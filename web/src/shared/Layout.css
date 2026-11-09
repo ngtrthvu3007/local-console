@@ -1,0 +1,25 @@
+/*
+ Cloudscape mở sidebar trong 115ms, tuyến tính, nên trông giật.
+ Kéo dài và dùng easing giảm tốc cho mượt hơn. Cloudscape tự tắt animation
+ khi người dùng bật prefers-reduced-motion, nên ở đây chỉ đổi thời gian và easing.
+
+ Tên class của Cloudscape có hash đổi theo phiên bản, nên khớp theo tiền tố.
+ Selector gốc có :not(#\9) + 3 class; ở đây 3 attribute + "body" để thắng độ ưu tiên.
+*/
+:root {
+  --sidebar-motion-duration: 240ms;
+  --sidebar-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Panel trượt ra khi mở, và nút ☰ hiện dần khi đóng */
+body
+  nav[class*="awsui_navigation_"][class*="awsui_is-navigation-open_"][class*="awsui_animating_"]:not(
+    #\9
+  ),
+body
+  nav[class*="awsui_show-navigation_"][class*="awsui_animating_"]:not(
+    [class*="awsui_is-navigation-open_"]
+  ):not(#\9) {
+  animation-duration: var(--sidebar-motion-duration);
+  animation-timing-function: var(--sidebar-motion-easing);
+}
