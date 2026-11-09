@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Outlet } from "react-router";
-import AppLayout from "@cloudscape-design/components/app-layout";
+import AppLayout, { type AppLayoutProps } from "@cloudscape-design/components/app-layout";
 import BreadcrumbGroup from "@cloudscape-design/components/breadcrumb-group";
 import Flashbar, { type FlashbarProps } from "@cloudscape-design/components/flashbar";
 import SideNavigation from "@cloudscape-design/components/side-navigation";
+import SplitPanel from "@cloudscape-design/components/split-panel";
 import Spinner from "@cloudscape-design/components/spinner";
 import TopNavigation, {
   type TopNavigationProps,
@@ -14,7 +16,10 @@ import {
   HOME_PATH,
   LOADING_PLACEHOLDER,
   LOGO_PATH,
+  PHONE_MAX_WIDTH_PX,
   REGION_LABELS,
+  SPLIT_PANEL_PHONE_HEIGHT_RATIO,
+  SPLIT_PANEL_SIDE_WIDTH_PX,
 } from "./constants.ts";
 import { useBreadcrumbItems } from "./hooks/useBreadcrumbs.ts";
 import { useConfig } from "./hooks/useConfig.ts";
@@ -22,6 +27,7 @@ import { useFlociStatus, type FlociState } from "./hooks/useFlociStatus.ts";
 import { useFollow } from "./hooks/useFollow.ts";
 import { useNotifications } from "./hooks/useNotify.ts";
 import { useSideNavigation } from "./hooks/useSideNavigation.ts";
+import { useSplitPanelContent } from "./hooks/useSplitPanel.ts";
 import "./Layout.css";
 
 const TOP_NAVIGATION_ID = "top-nav";
@@ -36,6 +42,12 @@ const FLOCI_LABELS: Record<FlociState, string> = {
 
 const regionLabel = (region: string) => REGION_LABELS[region] ?? region;
 
+// Điện thoại: panel nằm dưới, cao 2/3 màn hình. Desktop: panel bên phải
+const defaultPanelSize = () =>
+  window.innerWidth <= PHONE_MAX_WIDTH_PX
+    ? Math.round(window.innerHeight * SPLIT_PANEL_PHONE_HEIGHT_RATIO)
+    : SPLIT_PANEL_SIDE_WIDTH_PX;
+
 export function Layout() {
   const follow = useFollow();
   const navigation = useSideNavigation();
@@ -43,6 +55,11 @@ export function Layout() {
   const { data: config } = useConfig();
   const breadcrumbs = useBreadcrumbItems();
   const messages = useNotifications();
+  const panel = useSplitPanelContent();
+  const [panelSize, setPanelSize] = useState(defaultPanelSize);
+  const [panelPreferences, setPanelPreferences] = useState<AppLayoutProps.SplitPanelPreferences>({
+    position: "side",
+  });
   const down = floci.state === "down";
 
   const identity: TopNavigationProps.Identity = {
@@ -91,6 +108,13 @@ export function Layout() {
     <Flashbar items={flashMessages} stackItems={flashMessages.length > FLASHBAR_STACK_THRESHOLD} />
   );
 
+  // Panel luôn mở khi trang có nội dung panel; đóng (✕) thì trang tự gỡ nội dung
+  const splitPanel = panel && (
+    <SplitPanel header={panel.header} headerDescription={panel.description}>
+      {panel.body}
+    </SplitPanel>
+  );
+
   // Mọi trang cần config (region, endpoint) nên chờ có rồi mới render
   const content = config ? <Outlet /> : <Spinner size='large' />;
 
@@ -106,6 +130,13 @@ export function Layout() {
         breadcrumbs={breadcrumbGroup}
         notifications={notifications}
         content={content}
+        splitPanel={splitPanel}
+        splitPanelOpen={Boolean(panel)}
+        onSplitPanelToggle={({ detail }) => !detail.open && panel?.onClose()}
+        splitPanelSize={panelSize}
+        onSplitPanelResize={({ detail }) => setPanelSize(detail.size)}
+        splitPanelPreferences={panelPreferences}
+        onSplitPanelPreferencesChange={({ detail }) => setPanelPreferences(detail)}
       />
     </>
   );

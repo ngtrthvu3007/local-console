@@ -87,7 +87,7 @@ docker compose up --build
 - Docker tự pull `floci/floci` và build image console từ source.
 - Mở **<http://localhost:3701>** là vào console.
 - Floci chạy ở **<http://localhost:4566>**, đúng cổng của LocalStack.
-- Dữ liệu được lưu xuống volume, tắt rồi bật lại vẫn còn. Muốn reset sạch thì chạy `docker compose down -v`.
+- Dữ liệu được lưu xuống volume, tắt rồi bật lại vẫn còn. **Riêng dữ liệu trong ElastiCache (Redis) thì mất**: Floci chỉ giữ cluster, cache khởi động lại trống. Muốn reset sạch thì chạy `docker compose down -v`.
 
 ### Trỏ BE của dự án vào Floci
 
@@ -162,12 +162,14 @@ Chi tiết: [DynamoDB — Thiết kế](2026-11-09-dynamodb-design.md).
 
 ### ElastiCache (Redis)
 
-| Nhóm    | Tính năng                                                                                     |
-| ------- | --------------------------------------------------------------------------------------------- |
-| Cluster | Liệt kê, tạo, xóa, hiện endpoint và port để BE kết nối                                        |
-| Key     | Lọc theo pattern, hiện kiểu dữ liệu và TTL                                                    |
-| Giá trị | Xem/sửa theo kiểu (string, hash, list, set, sorted set), thêm key, xóa key, đặt TTL, flush DB |
-| Server  | Memory đang dùng, số client đang kết nối                                                      |
+Chi tiết: [ElastiCache — Thiết kế](2026-11-09-elasticache-design.md). Xem key chỉ cho cluster tắt cluster mode, không AUTH/TLS, DB 0.
+
+| Nhóm    | Tính năng                                                                                                          |
+| ------- | ------------------------------------------------------------------------------------------------------------------ |
+| Cluster | Liệt kê, tạo (1 node), xóa, hiện endpoint, port và connection string để BE kết nối                                 |
+| Key     | Lọc theo pattern và theo kiểu, hiện kiểu dữ liệu và TTL                                                            |
+| Giá trị | Xem/sửa theo kiểu (string, hash, list, set, sorted set) trong panel bên phải, thêm key, xóa key, đặt TTL, flush DB |
+| Server  | Memory đang dùng, số client đang kết nối, số key, version, uptime                                                  |
 
 ### Amazon MQ (RabbitMQ)
 
@@ -232,14 +234,13 @@ localconsole/
 ├── server/                      # Backend
 │   └── src/
 │       ├── index.ts             # Khởi động server
-│       ├── app.ts               # Ghép các route lại
+│       ├── app.ts               # Ghép các route lại; tạo client AWS phía server (tra endpoint Redis/RabbitMQ)
 │       ├── config.ts            # Đọc biến môi trường
-│       ├── aws.ts               # Client AWS phía server (để tra endpoint Redis/RabbitMQ)
 │       ├── middleware/error.ts  # Chuẩn hóa lỗi thành JSON
 │       └── routes/
 │           ├── health.ts        # GET /api/health
 │           ├── aws-proxy.ts     # /aws/* → Floci
-│           ├── redis/           # router.ts (HTTP) + client.ts (nói chuyện với Redis)
+│           ├── redis/           # router.ts (HTTP) + client.ts (nói chuyện với Redis) + contract.ts (type dùng chung với web)
 │           └── rabbitmq/        # router.ts (HTTP) + client.ts (nói chuyện với RabbitMQ)
 ├── Dockerfile
 ├── docker-compose.yml
@@ -277,20 +278,23 @@ Trình duyệt **chỉ gửi tên cluster/broker, không gửi địa chỉ**. B
 
 **Danh sách API của backend:**
 
-| API                                                    | Việc                                          |
-| ------------------------------------------------------ | --------------------------------------------- |
-| `GET /api/health`                                      | Kiểm tra console còn sống (yêu cầu của Floci) |
-| `/aws/*`                                               | Chuyển tiếp nguyên request sang Floci         |
-| `GET /api/redis/:cluster/keys?pattern=&cursor=`        | Lọc key                                       |
-| `GET` / `PUT` / `DELETE /api/redis/:cluster/keys/:key` | Đọc, ghi, xóa key                             |
-| `PUT /api/redis/:cluster/keys/:key/ttl`                | Đặt hoặc xóa TTL                              |
-| `GET /api/redis/:cluster/info`                         | Thông tin server                              |
-| `POST /api/redis/:cluster/flush`                       | Xóa sạch DB                                   |
-| `GET /api/mq/:broker/queues`, `/exchanges`             | Liệt kê                                       |
-| `PUT` / `DELETE /api/mq/:broker/queues/:name`          | Tạo, xóa queue                                |
-| `POST /api/mq/:broker/exchanges/:name/publish`         | Publish message                               |
-| `POST /api/mq/:broker/queues/:name/peek`               | Xem trước message                             |
-| `DELETE /api/mq/:broker/queues/:name/messages`         | Purge queue                                   |
+| API                                                   | Việc                                          |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `GET /api/health`                                     | Kiểm tra console còn sống (yêu cầu của Floci) |
+| `/aws/*`                                              | Chuyển tiếp nguyên request sang Floci         |
+| `GET /api/redis/:cluster/keys?pattern=&type=&cursor=` | Lọc key                                       |
+| `POST /api/redis/:cluster/keys`                       | Tạo key                                       |
+| `POST /api/redis/:cluster/keys/delete`                | Xóa nhiều key                                 |
+| `GET /api/redis/:cluster/key?name=&cursor=`           | Đọc một trang giá trị của key                 |
+| `PATCH /api/redis/:cluster/key?name=`                 | Sửa từng field/phần tử                        |
+| `PUT /api/redis/:cluster/key/ttl?name=`               | Đặt hoặc xóa TTL                              |
+| `GET /api/redis/:cluster/info`                        | Thông tin server                              |
+| `POST /api/redis/:cluster/flush`                      | Xóa sạch DB                                   |
+| `GET /api/mq/:broker/queues`, `/exchanges`            | Liệt kê                                       |
+| `PUT` / `DELETE /api/mq/:broker/queues/:name`         | Tạo, xóa queue                                |
+| `POST /api/mq/:broker/exchanges/:name/publish`        | Publish message                               |
+| `POST /api/mq/:broker/queues/:name/peek`              | Xem trước message                             |
+| `DELETE /api/mq/:broker/queues/:name/messages`        | Purge queue                                   |
 
 ### Đóng gói
 
@@ -304,7 +308,7 @@ Trình duyệt **chỉ gửi tên cluster/broker, không gửi địa chỉ**. B
 services:
   floci:
     image: floci/floci:2.4.0 # ghim version, không dùng latest
-    ports: ["4566:4566"]
+    ports: ["4566:4566", "6379-6399:6379-6399"] # 6379-6399: Redis của ElastiCache
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false" # tắt UI có sẵn của Floci
       FLOCI_STORAGE_MODE: hybrid # lưu xuống đĩa mỗi 5 giây
@@ -385,11 +389,11 @@ Những chỗ hay hỏng trên Windows và cách xử lý:
 
 Ba điểm dưới đây chưa chắc chắn, nên sẽ được kiểm tra **đầu tiên**, trước khi làm giao diện:
 
-| #   | Rủi ro                                                                                                                                                        | Nếu xảy ra thì                                                                                                 |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 1   | **Chữ ký AWS qua proxy.** SDK ký request theo địa chỉ của console, proxy chuyển sang Floci với địa chỉ khác. Nếu Floci kiểm tra chữ ký thì request bị từ chối | **Đã kiểm tra 2026-11-09: không xảy ra.** Request đã ký đi qua proxy được Floci 2.4.0 chấp nhận (S3, DynamoDB) |
-| 2   | **Pre-signed URL** phải trỏ tới địa chỉ trình duyệt gọi được (`localhost:4566`), không trỏ vào proxy                                                          | Tạo pre-signed URL bằng `FLOCI_PUBLIC_URL`                                                                     |
-| 3   | **Địa chỉ của Redis/RabbitMQ:** Floci có thể trả về `localhost:<port>`. Từ bên trong container console, `localhost` lại là chính container console            | Backend đổi `localhost` thành `host.docker.internal` trước khi kết nối                                         |
+| #   | Rủi ro                                                                                                                                                        | Nếu xảy ra thì                                                                                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Chữ ký AWS qua proxy.** SDK ký request theo địa chỉ của console, proxy chuyển sang Floci với địa chỉ khác. Nếu Floci kiểm tra chữ ký thì request bị từ chối | **Đã kiểm tra 2026-11-09: không xảy ra.** Request đã ký đi qua proxy được Floci 2.4.0 chấp nhận (S3, DynamoDB)                                                                                                                                                                    |
+| 2   | **Pre-signed URL** phải trỏ tới địa chỉ trình duyệt gọi được (`localhost:4566`), không trỏ vào proxy                                                          | Tạo pre-signed URL bằng `FLOCI_PUBLIC_URL`                                                                                                                                                                                                                                        |
+| 3   | **Địa chỉ của Redis/RabbitMQ:** Floci có thể trả về `localhost:<port>`. Từ bên trong container console, `localhost` lại là chính container console            | **Đã kiểm tra 2026-11-09 (Redis):** Floci trả `localhost:6379`, nhưng proxy TCP chạy trong container Floci. Backend đổi `localhost` thành host của `AWS_ENDPOINT_URL` (vd: `floci`); `host.docker.internal` bị từ chối. Compose mở thêm cổng `6379-6399` cho BE chạy ngoài Docker |
 
 ---
 

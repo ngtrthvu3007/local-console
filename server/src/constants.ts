@@ -17,11 +17,20 @@ export const ROUTES = {
   config: "/api/config",
   apiPrefix: "/api",
   awsProxy: "/aws",
+  redis: "/api/redis",
   spaFallback: "/{*path}",
 } as const;
+
+// Floci nhận credential bất kỳ
+export const AWS_TEST_CREDENTIALS = { accessKeyId: "test", secretAccessKey: "test" } as const;
 
 export const FLOCI_HEALTH_PATH = "/_floci/health";
 export const SPA_INDEX_FILE = "index.html";
 
+export const HTTP_CREATED = 201;
+export const HTTP_BAD_REQUEST = 400;
 export const HTTP_NOT_FOUND = 404;
+export const HTTP_CONFLICT = 409;
+export const HTTP_INTERNAL_ERROR = 500;
+export const HTTP_BAD_GATEWAY = 502;
 export const NOT_FOUND_ERROR_CODE = "NotFound";

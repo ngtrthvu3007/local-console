@@ -27,7 +27,8 @@ ace.config.setModuleUrl("ace/mode/javascript_worker", javascriptWorkerUrl);
 const JAVASCRIPT_PAIRED_QUOTES = { '"': '"', "'": "'" };
 ace.require("ace/mode/javascript").Mode.prototype.$quotes = JAVASCRIPT_PAIRED_QUOTES;
 
-export type EditorLanguage = "json" | "javascript" | "python";
+// "text": chế độ chữ thường có sẵn trong ace, không cần nạp thêm
+export type EditorLanguage = "json" | "javascript" | "python" | "text";
 
 interface Props {
   value: string;

@@ -11,20 +11,16 @@ import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import {
-  DETAIL_SEPARATOR,
-  ITEM_LIST_WIDTH_PX,
-  ITEMS_PAGE_SIZE,
-  RESULT_SEPARATOR,
-} from "../constants.ts";
+import { ITEMS_PAGE_SIZE, RESULT_SEPARATOR } from "../constants.ts";
 import { cellText, isNestedValue, itemId, type Item } from "../itemJson.ts";
 import { useExportTable, useItemPages, type SearchRequest } from "../hooks/useItems.ts";
 import { keyAttributesOf, keySchemaOf, type IndexKeys } from "../hooks/useTables.ts";
 import { resultSummary, searchSummary } from "../searchSummary.ts";
 import type { ItemSearchForm } from "../schemas.ts";
 import { DeleteItemsModal } from "./DeleteItemsModal.tsx";
-import { Figure, FigureHeader } from "./Figure.tsx";
+import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { ImportModal } from "./ImportModal.tsx";
 import { ItemEditorModal, type ItemEditorMode } from "./ItemEditorModal.tsx";
 import { EMPTY_SEARCH, SearchForm, toItemSearch } from "./SearchForm.tsx";

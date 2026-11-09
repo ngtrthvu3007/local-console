@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
+import { elasticacheService } from "./services/elasticache/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
 
@@ -26,6 +27,11 @@ export interface ServiceDefinition {
   useResourceCount?: () => ResourceCount;
 }
 
-export const services: ServiceDefinition[] = [s3Service, lambdaService, dynamodbService];
+export const services: ServiceDefinition[] = [
+  s3Service,
+  lambdaService,
+  dynamodbService,
+  elasticacheService,
+];
 
 export const servicePath = (service: ServiceDefinition) => `/${service.id}`;

@@ -11,7 +11,10 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "types": ["vite/client"],
-    "paths": { "@shared/*": ["./src/shared/*"] }
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@server/*": ["../server/src/*"]
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

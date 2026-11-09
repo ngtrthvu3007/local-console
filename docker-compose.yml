@@ -3,6 +3,7 @@ services:
     image: floci/floci:2.4.0
     ports:
       - "4566:4566"
+      - "6379-6399:6379-6399" # Redis của ElastiCache, cho BE chạy ngoài Docker
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false" # tắt UI có sẵn của Floci
       FLOCI_STORAGE_MODE: hybrid # giữ dữ liệu khi tắt/bật

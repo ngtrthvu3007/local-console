@@ -20,15 +20,10 @@ export const KEY_TYPE_RANGE: KeyRole = "RANGE";
 
 export const ITEMS_PAGE_SIZE = 50;
 
-// Ngăn các phần trong một dòng mô tả: "pk String · sk String · 68 items"
-export const DETAIL_SEPARATOR = " · ";
 // Ngăn câu điều kiện với kết quả: "Scan on orders — 50 returned"
 export const RESULT_SEPARATOR = " — ";
 // Số viết dạng chữ của DynamoDB: 42, -1.5, 1e3
 export const NUMBER_TEXT_PATTERN = /^-?\d+(\.\d+)?([eE][-+]?\d+)?$/;
-// Dưới độ rộng này bảng item thành danh sách hai tầng và form tìm thu gọn (điện thoại);
-// tablet vẫn giữ dạng bảng nhiều cột
-export const ITEM_LIST_WIDTH_PX = 640;
 // Giới hạn của BatchWriteItem
 export const BATCH_WRITE_MAX_ITEMS = 25;
 export const UNPROCESSED_RETRY_LIMIT = 5;

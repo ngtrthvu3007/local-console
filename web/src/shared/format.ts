@@ -1,4 +1,9 @@
-import { NOT_AVAILABLE } from "./constants.ts";
+import {
+  NOT_AVAILABLE,
+  SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_MINUTE,
+} from "./constants.ts";
 
 const BYTES_PER_UNIT = 1024;
 const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
@@ -31,3 +36,25 @@ export const nounFor = (count: number, singular: string, pluralForm = `${singula
 
 export const pluralize = (count: number, singular: string, pluralForm?: string) =>
   `${count} ${nounFor(count, singular, pluralForm)}`;
+
+const DURATION_UNITS = [
+  { seconds: SECONDS_PER_DAY, suffix: "d" },
+  { seconds: SECONDS_PER_HOUR, suffix: "h" },
+  { seconds: SECONDS_PER_MINUTE, suffix: "m" },
+  { seconds: 1, suffix: "s" },
+];
+// Hai đơn vị lớn nhất là đủ đọc: 59m 12s, 6h 0m, 3d 4h
+const DURATION_PARTS = 2;
+
+export function formatDuration(totalSeconds: number): string {
+  const first = DURATION_UNITS.findIndex((unit) => totalSeconds >= unit.seconds);
+  if (first < 0) return `${totalSeconds}s`;
+  let remaining = totalSeconds;
+  return DURATION_UNITS.slice(first, first + DURATION_PARTS)
+    .map((unit) => {
+      const amount = Math.floor(remaining / unit.seconds);
+      remaining -= amount * unit.seconds;
+      return `${amount}${unit.suffix}`;
+    })
+    .join(" ");
+}

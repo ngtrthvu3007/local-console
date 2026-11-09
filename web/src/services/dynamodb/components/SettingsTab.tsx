@@ -19,7 +19,7 @@ import type {
 import type { EventSourceMappingConfiguration } from "@aws-sdk/client-lambda";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -30,8 +30,6 @@ import {
 } from "../../lambda/constants.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
 import {
-  DETAIL_SEPARATOR,
-  ITEM_LIST_WIDTH_PX,
   PROJECTION_LABELS,
   STREAM_VIEW_TYPES,
   TTL_STATUS_ENABLED,
@@ -39,7 +37,7 @@ import {
 } from "../constants.ts";
 import { useStreamTriggers, useTimeToLive } from "../hooks/useTableSettings.ts";
 import { keySchemaOf } from "../hooks/useTables.ts";
-import { Figure, FigureHeader } from "./Figure.tsx";
+import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { KeyLabel, keyText } from "./KeyLabel.tsx";
 import { StreamModal, StreamTriggerModal, TimeToLiveModal } from "./SettingsModals.tsx";
 

@@ -1,13 +1,12 @@
 import type { AttributeValue } from "@aws-sdk/client-dynamodb";
 import { marshall, NumberValueImpl, unmarshall } from "@aws-sdk/util-dynamodb";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes } from "@shared/format.ts";
 import { prettyJson } from "@shared/json.ts";
 import {
   ATTRIBUTE_VALUE_TYPES,
   BASE64_PATTERN,
   CELL_PREVIEW_MAX_LENGTH,
-  DETAIL_SEPARATOR,
   KEY_TYPES,
   MAX_EXACT_SIGNIFICANT_DIGITS,
   NUMBER_TEXT_PATTERN,

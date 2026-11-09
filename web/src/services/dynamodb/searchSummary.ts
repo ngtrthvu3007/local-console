@@ -1,12 +1,8 @@
-import {
-  DETAIL_SEPARATOR,
-  FILTER_OPERATORS,
-  SORT_KEY_OPERATORS,
-  VALUELESS_FILTER_OPERATORS,
-} from "./constants.ts";
+import { FILTER_OPERATORS, SORT_KEY_OPERATORS, VALUELESS_FILTER_OPERATORS } from "./constants.ts";
 import type { FilterCondition, ItemSearch } from "./expressions.ts";
 import type { IndexKeys } from "./hooks/useTables.ts";
 import type { ItemPage } from "./hooks/useItems.ts";
+import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 
 const operatorWord = (label: string) => label.toLowerCase();

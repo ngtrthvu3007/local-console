@@ -13,7 +13,7 @@ import {
   PutBucketNotificationConfigurationCommand,
   type S3Client,
 } from "@aws-sdk/client-s3";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { useS3 } from "../../s3/hooks/useS3.ts";
 import {
   toNotificationConfiguration,
@@ -31,7 +31,6 @@ import { functionQueryKey } from "./useFunctions.ts";
 import { useLambda } from "./useLambda.ts";
 
 const ARN_SEPARATOR = ":";
-const DETAIL_SEPARATOR = " · ";
 
 export interface TriggerRow {
   id: string;

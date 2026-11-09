@@ -41,10 +41,20 @@ export const COPY_TEXTS = {
 
 // Khung hẹp hơn mức này thì gom nút vào dropdown và ẩn cột phụ của bảng
 export const COMPACT_WIDTH_PX = 900;
+// Mốc điện thoại của Cloudscape: dưới mức này panel luôn nằm dưới
+export const PHONE_MAX_WIDTH_PX = 688;
+// Panel bên phải rộng 480px; trên điện thoại panel cao 2/3 màn hình để bảng bên trong có chỗ
+export const SPLIT_PANEL_SIDE_WIDTH_PX = 480;
+export const SPLIT_PANEL_PHONE_HEIGHT_RATIO = 2 / 3;
 export const SERVICE_ICON_SIZE_PX = 20;
 
 // Modal xóa hàng loạt chỉ liệt kê vài mục đầu
 export const DELETE_PREVIEW_COUNT = 8;
 
 export const NOT_AVAILABLE = "—";
+
+// Ngăn các phần trong một dòng mô tả: "pk String · sk String · 68 items"
+export const DETAIL_SEPARATOR = " · ";
+// Dưới độ rộng này bảng thành danh sách hai tầng (điện thoại); tablet vẫn giữ dạng bảng nhiều cột
+export const ITEM_LIST_WIDTH_PX = 640;
 export const LOADING_PLACEHOLDER = "…";

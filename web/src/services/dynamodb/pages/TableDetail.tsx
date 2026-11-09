@@ -18,7 +18,7 @@ import { DeleteTablesModal } from "../components/DeleteTablesModal.tsx";
 import { ItemsTab } from "../components/ItemsTab.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
 import { keyText } from "../components/KeyLabel.tsx";
-import { DETAIL_SEPARATOR } from "../constants.ts";
+import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { keySchemaOf, useTable } from "../hooks/useTables.ts";
 import {
   SEARCH_PARAMS,
