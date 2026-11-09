@@ -150,11 +150,15 @@ Chi tiết: [Lambda — Thiết kế](2026-11-09-lambda-design.md). Chỉ hỗ t
 
 ### DynamoDB
 
-| Nhóm | Tính năng                                                                                 |
-| ---- | ----------------------------------------------------------------------------------------- |
-| Bảng | Liệt kê, tạo (partition key, sort key, GSI, LSI), xóa, xem chi tiết (key, index, số item) |
-| Item | Scan, query (theo key, theo index), lọc, phân trang                                       |
-| Sửa  | Thêm/sửa item bằng JSON editor hoặc form theo từng attribute, xóa nhiều item              |
+Chi tiết: [DynamoDB — Thiết kế](2026-11-09-dynamodb-design.md).
+
+| Nhóm        | Tính năng                                                                            |
+| ----------- | ------------------------------------------------------------------------------------ |
+| Bảng        | Liệt kê, tạo (partition key, sort key, GSI), xóa, xem chi tiết (key, index, số item) |
+| Item        | Scan, query (theo key, theo index), lọc, phân trang                                  |
+| Sửa         | Thêm/sửa item bằng JSON editor (JSON thường hoặc DynamoDB JSON), xóa nhiều item      |
+| File        | Import/Export item bằng file JSON                                                    |
+| TTL, Stream | Bật/tắt; Stream dùng làm trigger cho Lambda                                          |
 
 ### ElastiCache (Redis)
 
@@ -180,7 +184,7 @@ Chi tiết: [Lambda — Thiết kế](2026-11-09-lambda-design.md). Chỉ hỗ t
 Một tính năng phụ được thêm vào nếu đủ hai điều kiện: **Floci có hỗ trợ**, và **làm nhanh** (chỉ cần một form hoặc một công tắc). Danh sách dưới đây sẽ được đối chiếu với tài liệu Floci trước khi làm:
 
 - **Lambda:** SnapStart, Function URL, version và alias
-- **DynamoDB:** Global Tables, TTL, Streams
+- **DynamoDB:** Global Tables (TTL và Streams đã đưa vào đợt 1)
 - **S3:** tag, lifecycle rule
 
 ### Ngoài phạm vi đợt 1

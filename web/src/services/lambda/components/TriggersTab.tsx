@@ -82,7 +82,8 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const [openModal, setOpenModal] = useState<ModalId | null>(null);
   const rows = triggers.data ?? [];
   const single = selected[0];
-  const sqsSelected = single?.source === "sqs" ? single : undefined;
+  // Bật/tắt được mọi trigger dạng event source mapping (SQS, DynamoDB)
+  const mappingSelected = single?.uuid ? single : undefined;
   const closeModal = () => setOpenModal(null);
   const finish = () => {
     closeModal();
@@ -111,30 +112,30 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     );
 
   const toggle = (enabled: boolean) =>
-    sqsSelected &&
+    mappingSelected &&
     setEnabled.mutate(
-      { uuid: sqsSelected.uuid!, enabled },
+      { uuid: mappingSelected.uuid!, enabled },
       notifyOutcome({
-        success: `${enabled ? "Enabled" : "Disabled"} trigger ${sqsSelected.resource}`,
+        success: `${enabled ? "Enabled" : "Disabled"} trigger ${mappingSelected.resource}`,
         errorHeader: "Couldn't change the trigger",
         then: () => setSelected([]),
       }),
     );
 
-  const isEnabled = sqsSelected?.state === EVENT_SOURCE_STATES.enabled;
+  const isEnabled = mappingSelected?.state === EVENT_SOURCE_STATES.enabled;
   const actions: BarAction[] = [
     refreshAction(triggers),
     {
       id: "enable",
       text: "Enable",
-      disabled: !sqsSelected || isEnabled,
+      disabled: !mappingSelected || isEnabled,
       loading: setEnabled.isPending && !isEnabled,
       onClick: () => toggle(true),
     },
     {
       id: "disable",
       text: "Disable",
-      disabled: !sqsSelected || !isEnabled,
+      disabled: !mappingSelected || !isEnabled,
       loading: setEnabled.isPending && isEnabled,
       onClick: () => toggle(false),
     },
@@ -145,7 +146,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in an S3 bucket or messages arrive in an SQS queue.'
+      description='Run the function when objects change in S3, messages arrive in SQS, or items change in DynamoDB.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers
@@ -154,7 +155,10 @@ export function TriggersTab({ functionName, functionArn }: Props) {
 
   const empty = emptyOrError(
     triggers,
-    <EmptyState title='No triggers' description='Add an S3 or SQS trigger to run this function.' />,
+    <EmptyState
+      title='No triggers'
+      description='Add an S3, SQS or DynamoDB trigger to run this function.'
+    />,
   );
 
   // Trigger S3 thực chất là event notification của bucket
@@ -164,7 +168,10 @@ export function TriggersTab({ functionName, functionArn }: Props) {
         This removes the event notification from bucket <b>{single.resource}</b>: {single.details}
       </Box>
     ) : (
-      <Box>This removes the SQS trigger for queue {single?.resource}.</Box>
+      <Box>
+        This removes the {TRIGGER_SOURCES[single?.source ?? "sqs"]} trigger for{" "}
+        {single?.source === "dynamodb" ? "table" : "queue"} {single?.resource}.
+      </Box>
     );
 
   return (

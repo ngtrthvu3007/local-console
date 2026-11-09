@@ -82,11 +82,23 @@ export const DEFAULT_LOG_RANGE: LogRangeId = "1h";
 export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 
 // Trigger
-export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS" } as const;
+export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
 export const S3_TRIGGER_EVENTS = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"] as const;
 export const SQS_ARN_PATTERN = /^arn:aws:sqs:/;
 export const SQS_BATCH_SIZE = { min: 1, max: 10, default: 10 } as const;
+// Trigger từ DynamoDB Stream
+export const DYNAMODB_ARN_PATTERN = /^arn:aws:dynamodb:/;
+export const STREAM_BATCH_SIZE = { min: 1, max: 10000, default: 100 } as const;
+export const STARTING_POSITIONS = { LATEST: "Latest", TRIM_HORIZON: "Trim horizon" } as const;
+export type StartingPosition = keyof typeof STARTING_POSITIONS;
+export const DEFAULT_STARTING_POSITION: StartingPosition = "LATEST";
+export const STARTING_POSITION_OPTIONS = Object.entries(STARTING_POSITIONS).map(
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+);
 export const SQS_QUEUE_ARN_EXAMPLE = "orders-queue";
 export const EVENT_SOURCE_STATES = { enabled: "Enabled", disabled: "Disabled" } as const;
 

@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.1161.0",
+    "@aws-sdk/client-dynamodb": "^3.1161.0",
     "@aws-sdk/client-lambda": "^3.1161.0",
     "@aws-sdk/client-s3": "^3.1161.0",
     "@aws-sdk/lib-storage": "^3.1161.0",
     "@aws-sdk/s3-request-presigner": "^3.1161.0",
+    "@aws-sdk/util-dynamodb": "^3.996.9",
     "@cloudscape-design/collection-hooks": "^1.0.110",
     "@cloudscape-design/components": "^3.0.1407",
     "@cloudscape-design/global-styles": "^1.0.71",

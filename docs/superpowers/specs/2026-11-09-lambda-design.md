@@ -46,7 +46,7 @@ Tất cả tính năng trong "Làm trong đợt này" đã được đối chi�
 | Layer                                               | Floci chạy thật (đã thử)                                                          |
 | Async config và destination (OnSuccess / OnFailure) | Floci chạy thật với SQS, SNS, Lambda, EventBridge                                 |
 | Reserved concurrency, filter criteria, log JSON     | Dùng trong vài tình huống test hẹp                                                |
-| Trigger Kinesis, DynamoDB Streams                   | Làm khi DynamoDB Streams có trên console                                          |
+| Trigger Kinesis                                     | Trigger DynamoDB Streams làm cùng service DynamoDB (xem spec DynamoDB, mục 3.9)   |
 | Chọn SQS queue bằng dropdown                        | Đợt này nhập ARN. Có dropdown khi làm service SQS                                 |
 
 ### Không làm
@@ -382,6 +382,8 @@ web/src/services/lambda/
 | 12  | **Xóa function** có dọn hết không                                                     | **Đã kiểm tra:** Floci tự xóa code trong bucket nội bộ và container, **giữ log group** → có ô tick xóa log group                                                                                                                        |
 
 **Bucket nội bộ `awslambda-<region>-tasks`:** Floci lưu code của function ở đây (`snapshots/<account>/<function>`). Bucket này hiện trong danh sách bucket S3. Xóa object trong đó có thể làm hỏng function. Xem câu hỏi mở ở mục 9.
+
+**Đã kiểm tra (2026-11-09):** Floci chỉ tạo bucket này khi tạo function đầu tiên, và **không xóa** khi xóa function cuối cùng, nên bucket còn sót lại. Xóa bucket khi đã trống thì an toàn: tạo function mới, Floci tự tạo lại bucket và function chạy bình thường.
 
 ---
 

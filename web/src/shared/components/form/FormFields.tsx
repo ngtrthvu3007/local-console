@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import {
   Controller,
   type Control,
@@ -8,6 +8,8 @@ import {
 } from "react-hook-form";
 import Autosuggest, { type AutosuggestProps } from "@cloudscape-design/components/autosuggest";
 import Checkbox from "@cloudscape-design/components/checkbox";
+import Button from "@cloudscape-design/components/button";
+import FileTokenGroup from "@cloudscape-design/components/file-token-group";
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
 import Multiselect from "@cloudscape-design/components/multiselect";
@@ -100,6 +102,62 @@ export function FormAutosuggest<TValues extends FieldValues>(
   );
 }
 
+interface FileUploadFieldProps<TValues extends FieldValues> extends FieldProps<TValues> {
+  accept?: string; // vd: ".json"
+}
+
+interface FilePickerProps {
+  files: File[];
+  accept?: string;
+  onChange: (files: File[]) => void;
+}
+
+// Nút chọn file giống trang Upload của S3 (icon add-plus), file đã chọn hiện thành token có nút bỏ.
+// FileUpload của Cloudscape luôn vẽ icon mũi tên upload, lệch với S3 nên không dùng.
+function FilePicker({ files, accept, onChange }: FilePickerProps) {
+  const input = useRef<HTMLInputElement>(null);
+  const tokens = files.map((file) => ({ file }));
+  return (
+    <>
+      <input
+        ref={input}
+        type='file'
+        accept={accept}
+        hidden
+        onChange={(event) => {
+          onChange(Array.from(event.target.files ?? []));
+          // Cho phép chọn lại cùng một file sau khi đã bỏ
+          event.target.value = "";
+        }}
+      />
+      <Button iconName='add-plus' onClick={() => input.current?.click()}>
+        Choose file
+      </Button>
+      {tokens.length > 0 && (
+        <FileTokenGroup
+          items={tokens}
+          showFileSize
+          onDismiss={({ detail }) =>
+            onChange(files.filter((_file, index) => index !== detail.fileIndex))
+          }
+        />
+      )}
+    </>
+  );
+}
+
+// Giá trị là mảng File
+export function FormFileUpload<TValues extends FieldValues>(props: FileUploadFieldProps<TValues>) {
+  const { accept, ...fieldProps } = props;
+  return (
+    <ControlledField {...fieldProps}>
+      {(field) => (
+        <FilePicker files={field.value ?? []} accept={accept} onChange={field.onChange} />
+      )}
+    </ControlledField>
+  );
+}
+
 interface OptionsProps<TValues extends FieldValues> extends FieldProps<TValues> {
   options: SelectProps.Option[];
 }
@@ -141,17 +199,21 @@ export function FormMultiselect<TValues extends FieldValues>(props: OptionsProps
 
 interface RadioProps<TValues extends FieldValues> extends FieldProps<TValues> {
   items: RadioGroupProps.RadioButtonDefinition[];
+  onChange?: (value: string) => void; // việc làm thêm khi đổi lựa chọn (vd: đặt lại giá trị mặc định)
 }
 
 export function FormRadioGroup<TValues extends FieldValues>(props: RadioProps<TValues>) {
-  const { items, ...fieldProps } = props;
+  const { items, onChange, ...fieldProps } = props;
   return (
     <ControlledField {...fieldProps}>
       {(field) => (
         <RadioGroup
           items={items}
           value={field.value}
-          onChange={({ detail }) => field.onChange(detail.value)}
+          onChange={({ detail }) => {
+            field.onChange(detail.value);
+            onChange?.(detail.value);
+          }}
         />
       )}
     </ControlledField>

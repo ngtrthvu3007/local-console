@@ -16,6 +16,7 @@ export interface BarAction {
   iconName?: IconProps.Name;
   iconOnly?: boolean; // chỉ hiện icon, text làm aria-label
   primary?: boolean; // nút chính, luôn đứng cuối
+  quiet?: boolean; // nút chính nhưng kiểu thường, khi trang đã có nút chính khác (vd: Run của form tìm)
   pinned?: boolean; // luôn là nút riêng, kể cả khi khung hẹp
 }
 
@@ -73,7 +74,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
   const renderButton = (action: BarAction) => (
     <Button
       key={action.id}
-      variant={action.primary ? "primary" : "normal"}
+      variant={action.primary && !action.quiet ? "primary" : "normal"}
       iconName={action.iconName}
       ariaLabel={action.iconOnly ? action.text : undefined}
       disabled={action.disabled}

@@ -12,6 +12,9 @@ import {
   S3_TRIGGER_EVENTS,
   SQS_ARN_PATTERN,
   SQS_BATCH_SIZE,
+  STARTING_POSITIONS,
+  STREAM_BATCH_SIZE,
+  type StartingPosition,
   TIMEOUT_LIMITS_SECONDS,
   TRIGGER_SOURCES,
   type TriggerSource,
@@ -91,6 +94,12 @@ export const environmentSchema = z
     }
   });
 
+// Dùng chung cho tab Triggers của Lambda và trang bảng DynamoDB
+export const startingPositionSchema = z.enum(
+  Object.keys(STARTING_POSITIONS) as [StartingPosition, ...StartingPosition[]],
+);
+export const streamBatchSizeSchema = wholeNumberIn(STREAM_BATCH_SIZE, "records");
+
 export const triggerSchema = z
   .object({
     source: z.enum(TRIGGER_SOURCE_IDS),
@@ -99,6 +108,8 @@ export const triggerSchema = z
     prefix: z.string().trim(),
     suffix: z.string().trim(),
     queueArn: z.string().trim(),
+    table: z.string(),
+    startingPosition: startingPositionSchema,
     batchSize: z.string().trim(),
     enabled: z.boolean(),
   })
@@ -108,6 +119,12 @@ export const triggerSchema = z
     if (values.source === "s3") {
       if (!values.bucket) addIssue("bucket", "Choose a bucket.");
       if (!values.events.length) addIssue("events", "Choose at least one event type.");
+      return;
+    }
+    if (values.source === "dynamodb") {
+      if (!values.table) addIssue("table", "Choose a table with a stream.");
+      const batchSize = streamBatchSizeSchema.safeParse(values.batchSize);
+      if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
       return;
     }
     if (!SQS_ARN_PATTERN.test(values.queueArn))
