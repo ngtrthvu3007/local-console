@@ -613,7 +613,8 @@ server/src/
 
 - **API (curl):** tạo key đủ 5 kiểu; trùng key, trùng field, trùng member (409); thêm/sửa/xóa field; push đầu và cuối, xóa theo index; thêm member, sửa score; sửa string giữ TTL; đặt và bỏ TTL; key không còn (404); sai kiểu (`WRONGTYPE` → 409); cursor sai (400); cluster không có (404); string binary trả `value: null`; key kiểu stream trả `unsupported`; server info.
 - **Giao diện:** chụp ở 1288, 1000 và 390px qua Chrome DevTools Protocol: danh sách cluster, tab Keys, panel của string và 4 kiểu collection, key đã bị xóa, tab Details. Không màn nào cuộn ngang.
-- **Chưa thử:** bấm thật trong giao diện các modal Create key, Edit, Set TTL, Delete, Flush. Rủi ro #6 (Floci khởi động lại).
+- **Bấm thật trong giao diện** (Chrome headless qua DevTools Protocol, 18 bước, đều qua): tạo cluster (tên sai bị chặn); tạo key string kèm TTL, sửa trong panel (TTL giữ nguyên), bỏ TTL; hash: thêm, thêm trùng, sửa value, xóa field; list: push đầu, xóa theo index; set: thêm trùng; sorted set: thêm, sửa score; lọc theo pattern; xóa nhiều key; flush; tab Details; xóa cluster.
+- **Chưa thử:** lọc theo kiểu bằng dropdown Type; rủi ro #6 (Floci khởi động lại).
 
 **Lỗi tìm thấy khi thử và đã sửa:** tên key bị bóp vỡ chữ khi panel hẹp (đưa nút xuống thân panel); dòng thứ hai của bảng hai tầng dính vào dòng đầu; `KeyValuePairs` 2 cột trên điện thoại làm connection string bị bẻ giữa chữ (khung hẹp thì một cột).
 

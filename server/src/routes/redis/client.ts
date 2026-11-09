@@ -12,6 +12,7 @@ import {
   HTTP_CONFLICT,
   HTTP_NOT_FOUND,
 } from "../../constants.ts";
+import { reachableHost } from "../../flociHost.ts";
 import { HttpError } from "../../middleware/error.ts";
 import {
   REDIS_ERROR_CODES,
@@ -29,9 +30,6 @@ const CONNECT_TIMEOUT_MS = 5000;
 const COMMAND_TIMEOUT_MS = 5000;
 const READY_STATUS = "ready";
 
-// Floci trả endpoint "localhost": proxy TCP chạy trong container Floci, nên từ container
-// console phải gọi bằng host của Floci (vd: floci). Chạy ngoài Docker thì host là localhost, vẫn đúng.
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const NOT_FOUND_FAULTS = new Set(["ReplicationGroupNotFoundFault", "CacheClusterNotFoundFault"]);
 const MEMCACHED_ENGINE = "memcached";
 const REDIS_ENGINE = "redis";
@@ -98,7 +96,6 @@ const alreadyExists = (message: string) =>
   new HttpError(HTTP_CONFLICT, REDIS_ERROR_CODES.alreadyExists, message);
 
 export function createRedisConnector(elastiCache: ElastiCacheClient, flociUrl: string) {
-  const flociHost = new URL(flociUrl).hostname;
   const connections = new Map<string, Redis>();
 
   async function orUndefinedWhenNotFound<T>(request: () => Promise<T>): Promise<T | undefined> {
@@ -153,8 +150,7 @@ export function createRedisConnector(elastiCache: ElastiCacheClient, flociUrl: s
         `Cluster ${cluster} has no endpoint yet`,
       );
     }
-    const host = LOCAL_HOSTS.has(endpoint.Address) ? flociHost : endpoint.Address;
-    return { host, port: endpoint.Port };
+    return { host: reachableHost(endpoint.Address, flociUrl), port: endpoint.Port };
   }
 
   // Giữ một kết nối cho mỗi địa chỉ; mất kết nối thì bỏ, lần sau mở lại

@@ -173,6 +173,8 @@ Chi tiết: [ElastiCache — Thiết kế](2026-11-09-elasticache-design.md). Xe
 
 ### Amazon MQ (RabbitMQ)
 
+Chi tiết: [Amazon MQ — Thiết kế](2026-11-09-mq-design.md). Phần queue chỉ dùng được khi console chạy trong compose.
+
 | Nhóm     | Tính năng                                                                                                              |
 | -------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Broker   | Liệt kê, tạo (user/pass), xóa, reboot, hiện endpoint AMQP và trang quản lý                                             |

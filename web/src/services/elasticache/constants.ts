@@ -49,5 +49,4 @@ export const NODE_ROLE_LABELS: Record<string, string> = {
 export const PANEL_LIST_WIDTH_PX = 400;
 // Ô value trong bảng chỉ hiện một dòng
 export const VALUE_PREVIEW_MAX_LENGTH = 200;
-export const EDITOR_HEIGHT_PX = 360;
 export const STRING_EDITOR_HEIGHT_PX = 240;

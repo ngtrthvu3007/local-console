@@ -2,6 +2,7 @@ import path from "node:path";
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { ElastiCacheClient } from "@aws-sdk/client-elasticache";
+import { MqClient } from "@aws-sdk/client-mq";
 import type { Config } from "./config.ts";
 import {
   AWS_TEST_CREDENTIALS,
@@ -12,6 +13,8 @@ import {
 } from "./constants.ts";
 import { errorHandler } from "./middleware/error.ts";
 import { healthRouter } from "./routes/health.ts";
+import { createRabbitConnector } from "./routes/rabbitmq/client.ts";
+import { rabbitRouter } from "./routes/rabbitmq/router.ts";
 import { createRedisConnector } from "./routes/redis/client.ts";
 import { redisRouter } from "./routes/redis/router.ts";
 
@@ -33,14 +36,19 @@ export function createApp(config: Config) {
     createProxyMiddleware({ target: config.AWS_ENDPOINT_URL, changeOrigin: true }),
   );
 
-  // Server chỉ dùng AWS API để tra endpoint của cluster Redis
-  const elastiCache = new ElastiCacheClient({
+  // Server chỉ dùng AWS API để tra địa chỉ của cluster Redis và broker RabbitMQ
+  const awsOptions = {
     region: config.AWS_REGION,
     endpoint: config.AWS_ENDPOINT_URL,
     credentials: AWS_TEST_CREDENTIALS,
-  });
-  const withRedis = createRedisConnector(elastiCache, config.AWS_ENDPOINT_URL);
+  };
+  const withRedis = createRedisConnector(
+    new ElastiCacheClient(awsOptions),
+    config.AWS_ENDPOINT_URL,
+  );
   app.use(ROUTES.redis, redisRouter(withRedis));
+  const callRabbit = createRabbitConnector(new MqClient(awsOptions), config.AWS_ENDPOINT_URL);
+  app.use(ROUTES.rabbitmq, rabbitRouter(callRabbit));
 
   app.use(ROUTES.apiPrefix, (_request, response) => {
     response

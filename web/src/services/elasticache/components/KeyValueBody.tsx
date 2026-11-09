@@ -10,7 +10,7 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { STRING_EDITOR_HEIGHT_PX } from "../constants.ts";
 import { isKeyNotFound, useUpdateKey, type KeyValueQuery } from "../hooks/useRedis.ts";
 import { CollectionTable } from "./CollectionTable.tsx";
-import { ValueEditor } from "./ValueEditor.tsx";
+import { ValueEditor } from "@shared/components/ValueEditor.tsx";
 
 type StringValue = Extract<KeyValue, { kind: "string" }>;
 

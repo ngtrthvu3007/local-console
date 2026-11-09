@@ -5,7 +5,7 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { KEY_TYPE_OPTIONS } from "../constants.ts";
 import { useCreateKey } from "../hooks/useRedis.ts";
 import { createKeySchema, type CreateKeyForm } from "../schemas.ts";
-import { FormValueEditor } from "./ValueEditor.tsx";
+import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 
 interface Props {
   cluster: string;

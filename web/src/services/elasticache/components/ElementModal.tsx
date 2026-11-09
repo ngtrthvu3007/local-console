@@ -6,7 +6,7 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useUpdateKey } from "../hooks/useRedis.ts";
 import { LIST_ENDS, elementSchemaFor, type CollectionKind, type ElementForm } from "../schemas.ts";
-import { FormValueEditor } from "./ValueEditor.tsx";
+import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 
 // Phần tử đang sửa; không có = thêm mới
 export interface ElementTarget {

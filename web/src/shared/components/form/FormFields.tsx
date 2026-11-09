@@ -11,7 +11,9 @@ import Checkbox from "@cloudscape-design/components/checkbox";
 import Button from "@cloudscape-design/components/button";
 import FileTokenGroup from "@cloudscape-design/components/file-token-group";
 import FormField from "@cloudscape-design/components/form-field";
-import Input from "@cloudscape-design/components/input";
+import Input, {
+  type InputProps as CloudscapeInputProps,
+} from "@cloudscape-design/components/input";
 import Multiselect from "@cloudscape-design/components/multiselect";
 import RadioGroup, { type RadioGroupProps } from "@cloudscape-design/components/radio-group";
 import SegmentedControl, {
@@ -54,15 +56,17 @@ function ControlledField<TValues extends FieldValues>(props: ControlledFieldProp
 interface InputProps<TValues extends FieldValues> extends FieldProps<TValues> {
   placeholder?: string;
   autoFocus?: boolean;
+  type?: CloudscapeInputProps.Type; // vd: "password"
 }
 
 export function FormInput<TValues extends FieldValues>(props: InputProps<TValues>) {
-  const { placeholder, autoFocus, ...fieldProps } = props;
+  const { placeholder, autoFocus, type, ...fieldProps } = props;
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
         <Input
           ref={field.ref}
+          type={type}
           value={field.value ?? ""}
           placeholder={placeholder}
           autoFocus={autoFocus}
