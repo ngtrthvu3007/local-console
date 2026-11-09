@@ -6,6 +6,7 @@ import {
   type FieldValues,
   type Path,
 } from "react-hook-form";
+import Autosuggest, { type AutosuggestProps } from "@cloudscape-design/components/autosuggest";
 import Checkbox from "@cloudscape-design/components/checkbox";
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
@@ -64,6 +65,33 @@ export function FormInput<TValues extends FieldValues>(props: InputProps<TValues
           placeholder={placeholder}
           autoFocus={autoFocus}
           invalid={invalid}
+          onChange={({ detail }) => field.onChange(detail.value)}
+          onBlur={field.onBlur}
+        />
+      )}
+    </ControlledField>
+  );
+}
+
+interface AutosuggestFieldProps<TValues extends FieldValues> extends InputProps<TValues> {
+  options: AutosuggestProps.Options;
+  enteredTextLabel: (value: string) => string; // dòng "Use: …" khi giá trị gõ tay không có trong gợi ý
+}
+
+// Ô nhập có gợi ý, vẫn gõ tay được giá trị bất kỳ
+export function FormAutosuggest<TValues extends FieldValues>(
+  props: AutosuggestFieldProps<TValues>,
+) {
+  const { options, enteredTextLabel, placeholder, ...fieldProps } = props;
+  return (
+    <ControlledField {...fieldProps}>
+      {(field, invalid) => (
+        <Autosuggest
+          value={field.value ?? ""}
+          options={options}
+          placeholder={placeholder}
+          invalid={invalid}
+          enteredTextLabel={enteredTextLabel}
           onChange={({ detail }) => field.onChange(detail.value)}
           onBlur={field.onBlur}
         />

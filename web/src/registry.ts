@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router";
+import { lambdaService } from "./services/lambda/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
 
 export interface ServiceLink {
@@ -24,6 +25,6 @@ export interface ServiceDefinition {
   useResourceCount?: () => ResourceCount;
 }
 
-export const services: ServiceDefinition[] = [s3Service];
+export const services: ServiceDefinition[] = [s3Service, lambdaService];
 
 export const servicePath = (service: ServiceDefinition) => `/${service.id}`;

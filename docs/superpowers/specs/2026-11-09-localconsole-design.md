@@ -137,12 +137,16 @@ Riêng S3 thì bật `forcePathStyle: true` trong SDK.
 
 ### Lambda
 
+Chi tiết: [Lambda — Thiết kế](2026-11-09-lambda-design.md). Chỉ hỗ trợ Node.js và Python.
+
 | Nhóm     | Tính năng                                                                                     |
 | -------- | --------------------------------------------------------------------------------------------- |
-| Function | Liệt kê, tạo (runtime, handler, upload zip, memory, timeout), xóa                             |
-| Cấu hình | Sửa cấu hình, biến môi trường, upload code mới                                                |
+| Function | Liệt kê, tạo từ code Hello world (runtime, memory, timeout), xóa                              |
+| Code     | Sửa code ngay trên trang rồi bấm Deploy                                                       |
+| Cấu hình | Sửa cấu hình, biến môi trường                                                                 |
 | Test     | Invoke với JSON payload, lưu sẵn test event, xem response, thời gian chạy và log của lần chạy |
-| Log      | Xem log CloudWatch của function (các log stream)                                              |
+| Log      | Xem log CloudWatch của function (gộp mọi log stream), tự làm mới                              |
+| Trigger  | S3 (event notification) và SQS (event source mapping)                                         |
 
 ### DynamoDB
 

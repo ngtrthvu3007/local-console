@@ -23,3 +23,11 @@ body
   animation-duration: var(--sidebar-motion-duration);
   animation-timing-function: var(--sidebar-motion-easing);
 }
+
+/*
+ Luôn chừa chỗ cho thanh cuộn dọc: khi nội dung vừa dài quá màn hình (vd: mở khối
+ "Additional settings"), thanh cuộn hiện ra không làm header và nội dung co lại, giật sang trái.
+*/
+html {
+  scrollbar-gutter: stable;
+}

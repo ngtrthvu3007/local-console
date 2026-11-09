@@ -9,7 +9,7 @@ import { jsonError } from "../json.ts";
 import { ConfirmModal } from "./ConfirmModal.tsx";
 import { ErrorState, type FailableQuery } from "./TableStates.tsx";
 
-const JsonEditor = lazy(() => import("./JsonEditor.tsx"));
+const CodeEditor = lazy(() => import("./CodeEditor.tsx"));
 
 interface Props {
   title: string;
@@ -54,7 +54,7 @@ export function JsonSettingEditor({
   ) : (
     <FormField stretch errorText={error}>
       <Suspense fallback={<Spinner />}>
-        <JsonEditor value={draft} onChange={setDraft} />
+        <CodeEditor value={draft} onChange={setDraft} />
       </Suspense>
     </FormField>
   );

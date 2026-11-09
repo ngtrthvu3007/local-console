@@ -85,7 +85,6 @@ export const VERSIONING_DESCRIPTION =
   "Keep every version of an object, so you can restore one after it is overwritten or deleted.";
 
 export const BUCKET_LIST_PAGE_SIZE = 50;
-export const DELETE_PREVIEW_COUNT = 8;
 
 // Event notification
 export const NOTIFICATION_EVENT_TYPES = [
@@ -101,7 +100,6 @@ export const NOTIFICATION_EVENT_TYPES = [
 export type NotificationEvent = (typeof NOTIFICATION_EVENT_TYPES)[number];
 export const DEFAULT_NOTIFICATION_EVENTS: NotificationEvent[] = ["s3:ObjectCreated:*"];
 export const FILTER_RULE_NAMES = { prefix: "prefix", suffix: "suffix" } as const;
-export const FLOCI_ACCOUNT_ID = "000000000000";
 
 export const NOTIFICATION_DESTINATIONS = {
   lambda: {

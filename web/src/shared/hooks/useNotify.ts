@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import { SUCCESS_MESSAGE_LIFETIME_MS } from "../constants.ts";
 import { pluralize } from "../format.ts";
@@ -26,7 +27,9 @@ function notify(message: Omit<Message, "id" | "dismissible" | "onDismiss">) {
   if (message.type === "success") setTimeout(remove, SUCCESS_MESSAGE_LIFETIME_MS);
 }
 
-export const notifySuccess = (content: string) => notify({ type: "success", content });
+// `action`: nút/link đi kèm, vd: "Upload a file" sau khi thêm trigger S3
+export const notifySuccess = (content: string, action?: ReactNode) =>
+  notify({ type: "success", content, action });
 
 // Thông báo cập nhật liên tục (vd: tiến trình upload): cùng id thì thay tại chỗ, null thì gỡ.
 // Không có nút đóng, nơi tạo tự gỡ khi xong.
@@ -64,6 +67,7 @@ const dismissErrors = (header: string) =>
 // Thành công thì đóng lỗi cũ của cùng thao tác (vd: lần thử trước thất bại).
 export function notifyOutcome<TResult>(options: {
   success: string | ((result: TResult) => string);
+  successAction?: ReactNode;
   errorHeader: string;
   then?: (result: TResult) => void;
 }) {
@@ -72,6 +76,7 @@ export function notifyOutcome<TResult>(options: {
       dismissErrors(options.errorHeader);
       notifySuccess(
         typeof options.success === "function" ? options.success(result) : options.success,
+        options.successAction,
       );
       options.then?.(result);
     },

@@ -16,6 +16,7 @@ export const FLOCI_START_COMMAND = "docker compose up -d floci";
 
 // Floci nhận credential bất kỳ
 export const AWS_TEST_CREDENTIALS = { accessKeyId: "test", secretAccessKey: "test" } as const;
+export const FLOCI_ACCOUNT_ID = "000000000000";
 
 // Region hiển thị kèm mã Local Zone
 export const REGION_LABELS: Record<string, string> = {
@@ -41,6 +42,9 @@ export const COPY_TEXTS = {
 // Khung hẹp hơn mức này thì gom nút vào dropdown và ẩn cột phụ của bảng
 export const COMPACT_WIDTH_PX = 900;
 export const SERVICE_ICON_SIZE_PX = 20;
+
+// Modal xóa hàng loạt chỉ liệt kê vài mục đầu
+export const DELETE_PREVIEW_COUNT = 8;
 
 export const NOT_AVAILABLE = "—";
 export const LOADING_PLACEHOLDER = "…";

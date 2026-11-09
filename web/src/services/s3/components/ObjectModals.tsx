@@ -12,10 +12,10 @@ import {
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { TagsModal } from "@shared/components/TagsModal.tsx";
+import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DELETE_PREVIEW_COUNT } from "../constants.ts";
 import { asFolderKey, fileNameOf, s3Uri, withoutTrailingDelimiter } from "../helpers.ts";
 import { useBuckets } from "../hooks/useBuckets.ts";
 import {

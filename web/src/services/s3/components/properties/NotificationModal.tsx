@@ -1,13 +1,19 @@
 import { useWatch } from "react-hook-form";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
 import type { RadioGroupProps } from "@cloudscape-design/components/radio-group";
-import { FormInput, FormMultiselect, FormRadioGroup } from "@shared/components/form/FormFields.tsx";
+import {
+  FormAutosuggest,
+  FormInput,
+  FormMultiselect,
+  FormRadioGroup,
+} from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
+import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { useFunctions } from "../../../lambda/hooks/useFunctions.ts";
 import {
   DEFAULT_NOTIFICATION_EVENTS,
-  FLOCI_ACCOUNT_ID,
   NOTIFICATION_DESTINATIONS,
   NOTIFICATION_EVENT_TYPES,
   type NotificationDestination,
@@ -45,6 +51,12 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
   const { region } = useLoadedConfig();
   const form = useZodForm(notificationSchema(existingIds), INITIAL_VALUES);
   const destination = useWatch({ control: form.control, name: "destination" });
+  const functions = useFunctions();
+  const functionOptions = (functions.data ?? []).map((item) => ({
+    value: item.FunctionArn!,
+    label: item.FunctionName,
+    description: item.FunctionArn,
+  }));
 
   const submit = form.handleSubmit((values) => onSave(values));
   const destinationLabel = NOTIFICATION_DESTINATIONS[destination].label;
@@ -91,12 +103,24 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
         label='Destination'
         items={DESTINATION_ITEMS}
       />
-      <FormInput
-        control={form.control}
-        name='arn'
-        label={`${destinationLabel} ARN`}
-        placeholder={exampleArn(destination, region)}
-      />
+      {/* Lambda có gợi ý chọn function, vẫn gõ ARN tay được; SQS/SNS chưa có service nên nhập ARN */}
+      {destination === "lambda" ? (
+        <FormAutosuggest
+          control={form.control}
+          name='arn'
+          label={`${destinationLabel} ARN`}
+          placeholder={exampleArn(destination, region)}
+          options={functionOptions}
+          enteredTextLabel={(value) => `Use: ${value}`}
+        />
+      ) : (
+        <FormInput
+          control={form.control}
+          name='arn'
+          label={`${destinationLabel} ARN`}
+          placeholder={exampleArn(destination, region)}
+        />
+      )}
     </FormModal>
   );
 }

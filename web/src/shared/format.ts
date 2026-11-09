@@ -18,7 +18,7 @@ export function formatBytes(bytes?: number): string {
   return `${value} ${BYTE_UNITS[unitIndex]}`;
 }
 
-export const formatDate = (date?: Date | string) =>
+export const formatDate = (date?: Date | string | number) =>
   date ? new Date(date).toLocaleString(DATE_TIME_LOCALE) : NOT_AVAILABLE;
 
 export function formatTime(timestamp: number): string {
