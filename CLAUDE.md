@@ -7,7 +7,7 @@
 
 ## Start of every session
 
-- Read [README.md](README.md): repo & stack, setup, commands, database, **traps & open issues** (section 5), tests.
+- Read [README.md](README.md): setup, commands, tests, **Traps & open issues** (last section).
 
 ## Before writing code
 
@@ -44,6 +44,7 @@
 - **No git command that writes, ever — not even when asked.** No `commit`, `add`, `push`, `merge`, `rebase`, `checkout`, `switch`, `branch`, `stash`, `reset`, `tag`, `cherry-pick`, `gh pr create`, or MCP equivalent.
 - Read-only is fine: `status`, `log`, `diff`, `show`, `branch --list`, `fetch`.
 - The user drives git by hand: leave changes in the working tree, say what is ready, write commit messages / PR descriptions for them to paste.
+- **No attribution lines** in commit messages or PR descriptions: no `Co-Authored-By:`, no "Generated with Claude Code".
 - "Commit" / "push" in an instruction means "get it ready for me to do that" — say it's ready and stop.
-- **Same for packages: never run an install / uninstall / update** (`npm install|add|update|uninstall`, `npx playwright install`, `uv add|sync`, `pip install`, `brew install`, …). Write the exact command for the user to run — with the org's release-age flag (`npm … --min-release-age=7`, `uv … --exclude-newer="1 week"`).
+- **Same for packages: never run an install / uninstall / update** (`npm install|add|update|uninstall`, `npx playwright install`, `uv add|sync`, `pip install`, `brew install`, …). Write the exact command for the user to run.
 - **Same for AWS: never run any `aws` command yourself — not even read-only, not even when asked.** That covers scripts that call it (`config`, `rds`) and the Keychain entries `aws-cli/*` (`security …`). Write the exact command for the user to run, and read the output they paste back.
