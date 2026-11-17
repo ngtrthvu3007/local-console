@@ -1,10 +1,10 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
 import SegmentedControl from "@cloudscape-design/components/segmented-control";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import Toggle from "@cloudscape-design/components/toggle";
 import type { FilteredLogEvent } from "@aws-sdk/client-cloudwatch-logs";
@@ -58,7 +58,7 @@ export function MonitorTab({ functionName, logGroup }: { functionName: string; l
   const events = logs.data ?? [];
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='m' alignItems='center'>
+    <ResponsiveActions>
       <SegmentedControl
         label='Range'
         options={RANGE_OPTIONS}
@@ -75,7 +75,7 @@ export function MonitorTab({ functionName, logGroup }: { functionName: string; l
         loading={logs.isFetching && !autoRefresh}
         onClick={() => logs.refetch()}
       />
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const header = (

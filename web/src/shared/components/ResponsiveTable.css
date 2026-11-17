@@ -1,0 +1,47 @@
+.console-table {
+  min-width: 0;
+}
+.mobile-table-row {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mobile-table-row__details {
+  margin: 8px 0 0;
+  display: grid;
+  gap: 8px;
+}
+.mobile-table-row__details > div {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+.mobile-table-row__details dt {
+  font-weight: 400;
+}
+.mobile-table-row__details dd {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 120px;
+}
+.mobile-table-sort {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+.mobile-table-sort > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.console-table[data-mobile] table {
+  table-layout: fixed;
+  width: 100%;
+}
+.console-table[data-mobile] tbody :is(td, th) {
+  overflow-wrap: anywhere;
+}
+.console-table[data-mobile] tbody a {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

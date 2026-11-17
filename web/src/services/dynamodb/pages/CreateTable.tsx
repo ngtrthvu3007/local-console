@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useFieldArray } from "react-hook-form";
 import { useNavigate } from "react-router";
 import AttributeEditor from "@cloudscape-design/components/attribute-editor";
@@ -65,14 +66,14 @@ export function CreateTable() {
   );
 
   const actions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions footer>
       <Button variant='link' href={dynamodbRoutes.tables} onFollow={follow}>
         Cancel
       </Button>
       <Button variant='primary' formAction='submit' loading={createTable.isPending}>
         Create table
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const tableDetails = (

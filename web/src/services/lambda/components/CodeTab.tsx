@@ -23,8 +23,8 @@ const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));
 const EDITOR_HEIGHT_PX = 480;
 const MODIFIED_TAG = "Modified";
 const MODULE_EXTENSION_SEPARATOR = ".";
-const fileRowStyle = { display: "flex", alignItems: "center" } as const;
-const fileSelectStyle = { flex: 1, minWidth: 0 } as const;
+const fileRowStyle = { display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" } as const;
+const fileSelectStyle = { flex: "1 1 180px", minWidth: 0 } as const;
 
 // Giống AWS Console: chỉ sửa trên trang khi là gói .zip, Node.js/Python và không quá lớn
 const canEditInline = (configuration: FunctionConfiguration) =>
@@ -110,7 +110,7 @@ export function CodeTab(props: Props) {
       <div style={fileRowStyle}>
         <div style={fileSelectStyle}>{fileSelect}</div>
         {hasUndeployedChanges && (
-          <Box margin={{ left: "m" }}>
+          <Box>
             <StatusIndicator type='warning'>Changes not deployed</StatusIndicator>
           </Box>
         )}

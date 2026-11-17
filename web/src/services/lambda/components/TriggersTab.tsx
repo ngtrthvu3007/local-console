@@ -1,9 +1,10 @@
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
@@ -179,6 +180,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
       <Table
         variant='container'
         selectionType='single'
+        ariaLabels={selectionLabels<TriggerRow>("trigger", (item) => `${item.resource} ${item.id}`)}
         trackBy='id'
         items={rows}
         selectedItems={selected}

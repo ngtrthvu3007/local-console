@@ -1,3 +1,4 @@
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState, type ReactNode } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -6,7 +7,7 @@ import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
@@ -270,6 +271,7 @@ export function ItemsTab({ table }: Props) {
         <Table
           variant='container'
           selectionType='multi'
+          ariaLabels={selectionLabels<Item>("item", (item) => itemId(item, tableKeys))}
           trackBy={(item) => itemId(item, tableKeys)}
           items={items}
           selectedItems={selected}

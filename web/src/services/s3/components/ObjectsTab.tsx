@@ -1,3 +1,4 @@
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useEffect, useState, type ReactNode } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -6,7 +7,7 @@ import Header from "@cloudscape-design/components/header";
 import Icon from "@cloudscape-design/components/icon";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import Toggle from "@cloudscape-design/components/toggle";
 import { copyToClipboard } from "@shared/clipboard.ts";
@@ -277,6 +278,7 @@ export function ObjectsTab({ bucket, prefix, onOpenFolder }: Props) {
       <Table
         variant='container'
         selectionType='multi'
+        ariaLabels={selectionLabels<ObjectRow>("object", (item) => item.key)}
         trackBy={rowId}
         items={rows}
         selectedItems={selected}

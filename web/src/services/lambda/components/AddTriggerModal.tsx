@@ -89,7 +89,14 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
 
   const s3Fields = (
     <>
-      <FormSelect control={form.control} name='bucket' label='Bucket' options={bucketOptions} />
+      <FormSelect
+        control={form.control}
+        name='bucket'
+        label='Bucket'
+        placeholder='Choose a bucket'
+        empty='No buckets'
+        options={bucketOptions}
+      />
       <FormMultiselect
         control={form.control}
         name='events'

@@ -3,6 +3,7 @@ import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import Spinner from "@cloudscape-design/components/spinner";
+import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
 import { formatBytes } from "@shared/format.ts";
 import { reformatJson } from "@shared/json.ts";
@@ -75,7 +76,10 @@ export function ObjectPreview({ bucket, objectKey, contentType, size }: Props) {
 
   const textBody = text.data !== undefined && (
     <div style={previewFrameStyle}>
-      <Box variant='pre'>{kind === "json" ? reformatJson(text.data) : text.data}</Box>
+      <CodeSnippet
+        code={kind === "json" ? reformatJson(text.data) : text.data}
+        wrap={kind === "text"}
+      />
     </div>
   );
 

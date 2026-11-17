@@ -6,7 +6,7 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { REDIS_ERROR_CODES } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";

@@ -9,6 +9,10 @@
 :root {
   --sidebar-motion-duration: 240ms;
   --sidebar-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+  /* Phone: vùng chạm tối thiểu, chiều cao nút nhìn thấy, khoảng cách = space-s của Cloudscape */
+  --touch-target: 44px;
+  --phone-button-size: 36px;
+  --phone-space: 12px;
 }
 
 /* Panel trượt ra khi mở, và nút ☰ hiện dần khi đóng */
@@ -25,9 +29,137 @@ body
 }
 
 /*
- Luôn chừa chỗ cho thanh cuộn dọc: khi nội dung vừa dài quá màn hình (vd: mở khối
- "Additional settings"), thanh cuộn hiện ra không làm header và nội dung co lại, giật sang trái.
+ Chỉ chừa chỗ cho thanh cuộn trên desktop để tránh layout nhảy khi nội dung dài ra.
+ Phone dùng scrollbar overlay; gutter cố định sẽ tạo một dải trống bên phải.
 */
 html {
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
+}
+@media (min-width: 689px) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Mobile uses the same Cloudscape components, with room for fingers and long identifiers. */
+.local-console :is(h1, h2, h3),
+.local-console [class*="awsui_description_"],
+[role="dialog"] :is(h2, label) {
+  overflow-wrap: anywhere;
+}
+.console-count {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 688px) {
+  /* Bỏ nút "…" của breadcrumb: cao 44px làm chevron lệch và đè viền thanh breadcrumb. */
+  :is(.local-console, [role="dialog"]) button:not([class*="awsui_breadcrumb-group_"] *) {
+    min-height: var(--phone-button-size);
+    min-width: var(--phone-button-size);
+  }
+  /* Nút nhìn gọn 36px nhưng vùng chạm vẫn 44px: ::after trong suốt căn giữa nút, không nhỏ hơn 44px.
+     Căn theo tâm thay vì inset âm vì inset tính từ padding box, bị viền nút ăn mất.
+     ::before của Cloudscape dành cho focus ring nên dùng ::after. */
+  /* Link tên resource trong bảng mobile cũng nới vùng chạm như nút, thay vì làm dòng cao thêm.
+     Cần :not(#\9) vì style link của Cloudscape có cùng mức ưu tiên đó. */
+  body :is(.local-console, [role="dialog"]) [class*="awsui_button_"]:not(#\9),
+  body .console-table[data-mobile] tbody a:not(#\9) {
+    position: relative;
+  }
+  body .console-table[data-mobile] tbody a:not(#\9) {
+    display: inline-block;
+  }
+  body :is(.local-console, [role="dialog"]) [class*="awsui_button_"]:not(#\9)::after,
+  body .console-table[data-mobile] tbody a:not(#\9)::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: max(100%, var(--touch-target));
+    block-size: max(100%, var(--touch-target));
+    transform: translate(-50%, -50%);
+  }
+  /* Nút dạng link (href) bị kéo cao theo nút dropdown cạnh nó; phải căn giữa chữ thủ công. */
+  body :is(.local-console, [role="dialog"]) a[class*="awsui_button_"]:not(#\9) {
+    min-block-size: var(--phone-button-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Icon-only buttons need both dimensions; Cloudscape's logical min-inline-size
+     otherwise overrides the physical min-width and leaves a narrow oval. */
+  body :is(.local-console, [role="dialog"]) button[class*="awsui_button-no-text_"]:not(#\9) {
+    inline-size: var(--phone-button-size);
+    block-size: var(--phone-button-size);
+    min-inline-size: var(--phone-button-size);
+    min-block-size: var(--phone-button-size);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+  }
+  :is(.local-console, [role="dialog"])
+    input:not([type="checkbox"]):not([type="radio"]):not(.ace_text-input):not(#\9) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  :is(.local-console, [role="dialog"]) [class*="awsui_button-trigger_"]:not(#\9) {
+    min-block-size: 44px;
+  }
+  /* Header xuống dòng trên phone: tiêu đề → hàng nút, và hàng nút → ô tìm, mặc định chỉ 4px / 8px nên trông dính. */
+  body .local-console [class*="awsui_main_"]:has(> [class*="awsui_actions_"]):not(#\9) {
+    row-gap: var(--phone-space);
+  }
+  body .local-console [class*="awsui_tools_"]:not(#\9) {
+    padding-block-start: var(--phone-space);
+  }
+  /* Ô tìm nằm trong SpaceBetween (cạnh toggle) không tự giãn; cho nó lấp hết hàng như các bảng khác. */
+  .local-console [class*="awsui_tools-filtering_"] [class*="awsui_child_"]:has([class*="awsui_input-type-search_"]) {
+    flex: 1 1 100%;
+  }
+  .local-console [class*="awsui_tools-filtering_"] [class*="awsui_child_"]:has([class*="awsui_input-type-search_"]) > * {
+    flex: 1 1 auto;
+  }
+  .local-console [class*="awsui_key-value-pairs_"] {
+    overflow-wrap: anywhere;
+  }
+  /* Ẩn gợi ý kéo thả trên màn hình cảm ứng: ngón tay không kéo file vào được, chỉ còn nút Add files / Add folder. */
+  @media (pointer: coarse) {
+    .console-drag-hint {
+      display: none;
+    }
+  }
+  [role="dialog"] {
+    overflow-wrap: anywhere;
+  }
+}
+
+.console-service {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.console-service__count {
+  margin-top: 8px;
+}
+@media (max-width: 688px) {
+  /* Trong bảng, label chọn dòng của Cloudscape đã phủ cả ô; ép 44px sẽ đẩy radio tràn khỏi dòng. */
+  :is(.local-console, [role="dialog"])
+    span[class*="awsui_label-wrapper_"]:has(input:is([type="checkbox"], [type="radio"])):not(
+      :is(td, th) *
+    ) {
+    min-height: 44px;
+    align-items: center;
+  }
+  :is(.local-console, [role="dialog"]) textarea:not(.ace_text-input):not(#\9) {
+    font-size: 16px;
+  }
+  /* Cloudscape đặt min-block-size 28px kèm :not(#\9); cần cùng mức ưu tiên mới đè được. */
+  body .local-console nav[aria-label="Side navigation"] a:not(#\9) {
+    min-block-size: 44px;
+    align-items: center;
+  }
 }

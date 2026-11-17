@@ -1,6 +1,6 @@
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
-import Table from "@cloudscape-design/components/table";
+import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "./TableStates.tsx";
 import type { Tag } from "./TagsModal.tsx";
 

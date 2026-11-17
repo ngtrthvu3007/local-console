@@ -4,7 +4,8 @@
   "type": "module",
   "workspaces": [
     "server",
-    "web"
+    "web",
+    "tests"
   ],
   "engines": {
     "node": ">=24"
@@ -13,8 +14,8 @@
     "dev:server": "npm run dev -w server",
     "dev:web": "npm run dev -w web",
     "build": "npm run build -w web",
-    "typecheck": "npm run typecheck --workspaces",
-    "test": "npm test --workspaces",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
     "format": "prettier --write ."
   },
   "devDependencies": {
