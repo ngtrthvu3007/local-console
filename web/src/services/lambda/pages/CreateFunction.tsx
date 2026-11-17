@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useNavigate } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
@@ -64,14 +65,14 @@ export function CreateFunction() {
   });
 
   const actions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions footer>
       <Button variant='link' href={lambdaRoutes.functions} onFollow={follow}>
         Cancel
       </Button>
       <Button variant='primary' formAction='submit' loading={createFunction.isPending}>
         Create function
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const basicInformation = (

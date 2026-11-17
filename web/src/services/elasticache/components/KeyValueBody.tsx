@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -37,21 +38,14 @@ function StringEditor({ cluster, value }: { cluster: string; value: StringValue 
   return (
     <SpaceBetween size='s'>
       <ValueEditor value={text} onChange={setText} height={STRING_EDITOR_HEIGHT_PX} />
-      <Box float='right'>
-        <SpaceBetween direction='horizontal' size='xs'>
-          <Button disabled={!changed} onClick={() => setText(value.value ?? "")}>
-            Reset
-          </Button>
-          <Button
-            variant='primary'
-            disabled={!changed}
-            loading={updateKey.isPending}
-            onClick={save}
-          >
-            Save
-          </Button>
-        </SpaceBetween>
-      </Box>
+      <ResponsiveActions footer>
+        <Button disabled={!changed} onClick={() => setText(value.value ?? "")}>
+          Reset
+        </Button>
+        <Button variant='primary' disabled={!changed} loading={updateKey.isPending} onClick={save}>
+          Save
+        </Button>
+      </ResponsiveActions>
     </SpaceBetween>
   );
 }

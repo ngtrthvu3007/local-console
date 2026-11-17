@@ -1,6 +1,5 @@
-import Box from "@cloudscape-design/components/box";
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import Button from "@cloudscape-design/components/button";
-import SpaceBetween from "@cloudscape-design/components/space-between";
 
 interface Props {
   actionText: string;
@@ -20,15 +19,13 @@ export function ModalFooter({
   loading,
 }: Props) {
   return (
-    <Box float='right'>
-      <SpaceBetween direction='horizontal' size='xs'>
-        <Button variant='link' onClick={onCancel}>
-          {cancelText}
-        </Button>
-        <Button variant='primary' disabled={disabled} loading={loading} onClick={onAction}>
-          {actionText}
-        </Button>
-      </SpaceBetween>
-    </Box>
+    <ResponsiveActions footer>
+      <Button variant='link' onClick={onCancel}>
+        {cancelText}
+      </Button>
+      <Button variant='primary' disabled={disabled} loading={loading} onClick={onAction}>
+        {actionText}
+      </Button>
+    </ResponsiveActions>
   );
 }

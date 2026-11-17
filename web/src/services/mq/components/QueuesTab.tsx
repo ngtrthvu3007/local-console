@@ -1,3 +1,5 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useEffect, useState } from "react";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import Box from "@cloudscape-design/components/box";
@@ -7,7 +9,7 @@ import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import Toggle from "@cloudscape-design/components/toggle";
 import type { Queue } from "@server/routes/rabbitmq/contract.ts";
@@ -158,7 +160,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
       counter={queues.data ? `(${queues.data.length})` : undefined}
       description='Message counts update about every 5 seconds.'
       actions={
-        <SpaceBetween direction='horizontal' size='s' alignItems='center'>
+        <ResponsiveActions>
           <Toggle checked={autoRefresh} onChange={({ detail }) => setAutoRefresh(detail.checked)}>
             Auto refresh
           </Toggle>
@@ -168,7 +170,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
             menuItems={menuItems}
             onMenuItemClick={onMenuItemClick}
           />
-        </SpaceBetween>
+        </ResponsiveActions>
       }
     >
       Queues
@@ -204,6 +206,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
         {...collectionProps}
         variant='container'
         selectionType='multi'
+        ariaLabels={selectionLabels<Queue>("queue", (item) => item.name)}
         trackBy={NAME_FIELD}
         items={items}
         loading={queues.isLoading}

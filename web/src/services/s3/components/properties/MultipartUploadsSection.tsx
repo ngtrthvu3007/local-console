@@ -1,8 +1,9 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState } from "react";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { MultipartUpload } from "@aws-sdk/client-s3";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
@@ -40,7 +41,7 @@ export function MultipartUploadsSection({ bucket }: { bucket: string }) {
     );
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions toolbar>
       <Button
         iconName='refresh'
         ariaLabel='Refresh'
@@ -50,7 +51,7 @@ export function MultipartUploadsSection({ bucket }: { bucket: string }) {
       <Button disabled={!selected.length} onClick={() => setConfirming(true)}>
         Abort
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const header = (
@@ -68,6 +69,10 @@ export function MultipartUploadsSection({ bucket }: { bucket: string }) {
         items={items}
         trackBy='UploadId'
         selectionType='multi'
+        ariaLabels={selectionLabels<MultipartUpload>(
+          "upload",
+          (item) => `${item.Key ?? ""} ${item.UploadId ?? ""}`,
+        )}
         selectedItems={selected}
         onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
         loading={uploads.isLoading}

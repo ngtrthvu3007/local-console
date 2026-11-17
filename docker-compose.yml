@@ -2,8 +2,8 @@ services:
   floci:
     image: floci/floci:2.4.0
     ports:
-      - "4566:4566"
-      - "6379-6399:6379-6399" # Redis của ElastiCache, cho BE chạy ngoài Docker
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:6379-6399:6379-6399" # Redis của ElastiCache, cho BE chạy ngoài Docker
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false" # tắt UI có sẵn của Floci
       FLOCI_STORAGE_MODE: hybrid # giữ dữ liệu khi tắt/bật
@@ -14,7 +14,7 @@ services:
   console:
     build: .
     ports:
-      - "3701:3701"
+      - "127.0.0.1:3701:3701"
     environment:
       AWS_ENDPOINT_URL: http://floci:4566
       FLOCI_PUBLIC_URL: http://localhost:4566

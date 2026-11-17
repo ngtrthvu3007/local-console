@@ -2,7 +2,7 @@ import Box from "@cloudscape-design/components/box";
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { servicePath, services, type ServiceDefinition } from "../../registry.ts";
 import { ServiceIcon } from "@shared/components/ServiceIcon.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
@@ -12,10 +12,16 @@ import { useFlociStatus } from "@shared/hooks/useFlociStatus.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 
-function ServiceCell({ service }: { service: ServiceDefinition }) {
+function ServiceCell({
+  service,
+  showCount = false,
+}: {
+  service: ServiceDefinition;
+  showCount?: boolean;
+}) {
   const follow = useFollow();
   return (
-    <SpaceBetween direction='horizontal' size='s' alignItems='center'>
+    <div className='console-service'>
       <ServiceIcon src={service.iconPath} />
       <div>
         <Link href={servicePath(service)} onFollow={follow}>
@@ -24,8 +30,13 @@ function ServiceCell({ service }: { service: ServiceDefinition }) {
         <Box variant='small' display='block' color='text-body-secondary'>
           {service.description}
         </Box>
+        {showCount && (
+          <div className='console-service__count'>
+            <ResourceCountCell service={service} />
+          </div>
+        )}
       </div>
-    </SpaceBetween>
+    </div>
   );
 }
 
@@ -37,7 +48,11 @@ function ResourceCountCell({ service }: { service: ServiceDefinition }) {
     return <Box color='text-status-inactive'>{NOT_AVAILABLE}</Box>;
   }
   const color = resources.count > 0 ? "inherit" : "text-status-inactive";
-  return <Box color={color}>{pluralize(resources.count, resources.noun)}</Box>;
+  return (
+    <Box color={color}>
+      <span className='console-count'>{pluralize(resources.count, resources.noun)}</span>
+    </Box>
+  );
 }
 
 function QuickLinksCell({ service }: { service: ServiceDefinition }) {
@@ -71,7 +86,12 @@ const quickLinksColumn: TableProps.ColumnDefinition<ServiceDefinition> = {
 };
 
 const WIDE_COLUMNS = [serviceColumn, resourcesColumn, quickLinksColumn];
-const COMPACT_COLUMNS = [serviceColumn, resourcesColumn];
+const COMPACT_COLUMNS: TableProps.ColumnDefinition<ServiceDefinition>[] = [
+  {
+    ...serviceColumn,
+    cell: (service) => <ServiceCell service={service} showCount />,
+  },
+];
 
 export function ServicesTable() {
   const { region } = useLoadedConfig();

@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { Controller } from "react-hook-form";
 import { useNavigate } from "react-router";
 import Button from "@cloudscape-design/components/button";
@@ -55,14 +56,14 @@ export function CreateBucket() {
   );
 
   const actions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions footer>
       <Button variant='link' href={s3Routes.buckets} onFollow={follow}>
         Cancel
       </Button>
       <Button variant='primary' formAction='submit' loading={createBucket.isPending}>
         Create bucket
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const tagsEditor = (

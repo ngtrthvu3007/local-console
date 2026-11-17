@@ -3,7 +3,7 @@ import ButtonDropdown, {
   type ButtonDropdownProps,
 } from "@cloudscape-design/components/button-dropdown";
 import type { IconProps } from "@cloudscape-design/components/icon";
-import SpaceBetween from "@cloudscape-design/components/space-between";
+import { ResponsiveActions } from "./ResponsiveActions.tsx";
 import { useFollow } from "../hooks/useFollow.ts";
 
 export interface BarAction {
@@ -17,7 +17,7 @@ export interface BarAction {
   iconOnly?: boolean; // chỉ hiện icon, text làm aria-label
   primary?: boolean; // nút chính, luôn đứng cuối
   quiet?: boolean; // nút chính nhưng kiểu thường, khi trang đã có nút chính khác (vd: Run của form tìm)
-  pinned?: boolean; // luôn là nút riêng, kể cả khi khung hẹp
+  pinned?: boolean; // khung hẹp vẫn là nút riêng, trừ khi có split button để gộp vào
 }
 
 interface Props {
@@ -36,7 +36,7 @@ interface RefetchableQuery {
   refetch: () => unknown;
 }
 
-// Nút làm mới chỉ có icon, luôn nằm ngoài dropdown
+// Nút làm mới chỉ có icon; khung hẹp có nút chính thì vào menu ▾
 export const refreshAction = (query: RefetchableQuery): BarAction => ({
   id: "refresh",
   text: "Refresh",
@@ -50,25 +50,29 @@ export const refreshAction = (query: RefetchableQuery): BarAction => ({
 const toMenuItem = (action: BarAction): ButtonDropdownProps.Item => ({
   id: action.id,
   text: action.text,
-  disabled: action.disabled,
+  disabled: action.disabled || action.loading,
+  href: action.href,
   iconName: action.iconName,
 });
 
 // Khung rộng: mỗi action là một nút + dropdown "Actions".
-// Khung hẹp: nút ghim + một split button [nút chính | ▾] chứa mọi action còn lại.
+// Khung hẹp: một split button [nút chính | ▾] chứa mọi action còn lại, kể cả Refresh,
+// để header nằm gọn một hàng cạnh tiêu đề. Không có nút chính thì nút ghim vẫn đứng riêng.
 export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }: Props) {
   const follow = useFollow();
   const primary = actions.find((action) => action.primary);
   const secondary = actions.filter((action) => !action.primary);
-  const pinned = secondary.filter((action) => action.pinned);
-  const folded = compact ? secondary.filter((action) => !action.pinned) : [];
-  const visibleSecondary = compact ? pinned : secondary;
+  const folded = compact ? secondary.filter((action) => primary || !action.pinned) : [];
+  const visibleSecondary = secondary.filter((action) => !folded.includes(action));
   const dropdownItems = [...folded.map(toMenuItem), ...menuItems];
 
   const runItem = (id: string) => {
     const action = folded.find((candidate) => candidate.id === id);
-    if (action) action.onClick?.();
-    else onMenuItemClick?.(id);
+    if (action) {
+      if (!action.disabled && !action.loading) action.onClick?.();
+      return;
+    }
+    onMenuItemClick?.(id);
   };
 
   const renderButton = (action: BarAction) => (
@@ -91,10 +95,12 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
 
   const splitButton = primary && dropdownItems.length > 0 && (
     <ButtonDropdown
-      variant='primary'
+      variant={primary.quiet ? "normal" : "primary"}
+      loading={primary.loading}
       ariaLabel={MORE_ACTIONS_LABEL}
       items={dropdownItems}
       onItemClick={onItemClick}
+      onItemFollow={follow}
       mainAction={{
         text: primary.text,
         iconName: primary.iconName,
@@ -107,25 +113,22 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
   );
 
   const menuDropdown = dropdownItems.length > 0 && (
-    <ButtonDropdown items={dropdownItems} onItemClick={onItemClick}>
+    <ButtonDropdown items={dropdownItems} onItemClick={onItemClick} onItemFollow={follow}>
       {MENU_TEXT}
     </ButtonDropdown>
   );
 
   if (compact && splitButton) {
     return (
-      <SpaceBetween direction='horizontal' size='xs'>
-        {pinned.map(renderButton)}
-        {splitButton}
-      </SpaceBetween>
+      <ResponsiveActions toolbar>{splitButton}</ResponsiveActions>
     );
   }
 
   return (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions toolbar={compact}>
       {visibleSecondary.map(renderButton)}
       {menuDropdown}
       {primary && renderButton(primary)}
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 }

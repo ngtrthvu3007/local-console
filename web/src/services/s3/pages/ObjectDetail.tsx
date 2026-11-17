@@ -9,7 +9,7 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { isNotFoundError } from "@shared/aws.ts";
 import { copyToClipboard } from "@shared/clipboard.ts";

@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useCallback, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Box from "@cloudscape-design/components/box";
@@ -5,7 +6,6 @@ import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
@@ -124,13 +124,13 @@ export function BrokerDetail() {
     );
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions>
       {authorization && <Button onClick={() => setAuthorization(undefined)}>Sign out</Button>}
       <Button loading={reboot.isPending} disabled={!running} onClick={rebootBroker}>
         Reboot
       </Button>
       <Button onClick={() => setDeleting(true)}>Delete</Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   // Trạng thái chỉ hiện khi khác RUNNING

@@ -1,8 +1,9 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState, type ReactNode } from "react";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { EmptyState, emptyOrError, type FailableQuery } from "@shared/components/TableStates.tsx";
 
@@ -49,12 +50,12 @@ export function RulesSection<TRule>(props: Props<TRule>) {
     );
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions toolbar>
       <Button disabled={!selected.length} onClick={() => setModal("delete")}>
         Delete
       </Button>
       <Button onClick={() => setModal("create")}>{createText}</Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const header = (
@@ -70,6 +71,7 @@ export function RulesSection<TRule>(props: Props<TRule>) {
         items={rules}
         trackBy={ruleId}
         selectionType='multi'
+        ariaLabels={selectionLabels<TRule>("rule", ruleId)}
         selectedItems={selected}
         onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
         loading={query.isLoading}

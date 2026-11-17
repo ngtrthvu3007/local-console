@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet } from "react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { Outlet, useLocation } from "react-router";
 import AppLayout, { type AppLayoutProps } from "@cloudscape-design/components/app-layout";
 import BreadcrumbGroup from "@cloudscape-design/components/breadcrumb-group";
 import Flashbar, { type FlashbarProps } from "@cloudscape-design/components/flashbar";
@@ -48,9 +48,16 @@ const defaultPanelSize = () =>
     ? Math.round(window.innerHeight * SPLIT_PANEL_PHONE_HEIGHT_RATIO)
     : SPLIT_PANEL_SIDE_WIDTH_PX;
 
-export function Layout() {
+export function Layout({ children }: { children?: ReactNode }) {
   const follow = useFollow();
   const navigation = useSideNavigation();
+  const { pathname } = useLocation();
+  const [navigationOpen, setNavigationOpen] = useState(
+    () => window.innerWidth > PHONE_MAX_WIDTH_PX,
+  );
+  useEffect(() => {
+    if (window.innerWidth <= PHONE_MAX_WIDTH_PX) setNavigationOpen(false);
+  }, [pathname]);
   const floci = useFlociStatus();
   const { data: config } = useConfig();
   const breadcrumbs = useBreadcrumbItems();
@@ -81,7 +88,7 @@ export function Layout() {
       type: "button",
       text: config ? regionLabel(config.region) : LOADING_PLACEHOLDER,
       iconName: "globe",
-      disableUtilityCollapse: true,
+      disableUtilityCollapse: false,
     },
   ];
 
@@ -94,7 +101,14 @@ export function Layout() {
   const flashMessages = down ? [flociDownMessage, ...messages] : messages;
 
   const sideNavigation = (
-    <SideNavigation items={navigation.items} activeHref={navigation.activeHref} onFollow={follow} />
+    <SideNavigation
+      items={navigation.items}
+      activeHref={navigation.activeHref}
+      onFollow={(event) => {
+        follow(event);
+        if (window.innerWidth <= PHONE_MAX_WIDTH_PX) setNavigationOpen(false);
+      }}
+    />
   );
 
   const breadcrumbGroup = breadcrumbs.length > 0 && (
@@ -116,10 +130,10 @@ export function Layout() {
   );
 
   // Mọi trang cần config (region, endpoint) nên chờ có rồi mới render
-  const content = config ? <Outlet /> : <Spinner size='large' />;
+  const content = config ? (children ?? <Outlet />) : <Spinner size='large' />;
 
   return (
-    <>
+    <div className='local-console'>
       <div id={TOP_NAVIGATION_ID} style={topNavigationStyle}>
         <TopNavigation identity={identity} utilities={utilities} />
       </div>
@@ -127,6 +141,8 @@ export function Layout() {
         headerSelector={`#${TOP_NAVIGATION_ID}`}
         toolsHide
         navigation={sideNavigation}
+        navigationOpen={navigationOpen}
+        onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
         breadcrumbs={breadcrumbGroup}
         notifications={notifications}
         content={content}
@@ -138,6 +154,6 @@ export function Layout() {
         splitPanelPreferences={panelPreferences}
         onSplitPanelPreferencesChange={({ detail }) => setPanelPreferences(detail)}
       />
-    </>
+    </div>
   );
 }
