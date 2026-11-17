@@ -6,4 +6,4 @@ dist/
 .env
 .playwright-mcp/
 .taste-skill/
-tests/results/playwright/
+tests/results/

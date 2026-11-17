@@ -11,7 +11,7 @@ import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { FunctionConfiguration } from "@aws-sdk/client-lambda";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";

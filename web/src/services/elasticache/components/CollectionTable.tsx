@@ -1,10 +1,11 @@
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState, type ReactNode } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import type { ButtonDropdownProps } from "@cloudscape-design/components/button-dropdown";
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { KeyUpdate, KeyValue } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
@@ -245,6 +246,7 @@ export function CollectionTable(props: Props) {
       <Table
         variant='embedded'
         selectionType='multi'
+        ariaLabels={selectionLabels<Row>(config.noun, (item) => `${item.primary} (${item.id})`)}
         trackBy='id'
         items={rows}
         selectedItems={selected}

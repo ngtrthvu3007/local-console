@@ -7,7 +7,8 @@
     "test:e2e": "playwright test --project=e2e",
     "test:ui": "playwright test --project=ui-*",
     "test:ux": "playwright test --project=ux",
-    "leftovers": "node it/leftovers.mjs"
+    "leftovers": "node it/leftovers.mjs",
+    "test:mobile": "playwright test --config playwright.mobile.config.ts"
   },
   "devDependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",

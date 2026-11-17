@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { lazy, Suspense, useState } from "react";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
@@ -87,7 +88,7 @@ function InvokeResultView({
           <CodeSnippet code={result.response} />
         </FormField>
         <FormField label='Log output' stretch>
-          <CodeSnippet code={result.logs || "No log output."} />
+          <CodeSnippet code={result.logs || "No log output."} wrap />
         </FormField>
       </SpaceBetween>
     </Alert>
@@ -193,7 +194,7 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
     );
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions>
       <Button disabled={savedName === undefined} onClick={remove}>
         Delete
       </Button>
@@ -208,7 +209,7 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
       >
         Test
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const header = (

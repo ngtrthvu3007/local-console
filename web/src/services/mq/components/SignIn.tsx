@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import Form from "@cloudscape-design/components/form";
@@ -41,9 +42,11 @@ export function SignIn({ brokerName, error, onSignIn }: Props) {
         <Form
           errorText={error}
           actions={
-            <Button variant='primary' formAction='submit'>
-              Sign in
-            </Button>
+            <ResponsiveActions footer>
+              <Button variant='primary' formAction='submit'>
+                Sign in
+              </Button>
+            </ResponsiveActions>
           }
         >
           <SpaceBetween size='m'>

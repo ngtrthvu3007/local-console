@@ -1,8 +1,9 @@
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState } from "react";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CONFIRM_PERMANENT_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -125,6 +126,7 @@ export function ObjectVersions({ bucket, objectKey }: { bucket: string; objectKe
         items={history.data ?? []}
         trackBy='VersionId'
         selectionType='single'
+        ariaLabels={selectionLabels<VersionEntry>("version", (item) => item.VersionId ?? "")}
         selectedItems={selected ? [selected] : []}
         onSelectionChange={({ detail }) => setSelected(detail.selectedItems[0])}
         loading={history.isLoading}

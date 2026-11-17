@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import Box from "@cloudscape-design/components/box";
 import Header from "@cloudscape-design/components/header";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { Exchange } from "@server/routes/rabbitmq/contract.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
