@@ -12,6 +12,7 @@ import {
   SPA_INDEX_FILE,
 } from "./constants.ts";
 import { errorHandler } from "./middleware/error.ts";
+import { localOnly } from "./middleware/localOnly.ts";
 import { healthRouter } from "./routes/health.ts";
 import { createRabbitConnector } from "./routes/rabbitmq/client.ts";
 import { rabbitRouter } from "./routes/rabbitmq/router.ts";
@@ -21,7 +22,9 @@ import { redisRouter } from "./routes/redis/router.ts";
 export function createApp(config: Config) {
   const app = express();
 
+  // Health đứng trước localOnly: Floci gọi health qua tên container, không phải localhost
   app.use(healthRouter(config.AWS_ENDPOINT_URL));
+  app.use([ROUTES.apiPrefix, ROUTES.awsProxy], localOnly);
   app.get(ROUTES.config, (_request, response) => {
     response.json({
       region: config.AWS_REGION,
