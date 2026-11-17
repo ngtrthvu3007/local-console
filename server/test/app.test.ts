@@ -69,6 +69,34 @@ describe("/aws proxy", () => {
   });
 });
 
+describe("localOnly", () => {
+  it("blocks a request sent by another site (CSRF)", async () => {
+    const response = await request(appFor(flociUrl))
+      .post("/aws/my-bucket")
+      .set("sec-fetch-site", "cross-site");
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("Forbidden");
+  });
+
+  it("blocks a foreign Host (DNS rebinding)", async () => {
+    const response = await request(appFor(flociUrl)).get("/api/config").set("host", "evil.test");
+    expect(response.status).toBe(403);
+  });
+
+  it("allows the console itself, IPv6 localhost and non-browser clients", async () => {
+    const app = appFor(flociUrl);
+    const sameOrigin = await request(app).get("/api/config").set("sec-fetch-site", "same-origin");
+    const ipv6 = await request(app).get("/api/config").set("host", "[::1]:3701");
+    const curl = await request(app).get("/api/config");
+    expect([sameOrigin.status, ipv6.status, curl.status]).toEqual([200, 200, 200]);
+  });
+
+  it("keeps health open for Floci, which calls it by container name", async () => {
+    const response = await request(appFor(flociUrl)).get("/api/health").set("host", "console");
+    expect(response.body.status).toBe("ok");
+  });
+});
+
 describe("API", () => {
   it("returns the config for the web app", async () => {
     const response = await request(appFor(flociUrl)).get("/api/config");

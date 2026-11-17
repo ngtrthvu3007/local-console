@@ -53,3 +53,9 @@ npm run dev:web              # terminal 2: UI on :5173 (proxies /api and /aws to
 Checks: `npm run typecheck` · `npm test`
 
 Design: [docs/superpowers/specs/2026-11-09-localconsole-design.md](docs/superpowers/specs/2026-11-09-localconsole-design.md)
+
+## Traps & open issues
+
+- **`/api` and `/aws` only answer the console itself.** `server/src/middleware/localOnly.ts` rejects (403) requests from another site (`Sec-Fetch-Site`) and foreign `Host` headers (DNS rebinding). Open the console via `localhost`, `127.0.0.1` or `[::1]`; any other hostname gets 403. `/api/health` stays open for Floci's probe. Floci's own port `4566` is not covered.
+- **Bundle is large (open):** JS ~2.2 MB, CSS ~1.3 MB, served uncompressed — 6 perf FAILs in [tests/REPORT.md](tests/REPORT.md) §10. Next step: `lazy()` each service's routes so a page only loads its own service. Compression skipped while the console is localhost-only.
+- **Logo `<img>` has no `width`/`height` (2 perf WARNs, won't fix):** Cloudscape `TopNavigation` renders it and its `logo` prop only takes `src`/`alt`; `mark.svg` already has a fixed size and layout shift is 0.
