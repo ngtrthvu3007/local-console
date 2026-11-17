@@ -1,10 +1,10 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
@@ -94,13 +94,13 @@ export function ClusterDetail() {
   ];
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions>
       <CopyButton
         label='Copy endpoint'
         text={cluster.endpoint ? addressText(cluster.endpoint) : undefined}
       />
       <Button onClick={() => setDeleting(true)}>Delete</Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const header = (

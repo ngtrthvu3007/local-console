@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
@@ -135,10 +136,10 @@ export function FunctionDetail() {
   ];
 
   const headerActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions>
       <CopyButton label='Copy ARN' text={arn} />
       <Button onClick={() => setDeleting(true)}>Delete</Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   const header = (

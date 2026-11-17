@@ -24,15 +24,17 @@ test("side navigation opens each service", async ({ page }) => {
   for (const [link, url, heading] of pages) {
     await navigation.getByRole("link", { name: link, exact: true }).click();
     await expect(page).toHaveURL(url);
-    await expect(page.getByRole("heading", { level: 1, name: new RegExp(`^${heading}`) })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: new RegExp(`^${heading}`) }),
+    ).toBeVisible();
   }
 });
 
 test("an unknown page keeps the console layout", async ({ page }) => {
-  // Bug đã biết: router không có route "*" / errorElement, nên React Router hiện trang lỗi mặc định
-  // "Unexpected Application Error! 404 Not Found" và mất cả layout. Sửa xong thì bỏ dòng test.fail.
-  test.fail();
   await page.goto("/s3/does-not-exist/at-all");
   await expect(page.getByRole("navigation", { name: "Side navigation" })).toBeVisible();
   await expect(page.getByText("Unexpected Application Error!")).toHaveCount(0);
+  await expect(page.getByText("Page not found", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Back to Console Home" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });

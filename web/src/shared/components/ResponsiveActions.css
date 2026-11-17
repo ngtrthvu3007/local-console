@@ -1,0 +1,44 @@
+.console-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.console-actions--footer {
+  justify-content: flex-end;
+}
+/* Nút nằm dưới một dòng chữ căn giữa (vd: khung kéo thả) xuống dòng vẫn phải căn giữa theo chữ. */
+.console-actions--center {
+  justify-content: center;
+}
+@media (max-width: 688px) {
+  /* Nút xuống dòng trên phone: hàng cách hàng 12px để vùng chạm 44px của hai hàng không chồng nhau. */
+  .console-actions {
+    row-gap: var(--phone-space);
+  }
+  .local-console [class*="awsui_actions_"]:has(> .console-actions--footer) {
+    flex: 1 1 100%;
+  }
+  .console-actions--footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--phone-space);
+    width: 100%;
+  }
+  .console-actions--footer > * {
+    width: 100%;
+  }
+  body .console-actions--footer :is(button, a):not(#\9) {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  /* Toolbar trên header: cùng hàng với tiêu đề khi đủ chỗ, xuống dòng khi tiêu đề dài; luôn dồn mép phải thẳng ô tìm. */
+  .local-console [class*="awsui_actions_"]:has(> .console-actions--toolbar) {
+    margin-inline-start: auto;
+  }
+  .console-actions--toolbar {
+    justify-content: flex-end;
+  }
+}

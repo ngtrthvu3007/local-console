@@ -10,7 +10,7 @@ import KeyValuePairs, {
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type {
   GlobalSecondaryIndexDescription,
   LocalSecondaryIndexDescription,

@@ -1,3 +1,5 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useRef, useState, type DragEvent, type RefObject } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Box from "@cloudscape-design/components/box";
@@ -11,7 +13,7 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator, {
   type StatusIndicatorProps,
 } from "@cloudscape-design/components/status-indicator";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes } from "@shared/format.ts";
@@ -40,9 +42,9 @@ function ProgressCell({ item }: { item: UploadItem }) {
 
 const COLUMNS: TableProps.ColumnDefinition<UploadItem>[] = [
   { id: "path", header: "Name", isRowHeader: true, cell: (item) => item.path },
-  { id: "type", header: "Type", cell: (item) => item.file.type || NOT_AVAILABLE },
-  { id: "size", header: "Size", cell: (item) => formatBytes(item.file.size) },
   { id: "status", header: "Status", cell: (item) => <ProgressCell item={item} /> },
+  { id: "size", header: "Size", cell: (item) => formatBytes(item.file.size) },
+  { id: "type", header: "Type", cell: (item) => item.file.type || NOT_AVAILABLE },
 ];
 
 interface HiddenInputProps {
@@ -105,8 +107,10 @@ export function UploadPage() {
     <div onDropCapture={handleDrop}>
       <FileDropzone onChange={({ detail }) => uploader.add(filesFromList(detail.value))}>
         <SpaceBetween size='xs' alignItems='center'>
-          <Box>Drag and drop files or folders here</Box>
-          <SpaceBetween direction='horizontal' size='xs'>
+          <span className='console-drag-hint'>
+            <Box>Drag and drop files or folders here</Box>
+          </span>
+          <div className='console-actions console-actions--center'>
             <Button
               iconName='add-plus'
               disabled={started}
@@ -121,7 +125,7 @@ export function UploadPage() {
             >
               Add folder
             </Button>
-          </SpaceBetween>
+          </div>
         </SpaceBetween>
       </FileDropzone>
     </div>
@@ -131,9 +135,11 @@ export function UploadPage() {
     <Header
       counter={`(${items.length} · ${formatBytes(totalBytes)})`}
       actions={
-        <Button disabled={!selectedIds.length || started} onClick={removeSelected}>
-          Remove
-        </Button>
+        <ResponsiveActions toolbar>
+          <Button disabled={!selectedIds.length || started} onClick={removeSelected}>
+            Remove
+          </Button>
+        </ResponsiveActions>
       }
     >
       Files and folders
@@ -200,6 +206,7 @@ export function UploadPage() {
           items={items}
           trackBy='id'
           selectionType='multi'
+          ariaLabels={selectionLabels<UploadItem>("file", (item) => item.path)}
           selectedItems={items.filter((item) => selectedIds.includes(item.id))}
           onSelectionChange={({ detail }) =>
             setSelectedIds(detail.selectedItems.map((item) => item.id))
@@ -211,12 +218,10 @@ export function UploadPage() {
           footer={totalProgress}
         />
 
-        <Box float='right'>
-          <SpaceBetween direction='horizontal' size='xs'>
-            {secondaryAction}
-            {primaryAction}
-          </SpaceBetween>
-        </Box>
+        <ResponsiveActions footer>
+          {secondaryAction}
+          {primaryAction}
+        </ResponsiveActions>
       </SpaceBetween>
     </ContentLayout>
   );

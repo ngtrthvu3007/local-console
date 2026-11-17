@@ -45,7 +45,11 @@ function ControlledField<TValues extends FieldValues>(props: ControlledFieldProp
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormField {...formFieldProps} errorText={fieldState.error?.message}>
+        <FormField
+          {...formFieldProps}
+          constraintText={fieldState.error ? undefined : formFieldProps.constraintText}
+          errorText={fieldState.error?.message}
+        >
           {children(field, Boolean(fieldState.error))}
         </FormField>
       )}
@@ -166,13 +170,22 @@ interface OptionsProps<TValues extends FieldValues> extends FieldProps<TValues> 
   options: SelectProps.Option[];
 }
 
-export function FormSelect<TValues extends FieldValues>(props: OptionsProps<TValues>) {
-  const { options, ...fieldProps } = props;
+interface SelectFieldProps<TValues extends FieldValues> extends OptionsProps<TValues> {
+  placeholder?: string;
+  empty?: ReactNode;
+}
+
+export function FormSelect<TValues extends FieldValues>(props: SelectFieldProps<TValues>) {
+  const { options, placeholder, empty, ...fieldProps } = props;
   return (
     <ControlledField {...fieldProps}>
-      {(field) => (
+      {(field, invalid) => (
         <Select
+          ref={field.ref}
+          invalid={invalid}
           filteringType='auto'
+          placeholder={placeholder}
+          empty={empty}
           options={options}
           selectedOption={options.find((option) => option.value === field.value) ?? null}
           onChange={({ detail }) => field.onChange(detail.selectedOption.value)}
@@ -187,8 +200,10 @@ export function FormMultiselect<TValues extends FieldValues>(props: OptionsProps
   const { options, ...fieldProps } = props;
   return (
     <ControlledField {...fieldProps}>
-      {(field) => (
+      {(field, invalid) => (
         <Multiselect
+          ref={field.ref}
+          invalid={invalid}
           options={options}
           selectedOptions={options.filter((option) => field.value?.includes(option.value))}
           onChange={({ detail }) =>

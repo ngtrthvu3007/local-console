@@ -56,5 +56,6 @@ export const NOT_AVAILABLE = "—";
 // Ngăn các phần trong một dòng mô tả: "pk String · sk String · 68 items"
 export const DETAIL_SEPARATOR = " · ";
 // Dưới độ rộng này bảng thành danh sách hai tầng (điện thoại); tablet vẫn giữ dạng bảng nhiều cột
-export const ITEM_LIST_WIDTH_PX = 640;
+// Cùng mốc phone với Cloudscape; ResizeObserver dùng phép so sánh <.
+export const ITEM_LIST_WIDTH_PX = PHONE_MAX_WIDTH_PX + 1;
 export const LOADING_PLACEHOLDER = "…";

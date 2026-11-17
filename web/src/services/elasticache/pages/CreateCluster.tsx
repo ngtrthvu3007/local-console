@@ -1,3 +1,4 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useNavigate } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
@@ -40,14 +41,14 @@ export function CreateCluster() {
   );
 
   const actions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions footer>
       <Button variant='link' href={elasticacheRoutes.clusters} onFollow={follow}>
         Cancel
       </Button>
       <Button variant='primary' formAction='submit' loading={createCluster.isPending}>
         Create cluster
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   return (

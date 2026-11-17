@@ -1,3 +1,5 @@
+import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import Box from "@cloudscape-design/components/box";
@@ -10,7 +12,7 @@ import Link from "@cloudscape-design/components/link";
 import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { REDIS_ERROR_CODES, type KeySummary } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
@@ -107,14 +109,14 @@ export function KeysTab({ cluster, keyCount }: Props) {
   // Nút nằm dưới mô tả, không cùng hàng với tiêu đề: panel bên phải có thể chỉ rộng
   // khoảng 240px (khi sidebar mở), để chung hàng thì tên bị bóp vỡ từng chữ
   const panelActions = (
-    <SpaceBetween direction='horizontal' size='xs'>
+    <ResponsiveActions>
       <Button disabled={!value} onClick={() => setModal("ttl")}>
         Set TTL
       </Button>
       <Button disabled={!value} onClick={() => setModal("deleteOpenKey")}>
         Delete
       </Button>
-    </SpaceBetween>
+    </ResponsiveActions>
   );
 
   useSplitPanel(
@@ -330,6 +332,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
       <Table
         variant='container'
         selectionType='multi'
+        ariaLabels={selectionLabels<KeySummary>("key", (item) => item.name)}
         trackBy='name'
         items={keys}
         selectedItems={selected}

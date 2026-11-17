@@ -1,10 +1,11 @@
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useState } from "react";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
-import Table, { type TableProps } from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import type { FunctionConfiguration } from "@aws-sdk/client-lambda";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
@@ -146,6 +147,10 @@ export function FunctionList() {
         {...collectionProps}
         variant='full-page'
         selectionType='multi'
+        ariaLabels={selectionLabels<FunctionConfiguration>(
+          "function",
+          (item) => item.FunctionName ?? "",
+        )}
         trackBy={FUNCTION_NAME_FIELD}
         items={items}
         loading={functions.isLoading}
