@@ -1,6 +1,6 @@
 # Local Console — Thiết kế
 
-> Ngày: 2026-11-09 · Trạng thái: chờ duyệt
+> Ngày: 2026-11-09 · Trạng thái: đã làm (2026-11-09)
 
 ## 1. Tóm tắt
 
@@ -193,14 +193,13 @@ Một tính năng phụ được thêm vào nếu đủ hai điều kiện: **Fl
 
 ### Ngoài phạm vi đợt 1
 
-| Mục                                                                          | Khi nào làm                         |
-| ---------------------------------------------------------------------------- | ----------------------------------- |
-| CloudShell (terminal chạy `aws` CLI trên web)                                | Đợt sau                             |
-| EC2, API Gateway, RDS, SQS, SNS, EventBridge/Scheduler                       | Các đợt sau, mỗi đợt một spec riêng |
-| Theme tối, đa ngôn ngữ                                                       | Khi cần                             |
-| Đẩy image lên registry (GHCR hoặc Docker Hub, đều miễn phí cho image public) | Khi cần                             |
-| IAM, Route 53, SES và các service không hợp với dev local                    | Không làm                           |
-| Chọn region, kết nối nhiều Floci cùng lúc                                    | Không làm                           |
+Các service và việc sau đợt 1 được chọn và xếp đợt trong [Roadmap](../roadmap.md); tóm tắt ở mục 13.
+
+| Mục                                                                          | Khi nào làm |
+| ---------------------------------------------------------------------------- | ----------- |
+| Theme tối, đa ngôn ngữ                                                       | Khi cần     |
+| Đẩy image lên registry (GHCR hoặc Docker Hub, đều miễn phí cho image public) | Khi cần     |
+| Chọn region, kết nối nhiều Floci cùng lúc                                    | Không làm   |
 
 ---
 
@@ -236,12 +235,13 @@ localconsole/
 ├── server/                      # Backend
 │   └── src/
 │       ├── index.ts             # Khởi động server
-│       ├── app.ts               # Ghép các route lại; tạo client AWS phía server (tra endpoint Redis/RabbitMQ)
+│       ├── app.ts               # Ghép các route, proxy /aws/* → Floci; tạo client AWS phía server (tra endpoint Redis/RabbitMQ)
 │       ├── config.ts            # Đọc biến môi trường
-│       ├── middleware/error.ts  # Chuẩn hóa lỗi thành JSON
+│       ├── middleware/
+│       │   ├── error.ts         # Chuẩn hóa lỗi thành JSON
+│       │   └── localOnly.ts     # Chỉ nhận request từ chính console (chặn CSRF, DNS rebinding)
 │       └── routes/
 │           ├── health.ts        # GET /api/health
-│           ├── aws-proxy.ts     # /aws/* → Floci
 │           ├── redis/           # router.ts (HTTP) + client.ts (nói chuyện với Redis) + contract.ts (type dùng chung với web)
 │           └── rabbitmq/        # router.ts (HTTP) + client.ts (nói chuyện với RabbitMQ)
 ├── Dockerfile
@@ -278,6 +278,8 @@ Trình duyệt: GET /api/redis/my-cluster/keys?pattern=user:*
 
 Trình duyệt **chỉ gửi tên cluster/broker, không gửi địa chỉ**. Backend tự hỏi Floci để lấy địa chỉ, nên không ai bắt backend kết nối tới một địa chỉ tùy ý được.
 
+Vì không có đăng nhập, `/api` và `/aws` **chỉ nhận request từ chính console**: trả 403 nếu `Host` không phải `localhost` / `127.0.0.1` / `[::1]` (chống DNS rebinding) hoặc `Sec-Fetch-Site` khác `same-origin` / `none` (chống trang web khác gọi vào, CSRF). `GET /api/health` vẫn mở vì Floci gọi qua tên container.
+
 **Danh sách API của backend:**
 
 | API                                                   | Việc                                          |
@@ -310,7 +312,7 @@ Trình duyệt **chỉ gửi tên cluster/broker, không gửi địa chỉ**. B
 services:
   floci:
     image: floci/floci:2.4.0 # ghim version, không dùng latest
-    ports: ["4566:4566", "6379-6399:6379-6399"] # 6379-6399: Redis của ElastiCache
+    ports: ["127.0.0.1:4566:4566", "127.0.0.1:6379-6399:6379-6399"] # chỉ mở trên máy; 6379-6399: Redis của ElastiCache
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false" # tắt UI có sẵn của Floci
       FLOCI_STORAGE_MODE: hybrid # lưu xuống đĩa mỗi 5 giây
@@ -319,7 +321,7 @@ services:
       - floci-data:/app/data
   console:
     build: .
-    ports: ["3701:3701"]
+    ports: ["127.0.0.1:3701:3701"]
     environment:
       AWS_ENDPOINT_URL: http://floci:4566
     extra_hosts: ["host.docker.internal:host-gateway"] # cho Linux
@@ -425,3 +427,39 @@ Ba điểm dưới đây chưa chắc chắn, nên sẽ được kiểm tra **đ
 | Mỗi phần backend gồm router + client             | Đủ rõ ràng, không thừa lớp                                                       | Controller/service/repository, Hexagonal |
 | Cổng 3701                                        | Theo yêu cầu                                                                     | 4500 (mặc định của Floci UI)             |
 | Chỉ tiếng Anh, chỉ theme sáng, không chọn region | Đủ cho dev local, làm thêm khi cần                                               |                                          |
+
+---
+
+## 13. Phiên bản 2 — sau đợt 1 (2026-11-17)
+
+> Tóm tắt [Roadmap](../roadmap.md). Mục 1–12 ở trên giữ nguyên thiết kế đợt 1; chỗ nào khác với mục này thì **mục này đúng**.
+
+### Thay đổi so với mục 1–12
+
+| Chỗ              | Trước                   | Nay                                                                   |
+| ---------------- | ----------------------- | --------------------------------------------------------------------- |
+| SES              | Không làm (mục 4)       | Đợt 2: hộp thư local xem mail app đã gửi (Floci lưu mọi mail)         |
+| CloudShell       | Đợt sau (mục 4)         | Không làm (user chốt 2026-11-17)                                      |
+| EC2              | Đợt sau (mục 4)         | Đợt 3. Floci chạy instance là container Docker; phạm vi chốt ở spec   |
+| Bảo mật backend  | Không nhắc              | `/api`, `/aws` chỉ nhận request từ chính console (`localOnly`, mục 5) |
+| Thêm vào backend | Redis, RabbitMQ (mục 5) | Có thể thêm MCP server (`/mcp`), chốt ở spec                          |
+
+### Cách chọn service
+
+Chỉ làm service hoặc tính năng (1) dev thường dùng khi code, chạy local, test, hoặc (2) cần để nối với service khác cho trọn flow. Floci chỉ lưu cấu hình mà không chạy thật, hoặc dev local ít đụng → không làm.
+
+### Các đợt
+
+| Đợt       | Service                                                                                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1         | S3, Lambda, DynamoDB, ElastiCache, Amazon MQ — **đã làm**                                                                                                                |
+| 2         | SQS ([spec](2026-11-17-sqs-design.md)), SES ([spec](2026-11-17-ses-design.md)), SNS ([spec](2026-11-18-sns-design.md)), EventBridge + Scheduler, Cognito, CloudFormation |
+| 3         | API Gateway, RDS, Step Functions, CloudWatch Logs, EC2, MCP server                                                                                                       |
+| Để sau    | DocumentDB, Kinesis, ECS, Secrets Manager + SSM, Athena                                                                                                                  |
+| Không làm | IAM, KMS, Auto Scaling, EKS, ECR, ELB, OpenSearch, MSK, Redshift, CodeBuild, CodePipeline, CodeDeploy, X-Ray, CloudShell, bảo mật/chi phí, AI/ML                         |
+
+Thứ tự trong đợt 2: SQS → SNS → EventBridge; SES, Cognito, CloudFormation làm song song. MCP server làm sau SQS và SES.
+
+### Quy trình một service
+
+Spec (theo mẫu spec SQS) → kiểm rủi ro trên Floci thật → duyệt → code (một folder trong `web/src/services/` + một dòng trong `registry.ts`) → test (unit, integration, E2E) → kiểm giao diện 1440/1024/390px → cập nhật spec và README. Chi tiết: [Roadmap, mục 7](../roadmap.md).
