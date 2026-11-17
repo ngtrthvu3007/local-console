@@ -8,5 +8,18 @@
     "test:ui": "playwright test --project=ui-*",
     "test:ux": "playwright test --project=ux",
     "leftovers": "node it/leftovers.mjs"
+  },
+  "devDependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.1164.0",
+    "@aws-sdk/client-dynamodb": "^3.1164.0",
+    "@aws-sdk/client-lambda": "^3.1164.0",
+    "@aws-sdk/client-s3": "^3.1164.0",
+    "@aws-sdk/client-sqs": "^3.1164.0",
+    "@aws-sdk/s3-request-presigner": "^3.1164.0",
+    "@playwright/test": "^1.65.0",
+    "@smithy/signature-v4": "^5.7.5",
+    "fflate": "^0.8.3",
+    "vitest": "^5.1.0"
   }
 }
