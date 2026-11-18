@@ -1,9 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { paginateFilterLogEvents, type FilteredLogEvent } from "@aws-sdk/client-cloudwatch-logs";
-import { orEmptyWhenNotFound } from "@shared/aws.ts";
+import {
+  DescribeLogGroupsCommand,
+  paginateFilterLogEvents,
+  type CloudWatchLogsClient,
+  type FilteredLogEvent,
+} from "@aws-sdk/client-cloudwatch-logs";
 import { LOG_RANGES, LOG_REFRESH_INTERVAL_MS, type LogRangeId } from "../constants.ts";
 import { functionQueryKey } from "./useFunctions.ts";
 import { useLambda } from "./useLambda.ts";
+
+// Function chưa chạy lần nào thì chưa có log group. Hỏi trước bằng DescribeLogGroups (trả 200, rỗng)
+// thay vì để FilterLogEvents trả 400: request lỗi làm trình duyệt ghi console.error mỗi lần mở tab
+async function logGroupExists(logs: CloudWatchLogsClient, logGroupName: string) {
+  const { logGroups = [] } = await logs.send(
+    new DescribeLogGroupsCommand({ logGroupNamePrefix: logGroupName }),
+  );
+  // Lọc theo tiền tố: /aws/lambda/demo cũng khớp /aws/lambda/demo-consumer
+  return logGroups.some((group) => group.logGroupName === logGroupName);
+}
 
 interface LogOptions {
   rangeId: LogRangeId;
@@ -21,20 +35,19 @@ export function useFunctionLogs(name: string, logGroupName: string, options: Log
   return useQuery({
     queryKey: [...functionQueryKey(name, "logs"), rangeId, filterPattern],
     refetchInterval: autoRefresh ? LOG_REFRESH_INTERVAL_MS : false,
-    queryFn: () =>
-      // Function chưa chạy lần nào thì chưa có log group
-      orEmptyWhenNotFound(async () => {
-        const events: FilteredLogEvent[] = [];
-        const paginator = paginateFilterLogEvents(
-          { client: logs },
-          {
-            logGroupName,
-            startTime: Date.now() - range.milliseconds,
-            filterPattern: filterPattern || undefined,
-          },
-        );
-        for await (const page of paginator) events.push(...(page.events ?? []));
-        return events.reverse();
-      }, []),
+    queryFn: async () => {
+      if (!(await logGroupExists(logs, logGroupName))) return [];
+      const events: FilteredLogEvent[] = [];
+      const paginator = paginateFilterLogEvents(
+        { client: logs },
+        {
+          logGroupName,
+          startTime: Date.now() - range.milliseconds,
+          filterPattern: filterPattern || undefined,
+        },
+      );
+      for await (const page of paginator) events.push(...(page.events ?? []));
+      return events.reverse();
+    },
   });
 }

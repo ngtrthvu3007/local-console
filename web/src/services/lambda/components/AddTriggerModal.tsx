@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useWatch } from "react-hook-form";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
 import Link from "@cloudscape-design/components/link";
+import SpaceBetween from "@cloudscape-design/components/space-between";
 import {
   FormCheckbox,
   FormInput,
@@ -10,18 +11,17 @@ import {
   FormSelect,
 } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
-import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useTables } from "../../dynamodb/hooks/useTables.ts";
 import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
+import { useQueues } from "../../sqs/hooks/useQueues.ts";
+import { sqsRoutes } from "../../sqs/routes.ts";
 import {
   DEFAULT_STARTING_POSITION,
   S3_TRIGGER_EVENTS,
   SQS_BATCH_SIZE,
-  SQS_QUEUE_ARN_EXAMPLE,
   STARTING_POSITION_OPTIONS,
   STREAM_BATCH_SIZE,
   TRIGGER_SOURCES,
@@ -60,9 +60,9 @@ interface Props {
 
 // Chỉ mount khi mở
 export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
-  const { region } = useLoadedConfig();
   const follow = useFollow();
   const buckets = useBuckets();
+  const queues = useQueues();
   const tables = useTables();
   const form = useZodForm(triggerSchema, INITIAL_VALUES);
   const source = useWatch({ control: form.control, name: "source" });
@@ -82,13 +82,19 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
   };
   const save = (values: TriggerFormOutput) =>
     onSave({ ...values, streamArn: streamArnOf(values.table) });
+  const queueOptions = (queues.data ?? []).map((queue) => ({
+    value: queue.arn,
+    label: queue.name,
+    description: queue.arn,
+  }));
   const bucketOptions = (buckets.data ?? []).map((bucket) => ({
     value: bucket.Name!,
     label: bucket.Name!,
   }));
 
+  // Mỗi nguồn là một cụm field: bọc SpaceBetween vì fragment làm FormModal mất khoảng cách giữa các field
   const s3Fields = (
-    <>
+    <SpaceBetween size='m'>
       <FormSelect
         control={form.control}
         name='bucket'
@@ -117,16 +123,23 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
           description='Optional, e.g. .png'
         />
       </ColumnLayout>
-    </>
+    </SpaceBetween>
   );
 
   const sqsFields = (
-    <>
-      <FormInput
+    <SpaceBetween size='m'>
+      <FormSelect
         control={form.control}
         name='queueArn'
-        label='Queue ARN'
-        placeholder={`arn:aws:sqs:${region}:${FLOCI_ACCOUNT_ID}:${SQS_QUEUE_ARN_EXAMPLE}`}
+        label='Queue'
+        description={
+          <Link href={sqsRoutes.createQueue} onFollow={follow}>
+            Create a queue
+          </Link>
+        }
+        placeholder='Choose a queue'
+        empty='No queues'
+        options={queueOptions}
       />
       <FormInput
         control={form.control}
@@ -135,7 +148,7 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
         constraintText={`${SQS_BATCH_SIZE.min}–${SQS_BATCH_SIZE.max} messages per invocation.`}
       />
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
-    </>
+    </SpaceBetween>
   );
 
   const streamHint = (
@@ -148,7 +161,7 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
   );
 
   const dynamodbFields = (
-    <>
+    <SpaceBetween size='m'>
       <FormSelect
         control={form.control}
         name='table'
@@ -171,7 +184,7 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
         />
       </ColumnLayout>
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
-    </>
+    </SpaceBetween>
   );
 
   const fieldsBySource: Record<TriggerSource, ReactNode> = {
