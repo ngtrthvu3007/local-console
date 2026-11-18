@@ -22,11 +22,15 @@ test("test the function and see the result", async ({ page }) => {
 test("delete the function", async ({ page }) => {
   await page.goto("/lambda/functions");
   await page.getByRole("searchbox").fill(functionName);
-  await page.getByRole("row", { name: new RegExp(functionName) }).getByRole("checkbox").click();
+  await page
+    .getByRole("row", { name: new RegExp(functionName) })
+    .getByRole("checkbox")
+    .click();
   await page.getByRole("button", { name: "Delete" }).click();
   const dialog = page.getByRole("dialog");
   const confirm = dialog.getByRole("textbox");
-  if (await confirm.count()) await confirm.fill((await confirm.getAttribute("placeholder")) ?? "confirm");
+  if (await confirm.count())
+    await confirm.fill((await confirm.getAttribute("placeholder")) ?? "confirm");
   await dialog.getByRole("button", { name: /Delete/ }).click();
   await expect(page.getByRole("row", { name: new RegExp(functionName) })).toHaveCount(0);
 });

@@ -1,5 +1,9 @@
-import type { FunctionConfiguration } from "@aws-sdk/client-lambda";
+import type {
+  EventSourceMappingConfiguration,
+  FunctionConfiguration,
+} from "@aws-sdk/client-lambda";
 import { proxyEndpoint } from "@shared/aws.ts";
+import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { LOG_GROUP_PREFIX } from "./constants.ts";
 
 // Code.Location trỏ vào host nội bộ của Floci (http://floci:4566) mà trình duyệt không mở được,
@@ -19,3 +23,9 @@ const LINE_BREAK = "\n";
 
 export const logMessageText = (message = "") =>
   message.replace(CARRIAGE_RETURNS, LINE_BREAK).trimEnd();
+
+const FUNCTION_ARN_MARKER = ":function:";
+
+// Function của event source mapping: "arn:aws:lambda:…:function:my-function" → "my-function"
+export const functionNameOfMapping = (mapping: EventSourceMappingConfiguration) =>
+  mapping.FunctionArn?.split(FUNCTION_ARN_MARKER)[1] ?? NOT_AVAILABLE;

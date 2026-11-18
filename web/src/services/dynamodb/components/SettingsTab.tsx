@@ -28,6 +28,7 @@ import {
   STARTING_POSITIONS,
   type StartingPosition,
 } from "../../lambda/constants.ts";
+import { functionNameOfMapping } from "../../lambda/helpers.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
 import {
   PROJECTION_LABELS,
@@ -42,7 +43,6 @@ import { KeyLabel, keyText } from "./KeyLabel.tsx";
 import { StreamModal, StreamTriggerModal, TimeToLiveModal } from "./SettingsModals.tsx";
 
 const GENERAL_COLUMNS = 4;
-const FUNCTION_ARN_MARKER = ":function:";
 const MODALS = { ttl: "ttl", stream: "stream", trigger: "trigger" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
@@ -51,9 +51,6 @@ interface IndexRow {
   type: "GSI" | "LSI";
   index: GlobalSecondaryIndexDescription | LocalSecondaryIndexDescription;
 }
-
-const functionNameOf = (mapping: EventSourceMappingConfiguration) =>
-  mapping.FunctionArn?.split(FUNCTION_ARN_MARKER)[1] ?? NOT_AVAILABLE;
 
 const startingPositionText = (mapping: EventSourceMappingConfiguration) =>
   STARTING_POSITIONS[mapping.StartingPosition as StartingPosition] ?? NOT_AVAILABLE;
@@ -189,10 +186,10 @@ export function SettingsTab({ table }: { table: TableDescription }) {
       isRowHeader: true,
       cell: (mapping) => (
         <Link
-          href={lambdaRoutes.function(functionNameOf(mapping), FUNCTION_TABS.triggers)}
+          href={lambdaRoutes.function(functionNameOfMapping(mapping), FUNCTION_TABS.triggers)}
           onFollow={follow}
         >
-          {functionNameOf(mapping)}
+          {functionNameOfMapping(mapping)}
         </Link>
       ),
     },

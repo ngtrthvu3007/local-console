@@ -85,7 +85,6 @@ export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
 export const S3_TRIGGER_EVENTS = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"] as const;
-export const SQS_ARN_PATTERN = /^arn:aws:sqs:/;
 export const SQS_BATCH_SIZE = { min: 1, max: 10, default: 10 } as const;
 // Trigger từ DynamoDB Stream
 export const DYNAMODB_ARN_PATTERN = /^arn:aws:dynamodb:/;
@@ -99,7 +98,6 @@ export const STARTING_POSITION_OPTIONS = Object.entries(STARTING_POSITIONS).map(
     label,
   }),
 );
-export const SQS_QUEUE_ARN_EXAMPLE = "orders-queue";
 export const EVENT_SOURCE_STATES = { enabled: "Enabled", disabled: "Disabled" } as const;
 
 // Mẫu event ở tab Test, rút gọn từ mẫu của AWS Console

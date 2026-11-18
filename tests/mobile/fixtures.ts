@@ -42,6 +42,28 @@ const table = {
   BillingModeSummary: { BillingMode: "PAY_PER_REQUEST" },
 };
 
+const queueUrl = `http://localhost:4566/000000000000/${resourceName}`;
+const queueAttributes = {
+  QueueArn: `arn:aws:sqs:ap-southeast-1:000000000000:${resourceName}`,
+  ApproximateNumberOfMessages: "12",
+  ApproximateNumberOfMessagesNotVisible: "1",
+  ApproximateNumberOfMessagesDelayed: "0",
+  CreatedTimestamp: "1794787200",
+  LastModifiedTimestamp: "1794787200",
+  VisibilityTimeout: "30",
+  DelaySeconds: "0",
+  MessageRetentionPeriod: "345600",
+  MaximumMessageSize: "1048576",
+  ReceiveMessageWaitTimeSeconds: "0",
+};
+// Body dài một dòng, có tên resource để dòng của bảng message tìm được bằng resourceName
+const peekedMessage = {
+  MessageId: "0c19aabf-1111-2222-3333-444455556666",
+  Body: JSON.stringify({ name: resourceName, note: "unbroken-token".repeat(20) }),
+  Attributes: { SentTimestamp: "1794787200000", ApproximateReceiveCount: "0" },
+  MessageAttributes: {},
+};
+
 // Browser regression fixtures only: no resources are created or changed in Floci.
 export const test = base.extend<{ mockConsole: void }>({
   mockConsole: [
@@ -94,6 +116,8 @@ export const test = base.extend<{ mockConsole: void }>({
         const target = request.headers()["x-amz-target"]?.split(".").at(-1);
         const action = new URLSearchParams(request.postData() ?? "").get("Action");
         const xml = async (body: string) => route.fulfill({ contentType: "application/xml", body });
+        if (path.startsWith("/_aws/sqs/messages"))
+          return route.fulfill({ json: { messages: [peekedMessage] } });
         if (path.startsWith("/_floci"))
           return route.fulfill({
             json: { version: "2.4.0", edition: "community", services: { s3: "running" } },
@@ -114,6 +138,11 @@ export const test = base.extend<{ mockConsole: void }>({
             },
             ListTagsOfResource: { Tags: [] },
             ListEventSourceMappings: { EventSourceMappings: [] },
+            ListQueues: { QueueUrls: [queueUrl] },
+            GetQueueUrl: { QueueUrl: queueUrl },
+            GetQueueAttributes: { Attributes: queueAttributes },
+            ListDeadLetterSourceQueues: { queueUrls: [] },
+            DescribeLogGroups: { logGroups: [{ logGroupName: `/aws/lambda/${resourceName}` }] },
             FilterLogEvents: {
               events: [
                 {

@@ -13,6 +13,7 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { s3Routes } from "../../s3/routes.ts";
+import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { EVENT_SOURCE_STATES, TRIGGER_SOURCES } from "../constants.ts";
 import {
   useAddTrigger,
@@ -42,7 +43,7 @@ const resourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "resource",
   header: "Resource",
   isRowHeader: true,
-  cell: (row) => row.resource,
+  cell: (row) => (row.source === "sqs" ? <QueueLink name={row.resource} /> : row.resource),
 };
 const detailsColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "details",

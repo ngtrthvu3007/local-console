@@ -11,6 +11,8 @@ import {
   toNotificationRules,
   type NotificationRule,
 } from "../../notificationRules.ts";
+import { QueueLink } from "../../../sqs/components/QueueLink.tsx";
+import { queueNameOfArn } from "../../../sqs/queues.ts";
 import { NotificationModal } from "./NotificationModal.tsx";
 import { RulesSection } from "./RulesSection.tsx";
 
@@ -32,7 +34,12 @@ const COLUMNS: TableProps.ColumnDefinition<NotificationRule>[] = [
     header: "Destination type",
     cell: (rule) => NOTIFICATION_DESTINATIONS[rule.destination].label,
   },
-  { id: "destination", header: "Destination", cell: (rule) => rule.arn },
+  {
+    id: "destination",
+    header: "Destination",
+    cell: (rule) =>
+      rule.destination === "sqs" ? <QueueLink name={queueNameOfArn(rule.arn)} /> : rule.arn,
+  },
 ];
 
 const DESCRIPTION =

@@ -10,6 +10,8 @@ const PAGES = [
   { slug: "lambda-create", path: "/lambda/functions/create" },
   { slug: "dynamodb-tables", path: "/dynamodb/tables" },
   { slug: "dynamodb-create", path: "/dynamodb/tables/create" },
+  { slug: "sqs-queues", path: "/sqs/queues" },
+  { slug: "sqs-create", path: "/sqs/queues/create" },
   { slug: "elasticache-clusters", path: "/elasticache/clusters" },
   { slug: "mq-brokers", path: "/mq/brokers" },
 ];

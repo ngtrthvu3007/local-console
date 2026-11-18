@@ -6,12 +6,14 @@ import {
   FormInput,
   FormMultiselect,
   FormRadioGroup,
+  FormSelect,
 } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../../lambda/hooks/useFunctions.ts";
+import { useQueues } from "../../../sqs/hooks/useQueues.ts";
 import {
   DEFAULT_NOTIFICATION_EVENTS,
   NOTIFICATION_DESTINATIONS,
@@ -36,6 +38,9 @@ const INITIAL_VALUES = {
   arn: "",
 };
 
+// Luật của AWS: queue FIFO không làm đích S3 notification được
+const FIFO_NOT_SUPPORTED = "FIFO queues can't receive S3 events";
+
 const exampleArn = (destination: NotificationDestination, region: string) =>
   `arn:aws:${destination}:${region}:${FLOCI_ACCOUNT_ID}:${NOTIFICATION_DESTINATIONS[destination].arnExample}`;
 
@@ -56,6 +61,14 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
     value: item.FunctionArn!,
     label: item.FunctionName,
     description: item.FunctionArn,
+  }));
+
+  const queues = useQueues();
+  const queueOptions = (queues.data ?? []).map((queue) => ({
+    value: queue.arn,
+    label: queue.name,
+    disabled: queue.fifo,
+    description: queue.fifo ? FIFO_NOT_SUPPORTED : queue.arn,
   }));
 
   const submit = form.handleSubmit((values) => onSave(values));
@@ -103,8 +116,8 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
         label='Destination'
         items={DESTINATION_ITEMS}
       />
-      {/* Lambda có gợi ý chọn function, vẫn gõ ARN tay được; SQS/SNS chưa có service nên nhập ARN */}
-      {destination === "lambda" ? (
+      {/* Lambda có gợi ý chọn function, vẫn gõ ARN tay được; SQS chọn queue; SNS chưa có service nên nhập ARN */}
+      {destination === "lambda" && (
         <FormAutosuggest
           control={form.control}
           name='arn'
@@ -113,7 +126,18 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
           options={functionOptions}
           enteredTextLabel={(value) => `Use: ${value}`}
         />
-      ) : (
+      )}
+      {destination === "sqs" && (
+        <FormSelect
+          control={form.control}
+          name='arn'
+          label='Queue'
+          placeholder='Choose a queue'
+          empty='No queues'
+          options={queueOptions}
+        />
+      )}
+      {destination === "sns" && (
         <FormInput
           control={form.control}
           name='arn'
