@@ -181,6 +181,24 @@ export const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerIn
     }),
   );
 
+export interface QueueTriggerInput {
+  functionName: string;
+  queueArn: string;
+  batchSize: number;
+  enabled: boolean;
+}
+
+// Dùng chung cho tab Triggers của Lambda và nút Add trigger ở trang queue SQS
+export const createQueueTrigger = (lambda: LambdaClient, input: QueueTriggerInput) =>
+  lambda.send(
+    new CreateEventSourceMappingCommand({
+      FunctionName: input.functionName,
+      EventSourceArn: input.queueArn,
+      BatchSize: input.batchSize,
+      Enabled: input.enabled,
+    }),
+  );
+
 // streamArn: Stream ARN của bảng đã chọn (chỉ với nguồn DynamoDB)
 export type AddTriggerInput = TriggerFormOutput & { streamArn?: string };
 
@@ -209,14 +227,12 @@ export function useAddTrigger(functionName: string, functionArn: string) {
         enabled: values.enabled,
       });
     }
-    return lambda.send(
-      new CreateEventSourceMappingCommand({
-        FunctionName: functionName,
-        EventSourceArn: values.queueArn,
-        BatchSize: Number(values.batchSize),
-        Enabled: values.enabled,
-      }),
-    );
+    return createQueueTrigger(lambda, {
+      functionName,
+      queueArn: values.queueArn,
+      batchSize: Number(values.batchSize),
+      enabled: values.enabled,
+    });
   });
 }
 

@@ -33,11 +33,15 @@ test("create an item from JSON and find it again", async ({ page }) => {
 test("delete the table", async ({ page }) => {
   await page.goto("/dynamodb/tables");
   await page.getByRole("searchbox").fill(table);
-  await page.getByRole("row", { name: new RegExp(table) }).getByRole("checkbox").click();
+  await page
+    .getByRole("row", { name: new RegExp(table) })
+    .getByRole("checkbox")
+    .click();
   await page.getByRole("button", { name: "Delete" }).click();
   const dialog = page.getByRole("dialog");
   const confirm = dialog.getByRole("textbox");
-  if (await confirm.count()) await confirm.fill((await confirm.getAttribute("placeholder")) ?? "confirm");
+  if (await confirm.count())
+    await confirm.fill((await confirm.getAttribute("placeholder")) ?? "confirm");
   await dialog.getByRole("button", { name: /Delete/ }).click();
   await expect(page.getByRole("row", { name: new RegExp(table) })).toHaveCount(0);
 });

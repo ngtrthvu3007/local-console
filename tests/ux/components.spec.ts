@@ -10,6 +10,8 @@ const DESKTOP = { width: 1440, height: 900 };
 const bucket = uniqueName("bucket");
 const table = uniqueName("table");
 const functionName = uniqueName("fn");
+const queue = uniqueName("queue");
+const fifoQueue = `${uniqueName("fifo")}.fifo`;
 
 async function shot(page: Page, testInfo: TestInfo, name: string, fullPage = false) {
   for (const [label, viewport] of [
@@ -42,10 +44,17 @@ test("S3 components", async ({ page }, testInfo) => {
 
   // Trang upload: đã chọn file, chưa bấm Upload
   await page.goto(`/s3/buckets/${bucket}/upload`);
-  await page.locator('input[type="file"]').first().setInputFiles([
-    { name: "anh-dai-dien.png", mimeType: "image/png", buffer: Buffer.alloc(2048) },
-    { name: "ghi chú rất dài tên file để xem bảng xử lý thế nào khi tên quá dài.txt", mimeType: "text/plain", buffer: Buffer.from("xin chào") },
-  ]);
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles([
+      { name: "anh-dai-dien.png", mimeType: "image/png", buffer: Buffer.alloc(2048) },
+      {
+        name: "ghi chú rất dài tên file để xem bảng xử lý thế nào khi tên quá dài.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("xin chào"),
+      },
+    ]);
   await shot(page, testInfo, "s3-upload-selected", true);
   await page.getByRole("button", { name: "Upload", exact: true }).click();
   await expect(page.getByRole("button", { name: "Done" })).toBeVisible();
@@ -71,7 +80,10 @@ test("S3 components", async ({ page }, testInfo) => {
   // Modal xoá bucket còn object, rồi xoá thật
   await page.goto("/s3/buckets");
   await page.getByRole("searchbox").fill(bucket);
-  await page.getByRole("row", { name: new RegExp(bucket) }).getByRole("radio").click();
+  await page
+    .getByRole("row", { name: new RegExp(bucket) })
+    .getByRole("radio")
+    .click();
   await page.getByRole("button", { name: "Delete" }).click();
   await shot(page, testInfo, "s3-delete-modal");
   await page.getByRole("dialog").getByRole("textbox").fill(bucket);
@@ -86,7 +98,11 @@ test("DynamoDB components", async ({ page }, testInfo) => {
   await page.getByRole("textbox", { name: "Sort key name" }).fill("sk");
   await page.getByRole("button", { name: "Add index" }).click();
   await shot(page, testInfo, "dynamodb-create-with-index", true);
-  await page.getByRole("button", { name: /Remove/ }).first().click().catch(() => undefined);
+  await page
+    .getByRole("button", { name: /Remove/ })
+    .first()
+    .click()
+    .catch(() => undefined);
   await page.getByRole("button", { name: "Create table" }).click();
   await expect(page.getByRole("heading", { level: 1, name: table })).toBeVisible();
 
@@ -117,7 +133,10 @@ test("DynamoDB components", async ({ page }, testInfo) => {
   await shot(page, testInfo, "dynamodb-items-table");
 
   // Panel chi tiết item (split panel) khi chọn một dòng
-  await page.getByRole("row", { name: /user#1/ }).getByRole("checkbox").click();
+  await page
+    .getByRole("row", { name: /user#1/ })
+    .getByRole("checkbox")
+    .click();
   await shot(page, testInfo, "dynamodb-item-selected");
 
   // Tab Settings
@@ -127,12 +146,19 @@ test("DynamoDB components", async ({ page }, testInfo) => {
   // Dọn
   await page.goto("/dynamodb/tables");
   await page.getByRole("searchbox").fill(table);
-  await page.getByRole("row", { name: new RegExp(table) }).getByRole("checkbox").click();
+  await page
+    .getByRole("row", { name: new RegExp(table) })
+    .getByRole("checkbox")
+    .click();
   await page.getByRole("button", { name: "Delete" }).click();
   await shot(page, testInfo, "dynamodb-delete-modal");
   const confirm = page.getByRole("dialog").getByRole("textbox");
-  if (await confirm.count()) await confirm.fill((await confirm.getAttribute("placeholder")) ?? table);
-  await page.getByRole("dialog").getByRole("button", { name: /Delete/ }).click();
+  if (await confirm.count())
+    await confirm.fill((await confirm.getAttribute("placeholder")) ?? table);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Delete/ })
+    .click();
   await expect(page.getByRole("row", { name: new RegExp(table) })).toHaveCount(0);
 });
 
@@ -163,10 +189,106 @@ test("Lambda components", async ({ page }, testInfo) => {
   // Dọn
   await page.goto("/lambda/functions");
   await page.getByRole("searchbox").fill(functionName);
-  await page.getByRole("row", { name: new RegExp(functionName) }).getByRole("checkbox").click();
+  await page
+    .getByRole("row", { name: new RegExp(functionName) })
+    .getByRole("checkbox")
+    .click();
   await page.getByRole("button", { name: "Delete" }).click();
   const confirm = page.getByRole("dialog").getByRole("textbox");
-  if (await confirm.count()) await confirm.fill((await confirm.getAttribute("placeholder")) ?? functionName);
-  await page.getByRole("dialog").getByRole("button", { name: /Delete/ }).click();
+  if (await confirm.count())
+    await confirm.fill((await confirm.getAttribute("placeholder")) ?? functionName);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Delete/ })
+    .click();
   await expect(page.getByRole("row", { name: new RegExp(functionName) })).toHaveCount(0);
+});
+
+test("SQS components", async ({ page }, testInfo) => {
+  // Form báo lỗi: chọn FIFO mà tên thiếu đuôi .fifo
+  await page.goto("/sqs/queues/create");
+  await page.getByRole("radio", { name: /FIFO/ }).click();
+  await page.getByRole("textbox", { name: "Name" }).fill("payments");
+  await page.getByRole("button", { name: "Create queue" }).click();
+  await expect(page.getByText(/must end with \.fifo/)).toBeVisible();
+  await shot(page, testInfo, "sqs-create-validation");
+
+  await page.getByRole("textbox", { name: "Name" }).fill(fifoQueue);
+  await page.getByRole("button", { name: "Create queue" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: fifoQueue })).toBeVisible();
+
+  // FIFO: gửi thiếu group ID bị chặn ở form
+  await page.getByRole("button", { name: "Send message" }).click();
+  let dialog = page.getByRole("dialog");
+  await dialog.locator(".ace_text-input").focus();
+  await page.keyboard.type('{"paymentId": 7}');
+  await dialog.getByRole("button", { name: "Send" }).click();
+  await expect(dialog.getByText("Enter a message group ID.")).toBeVisible();
+  await shot(page, testInfo, "sqs-send-fifo-validation");
+  await dialog.getByRole("textbox", { name: "Message group ID" }).fill("user-1");
+  // Queue tắt content-based dedup: bắt buộc có dedup ID
+  await dialog.getByRole("textbox", { name: "Deduplication ID" }).fill("payment-7");
+  await dialog.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText(/^Sent message /)).toBeVisible();
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+
+  // Peek + panel chi tiết
+  await page.getByRole("button", { name: "Refresh" }).click();
+  await page
+    .getByRole("link", { name: /^[0-9a-f]{8}…$/ })
+    .first()
+    .click();
+  await expect(page.getByText("System attributes")).toBeVisible();
+  await shot(page, testInfo, "sqs-message-panel", true);
+
+  // Poll: nhận được message, chọn để xóa
+  await page.getByRole("button", { name: "Poll for messages" }).click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("row", { name: /paymentId/ })).toBeVisible();
+  await dialog
+    .getByRole("row", { name: /paymentId/ })
+    .getByRole("checkbox")
+    .check();
+  await shot(page, testInfo, "sqs-poll-modal");
+  await dialog.getByRole("button", { name: "Delete" }).click();
+  await expect(dialog.getByText("No messages available")).toBeVisible();
+  await shot(page, testInfo, "sqs-poll-empty");
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+
+  // Settings: các modal sửa thông số và DLQ (không có queue cùng loại thì dropdown rỗng)
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await shot(page, testInfo, "sqs-settings-tab", true);
+  await page.getByRole("button", { name: "Edit" }).first().click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox", { name: "Visibility timeout" }).fill("99999");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog.getByText(/Enter a whole number from 0 to 43200/)).toBeVisible();
+  await shot(page, testInfo, "sqs-edit-settings-validation");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("button", { name: "Edit" }).nth(1).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByRole("checkbox", { name: "Turn on dead-letter queue" }).check();
+  await dialog.getByRole("button", { name: /^Dead-letter queue/ }).click();
+  await shot(page, testInfo, "sqs-edit-dlq-empty");
+  await page.keyboard.press("Escape");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  // Danh sách: xóa nhiều queue, modal cảnh báo
+  await page.goto("/sqs/queues/create");
+  await page.getByRole("textbox", { name: "Name" }).fill(queue);
+  await page.getByRole("button", { name: "Create queue" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: queue })).toBeVisible();
+  await page.goto("/sqs/queues");
+  await page.getByRole("searchbox").fill("lc-e2e-");
+  for (const name of [queue, fifoQueue])
+    await page
+      .getByRole("row", { name: new RegExp(name.replace(".", "\\.")) })
+      .getByRole("checkbox")
+      .check();
+  await page.getByRole("button", { name: "Delete" }).click();
+  dialog = page.getByRole("dialog");
+  await shot(page, testInfo, "sqs-delete-queues-modal");
+  await dialog.getByRole("textbox").fill("delete");
+  await dialog.getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByRole("row", { name: new RegExp(queue) })).toHaveCount(0);
 });

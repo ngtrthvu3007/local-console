@@ -1,6 +1,6 @@
 # SQS — Thiết kế
 
-> Ngày: 2026-11-17 · Trạng thái: chờ duyệt · Thuộc: [Local Console](2026-11-09-localconsole-design.md)
+> Ngày: 2026-11-17 · Trạng thái: đã làm (2026-11-18, kết quả thử ở mục 10) · Thuộc: [Local Console](2026-11-09-localconsole-design.md)
 
 ## 1. Mục tiêu
 
@@ -105,11 +105,11 @@ Standard · 12 available · 1 in flight · DLQ: orders-dlq
 ### 3.4 Tab Messages
 
 ```text
-Messages                  Auto refresh [○]  [↻] [Poll for messages] [Peek messages]
-12 available · 1 in flight · 0 delayed
+Messages (2)                         Auto refresh [○]  [↻] [Poll for messages]
+12 available · 1 in flight · 0 delayed. Peek doesn't change the queue. Use Poll to act as a consumer.
 ```
 
-**Peek** (mặc định khi mở tab, không làm thay đổi queue):
+**Peek** (mặc định khi mở tab, không làm thay đổi queue). Nút ↻ là peek lại, nên không có nút "Peek messages" riêng:
 
 ```text
  Message ID        Sent                  Received   Body
@@ -198,14 +198,14 @@ Queue FIFO không làm đích S3 notification được (luật của AWS; Floci 
 
 ## 4. Cách hoạt động của một số thao tác
 
-| Thao tác       | Gọi                                                                                                                                     |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Peek           | `GET /aws/_aws/sqs/messages?QueueUrl=…` (endpoint riêng của Floci, không có trên AWS). Kèm header `Authorization` ghi region (mục 7 #3) |
-| Poll           | `ReceiveMessage` (`MaxNumberOfMessages: 10`, `WaitTimeSeconds: 5`, lấy hết system và message attributes)                                |
-| Số message     | `GetQueueAttributes`: `ApproximateNumberOfMessages`, `…NotVisible`, `…Delayed`                                                          |
-| Redrive        | `StartMessageMoveTask` với `SourceArn` là ARN của DLQ, không truyền đích → về queue gốc của từng message                                |
-| Sửa thông số   | `SetQueueAttributes`. Redrive policy gửi JSON `{ deadLetterTargetArn, maxReceiveCount }`; tắt DLQ gửi chuỗi rỗng                        |
-| Lambda trigger | Dùng lại hàm tạo event source mapping của Lambda (`useTriggers.ts`) với ARN của queue                                                   |
+| Thao tác       | Gọi                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Peek           | `GET /aws/_aws/sqs/messages?QueueUrl=…` (endpoint riêng của Floci, không có trên AWS). Kèm header `Authorization` ghi region (mục 7 #3). Trả `{ messages: [{ MessageId, Body, Attributes, MessageAttributes, … }] }` |
+| Poll           | `ReceiveMessage` (`MaxNumberOfMessages: 10`, `WaitTimeSeconds: 5`, lấy hết system và message attributes)                                                                                                             |
+| Số message     | `GetQueueAttributes`: `ApproximateNumberOfMessages`, `…NotVisible`, `…Delayed`                                                                                                                                       |
+| Redrive        | `StartMessageMoveTask` với `SourceArn` là ARN của DLQ, không truyền đích → về queue gốc của từng message                                                                                                             |
+| Sửa thông số   | `SetQueueAttributes`. Redrive policy gửi JSON `{ deadLetterTargetArn, maxReceiveCount }`; tắt DLQ gửi chuỗi rỗng                                                                                                     |
+| Lambda trigger | `createQueueTrigger` trong `lambda/hooks/useTriggers.ts`, dùng chung với tab Triggers của Lambda                                                                                                                     |
 
 ---
 
@@ -240,13 +240,15 @@ npm install @aws-sdk/client-sqs -w web
 web/src/services/sqs/
 ├── index.tsx, routes.ts, constants.ts, schemas.ts
 ├── peek.ts                    # gọi endpoint peek của Floci kèm header region
+├── queues.ts                  # đọc attribute thành Queue, redrive policy, tên từ URL/ARN
+├── messageText.ts             # chữ hiển thị của message (ID, body, ngày gửi)
 ├── hooks/
 │   ├── useSQS.ts              # SQSClient qua /aws
 │   ├── useQueues.ts           # list, create, delete, attributes, set attributes
 │   ├── useMessages.ts         # peek, poll, send, delete, purge, redrive
 │   └── useQueueTriggers.ts    # event source mapping theo ARN của queue
 ├── pages/                     # QueueList, CreateQueue, QueueDetail
-└── components/                # MessagesTab, TriggersTab, SettingsTab, các modal
+└── components/                # MessagesTab, TriggersTab, SettingsTab, QueueLink, các modal
 ```
 
 - **SQSClient** cần `endpoint` là `proxyEndpoint()`: có `endpoint` riêng thì SDK **không** lấy host từ QueueUrl (`useQueueUrlAsEndpoint` chỉ chạy khi không có endpoint), nên request vẫn đi qua `/aws`.
@@ -257,12 +259,12 @@ web/src/services/sqs/
 | Thành phần                                                       | Dùng cho                                  |
 | ---------------------------------------------------------------- | ----------------------------------------- |
 | `ActionBar`, `refreshAction`, `ConfirmModal`, `ModalFooter`      | Header bảng, modal xác nhận               |
-| `FormModal`, `FormFields`, `useZodForm`                          | Tạo queue, sửa thông số, DLQ, gửi message |
+| `FormModal`, `FormFields` (thêm `FormTiles`), `useZodForm`       | Tạo queue, sửa thông số, DLQ, gửi message |
 | `ValueEditor`, `CodeEditor`                                      | Body khi gửi, xem body                    |
 | `useSplitPanel`                                                  | Panel chi tiết message                    |
 | `CopyButton`, `Figure`, `EmptyState`, `emptyOrError`, `NotFound` | URL/ARN, cột số, trạng thái bảng          |
 | `useIsCompact`, `useNotify`, `formatDate`                        | Khung hẹp, thông báo, ngày                |
-| `createStreamTrigger` / form trigger của Lambda                  | Add trigger từ trang queue                |
+| `createQueueTrigger`, `functionNameOfMapping`, `wholeNumberIn`   | Add trigger từ trang queue, ô số          |
 
 ---
 
@@ -312,3 +314,37 @@ Chạy thử trên Floci 2.4.0 qua proxy `/aws` của console ngày 2026-11-17, 
 | Đường dẫn theo tên queue, URL lấy bằng `GetQueueUrl`   | Giống AWS Console; không tự ghép host                                               |
 | Tab Lambda triggers chỉ xem và thêm                    | Bật/tắt, xóa đã có ở Lambda; giống DynamoDB                                         |
 | Không sửa server                                       | SQS là AWS API thuần, đi qua proxy `/aws`                                           |
+| Bỏ nút "Peek messages" (mục 3.4)                       | Trùng với nút ↻ (peek lại)                                                          |
+
+---
+
+## 10. Kết quả thử
+
+Ngày 2026-11-18, Floci 2.4.0, region `ap-southeast-1`, console chạy bằng `docker compose`.
+
+| Bộ test                                      | Kết quả                                                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit (`web/test/services/sqs/`)              | 17/17: header peek, đọc attribute, redrive policy, luật tên queue, gửi FIFO, giới hạn body theo byte, chữ hiển thị message                              |
+| Integration (`tests/it/sqs.test.ts`)         | 6/6: peek không đổi queue, thiếu header region thì lỗi, poll → DLQ → redrive, tắt DLQ, FIFO dedup và group ID                                           |
+| E2E (`tests/e2e/sqs.spec.ts`)                | 4/4: tạo queue, gửi + peek, poll + xóa message, xóa queue                                                                                               |
+| E2E tích hợp (`tests/e2e/sqs-flows.spec.ts`) | 4/4: trigger Lambda từ trang queue → log ở tab Monitor; Lambda Add trigger chọn queue + link về queue; S3 → queue (FIFO bị khóa); DLQ + redrive trên UI |
+| UX (`tests/ux/components.spec.ts`)           | Chụp desktop + phone: lỗi form tạo queue, gửi FIFO thiếu ID, panel message, poll, sửa thông số, DLQ, xóa nhiều queue                                    |
+| UI (`tests/ui/responsive.spec.ts`)           | 2 trang SQS, pass ở 1440, 1024, 768, 390px                                                                                                              |
+| Mobile (`tests/mobile/`, mock SQS)           | Danh sách, chi tiết, tạo queue ở 320–1440px: không cuộn ngang, control có tên, nút đủ 44px                                                              |
+| Playwright MCP, Floci thật                   | Full flow và S3 → SQS → Lambda chạy trọn; 11 màn × 1440, 1024, 768, 390, 320px không cuộn ngang                                                         |
+| Toàn bộ repo                                 | Unit 129, IT 35, E2E 21, UI 48, UX 4, Mobile 30                                                                                                         |
+
+Lỗi tìm ra khi thử và đã sửa:
+
+| Lỗi                                                               | Sửa                                                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| URL/ARN bị bẻ vụn trên điện thoại (tab Settings)                  | Khối Details/Connect một cột trên điện thoại, giống MQ                                |
+| Field dính nhau trong modal DLQ, gửi FIFO, Lambda Add trigger     | Cụm field bọc `SpaceBetween` thay fragment (fragment làm `FormModal` mất khoảng cách) |
+| "1 message move" trong modal redrive                              | Chia động từ theo số message                                                          |
+| Gợi ý ô số khó đọc ("0s – 15m 0s, in seconds")                    | "0–900 seconds (up to 15m 0s)", cùng số với lỗi validate                              |
+| Message ID không phải link, panel không lưu trên URL              | Link thật, `?message=<id>`; Back đóng panel (giống key của ElastiCache)               |
+| Timestamp trong panel là epoch thô                                | Hiện ngày giờ như cột Sent                                                            |
+| Khung hẹp gom "Poll for messages" vào menu một mục                | Ghim nút Poll                                                                         |
+| Tab Monitor của Lambda (function chưa chạy) ghi lỗi 400 ở console | Hỏi `DescribeLogGroups` trước, chỉ gọi `FilterLogEvents` khi log group đã có          |
+
+Còn lại, không sửa: trang Properties của bucket chưa có lifecycle/tag ghi lỗi 404 ở console. S3 trả 404 cho cấu hình chưa đặt, trình duyệt luôn ghi lỗi cho request 4xx; app hiện đúng "No tags", "No lifecycle rules". Muốn hết phải đổi 404 → 200 ở proxy `/aws` (proxy không còn trong suốt), nên giữ nguyên; fixture E2E bỏ qua đúng hai request này. Nút "Start DLQ redrive" hiện sau khi danh sách queue nguồn tải xong (chậm một nhịp).

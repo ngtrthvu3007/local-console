@@ -10,7 +10,6 @@ import {
   RESERVED_ENVIRONMENT_KEYS,
   RUNTIMES,
   S3_TRIGGER_EVENTS,
-  SQS_ARN_PATTERN,
   SQS_BATCH_SIZE,
   STARTING_POSITIONS,
   STREAM_BATCH_SIZE,
@@ -23,7 +22,7 @@ import {
 const TRIGGER_SOURCE_IDS = Object.keys(TRIGGER_SOURCES) as [TriggerSource, ...TriggerSource[]];
 
 // Ô số nguyên trong khoảng [min, max]; Input của Cloudscape luôn trả chuỗi
-const wholeNumberIn = (limits: { min: number; max: number }, unit: string) =>
+export const wholeNumberIn = (limits: { min: number; max: number }, unit: string) =>
   z
     .string()
     .trim()
@@ -127,8 +126,7 @@ export const triggerSchema = z
       if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
       return;
     }
-    if (!SQS_ARN_PATTERN.test(values.queueArn))
-      addIssue("queueArn", "Enter the ARN of an SQS queue.");
+    if (!values.queueArn) addIssue("queueArn", "Choose a queue.");
     const batchSize = wholeNumberIn(SQS_BATCH_SIZE, "records").safeParse(values.batchSize);
     if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
   });

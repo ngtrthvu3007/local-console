@@ -20,6 +20,7 @@ import SegmentedControl, {
   type SegmentedControlProps,
 } from "@cloudscape-design/components/segmented-control";
 import Select, { type SelectProps } from "@cloudscape-design/components/select";
+import Tiles, { type TilesProps } from "@cloudscape-design/components/tiles";
 
 // Nối react-hook-form với component của Cloudscape: giá trị qua Controller, lỗi zod hiện ở errorText
 
@@ -233,6 +234,26 @@ export function FormRadioGroup<TValues extends FieldValues>(props: RadioProps<TV
             field.onChange(detail.value);
             onChange?.(detail.value);
           }}
+        />
+      )}
+    </ControlledField>
+  );
+}
+
+interface TilesFieldProps<TValues extends FieldValues> extends FieldProps<TValues> {
+  items: TilesProps.TilesDefinition[];
+}
+
+// Lựa chọn lớn có mô tả, vd: loại queue Standard / FIFO
+export function FormTiles<TValues extends FieldValues>(props: TilesFieldProps<TValues>) {
+  const { items, ...fieldProps } = props;
+  return (
+    <ControlledField {...fieldProps}>
+      {(field) => (
+        <Tiles
+          items={items}
+          value={field.value}
+          onChange={({ detail }) => field.onChange(detail.value)}
         />
       )}
     </ControlledField>
