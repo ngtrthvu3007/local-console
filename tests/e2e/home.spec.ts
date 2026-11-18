@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures.ts";
 
-const SERVICES = ["S3", "Lambda", "DynamoDB", "ElastiCache", "Amazon MQ"];
+const SERVICES = ["S3", "Lambda", "DynamoDB", "ElastiCache", "Amazon MQ", "SES"];
 
 test("home shows Floci status and every service", async ({ page }) => {
   await page.goto("/");
@@ -20,6 +20,7 @@ test("side navigation opens each service", async ({ page }) => {
     ["DynamoDB", /\/dynamodb\/tables$/, "Tables"],
     ["ElastiCache", /\/elasticache\/clusters$/, "Clusters"],
     ["Amazon MQ", /\/mq\/brokers$/, "Brokers"],
+    ["SES", /\/ses\/mailbox$/, "Mailbox"],
   ] as const;
   for (const [link, url, heading] of pages) {
     await navigation.getByRole("link", { name: link, exact: true }).click();

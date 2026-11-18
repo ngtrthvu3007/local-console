@@ -4,6 +4,7 @@
 import { S3Client, ListBucketsCommand, ListObjectVersionsCommand, DeleteObjectsCommand, DeleteBucketCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, ListTablesCommand, DeleteTableCommand } from "@aws-sdk/client-dynamodb";
 import { LambdaClient, ListFunctionsCommand, DeleteFunctionCommand } from "@aws-sdk/client-lambda";
+import { SESv2Client, ListEmailIdentitiesCommand, ListEmailTemplatesCommand, DeleteEmailIdentityCommand, DeleteEmailTemplateCommand } from "@aws-sdk/client-sesv2";
 import { SQSClient, ListQueuesCommand, DeleteQueueCommand } from "@aws-sdk/client-sqs";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
@@ -17,6 +18,7 @@ const s3 = new S3Client({ ...config, forcePathStyle: true });
 const dynamodb = new DynamoDBClient(config);
 const lambda = new LambdaClient(config);
 const sqs = new SQSClient(config);
+const ses = new SESv2Client(config);
 
 const buckets = mine(((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name));
 const tables = mine((await dynamodb.send(new ListTablesCommand({}))).TableNames ?? []);
@@ -25,8 +27,13 @@ const queues = [];
 for (const prefix of PREFIXES) {
   queues.push(...((await sqs.send(new ListQueuesCommand({ QueueNamePrefix: prefix }))).QueueUrls ?? []));
 }
+const identities = mine(((await ses.send(new ListEmailIdentitiesCommand({}))).EmailIdentities ?? []).map((item) => item.IdentityName));
+const templates = mine(((await ses.send(new ListEmailTemplatesCommand({}))).TemplatesMetadata ?? []).map((item) => item.TemplateName));
+// Hộp thư không có tên: lọc theo Source, xóa theo id
+const mailbox = (await (await fetch(`${consoleUrl}/aws/_aws/ses`)).json()).messages ?? [];
+const emails = mailbox.filter((mail) => PREFIXES.some((prefix) => mail.Source?.startsWith(prefix))).map((mail) => mail.Id).filter(Boolean);
 
-console.log(JSON.stringify({ buckets, tables, functions, queues }, null, 2));
+console.log(JSON.stringify({ buckets, tables, functions, queues, identities, templates, emails }, null, 2));
 
 if (process.argv.includes("--delete")) {
   for (const bucket of buckets) {
@@ -39,5 +46,8 @@ if (process.argv.includes("--delete")) {
   for (const table of tables) await dynamodb.send(new DeleteTableCommand({ TableName: table }));
   for (const name of functions) await lambda.send(new DeleteFunctionCommand({ FunctionName: name }));
   for (const url of queues) await sqs.send(new DeleteQueueCommand({ QueueUrl: url }));
+  for (const name of identities) await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
+  for (const name of templates) await ses.send(new DeleteEmailTemplateCommand({ TemplateName: name }));
+  for (const id of emails) await fetch(`${consoleUrl}/aws/_aws/ses?id=${encodeURIComponent(id)}`, { method: "DELETE" });
   console.log("deleted");
 }

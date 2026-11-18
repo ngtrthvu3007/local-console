@@ -250,7 +250,7 @@ Chạy thử trên Floci 2.4.0 qua proxy `/aws` của console ngày 2026-11-17, 
 | 9   | **Template gửi thật**                          | `SendTemplatedEmail` / v2 `SendEmail` template: hộp thư có subject và body đã điền dữ liệu                                                                                         |
 | 10  | **Lọc của Floci**                              | `?email=` chỉ khớp **người gửi** → lọc người nhận làm phía trình duyệt                                                                                                             |
 
-Kiểm thêm ngày 2026-11-18, **chỉ đọc** (GET hộp thư, [tài liệu SES của Floci](https://floci.io/floci/services/ses/)), không ghi vào Floci:
+Kiểm thêm ngày 2026-11-18, **chỉ đọc** (GET hộp thư, [tài liệu SES của Floci](https://floci.io/floci/services/ses/)), không ghi vào Floci (trừ #20–21: gửi thử bằng probe, đã xóa sau đó):
 
 | #   | Rủi ro                                  | Kết quả                                                                                                                                         |
 | --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -263,8 +263,8 @@ Kiểm thêm ngày 2026-11-18, **chỉ đọc** (GET hộp thư, [tài liệu SE
 | 17  | **Mail bị chặn**                        | Tài liệu: mail bị content-scan chặn chỉ có `RejectReason`, không có nội dung                                                                    |
 | 18  | **HTML có script, ảnh ngoài**           | Hộp thư có mail thật chứa `<script>` và `<img src="http://example.com/…">`: iframe sandbox (3.2) là bắt buộc; ảnh ngoài vẫn tải (chấp nhận ở local)          |
 | 19  | **Không phân trang**                    | Mỗi lần tải trả `RawData` của mọi mail → chỉ đọc MIME của mail đang mở. Chấp nhận ở local                                                    |
-
-**Chưa kiểm, kiểm khi làm:** mail có Bcc hiện trong `Destination` thế nào (tài liệu Floci không nhắc).
+| 20  | **Bcc**                                 | Gửi thử ngày 2026-11-18 (v2 `SendEmail` simple, đã xóa mail và identity thử): nằm ở `Destination.BccAddresses`, cạnh `ToAddresses`              |
+| 21  | **`Headers`**                           | Cùng mail thử: `Headers: [{ "Name": "X-Lc-Probe", "Value": "1" }]`, giống `MessageHeader` của SES v2. Mail không có header tùy chỉnh thì không có field này |
 
 ---
 
