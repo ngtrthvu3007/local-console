@@ -8,12 +8,15 @@ const pages = [
   "/lambda/functions",
   "/elasticache/clusters",
   "/mq/brokers",
+  "/sqs/queues",
+  `/sqs/queues/${resourceName}`,
   ...[
     "s3/buckets",
     "dynamodb/tables",
     "lambda/functions",
     "elasticache/clusters",
     "mq/brokers",
+    "sqs/queues",
   ].map((path) => `/${path}/create`),
 ];
 async function fits(page: Page) {

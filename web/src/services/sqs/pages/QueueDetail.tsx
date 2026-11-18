@@ -1,0 +1,156 @@
+import { useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import Container from "@cloudscape-design/components/container";
+import ContentLayout from "@cloudscape-design/components/content-layout";
+import Header from "@cloudscape-design/components/header";
+import Spinner from "@cloudscape-design/components/spinner";
+import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
+import { NotFound } from "@shared/components/NotFound.tsx";
+import { ErrorState } from "@shared/components/TableStates.tsx";
+import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { DeleteQueuesModal } from "../components/DeleteQueuesModal.tsx";
+import { MessagesTab } from "../components/MessagesTab.tsx";
+import { PurgeModal, RedriveModal, SendMessageModal } from "../components/MessageModals.tsx";
+import { SettingsTab } from "../components/SettingsTab.tsx";
+import { TriggersTab } from "../components/TriggersTab.tsx";
+import { isQueueMissing, useDeadLetterSources, useQueue } from "../hooks/useQueues.ts";
+import { messageCountsText, queueNameOfArn, queueTypeLabel, type Queue } from "../queues.ts";
+import { QUEUE_TABS, SEARCH_PARAMS, queueCrumbs, sqsRoutes, type QueueTab } from "../routes.ts";
+
+const MODALS = { send: "send", purge: "purge", delete: "delete", redrive: "redrive" } as const;
+type ModalId = (typeof MODALS)[keyof typeof MODALS];
+
+const isQueueTab = (value: string | null): value is QueueTab =>
+  Object.values<string | null>(QUEUE_TABS).includes(value);
+
+// "Standard · 12 available · 1 in flight · 0 delayed · DLQ: orders-dlq"
+const queueSummary = (queue: Queue) =>
+  [
+    queueTypeLabel(queue),
+    messageCountsText(queue),
+    queue.redrivePolicy && `DLQ: ${queueNameOfArn(queue.redrivePolicy.deadLetterTargetArn)}`,
+  ]
+    .filter(Boolean)
+    .join(DETAIL_SEPARATOR);
+
+function QueueView({
+  queue,
+  autoRefresh,
+  onAutoRefreshChange,
+}: {
+  queue: Queue;
+  autoRefresh: boolean;
+  onAutoRefreshChange: (autoRefresh: boolean) => void;
+}) {
+  const navigate = useNavigate();
+  const { ref, compact } = useIsCompact();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
+  const tab = isQueueTab(requestedTab) ? requestedTab : QUEUE_TABS.messages;
+  const sources = useDeadLetterSources(queue);
+  const sourceNames = sources.data ?? [];
+  const [modal, setModal] = useState<ModalId | null>(null);
+  const closeModal = () => setModal(null);
+
+  const selectTab = (nextTab: string) =>
+    setSearchParams(nextTab === QUEUE_TABS.messages ? {} : { [SEARCH_PARAMS.tab]: nextTab });
+
+  const tabs: TabsProps.Tab[] = [
+    {
+      id: QUEUE_TABS.messages,
+      label: "Messages",
+      content: (
+        <MessagesTab
+          queue={queue}
+          autoRefresh={autoRefresh}
+          onAutoRefreshChange={onAutoRefreshChange}
+        />
+      ),
+    },
+    { id: QUEUE_TABS.triggers, label: "Lambda triggers", content: <TriggersTab queue={queue} /> },
+    { id: QUEUE_TABS.settings, label: "Settings", content: <SettingsTab queue={queue} /> },
+  ];
+
+  // Queue là DLQ của queue khác thì có thêm nút redrive
+  const barActions: BarAction[] = [
+    ...(sourceNames.length
+      ? [{ id: MODALS.redrive, text: "Start DLQ redrive", onClick: () => setModal(MODALS.redrive) }]
+      : []),
+    { id: MODALS.purge, text: "Purge", onClick: () => setModal(MODALS.purge) },
+    { id: MODALS.delete, text: "Delete", onClick: () => setModal(MODALS.delete) },
+    { id: MODALS.send, text: "Send message", primary: true, onClick: () => setModal(MODALS.send) },
+  ];
+
+  const header = (
+    <Header
+      variant='h1'
+      description={queueSummary(queue)}
+      actions={<ActionBar compact={compact} actions={barActions} />}
+    >
+      {queue.name}
+    </Header>
+  );
+
+  return (
+    <div ref={ref}>
+      <ContentLayout header={header}>
+        <Tabs
+          activeTabId={tab}
+          tabs={tabs}
+          onChange={({ detail }) => selectTab(detail.activeTabId)}
+        />
+      </ContentLayout>
+      {modal === MODALS.send && <SendMessageModal queue={queue} onDismiss={closeModal} />}
+      {modal === MODALS.purge && <PurgeModal queue={queue} onDismiss={closeModal} />}
+      {modal === MODALS.redrive && (
+        <RedriveModal queue={queue} sources={sourceNames} onDismiss={closeModal} />
+      )}
+      {modal === MODALS.delete && (
+        <DeleteQueuesModal
+          queues={[queue]}
+          onDismiss={closeModal}
+          onDone={() => navigate(sqsRoutes.queues)}
+        />
+      )}
+    </div>
+  );
+}
+
+export function QueueDetail() {
+  const { queue: queueName = "" } = useParams();
+  // Auto refresh nằm ở tab Messages nhưng làm mới cả số message trên header
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const details = useQueue(queueName, autoRefresh);
+
+  useBreadcrumbs(queueCrumbs(queueName));
+
+  if (details.isLoading) return <Spinner size='large' />;
+  if (details.isError && isQueueMissing(details.error)) {
+    return (
+      <NotFound
+        title={`Queue ${queueName} not found`}
+        description='It may have been deleted, or the name is wrong.'
+        backHref={sqsRoutes.queues}
+        backText='View queues'
+      />
+    );
+  }
+  if (!details.data) {
+    return (
+      <Container>
+        <ErrorState error={details.error} onRetry={() => details.refetch()} />
+      </Container>
+    );
+  }
+
+  return (
+    <QueueView
+      queue={details.data}
+      autoRefresh={autoRefresh}
+      onAutoRefreshChange={setAutoRefresh}
+    />
+  );
+}

@@ -33,13 +33,20 @@ test.describe("mobile touch targets keep alignment", () => {
       const toolbar = await page.locator(".console-actions").first().boundingBox();
       const search = await page.getByRole("searchbox").first().boundingBox();
       expect(
-        Math.abs((toolbar?.x ?? 0) + (toolbar?.width ?? 0) - (search?.x ?? 0) - (search?.width ?? 0)),
+        Math.abs(
+          (toolbar?.x ?? 0) + (toolbar?.width ?? 0) - (search?.x ?? 0) - (search?.width ?? 0),
+        ),
         "toolbar and search must share the right edge",
       ).toBeLessThan(2);
       const title = await page.getByRole("heading", { level: 1 }).boundingBox();
       if (width >= 390)
         expect(
-          Math.abs((title?.y ?? 0) + (title?.height ?? 0) / 2 - (toolbar?.y ?? 0) - (toolbar?.height ?? 0) / 2),
+          Math.abs(
+            (title?.y ?? 0) +
+              (title?.height ?? 0) / 2 -
+              (toolbar?.y ?? 0) -
+              (toolbar?.height ?? 0) / 2,
+          ),
           "title and toolbar share one row when there is room",
         ).toBeLessThan(12);
       await page.getByRole("button", { name: "More actions" }).click();
@@ -83,12 +90,16 @@ test.describe("mobile touch targets keep alignment", () => {
           });
         }
         return Math.max(
-          ...[...rows.values()].map((row) => Math.abs(row.left - frame.left - (frame.right - row.right))),
+          ...[...rows.values()].map((row) =>
+            Math.abs(row.left - frame.left - (frame.right - row.right)),
+          ),
         );
       });
       expect(imbalance, "upload buttons stay centered").toBeLessThan(2);
 
       await page.goto("/");
+      // Số resource của từng service tải xong mới hết xê dịch layout; đo sớm thì hit-test trượt
+      await page.waitForLoadState("networkidle");
       expect(
         await hasTouchTarget(page.getByRole("link", { name: "Amazon S3", exact: true })),
         "service links need a 44px touch target",
