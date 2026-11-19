@@ -51,6 +51,11 @@ html {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+/* Nhóm service: mũi tên mở/đóng nằm cuối dòng, icon + tên thẳng cột với link thường */
+body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"]:not(#\9) {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
 @media (max-width: 688px) {
   /* Bỏ nút "…" của breadcrumb: cao 44px làm chevron lệch và đè viền thanh breadcrumb. */
   :is(.local-console, [role="dialog"]) button:not([class*="awsui_breadcrumb-group_"] *) {
@@ -161,5 +166,10 @@ html {
   body .local-console nav[aria-label="Side navigation"] a:not(#\9) {
     min-block-size: 44px;
     align-items: center;
+  }
+  /* Link cao 44px trên mobile nên mũi tên phải căn giữa theo chữ */
+  body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] [class*="awsui_expand-button_"]:not(#\9) {
+    align-items: center;
+    padding-block-start: 0;
   }
 }
