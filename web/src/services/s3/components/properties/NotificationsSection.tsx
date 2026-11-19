@@ -11,6 +11,7 @@ import {
   toNotificationRules,
   type NotificationRule,
 } from "../../notificationRules.ts";
+import { FunctionLink } from "../../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../../sqs/components/QueueLink.tsx";
 import { queueNameOfArn } from "../../../sqs/queues.ts";
 import { NotificationModal } from "./NotificationModal.tsx";
@@ -19,6 +20,13 @@ import { RulesSection } from "./RulesSection.tsx";
 const FILTER_SEPARATOR = " … ";
 
 const ruleId = (rule: NotificationRule) => rule.id || rule.arn;
+
+// Đích có trang trên console thì là link; SNS chưa có trang nên để ARN
+function DestinationCell({ rule }: { rule: NotificationRule }) {
+  if (rule.destination === "sqs") return <QueueLink name={queueNameOfArn(rule.arn)} />;
+  if (rule.destination === "lambda") return <FunctionLink arn={rule.arn} />;
+  return <>{rule.arn}</>;
+}
 
 const COLUMNS: TableProps.ColumnDefinition<NotificationRule>[] = [
   { id: "name", header: "Name", isRowHeader: true, cell: (rule) => rule.id || NOT_AVAILABLE },
@@ -37,8 +45,12 @@ const COLUMNS: TableProps.ColumnDefinition<NotificationRule>[] = [
   {
     id: "destination",
     header: "Destination",
+<<<<<<< HEAD
     cell: (rule) =>
       rule.destination === "sqs" ? <QueueLink name={queueNameOfArn(rule.arn)} /> : rule.arn,
+=======
+    cell: (rule) => <DestinationCell rule={rule} />,
+>>>>>>> 57912ddcbadcdb1a5aa74d4528b4c2f0161ff951
   },
 ];
 
@@ -64,7 +76,7 @@ export function NotificationsSection({ bucket }: { bucket: string }) {
       saving={saveNotifications.isPending}
       save={(rules, success, then) =>
         saveNotifications.mutate(
-          toNotificationConfiguration(rules),
+          toNotificationConfiguration(rules, notifications.data),
           notifyOutcome({ success, errorHeader: "Couldn't save event notifications", then }),
         )
       }
