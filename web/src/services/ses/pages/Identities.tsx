@@ -15,6 +15,7 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { AddEmailModal } from "../components/AddEmailModal.tsx";
 import { DeleteIdentitiesModal } from "../components/DeleteIdentitiesModal.tsx";
+import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { IDENTITY_TYPE_LABELS, VERIFICATION_STATUS } from "../constants.ts";
 import { useIdentities } from "../hooks/useIdentities.ts";
 import { sesBaseCrumbs, sesRoutes } from "../routes.ts";
@@ -36,6 +37,7 @@ function StatusCell({ identity }: { identity: IdentityInfo }) {
 }
 
 export function Identities() {
+  const { region } = useLoadedConfig();
   useBreadcrumbs(crumbs);
   const { ref, compact } = useIsCompact();
   const identities = useIdentities();
@@ -109,7 +111,7 @@ export function Identities() {
     <Header
       variant='awsui-h1-sticky'
       counter={identities.data ? `(${identities.data.length})` : undefined}
-      description='Addresses your app can send from. Floci verifies an email as soon as you add it.'
+      description={`Addresses your app can send from. Floci verifies an email as soon as you add it. Region: ${region}.`}
       actions={<ActionBar compact={compact} actions={barActions} />}
     >
       Identities

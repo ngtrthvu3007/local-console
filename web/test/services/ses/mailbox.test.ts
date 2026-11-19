@@ -4,9 +4,11 @@ import {
   mailboxForRegion,
   mailboxSchema,
   matchesSearch,
+  needsMimeFields,
   rawText,
   readEmail,
   recipientsOf,
+  withMimeFields,
 } from "../../../src/services/ses/mailbox.ts";
 
 const REGION = "ap-southeast-1";
@@ -137,5 +139,38 @@ describe("mailboxSchema", () => {
 
     expect(result.success).toBe(true);
     expect(result.data && recipientsOf(result.data.messages[0])).toEqual([]);
+  });
+});
+
+describe("needsMimeFields / withMimeFields", () => {
+  const raw = { ...base, RawData: "e30=" };
+  const fields = { subject: "Hi", to: ["a@x.com"] };
+
+  it("fills a raw mail with no Subject and no Destination", () => {
+    expect(needsMimeFields(raw)).toBe(true);
+    const filled = withMimeFields(raw, fields);
+    expect(filled.Subject).toBe("Hi");
+    expect(filled.Destination?.ToAddresses).toEqual(["a@x.com"]);
+  });
+  it("skips a mail that already has Subject and Destination", () => {
+    expect(needsMimeFields({ ...raw, Subject: "S", Destination: { ToAddresses: ["b@x.com"] } })).toBe(false);
+  });
+  it("skips rejected mail and mail without RawData", () => {
+    expect(needsMimeFields({ ...raw, RejectReason: "no" })).toBe(false);
+    expect(needsMimeFields(base)).toBe(false);
+  });
+  it("treats an empty Subject as missing", () => {
+    const email = { ...raw, Subject: "", Destination: { ToAddresses: ["b@x.com"] } };
+    expect(needsMimeFields(email)).toBe(true);
+    expect(withMimeFields(email, fields).Subject).toBe("Hi");
+  });
+  it("keeps existing Subject and Destination", () => {
+    const email = { ...raw, Subject: "S", Destination: { ToAddresses: ["b@x.com"] } };
+    const filled = withMimeFields(email, fields);
+    expect(filled.Subject).toBe("S");
+    expect(filled.Destination?.ToAddresses).toEqual(["b@x.com"]);
+  });
+  it("leaves Destination missing when to is empty", () => {
+    expect(withMimeFields(raw, { subject: "Hi", to: [] }).Destination).toBeUndefined();
   });
 });

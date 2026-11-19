@@ -4,6 +4,7 @@ import { useCollection } from "@cloudscape-design/collection-hooks";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
+import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
@@ -22,8 +23,8 @@ import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { DeleteEmailsModal } from "../components/DeleteEmailsModal.tsx";
 import { EmailPanel } from "../components/EmailPanel.tsx";
-import { ADDRESS_SEPARATOR } from "../constants.ts";
-import { useEmailContent, useMailbox } from "../hooks/useMailbox.ts";
+import { ADDRESS_SEPARATOR, NO_SUBJECT } from "../constants.ts";
+import { useEmailContent, useMailbox, useMimeFields } from "../hooks/useMailbox.ts";
 import { matchesSearch, recipientsOf, sentAt, type Email } from "../mailbox.ts";
 import { SEARCH_PARAMS, sesBaseCrumbs, sesRoutes } from "../routes.ts";
 
@@ -57,7 +58,7 @@ function SubjectCell({ email }: { email: Email }) {
   return (
     <>
       {email.Attachments?.length ? `${ATTACHMENT_ICON} ` : ""}
-      {email.Subject || NOT_AVAILABLE}
+      {email.Subject || NO_SUBJECT}
     </>
   );
 }
@@ -70,11 +71,12 @@ export function Mailbox() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [autoRefresh, setAutoRefresh] = useState(false);
   const mailbox = useMailbox(autoRefresh);
+  const emails = useMimeFields(mailbox.data);
   // Giữ bản sao các mail cần xóa, không giữ cờ: Auto refresh hay đóng mail khi modal mở thì modal vẫn đúng danh sách người dùng đã thấy
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   // Id trên URL không còn trong danh sách (đã xóa) thì không có mail để mở, panel đóng
   const openId = searchParams.get(SEARCH_PARAMS.email);
-  const openEmail = mailbox.data?.find((email) => email.Id === openId);
+  const openEmail = emails?.find((email) => email.Id === openId);
   const openContent = useEmailContent(openEmail);
 
   const emptyState = emptyOrError(
@@ -86,7 +88,7 @@ export function Mailbox() {
   );
 
   const { items, collectionProps, filterProps, paginationProps, filteredItemsCount, actions } =
-    useCollection<Email>(mailbox.data ?? [], {
+    useCollection<Email>(emails ?? [], {
       filtering: {
         empty: emptyState,
         noMatch: (
@@ -102,12 +104,14 @@ export function Mailbox() {
     });
 
   const selected = collectionProps.selectedItems ?? [];
-  const selectEmail = (email: Email) => {
+  const emailHref = (id: string) => {
     const next = new URLSearchParams(searchParams);
-    next.set(SEARCH_PARAMS.email, email.Id);
-    // Đổi mail khi panel đang mở thì thay entry, để Back luôn đóng panel
-    navigate(`?${next}`, { replace: Boolean(openId) });
+    next.set(SEARCH_PARAMS.email, id);
+    return `?${next}`;
   };
+  const selectEmail = (email: Email) =>
+    // Đổi mail khi panel đang mở thì thay entry, để Back luôn đóng panel
+    navigate(emailHref(email.Id), { replace: Boolean(openId) });
   const closeEmail = () =>
     setSearchParams(
       (current) => {
@@ -124,7 +128,7 @@ export function Mailbox() {
   };
 
   const panelHeader = (email: Email) =>
-    email.RejectReason ? "Rejected email" : (openContent.data?.subject ?? NOT_AVAILABLE);
+    email.RejectReason ? "Rejected email" : openContent.data?.subject || NO_SUBJECT;
   // Mô tả của SplitPanel nằm trong <p> nên chỉ dùng chữ, không dùng KeyValuePairs (div)
   const panelDescription = (email: Email) =>
     [
@@ -142,7 +146,9 @@ export function Mailbox() {
           body: (
             <SpaceBetween size='m'>
               <ResponsiveActions>
-                <Button onClick={() => setDeleteTarget({ emails: [openEmail], all: false })}>Delete</Button>
+                <Button onClick={() => setDeleteTarget({ emails: [openEmail], all: false })}>
+                  Delete
+                </Button>
               </ResponsiveActions>
               <EmailPanel key={openEmail.Id} email={openEmail} />
             </SpaceBetween>
@@ -151,16 +157,35 @@ export function Mailbox() {
       : null,
   );
 
+  const subjectLink = (email: Email) => (
+    <Link
+      href={emailHref(email.Id)}
+      onFollow={(event) => {
+        event.preventDefault();
+        selectEmail(email);
+      }}
+    >
+      {/* Mail đang mở in đậm: Table của Cloudscape không có kiểu dòng "đang mở" riêng */}
+      {email.Id === openId ? (
+        <strong>
+          <SubjectCell email={email} />
+        </strong>
+      ) : (
+        <SubjectCell email={email} />
+      )}
+    </Link>
+  );
+
   const toColumn: TableProps.ColumnDefinition<Email> = {
     id: "to",
     header: "To",
-    isRowHeader: true,
     cell: (email) => <Recipients email={email} />,
   };
   const subjectColumn: TableProps.ColumnDefinition<Email> = {
     id: "subject",
     header: "Subject",
-    cell: (email) => <SubjectCell email={email} />,
+    isRowHeader: true,
+    cell: subjectLink,
   };
   const fromColumn: TableProps.ColumnDefinition<Email> = {
     id: "from",
@@ -172,15 +197,17 @@ export function Mailbox() {
     header: "Sent",
     cell: (email) => formatDate(sentAt(email)),
   };
-  // Khung hẹp: tầng 1 là subject + giờ gửi; tầng 2 là người nhận, xám
+  // Khung hẹp: tầng 1 chỉ có subject (link mở mail); tầng 2 xám: người nhận và giờ gửi
   const compactColumns: TableProps.ColumnDefinition<Email>[] = [
     {
       ...subjectColumn,
       cell: (email) => (
         <div>
-          <SubjectCell email={email} /> {formatDate(sentAt(email))}
+          {subjectLink(email)}
           <Box variant='small' display='block' color='text-body-secondary'>
             <Recipients email={email} />
+            {DETAIL_SEPARATOR}
+            {formatDate(sentAt(email))}
           </Box>
         </div>
       ),
@@ -198,15 +225,15 @@ export function Mailbox() {
     {
       id: "deleteAll",
       text: "Delete all",
-      disabled: !mailbox.data?.length,
-      onClick: () => setDeleteTarget({ emails: mailbox.data ?? [], all: true }),
+      disabled: !emails?.length,
+      onClick: () => setDeleteTarget({ emails: emails ?? [], all: true }),
     },
   ];
 
   const header = (
     <Header
       variant='awsui-h1-sticky'
-      counter={mailbox.data ? `(${mailbox.data.length})` : undefined}
+      counter={emails ? `(${emails.length})` : undefined}
       description={`Emails your app sent through SES in ${region}. Nothing is delivered.`}
       actions={
         <SpaceBetween direction='horizontal' size='l' alignItems='center'>
@@ -227,7 +254,7 @@ export function Mailbox() {
         {...collectionProps}
         variant='full-page'
         selectionType='multi'
-        ariaLabels={selectionLabels<Email>("email", (item) => item.Subject ?? item.Id)}
+        ariaLabels={selectionLabels<Email>("email", (item) => item.Subject || item.Id)}
         trackBy={ID_FIELD}
         items={items}
         loading={mailbox.isLoading}
@@ -236,7 +263,6 @@ export function Mailbox() {
           compact ? compactColumns : [toColumn, subjectColumn, fromColumn, sentColumn]
         }
         wrapLines={compact}
-        onRowClick={({ detail }) => selectEmail(detail.item)}
         header={header}
         filter={
           <TextFilter

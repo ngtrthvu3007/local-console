@@ -1,10 +1,11 @@
 import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DELETE_PREVIEW_COUNT, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useDeleteEmails } from "../hooks/useMailbox.ts";
+import { NO_SUBJECT } from "../constants.ts";
 import type { Email } from "../mailbox.ts";
 
 interface Props {
@@ -42,7 +43,7 @@ export function DeleteEmailsModal({ emails, all, onDismiss, onDeleted }: Props) 
     >
       <Box>
         {emails.slice(0, DELETE_PREVIEW_COUNT).map((email) => (
-          <div key={email.Id}>{email.Subject ?? NOT_AVAILABLE}</div>
+          <div key={email.Id}>{email.Subject || NO_SUBJECT}</div>
         ))}
         {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
       </Box>

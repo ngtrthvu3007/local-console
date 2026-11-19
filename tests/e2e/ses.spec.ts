@@ -22,7 +22,12 @@ test("add a sender identity", async ({ page }) => {
   await expect(page.getByRole("row", { name: new RegExp(sender) })).toContainText("Verified");
 });
 
-test("open a sent mail: scripts stay off, links open a new tab", async ({ page, baseURL, context, pageErrors }) => {
+test("open a sent mail: scripts stay off, links open a new tab", async ({
+  page,
+  baseURL,
+  context,
+  pageErrors,
+}) => {
   const ses = new SESv2Client(viaConsole((await consoleConfig()).region));
   await ses.send(
     new SendEmailCommand({
@@ -41,7 +46,10 @@ test("open a sent mail: scripts stay off, links open a new tab", async ({ page, 
     }),
   );
   await page.goto("/ses/mailbox");
-  await page.getByRole("row", { name: new RegExp(subject) }).click();
+  await page
+    .getByRole("row", { name: new RegExp(subject) })
+    .getByRole("link")
+    .click();
   const frame = page.frameLocator('iframe[title="Email HTML"]');
   const link = frame.getByRole("link", { name: "Confirm account" });
   await expect(link).toBeVisible();
@@ -54,7 +62,10 @@ test("open a sent mail: scripts stay off, links open a new tab", async ({ page, 
 
 test("delete the mail and the identity", async ({ page, pageErrors }) => {
   await page.goto("/ses/mailbox");
-  await page.getByRole("row", { name: new RegExp(subject) }).click();
+  await page
+    .getByRole("row", { name: new RegExp(subject) })
+    .getByRole("link")
+    .click();
   await page.getByRole("button", { name: "Delete", exact: true }).last().click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox").fill("delete");
@@ -63,7 +74,10 @@ test("delete the mail and the identity", async ({ page, pageErrors }) => {
   dropSandboxNoise(pageErrors);
 
   await page.goto("/ses/identities");
-  await page.getByRole("row", { name: new RegExp(sender) }).getByRole("checkbox").click();
+  await page
+    .getByRole("row", { name: new RegExp(sender) })
+    .getByRole("checkbox")
+    .click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   const identityDialog = page.getByRole("dialog");
   await identityDialog.getByRole("textbox").fill("delete");

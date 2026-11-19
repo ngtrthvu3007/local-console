@@ -1,9 +1,22 @@
-import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  skipToken,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { fetchJson } from "@shared/api.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { MAILBOX_ID_PARAM, MAILBOX_PATH, MAILBOX_REFRESH_INTERVAL_MS } from "../constants.ts";
-import { mailboxForRegion, mailboxSchema, readEmail, type Email } from "../mailbox.ts";
+import {
+  mailboxForRegion,
+  mailboxSchema,
+  needsMimeFields,
+  readEmail,
+  withMimeFields,
+  type Email,
+} from "../mailbox.ts";
 
 export const mailboxQueryKey = ["ses", "mailbox"];
 const MISSING_ID_FAILURE = "Email has no id, not deleted";
@@ -29,6 +42,25 @@ export function useEmailContent(email?: Email) {
     queryFn: email && !email.RejectReason ? () => readEmail(email) : skipToken,
     staleTime: Infinity,
     gcTime: 0,
+  });
+}
+
+// Không nằm dưới mailboxQueryKey: Refresh, Auto refresh và xóa mail không đọc lại MIME. Chỉ giữ subject + to, bỏ attachment
+export function useMimeFields(emails: Email[] | undefined): Email[] | undefined {
+  const results = useQueries({
+    queries: (emails ?? []).filter(needsMimeFields).map((email) => ({
+      queryKey: ["ses", "mimeFields", email.Id],
+      queryFn: async () => {
+        const { subject, to } = await readEmail(email);
+        return { subject, to };
+      },
+      staleTime: Infinity,
+    })),
+  });
+  const pending = (emails ?? []).filter(needsMimeFields);
+  return emails?.map((email) => {
+    const data = results[pending.indexOf(email)]?.data;
+    return data ? withMimeFields(email, data) : email;
   });
 }
 

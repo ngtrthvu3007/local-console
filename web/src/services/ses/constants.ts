@@ -29,3 +29,5 @@ export const VERIFICATION_STATUS: Record<
   TEMPORARY_FAILURE: { type: "warning", label: "Temporary failure" },
   NOT_STARTED: { type: "stopped", label: "Not started" },
 };
+
+export const NO_SUBJECT = "(no subject)";

@@ -143,6 +143,21 @@ const contentFromFields = (email: Email): EmailContent => ({
   attachments: [],
 });
 
+// Mail SendRawEmail không có Subject/Destination: phải đọc MIME mới có để hiện trong danh sách
+export function needsMimeFields(email: Email): boolean {
+  return Boolean(email.RawData) && !email.RejectReason && (!email.Subject || !email.Destination);
+}
+
+// Không ghi đè giá trị Floci đã trả: chỉ điền chỗ còn thiếu
+export function withMimeFields(email: Email, fields: Pick<EmailContent, "subject" | "to">): Email {
+  return {
+    ...email,
+    Subject: email.Subject || fields.subject,
+    Destination:
+      email.Destination ?? (fields.to.length ? { ToAddresses: fields.to } : email.Destination),
+  };
+}
+
 export function rawText(rawData: string): string {
   try {
     return new TextDecoder().decode(fromBase64(rawData));

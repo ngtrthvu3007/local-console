@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import Header from "@cloudscape-design/components/header";
+import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
 import type { EmailTemplateMetadata } from "@aws-sdk/client-sesv2";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
@@ -10,6 +11,7 @@ import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
@@ -24,6 +26,7 @@ const crumbs = [...sesBaseCrumbs, { text: "Templates", href: sesRoutes.templates
 
 export function Templates() {
   useBreadcrumbs(crumbs);
+  const { region } = useLoadedConfig();
   const { ref, compact } = useIsCompact();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -56,13 +59,14 @@ export function Templates() {
   );
 
   const selected = collectionProps.selectedItems ?? [];
-  const selectTemplate = (template: EmailTemplateMetadata) => {
-    if (!template.TemplateName) return;
+  const templateHref = (name: string) => {
     const next = new URLSearchParams(searchParams);
-    next.set(SEARCH_PARAMS.template, template.TemplateName);
-    // Đổi template khi panel đang mở thì thay entry, để Back luôn đóng panel
-    navigate(`?${next}`, { replace: Boolean(openName) });
+    next.set(SEARCH_PARAMS.template, name);
+    return `?${next}`;
   };
+  const selectTemplate = (name: string) =>
+    // Đổi template khi panel đang mở thì thay entry, để Back luôn đóng panel
+    navigate(templateHref(name), { replace: Boolean(openName) });
   const closeTemplate = () =>
     setSearchParams(
       (current) => {
@@ -95,7 +99,21 @@ export function Templates() {
     header: "Name",
     sortingField: NAME_FIELD,
     isRowHeader: true,
-    cell: (template) => template.TemplateName ?? NOT_AVAILABLE,
+    cell: ({ TemplateName: name }) =>
+      name ? (
+        <Link
+          href={templateHref(name)}
+          onFollow={(event) => {
+            event.preventDefault();
+            selectTemplate(name);
+          }}
+        >
+          {/* Template đang mở in đậm: Table của Cloudscape không có kiểu dòng "đang mở" riêng */}
+          {name === openName ? <strong>{name}</strong> : name}
+        </Link>
+      ) : (
+        NOT_AVAILABLE
+      ),
   };
   const createdColumn: TableProps.ColumnDefinition<EmailTemplateMetadata> = {
     id: "created",
@@ -117,6 +135,7 @@ export function Templates() {
     <Header
       variant='awsui-h1-sticky'
       counter={templates.data ? `(${templates.data.length})` : undefined}
+      description={`Templates your app sends emails with. Region: ${region}.`}
       actions={<ActionBar compact={compact} actions={barActions} />}
     >
       Templates
@@ -139,7 +158,6 @@ export function Templates() {
         loadingText='Loading templates'
         columnDefinitions={[nameColumn, createdColumn]}
         wrapLines={compact}
-        onRowClick={({ detail }) => selectTemplate(detail.item)}
         header={header}
         pagination={<Pagination {...paginationProps} />}
       />
