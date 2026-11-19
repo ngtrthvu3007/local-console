@@ -1,0 +1,230 @@
+# Ghi chú tạm: Floci 2.4.0 — Step Functions & EC2
+
+Kiểm ngày 2026-11-19 trên `local-console-floci-1` (image `floci/floci:2.4.0`, Docker Desktop macOS), region `ap-southeast-1`, account `000000000000`. Mọi request ký giả (`Signature=0`). Script probe: `/private/tmp/claude-502/-Users-vu-nguyen-Root-Workspace---Vu-nguyen-Tobias-local-console/18d09423-c930-470c-8c65-fdb41a9339ca/scratchpad/probe-sfnec2/` (`s*.py` = SFN, `e*.py` = EC2, `clean_*.py` = dọn).
+
+Lưu ý: tài liệu floci.io mô tả bản **mới hơn** 2.4.0 — nhiều điểm tài liệu nói có nhưng 2.4.0 trả `UnsupportedOperation` (ghi rõ ở mục 3 mỗi phần). Trang `.../services/stepfunctions/` bị 404; trang đúng là `https://floci.io/floci/services/step-functions/`.
+
+---
+
+## A. Step Functions
+
+### A1. Action / tính năng
+
+| Action / tính năng | KQ | Bằng chứng |
+|---|---|---|
+| `CreateStateMachine` STANDARD / EXPRESS (+ `tags`) | ✅ | 200, trả `stateMachineArn`, `stateMachineVersionArn:null`. Tạo lại cùng tên cùng definition → idempotent |
+| Definition sai khi create | ✅ | 400 `InvalidDefinition` "SCHEMA_VALIDATION_FAILED: The field 'States' is required…" |
+| `DescribeStateMachine` | ✅ | có `definition`, `roleArn`, `type`, `status`, `loggingConfiguration`, `tracingConfiguration`, `encryptionConfiguration`, `revisionId` |
+| `UpdateStateMachine` (+ `publish`, `versionDescription`) | ✅ | trả `updateDate`, `revisionId`, `stateMachineVersionArn …:2` |
+| `DeleteStateMachine` | ✅ | dọn xong list = 0 |
+| `ListStateMachines` phân trang | ✅ | `maxResults:2` → 2 item + `nextToken` |
+| `ValidateStateMachineDefinition` | ✅ | OK → `{"result":"OK","diagnostics":[]}`; sai → `FAIL` + `diagnostics[{severity:ERROR, code:SCHEMA_VALIDATION_FAILED, message}]` |
+| Version: `PublishStateMachineVersion`, `ListStateMachineVersions`, `DeleteStateMachineVersion`, Describe `…:1` | ✅ | `DescribeStateMachine` với ARN `:1` trả definition cũ + `description:"v1"` |
+| Alias: Create/Describe/List/Update/Delete | ✅ | chạy qua alias ARN → execution có `stateMachineAliasArn` + `stateMachineVersionArn` đúng |
+| `TestState` | ❌ | 400 `UnsupportedOperation` "Operation TestState is not supported." |
+| `DescribeStateMachineForExecution` | ❌ | 400 `UnsupportedOperation` |
+| `RedriveExecution` | ❌ | 400 `UnsupportedOperation`; `DescribeExecution` không có `redriveStatus`/`redriveCount` |
+| `StartExecution` (có/không `name`) | ✅ | trả `executionArn`, `startDate`; không name → name = UUID |
+| `StartSyncExecution` (Express) | ✅ | trả đủ `status/output` hoặc `error/cause`. Gọi trên STANDARD → 400 `StateMachineTypeNotSupported` (đúng AWS) |
+| `DescribeExecution` | ✅ | `status`, `input`, `output`, `error`, `cause`, `startDate`, `stopDate` |
+| `ListExecutions` lọc `statusFilter` + phân trang | ✅ | `FAILED`/`RUNNING` lọc đúng; `maxResults:1` → `nextToken` |
+| `ListExecutions` theo version/alias ARN | ⚠️ | trả `[]` (AWS trả execution chạy qua version/alias đó) |
+| `ListExecutions` theo `mapRunArn` | ⚠️ | trả `[]` |
+| `StopExecution` (`error`, `cause`) | ✅ | status `ABORTED`, history có `ExecutionAborted {error,cause}` |
+| `GetExecutionHistory` | ✅ | đủ event từng bước, có `id` + `previousEventId` (dựng được cây/graph): `ExecutionStarted`, `{Pass,Choice,Task,Wait,Parallel,Map,Succeed,Fail}StateEntered/Exited` (có `name`, `input`/`output`), `TaskScheduled` (`resourceType`, `resource`, `parameters`, `heartbeatInSeconds`), `TaskStarted`, `TaskSubmitted` (.sync), `TaskSucceeded`/`TaskFailed` (`error`,`cause`), `LambdaFunctionScheduled/Started/Succeeded` (ARN trực tiếp), `ActivityScheduled/Started/Succeeded`, `ParallelStateStarted/Succeeded/Failed`, `MapStateStarted {length}`, `MapIterationStarted/Succeeded {index}`, `MapRunStarted/Succeeded`, `ExecutionSucceeded/Failed/Aborted` |
+| History: `maxResults`, `nextToken`, `reverseOrder`, `includeExecutionData:false` | ✅ | trang 5 event đảo ngược [29..25] rồi [24..20]; `includeExecutionData:false` bỏ input/output |
+| Express async (`StartExecution` trên EXPRESS) | ✅ (hơn AWS) | Describe/List/History đều chạy (AWS thật không cho). ARN dạng `…:express:<sm>:<uuid>:<uuid>`; qua StartSync là `…:express:<sm>:<ISO time>:<uuid>` |
+| Tag/Untag/ListTags | ✅ | |
+| Pass / Choice / Succeed / Fail | ✅ | Choice rẽ đúng nhánh; Fail → `error/cause` đúng |
+| Wait `Seconds` | ⚠️ chờ thật nhưng **bị cắt ở 30s** | Wait 5s → 5.27s; Wait 60s → SUCCEEDED sau **30.1s**; `TimestampPath` quá khứ → xong ngay. Retry `IntervalSeconds:45` cũng cắt còn 30s. Cấu hình `floci.services.stepfunctions.max-wait-seconds` (mặc định 30). Không có API “tua nhanh” |
+| Parallel | ✅ | output `["a","b"]` |
+| Map inline (`ItemsPath`, `ItemSelector`, `$$.Map.Item.Value/Index`, `MaxConcurrency`) | ✅ | kết quả đúng thứ tự input |
+| Distributed Map (`ItemReader` s3:getObject JSON, `ItemBatcher`, `ResultWriter`) | ✅ | 5 item / batch 2 → `executionCounts.total=3`; ghi `out/<id>/SUCCEEDED_0.json`, `manifest.json` lên S3 |
+| `DescribeMapRun` | ✅ | `itemCounts`, `executionCounts`, `maxConcurrency`… |
+| `ListMapRuns` | ❌ | 400 `UnsupportedOperation` |
+| Retry / Catch | ✅ | Retry 2 lần (interval 1s) rồi Catch `States.ALL` → `ResultPath $.err` = `{Error,Cause}`; với Lambda: lỗi custom `CustomErr` retry rồi catch |
+| JSONPath: `InputPath`, `Parameters`, `ResultSelector`, `ResultPath`, `OutputPath`, `$$` context, intrinsic (`States.Format`, `States.ArrayLength`) | ✅ | |
+| `Assign` + biến `$x` trong JSONPath | ⚠️ | `"got.$":"$x"` → `{"got":null}` (AWS trả giá trị biến) |
+| JSONata (`QueryLanguage`, `Output`, `Assign`, `Condition`, `$states.input`, biến `$saved`, `$sum`, `$uppercase`) | ✅ | output `{"v":"abc","s":6}` |
+| Activity: Create/Describe/List/Delete, `GetActivityTask` + `SendTaskSuccess` | ✅ | `GetActivityTask` trả `taskToken`, `input`; execution SUCCEEDED với output worker |
+| `SendTaskSuccess`/`SendTaskFailure`/`SendTaskHeartbeat` | ✅ | token sai → 400 `InvalidToken` |
+| `TimeoutSeconds` trên Task | ✅ | `lambda:invoke.waitForTaskToken` + `TimeoutSeconds:5` → `States.Timeout` sau 5.2s |
+| `loggingConfiguration` (CloudWatch Logs) | ❌ (chỉ lưu cấu hình) | Describe trả lại đúng cấu hình `level:ALL`; sau khi chạy, log group `/aws/vendedlogs/states/…` **không có log stream nào**; không tự tạo `/aws/states/*` |
+| Sự kiện EventBridge `Step Functions Execution Status Change` | ✅ | rule `source:aws.states` → SQS nhận 2 event (RUNNING, rồi kết thúc) cho 1 execution |
+
+### A2. Điểm nối với service khác
+
+| Điểm nối | KQ | Bằng chứng |
+|---|---|---|
+| Lambda `arn:aws:states:::lambda:invoke` | ✅ | Payload tới hàm; output `{"ExecutedVersion":"$LATEST","Payload":…,"StatusCode":200}` |
+| Lambda ARN trực tiếp (`Resource: arn:aws:lambda:…`) | ✅ | event `LambdaFunction*` |
+| Lambda lỗi → `error`=`errorType`, `cause`=JSON lỗi + trace | ✅ | |
+| `lambda:invoke.waitForTaskToken` | ✅ | hàm được gọi, chờ token (timeout chạy đúng) |
+| SQS `sqs:sendMessage` | ✅ | message `{"hello":"vu"}` tới queue |
+| SQS `sendMessage.waitForTaskToken` + `SendTaskSuccess/Failure/Heartbeat` | ✅ | token (UUID 36 ký tự) có trong body; success → output `{"done":true}`; failure → `FAILED` `Rejected/by probe` |
+| SNS `sns:publish` | ✅ | tới queue subscribe (raw) nhận `vu` |
+| DynamoDB `putItem`/`getItem`/`updateItem`/`deleteItem` | ✅ | item `c` tăng 1→2, `ReturnValues ALL_NEW` đúng |
+| EventBridge `events:putEvents` | ✅ | rule → SQS nhận event `source lc.probe.sfn`, `detail {"who":"vu"}` |
+| Nested `states:startExecution` / `.sync` / `.sync:2` | ✅ | `.sync` Output là chuỗi JSON, `.sync:2` Output là object (đúng AWS); có `TaskSubmitted` |
+| `aws-sdk:sfn:startSyncExecution` | ✅ | |
+| `aws-sdk:*` — chạy được | ⚠️ một phần | ✅ `dynamodb:scan`, `dynamodb:query`, `sqs:sendMessage`, `sns:publish`, `s3:putObject` (lỗi map đúng kiểu `S3.NoSuchBucket`) |
+| `aws-sdk:*` — không chạy | ❌ | `States.TaskFailed "Unsupported resource: …"`: `s3:getObject`, `s3:listObjectsV2`, `s3:deleteObject`, `s3:copyObject`, `sqs:listQueues`, `lambda:invoke`, `lambda:listFunctions`, `ec2:describeVpcs`, `ssm:getParameter`, `secretsmanager:getSecretValue`, `eventbridge:putEvents`, `sfn:listStateMachines`, `cloudwatchlogs:describeLogGroups`, `kinesis:listStreams` |
+| ECS `ecs:runTask` / `.sync` | ⚠️ chưa chạy trọn | integration có thật: gọi tới ECS, trả `ECS.ClusterNotFoundException` (không tạo cluster để thử tiếp — ECS ngoài phạm vi) |
+| HTTP Task `http:invoke` | ⚠️ | `http://` bị chặn ("must have the scheme 'https'… `floci.services.stepfunctions.allow-plaintext-http=true`"); thiếu `Authentication.ConnectionArn` → `States.Runtime`; có connection EventBridge → gọi thật (host sai → `States.TaskFailed "…: System error"`) nhưng gọi `https://example.com/` thành công thì **output `{}`** (không có `ResponseBody`/`StatusCode`) |
+| `apigateway:invoke` | ⚠️ | "only REST POST with IAM_ROLE and JSON request body is supported" (agent khác kiểm API GW) |
+| `glue:startJobRun`, `batch:submitJob.sync` | ❌ | `Unsupported resource` |
+| Nguồn kích hoạt: EventBridge Scheduler `at(...)` và `rate(1 minute)` → SFN | ✅ | execution có input `{"from":"scheduler"}` / `{"from":"rate"}` |
+| S3 (EventBridge notification) → rule → SFN | ✅ | execution input là event `aws.s3` `Object Created` |
+| EventBridge rule → SFN | ✅ (đã biết) | |
+| CloudWatch Logs (`loggingConfiguration`) | ❌ | xem A1 |
+| CloudFormation `AWS::StepFunctions::StateMachine` (`DefinitionString` + `DefinitionSubstitutions`, `Definition` object, EXPRESS, tên tự sinh) | ✅ | definition thật có `"Result":"hello-sub"`; tên tự sinh `lc-probe-sfn-stack-SM2-1800a2ec69f4`; `Ref` = ARN, `GetAtt Name` ok |
+| CFN `AWS::StepFunctions::Activity` / `StateMachineVersion` / `StateMachineAlias` | ❌ stub | `CREATE_COMPLETE` với physical id giả (`Act-6c085326`, `Ver-…`, `Al-…`) nhưng không có activity/version/alias thật |
+| CFN tag `aws:cloudformation:*` lên state machine | ❌ | `ListTagsForResource` = `[]` |
+| Tra ngược resource → stack | ✅ | `DescribeStackResources?PhysicalResourceId=<SM ARN>` → `StackName` (dùng được cho `StackLink`) |
+
+### A3. Floci khác tài liệu / khác AWS
+- Tài liệu (bản mới) không liệt kê `TestState`, `RedriveExecution`, `DescribeStateMachineForExecution`, `ListMapRuns` — 2.4.0 cũng không có (khớp).
+- Tài liệu ghi `dynamodb:query` không hỗ trợ — thực tế `aws-sdk:dynamodb:query` chạy được.
+- Tài liệu ghi optimized `s3:getObject`/`listObjectsV2` chỉ dùng cho `ItemReader` — đúng: dạng `aws-sdk:s3:getObject` trong Task thì lỗi.
+- Wait/Retry bị cắt 30s (AWS chờ đủ). Có lợi cho dev, nhưng console không nên hiển thị “còn X giây” theo định nghĩa.
+- Express execution xem lại được bằng Describe/List/History (AWS chỉ có qua CloudWatch Logs).
+- `TaskStarted`/`LambdaFunctionStarted`/`ActivityStarted` phát ngay lúc schedule (theo tài liệu; thấy cùng timestamp).
+- HTTP Task output rỗng `{}`.
+- Biến `$x` trong JSONPath trả null.
+- Logging không ghi gì.
+- Execution name của Standard đã đóng không bao giờ được giải phóng (tài liệu); Express giữ trong RAM không giới hạn.
+
+### A4. Gợi ý thô
+| Tính năng | Đề xuất | Lý do |
+|---|---|---|
+| List state machine (tên, type, ngày tạo) + chi tiết (definition JSON, role, logging, tag, version/alias) | **Làm** | API đủ |
+| Start execution (nhập input JSON) — Standard dùng `StartExecution`, Express cho chọn `StartSyncExecution` | **Làm** | dev chạy thử thường xuyên (đoán) |
+| List execution (lọc status, phân trang) + chi tiết execution (input/output/error/cause) + **bảng event history từng bước** | **Làm** | `GetExecutionHistory` đủ chi tiết, có `previousEventId` |
+| Stop execution | **Làm** | |
+| Graph trực quan definition (tô màu bước theo history) | **Để sau** | công L; bảng event + tên state đã đủ dùng; có thể vẽ sau từ definition + history |
+| Link điểm nối: từ `TaskScheduled.parameters` link tới Lambda / queue / table / topic đã có trên console | **Làm** (rẻ) | tiêu chí nối service; chỉ parse `resourceType` + `FunctionName/QueueUrl/TableName/TopicArn` |
+| `StackLink` cho state machine | **Làm** | tra ngược bằng `DescribeStackResources` chạy; tag CFN không có |
+| Version/alias | **Để sau** (đoán ít dev dùng local) | API đủ, thêm M nhỏ |
+| Activity + gửi `SendTaskSuccess/Failure` tay cho task đang chờ token | **Để sau** | hữu ích để test callback, nhưng hiếm (đoán) |
+| Validate definition khi tạo/sửa | **Để sau** | API có; tạo/sửa SM thường qua CDK |
+| `TestState`, Redrive, logs | **Không làm** | Floci không hỗ trợ |
+- **Backend:** không cần sửa — mọi thứ qua AWS SDK v3 (`@aws-sdk/client-sfn`) trong trình duyệt qua proxy `/aws` (JSON 1.0). Tra stack dùng client CloudFormation đã có.
+- **Ước lượng:** M (list + detail + executions + history table + start/stop + link). Graph +L.
+
+### A5. Chưa kiểm được
+- ECS `runTask.sync` chạy thật (cần cluster + task def; ECS ngoài phạm vi).
+- `.waitForTaskToken` với SNS/ECS; `SendTaskHeartbeat` quá hạn → `States.HeartbeatTimeout` (chưa đợi).
+- Map `ToleratedFailure*`, `ItemReader` CSV/listObjectsV2, Distributed Map `ExecutionType: EXPRESS`.
+- API Gateway → SFN (agent khác kiểm).
+- Nội dung `assignedVariables` trong history JSONata (không xem kỹ).
+- Persist sau restart Floci (tài liệu: execution RUNNING → ABORTED; không restart Floci theo yêu cầu).
+
+---
+
+## B. EC2
+
+### B1. Action / tính năng
+
+| Action / tính năng | KQ | Bằng chứng |
+|---|---|---|
+| `DescribeImages` | ✅ | 31 AMI catalog (AL2, AL2023 x86/arm, Ubuntu 20.04/22.04/24.04, Debian 12, Alpine, Windows 2022 (map sang image AL2023), openSUSE, SLES, Rocky, RHEL…). Map AMI → Docker image nằm trong binary (`image-catalog.yaml`): vd `ami-0abcdef1234567891` → `public.ecr.aws/amazonlinux/amazonlinux:2023`, `ami-ubuntu2204` → `ubuntu:22.04`, `ami-alpine` → `alpine:latest`. **Chỉ `ami-ubuntu2404-cloud-arm64` (`floci/ami-ubuntu:24.04-arm64`) có `guestRuntime: systemd`** (chạy `/sbin/init`, chưa thử vì phải pull image lớn) |
+| `RunInstances` → container Docker thật | ✅ | container `floci-aws-ec2-<instanceId>`, cmd `tail -f /dev/null`, `Privileged=true`, mem 1 GiB, 2 CPU; label `io.floci.service=ec2`, `io.floci.resource-id=<id>`, `io.floci.region`, `io.floci.account`. Env: `AWS_ENDPOINT_URL=http://localhost.floci.io:4566`, `AWS_ACCESS_KEY_ID=test`…, `AWS_EC2_INSTANCE_ID`, `AWS_EC2_METADATA_SERVICE_ENDPOINT` |
+| `pending` → `running` | ✅ | AL2023 (lần đầu, có thể gồm pull image): **10s**. Ubuntu: container chạy ~1 phút sau RunInstances (log 08:56:57, gồm pull + chờ do Alpine lỗi cùng lúc; không đo riêng) |
+| AMI không có trong catalog | ✅ | rơi về AL2023 (instance CFN có `imageId` là chuỗi path SSM vẫn chạy AL2023) |
+| Pull image lỗi | ⚠️ | Alpine bị `429 toomanyrequests` từ public.ecr.aws → instance chuyển thẳng `terminated`, **không có `stateReason`/message** (chỉ thấy trong `docker logs` Floci: "Failed to launch EC2 instance …") |
+| `StopInstances` | ✅ | `docker stop` (container còn, `Exited (137)`), mất **~31s** (tail bỏ qua SIGTERM → chờ timeout 30s); `ipAddress` biến mất, private IP giữ |
+| `StartInstances` | ⚠️ | `running` sau 1s; dữ liệu trong container còn (`/tmp/x`), **nhưng chỉ còn `tail` — sshd và process user data không chạy lại**; port SG forward không tự phục hồi |
+| `RebootInstances` | ✅ | `docker restart` (log "Rebooted EC2 container") |
+| `TerminateInstances` | ✅ | container bị `docker rm -f` (kiểm `docker ps -a` hết); instance `terminated` còn trong Describe ~1h |
+| Termination protection (`ModifyInstanceAttribute DisableApiTermination=true`) | ❌ | `ModifyInstanceAttribute` 200 nhưng Terminate vẫn chạy (`shutting-down`) |
+| `DescribeInstances` | ✅ | `privateIpAddress` (IP thật trong Docker network của VPC, vd 172.31.0.13 / 10.50.1.10), `privateDnsName ip-172-31-0-13.ap-southeast-1.compute.internal`, `ipAddress=127.0.0.1`, `dnsName=localhost`, `keyName`, `subnetId`, `vpcId`, `groupSet`, `tagSet`, ENI, `blockDeviceMapping` (vol root), `metadataOptions`, `iamInstanceProfile`. `groupSet` ở cấp reservation rỗng |
+| Filter `tag:<k>`, `instance-state-name` | ✅ | |
+| `DescribeInstanceStatus` (+ `IncludeAllInstances`) | ✅ | `ok`/`passed` reachability |
+| `DescribeInstanceAttribute userData` | ✅ | trả base64 đúng script |
+| `ModifyInstanceAttribute` | ⚠️ | trả `true` (xem termination protection ❌) |
+| `GetConsoleOutput` | ❌ | 400 `UnsupportedOperation` "Operation GetConsoleOutput is not supported." (tài liệu bản mới nói có) |
+| **User data** | ✅ nhưng chậm, cần internet | Floci cài `openssh-server` trong container (`dnf`/`apt-get`/`apk`, cần mạng) → start sshd → copy `/var/lib/user-data.sh` → chạy. AL2023: script chạy ở **~41s**, Ubuntu 22.04: **~83s**, instance báo `running` từ giây 10. Kết quả thật: `/tmp/x` có nội dung, `curl` IMDS trong script ok, `python3 -m http.server 8080` chạy nền. Chạy 1 lần (không chạy lại khi start). Instance CFN (`Fn::Base64`) cũng chạy |
+| Output user data | ⚠️ | **chỉ có trong `docker logs` của container Floci**: `UserDataPipeline … UserData shellscript part 1/1 completed for EC2 instance i-…: ud stdout line` (hoặc `(no output)`). Không có API nào trả, không ghi CloudWatch Logs |
+| SSH | ⚠️ | port 22 → host `2200, 2201, …` (thứ tự cấp phát; **API không trả port**). Login bằng key pair được với user **`root`**; `ec2-user` bị `Permission denied` |
+| Port app / Security group | ⚠️ | Mỗi rule ingress TCP từ CIDR → sidecar socat `floci-aws-ec2-fwd-<id>-<port>` publish host port **30000–30999** (`127.0.0.1:30000` → 8080 trả 200). Port host không xuất hiện trong API. Revoke rule → sidecar bị gỡ, Authorize lại → tạo lại. Stop → gỡ, Start → **không** tạo lại. SG không chặn gì (enforcement tắt mặc định) |
+| Mạng container ↔ instance | ✅ | Docker network `floci-aws-vpc-4566-<region>-<vpcId>`; container khác trong network gọi `172.31.0.13:8080` được. Từ máy dev (macOS) IP container không route được (log: "Docker backend is docker desktop… public addresses stay on 127.0.0.1") |
+| IMDS `169.254.169.254` | ✅ | socat trong container → `172.28.0.2:9169`. `instance-id`, `local-ipv4`, `public-ipv4` (127.0.0.1), `user-data`, `dynamic/instance-identity/document`, `tags/instance/` (có `Name` dù `instanceMetadataTags=disabled`). IMDSv2 token OK; `HttpTokens=required` → v1 trả 401. `IamInstanceProfile` → `iam/security-credentials/<role>` trả AccessKey/Secret/Token hạn 1h, `iam/info` đúng. `GET /latest/meta-data/` (listing) → 404 HTML |
+| Key pair: Create (rsa, trả `keyMaterial`), Import (ed25519 thật), Describe, Delete | ✅ | key giả sai format → `InvalidKey.Format` |
+| Security group: Create, Authorize/Revoke ingress, DescribeSecurityGroups, `DescribeSecurityGroupRules`, Delete | ⚠️ | `DescribeSecurityGroupRules` sau Revoke + Authorize lại vẫn còn rule id cũ (2 rule ingress 8080) trong khi `DescribeSecurityGroups` chỉ còn 1 |
+| VPC / Subnet / IGW (attach/detach) / Route table (route, associate) | ✅ metadata | default VPC `vpc-default-ap-southeast-1` (172.31.0.0/16), 3 subnet `subnet-default-ap-southeast-1-{a,b,c}`, `sg-default-…`, `igw-default`. VPC mới → Docker network riêng, instance nhận IP trong CIDR subnet (10.50.1.10) |
+| EBS: CreateVolume, Attach, Detach, Describe, Delete | ✅ | Attach → `in-use`, loop device `/dev/loop0` gắn vào container (`/dev/sdf`). Floci sinh container `floci-aws-ec2-volume-helper` (alpine:3.21, docker volume `floci-aws-ec2-volumes`) — **không tự xóa** (xem B6) |
+| `CreateSnapshot` | ❌ | 400 `UnsupportedOperation` (`DescribeSnapshots` chạy, rỗng) |
+| Elastic IP: Allocate (`203.0.113.x`), Associate, Disassociate, Release | ⚠️ | API chạy nhưng `DescribeInstances.ipAddress` vẫn `127.0.0.1` sau associate |
+| `CreateImage` (AMI từ instance) | ✅ | `docker commit` → image `floci-ami/ami-…:latest`, state `available` ~3s; `DeregisterImage` xóa image Docker |
+| Launch template: Create, DescribeVersions, Delete; `RunInstances` từ template | ✅ | instance nhận type/tag từ template |
+| Tag CRUD (`CreateTags`, `DescribeTags`, `DeleteTags`) | ✅ | |
+| SSM `SendCommand` tới instance | ❌ thực tế | `SendCommand` 200 nhưng `GetCommandInvocation` mãi `Pending`; `DescribeInstanceInformation` rỗng (container không có SSM agent; tài liệu: phải tự đăng ký agent) |
+| Auto Scaling / ELBv2 | (có service) | `DescribeAutoScalingGroups`, `DescribeLoadBalancers` trả 200 rỗng — ngoài phạm vi, không thử thêm |
+
+### B2. Điểm nối với service khác
+
+| Điểm nối | KQ | Bằng chứng |
+|---|---|---|
+| CFN `AWS::EC2::VPC`, `Subnet`, `SecurityGroup` (ingress inline), `Instance` (KeyName, SubnetId, SecurityGroupIds, UserData, Tags), `EIP` | ✅ | stack `CREATE_COMPLETE` ngay; physical id thật (`vpc-da12fe21`, `subnet-…`, `sg-…`, `i-207d9564dfa145322`, EIP `203.0.113.3`); instance chạy container thật, user data chạy, SG port 9000 được forward |
+| CFN `Fn::GetAtt Instance.PrivateIp` / `AvailabilityZone` | ✅ | `10.60.1.10`, `ap-southeast-1a` |
+| CFN `Fn::GetAtt Instance.PublicDnsName` | ❌ | trả chuỗi giả `"Inst.PublicDnsName"` |
+| CFN `{{resolve:ssm:/aws/service/ami-amazon-linux-latest/…}}` | ✅ | `imageId=ami-0abcdef1234567891` |
+| CFN Parameter `AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>` | ❌ | không resolve: `imageId` = chuỗi path SSM (instance vẫn chạy vì AMI lạ → fallback AL2023) |
+| SSM public parameters AMI (`/aws/service/ami-amazon-linux-latest/*`) | ✅ | `GetParameter`/`GetParametersByPath` trả AMI catalog |
+| Tra ngược instance → stack | ✅ | `DescribeStackResources?PhysicalResourceId=i-…` → `lc-probe-ec2-stack`. Tag `aws:cloudformation:*` **không** có trên instance (chỉ có `Name`) |
+| Xóa stack | ✅ | instance CFN bị terminate + container bị xóa; VPC/SG/EIP của stack hết |
+| EventBridge `EC2 Instance State-change Notification` | ❌ | rule `source:["aws.ec2"]` → SQS: **0 event** qua stop, start, reboot, terminate |
+| CloudWatch Logs | ❌ | không log group nào cho EC2/user data |
+| IAM instance profile → IMDS credentials | ✅ | xem B1 |
+| SSM Run Command / Session Manager | ❌ | xem B1 |
+
+### B3. Floci khác tài liệu / khác AWS
+- **`GetConsoleOutput` không có trong 2.4.0** (tài liệu mới: trả SSH host keys — dù có cũng không chứa output user data).
+- `CreateSnapshot` không có trong 2.4.0 (tài liệu mới liệt kê).
+- User data chạy **sau** khi cài openssh qua mạng (40–80s sau `running`); máy không có internet hoặc image không có package manager → có thể không bao giờ chạy (chưa thử offline).
+- Output user data chỉ ở log Floci; AWS có `/var/log/cloud-init-output.log` + console output.
+- SSH user là `root`, không phải `ec2-user`/`ubuntu`.
+- Port SSH (22xx) và port app (30000+) không lộ qua API; chỉ thấy qua `docker ps`/log Floci.
+- `publicIp` luôn `127.0.0.1`, `dnsName=localhost` (Docker Desktop); EIP không đổi IP instance.
+- Stop/Start: sshd và process không chạy lại (container chỉ chạy `tail`), port forward không phục hồi.
+- Termination protection bị bỏ qua.
+- Không có EventBridge state-change event.
+- Pull image lỗi → `terminated` im lặng.
+- Stop mất ~30s.
+
+### B4. Gợi ý thô
+| Tính năng | Đề xuất | Lý do |
+|---|---|---|
+| List instance (tên tag, id, state, type, AMI, private IP, VPC/subnet, SG, key) + filter state/tag | **Làm** | API đủ; roadmap (1) |
+| Chi tiết instance + tab tag (sửa tag) | **Làm** | `CreateTags/DeleteTags` chạy |
+| Start / Stop / Reboot / Terminate | **Làm** | chạy thật trên container; cần hiển thị trạng thái `stopping` lâu ~30s |
+| `StackLink` instance → stack | **Làm** | `DescribeStackResources` theo physical id chạy |
+| Xem **user data** (decode base64 từ `DescribeInstanceAttribute`) | **Làm** | rẻ, roadmap (3) |
+| Xem **output user data** / console output | **Để sau** | Floci không có API; muốn có phải để backend đọc `docker logs` container Floci (dòng `UserDataPipeline … completed for EC2 instance <id>: …`) → console phải mount `/var/run/docker.sock` (hiện chỉ Floci mount) → rủi ro bảo mật + phụ thuộc định dạng log. Không đáng ở bản đầu |
+| Hiện port SSH / port app đã publish (lệnh `ssh -p 22xx root@localhost`) | **Để sau** | cũng cần Docker API (backend); có thể đoán từ label/tên container `floci-aws-ec2-fwd-<id>-<port>` |
+| Security group (xem rule, thêm/xóa ingress) | **Để sau** (đoán) | API chạy (có lỗi nhỏ `DescribeSecurityGroupRules`); thêm rule = mở port host 30000+ — hữu ích nhưng không phải thói quen chính |
+| VPC/Subnet/RouteTable/IGW, EBS, EIP, AMI, launch template, key pair | **Để sau / Không làm** | gần như metadata; dev ít xem local (đoán) |
+| Launch instance từ console (wizard) | **Để sau** | instance thường do CDK tạo (roadmap); có thể form tối thiểu AMI + type + user data + key |
+| EventBridge state-change, SSM Run Command, CloudWatch Logs | **Không làm** | Floci không hỗ trợ |
+- **Backend:** không cần sửa cho phần “Làm” (SDK `@aws-sdk/client-ec2` qua `/aws`, query protocol). Chỉ cần backend (Docker socket) nếu muốn output user data / port mapping → khuyên không làm.
+- **Ước lượng:** M (list + detail + actions + tags + user data + StackLink). Thêm SG CRUD: +S. Output user data qua docker logs: +M và đổi `docker-compose.yml`.
+
+### B5. Chưa kiểm được
+- Image `systemd` (`ami-ubuntu2404-cloud-arm64` → `floci/ami-ubuntu:24.04-arm64`, chạy `/sbin/init`): không chạy để tránh pull image lớn; không biết user data có qua cloud-init thật không.
+- Alpine: pull `public.ecr.aws/docker/library/alpine` bị 429 rate limit → không thử user data trên Alpine.
+- User data khi không có internet (cài openssh thất bại) — chưa thử.
+- `FLOCI_NETWORK_SECURITY_GROUP_ENFORCEMENT_ENABLED=true` (chặn theo SG) — cần đổi env + restart Floci, bị cấm.
+- `FLOCI_SERVICES_EC2_CONTAINER_IPS_ROUTABLE` — như trên.
+- Format user data multipart / cloud-config (`#cloud-config`) — chưa thử (log ghi "shellscript part 1/1" → có xử lý multipart).
+- EBS dữ liệu thật trên `/dev/sdf` (mkfs/mount) — chỉ thấy loop device.
+- ASG/ELB — ngoài phạm vi.
+
+### B6. Xác nhận đã dọn (cả hai service)
+Kiểm lại sau khi dọn (script `clean_sfn.py`, `clean_ec2.py`, rồi liệt kê lại):
+- SFN: state machine `lc-probe-sfn-*` = 0 (kể cả version/alias), activity = 0, Lambda `lc-probe-sfn-fn` = 0, queue `lc-probe-sfn-*`/`lc-probe-ec2-*` = 0, topic = 0, table = 0, bucket = 0, EventBridge rule/connection = 0, schedule = 0, log group `lc-probe-sfn*` (gồm `/aws/lambda/lc-probe-sfn-fn`) = 0, stack `lc-probe-sfn-stack` đã xóa (resource tạo thật của nó cũng hết).
+- EC2: instance `lc-probe-ec2-*` = 7 bản ghi đều `terminated` (Floci giữ ~1h rồi tự xóa; không xóa sớm được), container `floci-aws-ec2-i-*` và `floci-aws-ec2-fwd-*` = 0 (`docker ps -a`), image `floci-ami/*` = 0, volume = 0, snapshot = 0, EIP = 0, key pair = 0, launch template = 0, AMI tự tạo = 0, VPC/subnet/SG/IGW/route table chỉ còn mặc định, IAM role/instance profile `lc-probe-ec2-*` = 0, stack `lc-probe-ec2-stack` `DELETE_COMPLETE`.
+- **Còn sót do Floci sinh (không có prefix, không xóa vì chỉ được quan sát Docker):**
+  - container `floci-aws-ec2-volume-helper` (alpine:3.21, sinh khi `AttachVolume`, Floci không tự gỡ) + docker volume `floci-aws-ec2-volumes`. Muốn xóa: `docker rm -f floci-aws-ec2-volume-helper && docker volume rm floci-aws-ec2-volumes`.
+  - Docker network `floci-aws-vpc-4566-ap-southeast-1-vpc-default-ap-southeast-1` (default VPC; container Floci đang gắn vào) — để nguyên.
+  - Image Floci tự pull: `public.ecr.aws/amazonlinux/amazonlinux:2023`, `public.ecr.aws/docker/library/ubuntu:22.04`, `alpine:3.21`.
+- Lưu ý: scratchpad `probe/` có `h.py` của agent khác (ghi đè helper của tôi lúc đầu); script của tôi đã dời sang `probe-sfnec2/`.
