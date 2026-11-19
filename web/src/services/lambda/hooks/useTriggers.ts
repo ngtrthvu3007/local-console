@@ -22,9 +22,10 @@ import {
 } from "../../s3/notificationRules.ts";
 import {
   DYNAMODB_ARN_PATTERN,
+  KINESIS_ARN_PATTERN,
   STARTING_POSITIONS,
   type StartingPosition,
-  type TriggerSource,
+  type TriggerRowSource,
 } from "../constants.ts";
 import type { TriggerFormOutput } from "../schemas.ts";
 import { functionQueryKey } from "./useFunctions.ts";
@@ -34,8 +35,8 @@ const ARN_SEPARATOR = ":";
 
 export interface TriggerRow {
   id: string;
-  source: TriggerSource;
-  resource: string; // tên bucket, queue hoặc bảng DynamoDB
+  source: TriggerRowSource;
+  resource: string; // tên bucket, queue, bảng DynamoDB hoặc stream Kinesis
   details: string;
   state?: string; // chỉ event source mapping (SQS, DynamoDB) có trạng thái bật/tắt
   rule?: NotificationRule; // S3: rule notification trỏ tới function
@@ -61,6 +62,7 @@ async function updateBucketRules(
       Bucket: bucket,
       NotificationConfiguration: toNotificationConfiguration(
         change(toNotificationRules(configuration)),
+        configuration,
       ),
     }),
   );
@@ -85,15 +87,23 @@ const DYNAMODB_STREAM_MARKER = "/stream/";
 const tableNameOf = (streamArn: string) =>
   streamArn.split(DYNAMODB_TABLE_MARKER)[1]?.split(DYNAMODB_STREAM_MARKER)[0] ?? NOT_AVAILABLE;
 
-// Nguồn của event source mapping lấy theo ARN (trước đây mọi mapping đều bị ghi là SQS)
+// "arn:aws:kinesis:…:stream/orders" → "orders"
+const KINESIS_STREAM_MARKER = ":stream/";
+const streamNameOf = (streamArn: string) =>
+  streamArn.split(KINESIS_STREAM_MARKER)[1] ?? NOT_AVAILABLE;
+
+// Nguồn của event source mapping lấy theo ARN; ARN không phải DynamoDB / Kinesis là SQS
+export function mappingSourceOf(arn: string): Pick<TriggerRow, "source" | "resource"> {
+  if (DYNAMODB_ARN_PATTERN.test(arn)) return { source: "dynamodb", resource: tableNameOf(arn) };
+  if (KINESIS_ARN_PATTERN.test(arn)) return { source: "kinesis", resource: streamNameOf(arn) };
+  return { source: "sqs", resource: arn.split(ARN_SEPARATOR).pop() ?? NOT_AVAILABLE };
+}
+
 function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
-  const arn = mapping.EventSourceArn ?? "";
-  const fromDynamoDB = DYNAMODB_ARN_PATTERN.test(arn);
   const startingPosition = mapping.StartingPosition as StartingPosition | undefined;
   return {
     id: `mapping:${mapping.UUID}`,
-    source: fromDynamoDB ? "dynamodb" : "sqs",
-    resource: fromDynamoDB ? tableNameOf(arn) : (arn.split(ARN_SEPARATOR).pop() ?? NOT_AVAILABLE),
+    ...mappingSourceOf(mapping.EventSourceArn ?? ""),
     details: [
       `Batch size ${mapping.BatchSize}`,
       startingPosition && STARTING_POSITIONS[startingPosition],
