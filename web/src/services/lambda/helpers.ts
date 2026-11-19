@@ -26,6 +26,12 @@ export const logMessageText = (message = "") =>
 
 const FUNCTION_ARN_MARKER = ":function:";
 
+const ARN_SEPARATOR = ":";
+
+// "arn:aws:lambda:…:function:my-function:prod" → "my-function" (bỏ version / alias)
+export const functionNameOfArn = (arn: string) =>
+  arn.split(FUNCTION_ARN_MARKER)[1]?.split(ARN_SEPARATOR)[0] ?? NOT_AVAILABLE;
+
 // Function của event source mapping: "arn:aws:lambda:…:function:my-function" → "my-function"
 export const functionNameOfMapping = (mapping: EventSourceMappingConfiguration) =>
   mapping.FunctionArn?.split(FUNCTION_ARN_MARKER)[1] ?? NOT_AVAILABLE;

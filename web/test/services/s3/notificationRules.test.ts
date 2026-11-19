@@ -111,6 +111,12 @@ describe("toNotificationConfiguration", () => {
     });
   });
 
+  it("keeps the EventBridge setting of the current configuration", () => {
+    const current = { EventBridgeConfiguration: {}, QueueConfigurations: [] };
+    expect(toNotificationConfiguration([], current).EventBridgeConfiguration).toEqual({});
+    expect(toNotificationConfiguration([])).not.toHaveProperty("EventBridgeConfiguration");
+  });
+
   it("round-trips with toNotificationRules", () => {
     const rules = [
       rule({ id: "a", prefix: "in/" }),
