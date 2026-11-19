@@ -25,7 +25,7 @@ const SUBSCRIPTIONS = "subscriptions";
 const ENDPOINT = "endpoint";
 
 // Local ít subscription nên đọc attribute từng cái song song
-export const describeAll = (client: SNSClient, listed: ListedSubscription[]) =>
+const describeAll = (client: SNSClient, listed: ListedSubscription[]) =>
   Promise.all(
     listed.map(async (item) => {
       const { Attributes = {} } = await client.send(
@@ -48,17 +48,23 @@ export function useSubscriptions(topicArn: string, topicName: string) {
   });
 }
 
-// Các subscription đang đẩy vào một queue / function: ListSubscriptions rồi lọc theo Endpoint
+// SNS không có API theo endpoint: ListSubscriptions rồi lọc theo Endpoint
+export async function listSubscriptionsOfEndpoint(
+  client: SNSClient,
+  matches: (endpoint: string) => boolean,
+) {
+  const listed: ListedSubscription[] = [];
+  for await (const page of paginateListSubscriptions({ client }, {}))
+    listed.push(...(page.Subscriptions ?? []).filter(({ Endpoint = "" }) => matches(Endpoint)));
+  return describeAll(client, listed);
+}
+
+// Các subscription đang đẩy vào một queue / function
 export function useSubscriptionsOfEndpoint(endpointArn: string) {
   const client = useSNS();
   return useQuery({
     queryKey: [SNS_QUERY_ROOT, ENDPOINT, endpointArn],
-    queryFn: async () => {
-      const listed: ListedSubscription[] = [];
-      for await (const page of paginateListSubscriptions({ client }, {}))
-        listed.push(...(page.Subscriptions ?? []).filter((item) => item.Endpoint === endpointArn));
-      return describeAll(client, listed);
-    },
+    queryFn: () => listSubscriptionsOfEndpoint(client, (endpoint) => endpoint === endpointArn),
   });
 }
 

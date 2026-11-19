@@ -5,6 +5,7 @@ import { S3Client, ListBucketsCommand, ListObjectVersionsCommand, DeleteObjectsC
 import { DynamoDBClient, ListTablesCommand, DeleteTableCommand } from "@aws-sdk/client-dynamodb";
 import { LambdaClient, ListFunctionsCommand, DeleteFunctionCommand } from "@aws-sdk/client-lambda";
 import { SQSClient, ListQueuesCommand, DeleteQueueCommand } from "@aws-sdk/client-sqs";
+import { SNSClient, ListTopicsCommand, DeleteTopicCommand } from "@aws-sdk/client-sns";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
 const { region } = await (await fetch(`${consoleUrl}/api/config`)).json();
@@ -17,6 +18,7 @@ const s3 = new S3Client({ ...config, forcePathStyle: true });
 const dynamodb = new DynamoDBClient(config);
 const lambda = new LambdaClient(config);
 const sqs = new SQSClient(config);
+const sns = new SNSClient(config);
 
 const buckets = mine(((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name));
 const tables = mine((await dynamodb.send(new ListTablesCommand({}))).TableNames ?? []);
@@ -26,7 +28,12 @@ for (const prefix of PREFIXES) {
   queues.push(...((await sqs.send(new ListQueuesCommand({ QueueNamePrefix: prefix }))).QueueUrls ?? []));
 }
 
-console.log(JSON.stringify({ buckets, tables, functions, queues }, null, 2));
+// Tên topic là phần cuối của ARN
+const topics = ((await sns.send(new ListTopicsCommand({}))).Topics ?? [])
+  .map((topic) => topic.TopicArn)
+  .filter((arn) => mine([arn?.split(":").pop()]).length);
+
+console.log(JSON.stringify({ buckets, tables, functions, queues, topics }, null, 2));
 
 if (process.argv.includes("--delete")) {
   for (const bucket of buckets) {
@@ -39,5 +46,6 @@ if (process.argv.includes("--delete")) {
   for (const table of tables) await dynamodb.send(new DeleteTableCommand({ TableName: table }));
   for (const name of functions) await lambda.send(new DeleteFunctionCommand({ FunctionName: name }));
   for (const url of queues) await sqs.send(new DeleteQueueCommand({ QueueUrl: url }));
+  for (const arn of topics) await sns.send(new DeleteTopicCommand({ TopicArn: arn }));
   console.log("deleted");
 }

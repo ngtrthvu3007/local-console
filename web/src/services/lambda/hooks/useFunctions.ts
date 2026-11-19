@@ -4,14 +4,17 @@ import {
   CreateFunctionCommand,
   DeleteFunctionCommand,
   GetFunctionCommand,
+  GetFunctionConfigurationCommand,
+  ListEventSourceMappingsCommand,
   paginateListFunctions,
   UpdateFunctionCodeCommand,
   UpdateFunctionConfigurationCommand,
   type FunctionConfiguration,
+  type LambdaClient,
   type Runtime,
   type UpdateFunctionConfigurationCommandInput,
 } from "@aws-sdk/client-lambda";
-import { orEmptyWhenNotFound } from "@shared/aws.ts";
+import { existsUnlessMissing, orEmptyWhenNotFound } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { DEFAULT_ROLE_ARN } from "../constants.ts";
 import { useLambda } from "./useLambda.ts";
@@ -42,6 +45,21 @@ export function useFunction(name: string) {
     queryFn: () => lambda.send(new GetFunctionCommand({ FunctionName: name })),
     retry: false,
   });
+}
+
+// Nơi khác tham chiếu tới function (S3 rule, SNS subscription…) còn trỏ được không
+export const functionExistsQuery = (lambda: LambdaClient, name: string) => ({
+  queryKey: functionQueryKey(name, "exists"),
+  queryFn: () =>
+    existsUnlessMissing(() =>
+      lambda.send(new GetFunctionConfigurationCommand({ FunctionName: name })),
+    ),
+  retry: false,
+});
+
+export function useFunctionExists(name: string) {
+  const { lambda } = useLambda();
+  return useQuery(functionExistsQuery(lambda, name));
 }
 
 // Làm mới chi tiết và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
@@ -85,7 +103,28 @@ export function useCreateFunction() {
 
 export interface FunctionToDelete {
   name: string;
+  arn: string;
   logGroup: string;
+}
+
+// Để cảnh báo khi xóa: Floci không xóa trigger (SQS, DynamoDB…) của function, chúng thành trigger mồ côi.
+// Chỉ cần biết có hay không, nên mỗi function chỉ đọc trang đầu
+export function useFunctionsWithTriggers(names: readonly string[]) {
+  const { lambda } = useLambda();
+  return useQuery({
+    queryKey: functionQueryKey(names.join(), "with-triggers"),
+    queryFn: async () => {
+      const checks = await Promise.all(
+        names.map(async (name) => {
+          const { EventSourceMappings } = await lambda.send(
+            new ListEventSourceMappingsCommand({ FunctionName: name }),
+          );
+          return { name, triggered: Boolean(EventSourceMappings?.length) };
+        }),
+      );
+      return checks.filter((check) => check.triggered).map((check) => check.name);
+    },
+  });
 }
 
 export function useDeleteFunctions() {

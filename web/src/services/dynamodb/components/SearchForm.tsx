@@ -327,7 +327,9 @@ export function SearchForm({ table, initial, running, onRun, onReset }: Props) {
 
   const actions = (
     <SpaceBetween direction='horizontal' size='xs'>
-      <Button onClick={reset}>Reset</Button>
+      <Button formAction='none' onClick={reset}>
+        Reset
+      </Button>
       <Button variant='primary' formAction='submit' loading={running}>
         Run
       </Button>

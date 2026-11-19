@@ -9,12 +9,12 @@ import {
   type MessageAttributeValue,
   type SNSClient,
 } from "@aws-sdk/client-sns";
-import { isNotFoundError } from "@shared/aws.ts";
+import { existsUnlessMissing, isNotFoundError } from "@shared/aws.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { ATTRIBUTE_TRUE } from "../../sqs/constants.ts";
 import type { AttributeDataType, TopicType } from "../constants.ts";
-import { toTopic, topicArn, type Topic } from "../topics.ts";
+import { toTopic, topicArn, topicNameOfArn, type Topic } from "../topics.ts";
 import { useSNS } from "./useSNS.ts";
 
 // Mọi query của SNS nằm dưới key gốc này
@@ -28,6 +28,23 @@ const DETAILS = "details";
 
 export const isTopicMissing = (error: unknown) =>
   error instanceof NotFoundException || isNotFoundError(error);
+
+// Nơi khác tham chiếu tới topic (S3 rule, trigger…) còn trỏ được không
+export const topicExistsQuery = (client: SNSClient, arn: string) => ({
+  queryKey: topicQueryKey(topicNameOfArn(arn), "exists"),
+  queryFn: () =>
+    existsUnlessMissing(
+      () => client.send(new GetTopicAttributesCommand({ TopicArn: arn })),
+      isTopicMissing,
+    ),
+  retry: false,
+});
+
+export function useTopicExists(name: string) {
+  const client = useSNS();
+  const { region } = useLoadedConfig();
+  return useQuery(topicExistsQuery(client, topicArn(region, name)));
+}
 
 async function describeTopic(client: SNSClient, arn: string) {
   const { Attributes = {} } = await client.send(new GetTopicAttributesCommand({ TopicArn: arn }));

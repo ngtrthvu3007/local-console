@@ -11,7 +11,6 @@ import {
 } from "./constants.ts";
 
 const ARN_SEPARATOR = ":";
-const LAMBDA_NAME_INDEX = 6; // arn:aws:lambda:region:account:function:NAME[:alias]
 
 export type Attributes = Record<string, string | undefined>;
 
@@ -40,9 +39,6 @@ export const topicArn = (region: string, name: string) =>
 
 // "arn:aws:sns:ap-southeast-1:000000000000:orders" → "orders"
 export const topicNameOfArn = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
-
-export const functionNameOfArn = (arn: string) =>
-  arn.split(ARN_SEPARATOR)[LAMBDA_NAME_INDEX] ?? arn;
 
 const numberOf = (value?: string) => Number(value ?? 0);
 

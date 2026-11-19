@@ -10,6 +10,7 @@ import Spinner from "@cloudscape-design/components/spinner";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { isNotFoundError } from "@shared/aws.ts";
+import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { NotFound } from "@shared/components/NotFound.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
@@ -41,6 +42,7 @@ export function BrokerDetail() {
   const [authorization, setAuthorization] = useBrokerAuthorization(brokerId);
   const [signInError, setSignInError] = useState<string>();
   const [deleting, setDeleting] = useState(false);
+  const [rebooting, setRebooting] = useState(false);
   const broker = details.data;
   const name = broker?.BrokerName ?? brokerId;
 
@@ -120,13 +122,17 @@ export function BrokerDetail() {
   const rebootBroker = () =>
     reboot.mutate(
       undefined,
-      notifyOutcome({ success: `Rebooting ${name}`, errorHeader: `Couldn't reboot ${name}` }),
+      notifyOutcome({
+        success: `Rebooting ${name}`,
+        errorHeader: `Couldn't reboot ${name}`,
+        then: () => setRebooting(false),
+      }),
     );
 
   const headerActions = (
     <ResponsiveActions>
       {authorization && <Button onClick={() => setAuthorization(undefined)}>Sign out</Button>}
-      <Button loading={reboot.isPending} disabled={!running} onClick={rebootBroker}>
+      <Button disabled={!running} onClick={() => setRebooting(true)}>
         Reboot
       </Button>
       <Button onClick={() => setDeleting(true)}>Delete</Button>
@@ -154,6 +160,16 @@ export function BrokerDetail() {
         tabs={tabs}
         onChange={({ detail }) => selectTab(detail.activeTabId)}
       />
+      <ConfirmModal
+        visible={rebooting}
+        header={`Reboot ${name}?`}
+        actionText='Reboot'
+        loading={reboot.isPending}
+        onConfirm={rebootBroker}
+        onDismiss={() => setRebooting(false)}
+      >
+        Apps connected to the broker are disconnected while it restarts.
+      </ConfirmModal>
       {deleting && (
         <DeleteBrokersModal
           brokers={[{ id: brokerId, name }]}

@@ -1,22 +1,20 @@
 import { useState } from "react";
 import Header from "@cloudscape-design/components/header";
-import Link from "@cloudscape-design/components/link";
 import Popover from "@cloudscape-design/components/popover";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { lambdaRoutes } from "../../lambda/routes.ts";
+import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { queueNameOfArn } from "../../sqs/queues.ts";
 import { ENDPOINT_PREVIEW_LENGTH, RAW_DELIVERY_PROTOCOLS } from "../constants.ts";
 import { summarizeFilterPolicy } from "../filterPolicy.ts";
 import { useSubscriptions } from "../hooks/useSubscriptions.ts";
-import { functionNameOfArn, protocolLabel, type Subscription, type Topic } from "../topics.ts";
+import { protocolLabel, type Subscription, type Topic } from "../topics.ts";
 import {
   CreateSubscriptionModal,
   DeleteSubscriptionsModal,
@@ -40,17 +38,9 @@ const shorten = (text: string) =>
   text.length > ENDPOINT_PREVIEW_LENGTH ? `${text.slice(0, ENDPOINT_PREVIEW_LENGTH)}${ELLIPSIS}` : text;
 
 function EndpointCell({ subscription }: { subscription: Subscription }) {
-  const follow = useFollow();
   if (subscription.protocol === "sqs")
     return <QueueLink name={queueNameOfArn(subscription.endpoint)} />;
-  if (subscription.protocol === "lambda") {
-    const name = functionNameOfArn(subscription.endpoint);
-    return (
-      <Link href={lambdaRoutes.function(name)} onFollow={follow}>
-        {name}
-      </Link>
-    );
-  }
+  if (subscription.protocol === "lambda") return <FunctionLink arn={subscription.endpoint} />;
   return <span title={subscription.endpoint}>{shorten(subscription.endpoint)}</span>;
 }
 

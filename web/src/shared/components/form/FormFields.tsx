@@ -139,7 +139,7 @@ function FilePicker({ files, accept, onChange }: FilePickerProps) {
           event.target.value = "";
         }}
       />
-      <Button iconName='add-plus' onClick={() => input.current?.click()}>
+      <Button iconName='add-plus' formAction='none' onClick={() => input.current?.click()}>
         Choose file
       </Button>
       {tokens.length > 0 && (

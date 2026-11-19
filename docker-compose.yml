@@ -7,6 +7,8 @@ services:
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false" # tắt UI có sẵn của Floci
       FLOCI_STORAGE_MODE: hybrid # giữ dữ liệu khi tắt/bật
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # để SNS HTTP subscription tới được app chạy trên máy dev (Linux)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # để Floci bật container Redis/RabbitMQ/Lambda
       - floci-data:/app/data

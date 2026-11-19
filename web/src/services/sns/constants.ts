@@ -38,8 +38,7 @@ export const ATTRIBUTE_DATA_TYPES = ["String", "Number"] as const;
 export type AttributeDataType = (typeof ATTRIBUTE_DATA_TYPES)[number];
 export const MAX_MESSAGE_ATTRIBUTES = 10;
 
-export const BODY_EDITOR_HEIGHT_PX = 200;
-export const FILTER_EDITOR_HEIGHT_PX = 200;
+export const EDITOR_HEIGHT_PX = 200;
 // Cột Filter chỉ hiện phần đầu của policy
 export const FILTER_SUMMARY_MAX_LENGTH = 40;
 export const ENDPOINT_PREVIEW_LENGTH = 48;

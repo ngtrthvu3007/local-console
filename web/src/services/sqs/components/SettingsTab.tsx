@@ -12,6 +12,7 @@ import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { TopicSubscriptions } from "../../sns/components/TopicSubscriptions.tsx";
 import { useDeadLetterSources } from "../hooks/useQueues.ts";
 import { queueNameOfArn, queueTypeLabel, queueUrlAt, type Queue } from "../queues.ts";
 import { QueueLink } from "./QueueLink.tsx";
@@ -134,6 +135,8 @@ export function SettingsTab({ queue }: { queue: Queue }) {
             </SpaceBetween>
           </Container>
         )}
+
+        <TopicSubscriptions endpointArn={queue.arn} />
 
         {modal === MODALS.settings && <EditSettingsModal queue={queue} onDismiss={closeModal} />}
         {modal === MODALS.deadLetter && (

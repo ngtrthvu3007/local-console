@@ -23,7 +23,7 @@ import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import {
   DEFAULT_FILTER_SCOPE,
-  FILTER_EDITOR_HEIGHT_PX,
+  EDITOR_HEIGHT_PX,
   FILTER_SCOPES,
   HOST_FROM_CONTAINER,
   HTTP_PROTOCOLS,
@@ -184,7 +184,7 @@ export function CreateSubscriptionModal({
             control={form.control}
             name='filterPolicy'
             label={FILTER_POLICY_LABEL}
-            height={FILTER_EDITOR_HEIGHT_PX}
+            height={EDITOR_HEIGHT_PX}
           />
         </SpaceBetween>
       </ExpandableSection>
@@ -238,7 +238,7 @@ export function EditFilterModal({
         control={form.control}
         name='filterPolicy'
         label={FILTER_POLICY_LABEL}
-        height={FILTER_EDITOR_HEIGHT_PX}
+        height={EDITOR_HEIGHT_PX}
       />
     </FormModal>
   );
