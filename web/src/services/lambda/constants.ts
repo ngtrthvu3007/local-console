@@ -84,8 +84,8 @@ export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 // Trigger
 export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
-// Nguồn chỉ hiện trong bảng Triggers (do IaC / app tạo), không thêm được từ console
-const DISPLAY_ONLY_SOURCES = { kinesis: "Kinesis" } as const;
+// Nguồn chỉ hiện trong bảng Triggers, không thêm được từ trang Lambda (SNS tạo từ trang topic)
+const DISPLAY_ONLY_SOURCES = { kinesis: "Kinesis", sns: "SNS" } as const;
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;

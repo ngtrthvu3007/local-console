@@ -10,6 +10,7 @@ import {
   SetQueueAttributesCommand,
   type SQSClient,
 } from "@aws-sdk/client-sqs";
+import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import {
   ALL_ATTRIBUTES,
@@ -40,6 +41,22 @@ const DLQ_SOURCES = "dlq-sources";
 
 // JSON protocol trả lỗi này với mã 400, isNotFoundError dùng chung không nhận ra
 export const isQueueMissing = (error: unknown) => error instanceof QueueDoesNotExist;
+
+// Nơi khác tham chiếu tới queue (S3 rule, SNS subscription, DLQ…) còn trỏ được không
+export const queueExistsQuery = (client: SQSClient, name: string) => ({
+  queryKey: queueQueryKey(name, "exists"),
+  queryFn: () =>
+    existsUnlessMissing(
+      () => client.send(new GetQueueUrlCommand({ QueueName: name })),
+      isQueueMissing,
+    ),
+  retry: false,
+});
+
+export function useQueueExists(name: string) {
+  const client = useSQS();
+  return useQuery(queueExistsQuery(client, name));
+}
 
 const refreshEvery = (autoRefresh: boolean) => (autoRefresh ? AUTO_REFRESH_INTERVAL_MS : false);
 

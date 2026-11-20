@@ -60,6 +60,7 @@ export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss:
         control={form.control}
         name='functionName'
         label='Function'
+        placeholder='Choose a function'
         empty='No functions'
         options={functionOptions}
       />

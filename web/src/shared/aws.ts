@@ -23,6 +23,21 @@ export function isNotFoundError(error: unknown): boolean {
   );
 }
 
+// true nếu request chạy được, false nếu resource không còn; lỗi khác (mạng, 500) vẫn ném ra.
+// `isMissing` cho dịch vụ có kiểu lỗi riêng (SQS trả 400, không phải 404)
+export async function existsUnlessMissing(
+  request: () => Promise<unknown>,
+  isMissing: (error: unknown) => boolean = isNotFoundError,
+): Promise<boolean> {
+  try {
+    await request();
+    return true;
+  } catch (error) {
+    if (isMissing(error)) return false;
+    throw error;
+  }
+}
+
 // Cấu hình chưa từng đặt thì AWS trả lỗi, coi như rỗng
 export async function orEmptyWhenNotFound<T>(request: () => Promise<T>, emptyValue: T): Promise<T> {
   try {

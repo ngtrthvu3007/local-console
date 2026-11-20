@@ -163,7 +163,7 @@ export function FunctionDetail() {
 
       {deleting && (
         <DeleteFunctionsModal
-          functions={[{ name, logGroup }]}
+          functions={[{ name, arn, logGroup }]}
           onDismiss={() => setDeleting(false)}
           onDone={() => navigate(lambdaRoutes.functions, { state: { [SKIP_LEAVE_GUARD]: true } })}
         />

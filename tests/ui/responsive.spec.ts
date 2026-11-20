@@ -14,6 +14,7 @@ const PAGES = [
   { slug: "sqs-create", path: "/sqs/queues/create" },
   { slug: "elasticache-clusters", path: "/elasticache/clusters" },
   { slug: "mq-brokers", path: "/mq/brokers" },
+  { slug: "sns-sms", path: "/sns/sms" },
   { slug: "ses-mailbox", path: "/ses/mailbox" },
   { slug: "ses-identities", path: "/ses/identities" },
   { slug: "ses-templates", path: "/ses/templates" },

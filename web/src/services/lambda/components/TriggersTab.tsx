@@ -16,6 +16,7 @@ import Link from "@cloudscape-design/components/link";
 import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { s3Routes } from "../../s3/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
+import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import {
   EVENT_SOURCE_STATES,
   SOURCE_LABELS,
@@ -52,6 +53,7 @@ const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
   sqs: "queue",
   dynamodb: "table",
   kinesis: "stream",
+  sns: "topic",
 };
 
 // Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
@@ -63,6 +65,7 @@ const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>
 function ResourceCell({ row }: { row: TriggerRow }) {
   const follow = useFollow();
   if (row.source === "sqs") return <QueueLink name={row.resource} />;
+  if (row.source === "sns") return <TopicLink name={row.resource} />;
   const href = RESOURCE_HREFS[row.source]?.(row.resource);
   if (!href) return <>{row.resource}</>;
   return (
@@ -181,7 +184,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in S3, messages arrive in SQS, or items change in DynamoDB.'
+      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, or a topic publishes in SNS.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers
@@ -201,6 +204,10 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     single?.source === "s3" ? (
       <Box>
         This removes the event notification from bucket <b>{single.resource}</b>: {single.details}
+      </Box>
+    ) : single?.source === "sns" ? (
+      <Box>
+        This removes the subscription of topic <b>{single.resource}</b> to this function.
       </Box>
     ) : (
       <Box>
