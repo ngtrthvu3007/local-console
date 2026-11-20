@@ -5,7 +5,10 @@ import {
   FILTER_SCOPES,
   HTTP_PROTOCOLS,
   MAX_MESSAGE_ATTRIBUTES,
+  PHONE_NUMBER_EXAMPLE,
+  PHONE_NUMBER_PATTERN,
   PROTOCOLS,
+  SMS_TYPES,
   TOPIC_NAME_MAX_LENGTH,
   TOPIC_NAME_PATTERN,
   TOPIC_TYPES,
@@ -124,10 +127,16 @@ export const publishSchema = ({ fifo, contentBasedDedup }: PublishTarget) =>
       // Chặn trước khi gửi, SNS trả InvalidParameter
       if (!values.groupId) addIssue(["groupId"], "Enter a message group ID.");
       if (!contentBasedDedup && !values.dedupId)
-        addIssue(
-          ["dedupId"],
-          "Enter a deduplication ID, or turn on content-based deduplication.",
-        );
+        addIssue(["dedupId"], "Enter a deduplication ID, or turn on content-based deduplication.");
     });
 
 export type PublishForm = z.input<ReturnType<typeof publishSchema>>;
+
+export const publishSmsSchema = z.object({
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(PHONE_NUMBER_PATTERN, `Enter a phone number like ${PHONE_NUMBER_EXAMPLE}.`),
+  message: z.string().trim().min(1, "Enter a message."),
+  type: z.enum(SMS_TYPES),
+});

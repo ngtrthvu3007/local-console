@@ -20,6 +20,7 @@ import SegmentedControl, {
   type SegmentedControlProps,
 } from "@cloudscape-design/components/segmented-control";
 import Select, { type SelectProps } from "@cloudscape-design/components/select";
+import Textarea from "@cloudscape-design/components/textarea";
 import Tiles, { type TilesProps } from "@cloudscape-design/components/tiles";
 
 // Nối react-hook-form với component của Cloudscape: giá trị qua Controller, lỗi zod hiện ở errorText
@@ -87,6 +88,30 @@ export function FormInput<TValues extends FieldValues>(props: InputProps<TValues
 interface AutosuggestFieldProps<TValues extends FieldValues> extends InputProps<TValues> {
   options: AutosuggestProps.Options;
   enteredTextLabel: (value: string) => string; // dòng "Use: …" khi giá trị gõ tay không có trong gợi ý
+}
+
+interface TextareaFieldProps<TValues extends FieldValues> extends FieldProps<TValues> {
+  placeholder?: string;
+  rows?: number;
+}
+
+export function FormTextarea<TValues extends FieldValues>(props: TextareaFieldProps<TValues>) {
+  const { placeholder, rows, ...fieldProps } = props;
+  return (
+    <ControlledField {...fieldProps}>
+      {(field, invalid) => (
+        <Textarea
+          ref={field.ref}
+          value={field.value ?? ""}
+          placeholder={placeholder}
+          rows={rows}
+          invalid={invalid}
+          onChange={({ detail }) => field.onChange(detail.value)}
+          onBlur={field.onBlur}
+        />
+      )}
+    </ControlledField>
+  );
 }
 
 // Ô nhập có gợi ý, vẫn gõ tay được giá trị bất kỳ

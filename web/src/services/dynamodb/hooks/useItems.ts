@@ -10,6 +10,7 @@ import {
   type DynamoDBClient,
   type WriteRequest,
 } from "@aws-sdk/client-dynamodb";
+import { downloadBlob } from "@shared/download.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { BATCH_WRITE_MAX_ITEMS, ITEMS_PAGE_SIZE, UNPROCESSED_RETRY_LIMIT } from "../constants.ts";
 import { buildSearchInput, type ItemSearch } from "../expressions.ts";
@@ -202,15 +203,6 @@ export function useFullItem(table: string, item: Item | undefined, keys: IndexKe
 const EXPORT_MIME_TYPE = "application/json";
 const EXPORT_EXTENSION = ".json";
 
-function downloadText(fileName: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: EXPORT_MIME_TYPE }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 // Export cả bảng (mọi trang), ra DynamoDB JSON để không mất số lớn, Set, Binary
 export function useExportTable(table: string) {
   const client = useDynamoDB();
@@ -220,7 +212,7 @@ export function useExportTable(table: string) {
       for await (const page of paginateScan({ client }, { TableName: table })) {
         items.push(...(page.Items ?? []));
       }
-      downloadText(`${table}${EXPORT_EXTENSION}`, exportText(items));
+      downloadBlob(`${table}${EXPORT_EXTENSION}`, exportText(items), EXPORT_MIME_TYPE);
       return items.length;
     },
   });

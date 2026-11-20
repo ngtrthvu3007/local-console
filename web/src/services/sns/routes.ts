@@ -6,13 +6,15 @@ const SNS_ROOT = `/${SNS_SERVICE_ID}`;
 export const TOPIC_TABS = { subscriptions: "subscriptions", details: "details" } as const;
 export type TopicTab = (typeof TOPIC_TABS)[keyof typeof TOPIC_TABS];
 
-export const SEARCH_PARAMS = { tab: "tab" } as const;
+// phone: điền sẵn ô tìm của hộp thư SMS (link từ service khác, vd: Cognito)
+export const SEARCH_PARAMS = { tab: "tab", phone: "phone" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const SNS_ROUTE_PATTERNS = {
   topics: "topics",
   createTopic: "topics/create",
   topic: "topics/:topic",
+  sms: "sms",
 } as const;
 
 const fullPath = (pattern: string) => `${SNS_ROOT}/${pattern}`;
@@ -20,6 +22,7 @@ const fullPath = (pattern: string) => `${SNS_ROOT}/${pattern}`;
 export const snsRoutes = {
   topics: fullPath(SNS_ROUTE_PATTERNS.topics),
   createTopic: fullPath(SNS_ROUTE_PATTERNS.createTopic),
+  sms: fullPath(SNS_ROUTE_PATTERNS.sms),
   // Tab mặc định (Subscriptions) không ghi lên URL
   topic: (topic: string, tab?: TopicTab) => {
     const path = generatePath(fullPath(SNS_ROUTE_PATTERNS.topic), { topic });
@@ -32,6 +35,11 @@ export const snsRoutes = {
 export const snsBaseCrumbs = [
   { text: "Amazon SNS", href: snsRoutes.topics },
   { text: "Topics", href: snsRoutes.topics },
+];
+
+export const smsCrumbs = [
+  { text: "Amazon SNS", href: snsRoutes.topics },
+  { text: "Text messaging (SMS)", href: snsRoutes.sms },
 ];
 
 export const topicCrumbs = (topic: string) => [

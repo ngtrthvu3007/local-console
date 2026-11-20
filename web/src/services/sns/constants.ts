@@ -1,3 +1,5 @@
+import { AWS_PROXY_PATH, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
+
 // Luật đặt tên topic của SNS: 1–256 ký tự (tính cả đuôi .fifo)
 export const TOPIC_NAME_MAX_LENGTH = 256;
 export const TOPIC_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
@@ -37,6 +39,20 @@ export const SUBSCRIPTION_ATTRIBUTES = {
 export const ATTRIBUTE_DATA_TYPES = ["String", "Number"] as const;
 export type AttributeDataType = (typeof ATTRIBUTE_DATA_TYPES)[number];
 export const MAX_MESSAGE_ATTRIBUTES = 10;
+
+// Hộp thư SMS của Floci dùng chung mọi region (spec SMS 7 #1)
+export const SMS_INBOX_PATH = `${AWS_PROXY_PATH}/_aws/sns`;
+export const SMS_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
+export const SMS_TYPE_ATTRIBUTE = "AWS.SNS.SMS.SMSType";
+export const SMS_TYPES = ["Transactional", "Promotional"] as const;
+export type SmsType = (typeof SMS_TYPES)[number];
+export const DEFAULT_SMS_TYPE: SmsType = "Transactional";
+// E.164: dấu +, chữ số đầu khác 0, tối đa 15 chữ số
+export const PHONE_NUMBER_PATTERN = /^\+[1-9]\d{1,14}$/;
+export const PHONE_NUMBER_EXAMPLE = "+84900000111";
+// Hiển thị số di động Việt Nam theo nhóm dễ đọc; số E.164 khác giữ nguyên.
+export const VIETNAM_MOBILE_NUMBER_PATTERN = /^\+84(\d{3})(\d{3})(\d{3})$/;
+export const VIETNAM_MOBILE_NUMBER_FORMAT = "+84 $1 $2 $3";
 
 export const EDITOR_HEIGHT_PX = 200;
 // Cột Filter chỉ hiện phần đầu của policy
