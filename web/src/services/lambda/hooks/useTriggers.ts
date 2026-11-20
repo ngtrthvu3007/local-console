@@ -13,7 +13,13 @@ import {
   PutBucketNotificationConfigurationCommand,
   type S3Client,
 } from "@aws-sdk/client-s3";
+import { UnsubscribeCommand, type SNSClient } from "@aws-sdk/client-sns";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { summarizeFilterPolicy } from "../../sns/filterPolicy.ts";
+import { useSNS } from "../../sns/hooks/useSNS.ts";
+import { listSubscriptionsOfEndpoint } from "../../sns/hooks/useSubscriptions.ts";
+import { SNS_QUERY_ROOT } from "../../sns/hooks/useTopics.ts";
+import { topicNameOfArn } from "../../sns/topics.ts";
 import { useS3 } from "../../s3/hooks/useS3.ts";
 import {
   toNotificationConfiguration,
@@ -22,9 +28,10 @@ import {
 } from "../../s3/notificationRules.ts";
 import {
   DYNAMODB_ARN_PATTERN,
+  KINESIS_ARN_PATTERN,
   STARTING_POSITIONS,
   type StartingPosition,
-  type TriggerSource,
+  type TriggerRowSource,
 } from "../constants.ts";
 import type { TriggerFormOutput } from "../schemas.ts";
 import { functionQueryKey } from "./useFunctions.ts";
@@ -34,12 +41,13 @@ const ARN_SEPARATOR = ":";
 
 export interface TriggerRow {
   id: string;
-  source: TriggerSource;
-  resource: string; // tên bucket, queue hoặc bảng DynamoDB
+  source: TriggerRowSource;
+  resource: string; // tên bucket, queue, bảng DynamoDB, stream Kinesis hoặc topic SNS
   details: string;
   state?: string; // chỉ event source mapping (SQS, DynamoDB) có trạng thái bật/tắt
   rule?: NotificationRule; // S3: rule notification trỏ tới function
   uuid?: string; // SQS, DynamoDB: id của event source mapping
+  subscriptionArn?: string; // SNS: subscription của topic tới function
 }
 
 // Rule trỏ tới function, kể cả ARN có version/alias (my-function:prod)
@@ -61,6 +69,7 @@ async function updateBucketRules(
       Bucket: bucket,
       NotificationConfiguration: toNotificationConfiguration(
         change(toNotificationRules(configuration)),
+        configuration,
       ),
     }),
   );
@@ -85,15 +94,23 @@ const DYNAMODB_STREAM_MARKER = "/stream/";
 const tableNameOf = (streamArn: string) =>
   streamArn.split(DYNAMODB_TABLE_MARKER)[1]?.split(DYNAMODB_STREAM_MARKER)[0] ?? NOT_AVAILABLE;
 
-// Nguồn của event source mapping lấy theo ARN (trước đây mọi mapping đều bị ghi là SQS)
+// "arn:aws:kinesis:…:stream/orders" → "orders"
+const KINESIS_STREAM_MARKER = ":stream/";
+const streamNameOf = (streamArn: string) =>
+  streamArn.split(KINESIS_STREAM_MARKER)[1] ?? NOT_AVAILABLE;
+
+// Nguồn của event source mapping lấy theo ARN; ARN không phải DynamoDB / Kinesis là SQS
+export function mappingSourceOf(arn: string): Pick<TriggerRow, "source" | "resource"> {
+  if (DYNAMODB_ARN_PATTERN.test(arn)) return { source: "dynamodb", resource: tableNameOf(arn) };
+  if (KINESIS_ARN_PATTERN.test(arn)) return { source: "kinesis", resource: streamNameOf(arn) };
+  return { source: "sqs", resource: arn.split(ARN_SEPARATOR).pop() ?? NOT_AVAILABLE };
+}
+
 function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
-  const arn = mapping.EventSourceArn ?? "";
-  const fromDynamoDB = DYNAMODB_ARN_PATTERN.test(arn);
   const startingPosition = mapping.StartingPosition as StartingPosition | undefined;
   return {
     id: `mapping:${mapping.UUID}`,
-    source: fromDynamoDB ? "dynamodb" : "sqs",
-    resource: fromDynamoDB ? tableNameOf(arn) : (arn.split(ARN_SEPARATOR).pop() ?? NOT_AVAILABLE),
+    ...mappingSourceOf(mapping.EventSourceArn ?? ""),
     details: [
       `Batch size ${mapping.BatchSize}`,
       startingPosition && STARTING_POSITIONS[startingPosition],
@@ -121,6 +138,23 @@ async function listS3Triggers(s3: S3Client, functionArn: string) {
   return perBucket.flat();
 }
 
+// Subscription trỏ tới function, kể cả ARN có version/alias
+async function listSnsTriggers(sns: SNSClient, functionArn: string) {
+  const subscriptions = await listSubscriptionsOfEndpoint(
+    sns,
+    (endpoint) => endpoint === functionArn || endpoint.startsWith(`${functionArn}${ARN_SEPARATOR}`),
+  );
+  return subscriptions.map(
+    (subscription): TriggerRow => ({
+      id: `sns:${subscription.arn}`,
+      source: "sns",
+      resource: topicNameOfArn(subscription.topicArn),
+      details: summarizeFilterPolicy(subscription.filterPolicy),
+      subscriptionArn: subscription.arn,
+    }),
+  );
+}
+
 async function listMappingTriggers(lambda: LambdaClient, functionName: string) {
   const rows: TriggerRow[] = [];
   const paginator = paginateListEventSourceMappings(
@@ -138,14 +172,16 @@ const triggersQueryKey = (functionName: string) => functionQueryKey(functionName
 export function useTriggers(functionName: string, functionArn: string) {
   const { lambda } = useLambda();
   const { s3 } = useS3();
+  const sns = useSNS();
   return useQuery({
     queryKey: triggersQueryKey(functionName),
     queryFn: async () => {
-      const [s3Rows, mappingRows] = await Promise.all([
+      const [s3Rows, mappingRows, snsRows] = await Promise.all([
         listS3Triggers(s3, functionArn),
         listMappingTriggers(lambda, functionName),
+        listSnsTriggers(sns, functionArn),
       ]);
-      return [...s3Rows, ...mappingRows];
+      return [...s3Rows, ...mappingRows, ...snsRows];
     },
   });
 }
@@ -157,7 +193,12 @@ function useTriggerMutation<TInput>(
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: run,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: triggersQueryKey(functionName) }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: triggersQueryKey(functionName) }),
+        // Xóa trigger SNS là xóa subscription, nên danh sách bên SNS cũng đổi
+        queryClient.invalidateQueries({ queryKey: [SNS_QUERY_ROOT] }),
+      ]),
   });
 }
 
@@ -239,13 +280,16 @@ export function useAddTrigger(functionName: string, functionArn: string) {
 export function useDeleteTrigger(functionName: string) {
   const { lambda } = useLambda();
   const { s3 } = useS3();
-  return useTriggerMutation(functionName, (row: TriggerRow) =>
-    row.source === "s3"
-      ? updateBucketRules(s3, row.resource, (rules) =>
-          rules.filter((rule) => !sameRule(rule, row.rule!)),
-        )
-      : lambda.send(new DeleteEventSourceMappingCommand({ UUID: row.uuid })),
-  );
+  const sns = useSNS();
+  return useTriggerMutation(functionName, (row: TriggerRow) => {
+    if (row.source === "s3")
+      return updateBucketRules(s3, row.resource, (rules) =>
+        rules.filter((rule) => !sameRule(rule, row.rule!)),
+      );
+    if (row.source === "sns")
+      return sns.send(new UnsubscribeCommand({ SubscriptionArn: row.subscriptionArn }));
+    return lambda.send(new DeleteEventSourceMappingCommand({ UUID: row.uuid }));
+  });
 }
 
 export function useSetTriggerEnabled(functionName: string) {

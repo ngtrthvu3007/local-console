@@ -63,6 +63,18 @@ const peekedMessage = {
   Attributes: { SentTimestamp: "1794787200000", ApproximateReceiveCount: "0" },
   MessageAttributes: {},
 };
+const smsInbox = {
+  messages: [
+    {
+      Id: "sms-mobile-1",
+      Region: "ap-southeast-1",
+      PhoneNumber: "+84900000111",
+      Message: "Your verification code is 123456",
+      Subject: null,
+      Timestamp: "2026-11-19T10:20:01.705209341Z",
+    },
+  ],
+};
 
 // Browser regression fixtures only: no resources are created or changed in Floci.
 export const test = base.extend<{ mockConsole: void }>({
@@ -118,6 +130,7 @@ export const test = base.extend<{ mockConsole: void }>({
         const xml = async (body: string) => route.fulfill({ contentType: "application/xml", body });
         if (path.startsWith("/_aws/sqs/messages"))
           return route.fulfill({ json: { messages: [peekedMessage] } });
+        if (path.startsWith("/_aws/sns")) return route.fulfill({ json: smsInbox });
         if (path.startsWith("/_floci"))
           return route.fulfill({
             json: { version: "2.4.0", edition: "community", services: { s3: "running" } },

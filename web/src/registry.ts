@@ -4,6 +4,8 @@ import { elasticacheService } from "./services/elasticache/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
+import { sesService } from "./services/ses/index.tsx";
+import { snsService } from "./services/sns/index.tsx";
 import { sqsService } from "./services/sqs/index.tsx";
 
 export interface ServiceLink {
@@ -34,8 +36,10 @@ export const services: ServiceDefinition[] = [
   lambdaService,
   dynamodbService,
   sqsService,
+  snsService,
   elasticacheService,
   mqService,
+  sesService,
 ];
 
 export const servicePath = (service: ServiceDefinition) => `/${service.id}`;

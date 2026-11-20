@@ -12,9 +12,17 @@ import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import Link from "@cloudscape-design/components/link";
+import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { s3Routes } from "../../s3/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
-import { EVENT_SOURCE_STATES, TRIGGER_SOURCES } from "../constants.ts";
+import { TopicLink } from "../../sns/components/TopicLink.tsx";
+import {
+  EVENT_SOURCE_STATES,
+  SOURCE_LABELS,
+  TRIGGER_SOURCES,
+  type TriggerRowSource,
+} from "../constants.ts";
 import {
   useAddTrigger,
   useDeleteTrigger,
@@ -37,13 +45,41 @@ function StateCell({ row }: { row: TriggerRow }) {
 const sourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "source",
   header: "Source",
-  cell: (row) => TRIGGER_SOURCES[row.source],
+  cell: (row) => SOURCE_LABELS[row.source],
 };
+
+const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
+  s3: "bucket",
+  sqs: "queue",
+  dynamodb: "table",
+  kinesis: "stream",
+  sns: "topic",
+};
+
+// Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
+const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>> = {
+  s3: (bucket) => s3Routes.bucket(bucket),
+  dynamodb: (table) => dynamodbRoutes.table(table),
+};
+
+function ResourceCell({ row }: { row: TriggerRow }) {
+  const follow = useFollow();
+  if (row.source === "sqs") return <QueueLink name={row.resource} />;
+  if (row.source === "sns") return <TopicLink name={row.resource} />;
+  const href = RESOURCE_HREFS[row.source]?.(row.resource);
+  if (!href) return <>{row.resource}</>;
+  return (
+    <Link href={href} onFollow={follow}>
+      {row.resource}
+    </Link>
+  );
+}
+
 const resourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "resource",
   header: "Resource",
   isRowHeader: true,
-  cell: (row) => (row.source === "sqs" ? <QueueLink name={row.resource} /> : row.resource),
+  cell: (row) => <ResourceCell row={row} />,
 };
 const detailsColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "details",
@@ -107,7 +143,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     deleteTrigger.mutate(
       single,
       notifyOutcome({
-        success: `Deleted ${TRIGGER_SOURCES[single.source]} trigger`,
+        success: `Deleted ${SOURCE_LABELS[single.source]} trigger`,
         errorHeader: "Couldn't delete the trigger",
         then: finish,
       }),
@@ -148,7 +184,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in S3, messages arrive in SQS, or items change in DynamoDB.'
+      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, or a topic publishes in SNS.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers
@@ -169,10 +205,14 @@ export function TriggersTab({ functionName, functionArn }: Props) {
       <Box>
         This removes the event notification from bucket <b>{single.resource}</b>: {single.details}
       </Box>
+    ) : single?.source === "sns" ? (
+      <Box>
+        This removes the subscription of topic <b>{single.resource}</b> to this function.
+      </Box>
     ) : (
       <Box>
-        This removes the {TRIGGER_SOURCES[single?.source ?? "sqs"]} trigger for{" "}
-        {single?.source === "dynamodb" ? "table" : "queue"} {single?.resource}.
+        This removes the {SOURCE_LABELS[single?.source ?? "sqs"]} trigger for{" "}
+        {RESOURCE_NOUNS[single?.source ?? "sqs"]} {single?.resource}.
       </Box>
     );
 

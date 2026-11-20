@@ -40,6 +40,18 @@ Mọi thao tác gọi thẳng Floci bằng AWS SDK qua proxy `/aws`. **Server kh
 | Thêm nguồn SNS trong modal Add trigger của Lambda | Tạo từ trang topic là đủ; tab Triggers của Lambda chỉ hiện  |
 | Publish batch, tag                                | Ít dùng khi test tay                                        |
 | Attribute kiểu `Binary`, `String.Array`           | Gửi thử bằng tay hiếm cần                                   |
+| Thông báo từ SES (bounce, complaint)              | Chuyển từ "Để sau" của spec SES; điều kiện ở dưới bảng      |
+
+**Thông báo từ SES** (tiêu chí 3: app cần biết mail bị bounce, complaint để xử lý; xem [spec SES](2026-11-17-ses-design.md) §2):
+
+- Làm sau khi SNS xong.
+- Trước khi làm, kiểm Floci (tài liệu Floci hoặc chạy thử):
+  - Floci có đẩy thông báo sang SNS thật không, hay chỉ lưu cấu hình.
+  - Floci có giả lập bounce, complaint không (`bounce@simulator.amazonses.com`). Không có thì ở local không tạo được bounce.
+  - Đẩy theo cách nào:
+    - Identity notification topic (`SetIdentityNotificationTopic`, SES v1): không cần configuration set.
+    - Event destination của configuration set (SES v2): làm configuration set trước (đang ở "Để sau" của spec SES), và chuyển event destination khỏi "Không làm".
+- Floci không đẩy thật thì bỏ mục này (không đạt tiêu chí 1).
 
 ### Không làm
 

@@ -208,6 +208,7 @@ export function StreamTriggerModal({ table, streamArn, onDismiss }: TriggerProps
         control={form.control}
         name='functionName'
         label='Function'
+        placeholder='Choose a function'
         options={functionOptions}
       />
       <ColumnLayout columns={2}>
