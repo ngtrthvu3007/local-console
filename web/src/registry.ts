@@ -1,4 +1,6 @@
 import type { RouteObject } from "react-router";
+import type { Icon } from "@tabler/icons-react";
+import type { ServiceCategory } from "@shared/constants.ts";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
@@ -24,7 +26,8 @@ export interface ServiceDefinition {
   name: string; // tên ngắn, vd: "S3"
   fullName: string; // vd: "Amazon S3"
   description: string;
-  iconPath: string; // file trong web/public/icons
+  icon: Icon; // glyph Tabler, vd: IconBucket; nằm trên ô màu của category
+  category: ServiceCategory; // nhóm trên sidebar
   navigation: ServiceLink[]; // menu con trên sidebar
   quickLinks: ServiceLink[]; // link nhanh trên Home
   routes: RouteObject[];

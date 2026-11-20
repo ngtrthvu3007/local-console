@@ -114,6 +114,7 @@ export function NotificationsSection({ bucket }: { bucket: string }) {
         createModal={({ existingIds, onCreate, onDismiss }) => (
           <NotificationModal
             existingIds={existingIds}
+            existingRules={rules}
             saving={saveNotifications.isPending}
             onDismiss={onDismiss}
             onSave={(rule) => onCreate(rule, "Created event notification")}

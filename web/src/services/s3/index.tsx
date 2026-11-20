@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconBucket } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useBuckets } from "./hooks/useBuckets.ts";
 import { BucketDetail } from "./pages/BucketDetail.tsx";
@@ -13,7 +14,8 @@ export const s3Service: ServiceDefinition = {
   name: "S3",
   fullName: "Amazon S3",
   description: "Object storage: buckets, objects, versions and pre-signed URLs",
-  iconPath: "/icons/s3.svg",
+  icon: IconBucket,
+  category: "storage",
   navigation: [{ text: "Buckets", href: s3Routes.buckets }],
   quickLinks: [{ text: "Create bucket", href: s3Routes.createBucket }],
   routes: [

@@ -7,18 +7,25 @@ services:
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false" # tắt UI có sẵn của Floci
       FLOCI_STORAGE_MODE: hybrid # giữ dữ liệu khi tắt/bật
+      # Host trong URL Floci trả về (SQS QueueUrl, endpoint Redis…). localhost.floci.io trỏ về 127.0.0.1
+      # qua DNS public nên máy dev dùng được; alias bên dưới cho app trong compose, Lambda dùng DNS của Floci
+      FLOCI_HOSTNAME: localhost.floci.io
     extra_hosts:
       - "host.docker.internal:host-gateway" # để SNS HTTP subscription tới được app chạy trên máy dev (Linux)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # để Floci bật container Redis/RabbitMQ/Lambda
       - floci-data:/app/data
+    networks:
+      default:
+        aliases:
+          - localhost.floci.io
 
   console:
     build: .
     ports:
       - "127.0.0.1:3701:3701"
     environment:
-      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_ENDPOINT_URL: http://localhost.floci.io:4566 # cùng host với URL Floci trả về; console hiện địa chỉ này cho app trong compose
       FLOCI_PUBLIC_URL: http://localhost:4566
       AWS_REGION: ${AWS_REGION:-ap-southeast-1} # phải trùng region của app
     extra_hosts:

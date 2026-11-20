@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { Children, isValidElement, useState, type ReactNode } from "react";
+import Box from "@cloudscape-design/components/box";
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
 import Modal from "@cloudscape-design/components/modal";
@@ -36,6 +37,9 @@ export function ConfirmModal({
     onDismiss();
   };
   const confirmed = !confirmText || typedText === confirmText;
+  // SpaceBetween tách mỗi con thành một dòng và lấy key từ con: chữ trần không có key (React cảnh báo)
+  // và câu "Version {id} of {key}" bị cắt thành nhiều dòng, nên gom chữ vào một Box
+  const body = Children.toArray(children).every(isValidElement) ? children : <Box>{children}</Box>;
 
   return (
     <Modal
@@ -53,7 +57,7 @@ export function ConfirmModal({
       }
     >
       <SpaceBetween size='m'>
-        {children}
+        {body}
         {confirmText && (
           <FormField label={`To confirm, type "${confirmText}"`}>
             <Input

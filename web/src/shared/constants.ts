@@ -13,6 +13,8 @@ export const FLOCI_PATHS = {
 } as const;
 export const FLOCI_SERVICE_RUNNING = "running";
 export const FLOCI_START_COMMAND = "docker compose up -d floci";
+// Chỉ gặp khi chạy UI bằng npm run dev:web; console trong Docker tự phục vụ trang này
+export const DEV_SERVER_START_COMMAND = "npm run dev:server";
 
 // Floci nhận credential bất kỳ
 export const AWS_TEST_CREDENTIALS = { accessKeyId: "test", secretAccessKey: "test" } as const;
@@ -46,7 +48,18 @@ export const PHONE_MAX_WIDTH_PX = 688;
 // Panel bên phải rộng 480px; trên điện thoại panel cao 2/3 màn hình để bảng bên trong có chỗ
 export const SPLIT_PANEL_SIDE_WIDTH_PX = 480;
 export const SPLIT_PANEL_PHONE_HEIGHT_RATIO = 2 / 3;
-export const SERVICE_ICON_SIZE_PX = 20;
+// Icon service: glyph trắng (Tabler) trên ô màu của danh mục; cỡ ô ở --service-icon-size (Layout.css)
+export const SERVICE_GLYPH_SIZE_PX = 16;
+
+// Nhóm service trên sidebar (theo thứ tự này) và màu ô icon, theo danh mục của AWS console
+export const SERVICE_CATEGORIES = {
+  compute: { label: "Compute", color: "#ED7100" },
+  storage: { label: "Storage", color: "#3F8624" },
+  database: { label: "Database", color: "#2E27AD" },
+  integration: { label: "Application integration", color: "#E7157B" },
+  business: { label: "Business applications", color: "#DD344C" },
+} as const;
+export type ServiceCategory = keyof typeof SERVICE_CATEGORIES;
 
 // Modal xóa hàng loạt chỉ liệt kê vài mục đầu
 export const DELETE_PREVIEW_COUNT = 8;

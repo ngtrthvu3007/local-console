@@ -1,3 +1,4 @@
+import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
@@ -9,13 +10,9 @@ import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
-import { isNotFoundError } from "@shared/aws.ts";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { NotFound } from "@shared/components/NotFound.tsx";
-import { ErrorState } from "@shared/components/TableStates.tsx";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { CodeTab } from "../components/CodeTab.tsx";
@@ -61,24 +58,13 @@ export function FunctionDetail() {
   const selectTab = (nextTab: string) =>
     setSearchParams(nextTab === FUNCTION_TABS.code ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
-  if (details.isLoading) return <Spinner size='large' />;
-  if (details.isError && isNotFoundError(details.error)) {
-    return (
-      <NotFound
-        title={`Function ${name} not found`}
-        description='It may have been deleted, or the name is wrong.'
-        backHref={lambdaRoutes.functions}
-        backText='View functions'
-      />
-    );
-  }
-  if (!details.data?.Configuration) {
-    return (
-      <Container>
-        <ErrorState error={details.error} onRetry={() => details.refetch()} />
-      </Container>
-    );
-  }
+  const state = pageState(details, {
+    ready: Boolean(details.data?.Configuration),
+    title: `Function ${name} not found`,
+    backHref: lambdaRoutes.functions,
+    backText: "View functions",
+  });
+  if (state || !details.data?.Configuration) return state;
 
   const configuration = details.data.Configuration;
   const arn = configuration.FunctionArn ?? "";

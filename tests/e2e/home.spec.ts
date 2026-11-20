@@ -39,3 +39,26 @@ test("an unknown page keeps the console layout", async ({ page }) => {
   await page.getByRole("link", { name: "Back to Console Home" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
+
+test("a page asks to start Floci while it is down, and comes back once it answers", async ({
+  page,
+}) => {
+  // Giả lập Floci tắt qua /api/health; các request khác vẫn tới Floci thật nên không có lỗi mạng
+  await page.route("**/api/health", (route) =>
+    route.fulfill({
+      json: { status: "unavailable", endpoint: "http://localhost.floci.io:4566", error: "down" },
+    }),
+  );
+  await page.goto("/sqs/queues");
+  await expect(page.getByRole("heading", { level: 1, name: "Floci isn't running" })).toBeVisible();
+  await expect(page.getByText("docker compose up -d floci", { exact: true })).toBeVisible();
+
+  // Home vẫn hiện, tự báo trạng thái Floci
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1, name: "Console Home" })).toBeVisible();
+
+  await page.goto("/sqs/queues");
+  await page.unroute("**/api/health");
+  await page.getByRole("button", { name: "Check again" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /^Queues/ })).toBeVisible();
+});

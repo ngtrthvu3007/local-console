@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconStack2 } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useQueues } from "./hooks/useQueues.ts";
 import { CreateQueue } from "./pages/CreateQueue.tsx";
@@ -11,7 +12,8 @@ export const sqsService: ServiceDefinition = {
   name: "SQS",
   fullName: "Amazon SQS",
   description: "Queues: peek and send messages, poll as a consumer, DLQ redrive, Lambda triggers",
-  iconPath: "/icons/sqs.svg",
+  icon: IconStack2,
+  category: "integration",
   navigation: [{ text: "Queues", href: sqsRoutes.queues }],
   quickLinks: [{ text: "Create queue", href: sqsRoutes.createQueue }],
   routes: [

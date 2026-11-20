@@ -26,6 +26,7 @@ interface Props {
 export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
   const deleteFunctions = useDeleteFunctions();
   const [deleteLogGroups, setDeleteLogGroups] = useState(true);
+  const [deleteTriggers, setDeleteTriggers] = useState(true);
   const withTriggers = useFunctionsWithTriggers(functions.map((item) => item.name)).data ?? [];
   const referenced = useReferencedNames(functions).data ?? [];
   const hiddenCount = functions.length - DELETE_PREVIEW_COUNT;
@@ -34,7 +35,7 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
 
   const submit = () =>
     deleteFunctions.mutate(
-      { functions, deleteLogGroups },
+      { functions, deleteLogGroups, deleteTriggers: deleteTriggers && withTriggers.length > 0 },
       notifyBulkOutcome({
         success: (result) => `Deleted ${pluralize(result.count, "function")}`,
         errorHeader: "Couldn't delete",
@@ -69,9 +70,17 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
         Also delete {logGroupLabel}
       </Checkbox>
       {withTriggers.length > 0 && (
+        <Checkbox
+          checked={deleteTriggers}
+          onChange={({ detail }) => setDeleteTriggers(detail.checked)}
+        >
+          Also delete the queue and stream triggers of {withTriggers.join(LIST_SEPARATOR)}
+        </Checkbox>
+      )}
+      {withTriggers.length > 0 && !deleteTriggers && (
         <Alert type='warning'>
-          Triggers on {withTriggers.join(LIST_SEPARATOR)} stay in the list but point at a deleted
-          function.
+          The triggers stay and point at a deleted function. They run again if a function with the
+          same name is created.
         </Alert>
       )}
       <ReferencedWarning names={referenced} />

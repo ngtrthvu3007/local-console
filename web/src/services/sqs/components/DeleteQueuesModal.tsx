@@ -66,7 +66,7 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
       {deadLetterQueues.length > 0 && (
         <Alert type='warning'>
           {deadLetterQueues.join(LIST_SEPARATOR)} {deadLetterQueues.length === 1 ? "is" : "are"} the
-          dead-letter queue of other queues. Failed messages from those queues have nowhere to go.
+          dead-letter queue of other queues. Floci then drops their failed messages for good.
         </Alert>
       )}
       <ReferencedWarning names={referenced} />

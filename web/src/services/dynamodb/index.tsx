@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconDatabase } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useTables } from "./hooks/useTables.ts";
 import { CreateTable } from "./pages/CreateTable.tsx";
@@ -11,7 +12,8 @@ export const dynamodbService: ServiceDefinition = {
   name: "DynamoDB",
   fullName: "Amazon DynamoDB",
   description: "Tables: browse, query and edit items, TTL and streams for Lambda",
-  iconPath: "/icons/dynamodb.svg",
+  icon: IconDatabase,
+  category: "database",
   navigation: [{ text: "Tables", href: dynamodbRoutes.tables }],
   quickLinks: [{ text: "Create table", href: dynamodbRoutes.createTable }],
   routes: [

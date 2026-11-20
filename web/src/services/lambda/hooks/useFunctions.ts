@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DeleteLogGroupCommand } from "@aws-sdk/client-cloudwatch-logs";
 import {
   CreateFunctionCommand,
+  DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
   GetFunctionCommand,
   GetFunctionConfigurationCommand,
@@ -14,9 +15,10 @@ import {
   type Runtime,
   type UpdateFunctionConfigurationCommandInput,
 } from "@aws-sdk/client-lambda";
-import { existsUnlessMissing, orEmptyWhenNotFound } from "@shared/aws.ts";
+import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { DEFAULT_ROLE_ARN } from "../constants.ts";
+import { logGroupExists } from "./useFunctionLogs.ts";
 import { useLambda } from "./useLambda.ts";
 
 const functionsQueryKey = ["lambda", "functions"];
@@ -131,17 +133,28 @@ export function useDeleteFunctions() {
   const { lambda, logs } = useLambda();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { functions: FunctionToDelete[]; deleteLogGroups: boolean }) => {
+    mutationFn: async (input: {
+      functions: FunctionToDelete[];
+      deleteLogGroups: boolean;
+      deleteTriggers: boolean;
+    }) => {
       const failures: string[] = [];
       for (const { name, logGroup } of input.functions) {
         try {
+          // Lấy danh sách trước khi xóa function; xóa trigger sau để function xóa lỗi thì trigger còn nguyên
+          const mappings = input.deleteTriggers
+            ? ((await lambda.send(new ListEventSourceMappingsCommand({ FunctionName: name })))
+                .EventSourceMappings ?? [])
+            : [];
           await lambda.send(new DeleteFunctionCommand({ FunctionName: name }));
-          // Function chưa chạy lần nào thì chưa có log group
-          if (input.deleteLogGroups) {
-            await orEmptyWhenNotFound(
-              () => logs.send(new DeleteLogGroupCommand({ logGroupName: logGroup })),
-              undefined,
-            );
+          // Floci (như AWS) giữ trigger của function đã xóa: chúng chạy lại khi tạo function cùng tên
+          for (const { UUID } of mappings) {
+            await lambda.send(new DeleteEventSourceMappingCommand({ UUID }));
+          }
+          // Function chưa chạy lần nào thì chưa có log group: hỏi trước thay vì để DeleteLogGroup
+          // trả 400, request lỗi làm trình duyệt ghi console.error
+          if (input.deleteLogGroups && (await logGroupExists(logs, logGroup))) {
+            await logs.send(new DeleteLogGroupCommand({ logGroupName: logGroup }));
           }
         } catch (error) {
           failures.push(`${name}: ${errorMessage(error)}`);
