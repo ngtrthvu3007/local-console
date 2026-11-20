@@ -7,8 +7,10 @@ export const MAILBOX_ID_PARAM = "id";
 export const MAILBOX_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 
 export const HTML_PREVIEW_HEIGHT = "70vh";
-export const HTML_PREVIEW_SANDBOX = "allow-popups allow-popups-to-escape-sandbox";
+export const HTML_PREVIEW_SANDBOX =
+  "allow-popups allow-popups-to-escape-sandbox";
 export const HTML_PREVIEW_BASE = '<base target="_blank">';
+export const HTML_PREVIEW_BACKGROUND = "#ffffff";
 
 export const UNNAMED_ATTACHMENT = "attachment";
 export const ADDRESS_SEPARATOR = ", ";

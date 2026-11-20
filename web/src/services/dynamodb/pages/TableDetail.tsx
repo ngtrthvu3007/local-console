@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
-import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
-import { isNotFoundError } from "@shared/aws.ts";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { NotFound } from "@shared/components/NotFound.tsx";
-import { ErrorState } from "@shared/components/TableStates.tsx";
+import { pageState } from "@shared/components/PageState.tsx";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { DeleteTablesModal } from "../components/DeleteTablesModal.tsx";
@@ -58,24 +54,13 @@ export function TableDetail() {
   const selectTab = (nextTab: string) =>
     setSearchParams(nextTab === TABLE_TABS.items ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
-  if (details.isLoading) return <Spinner size='large' />;
-  if (details.isError && isNotFoundError(details.error)) {
-    return (
-      <NotFound
-        title={`Table ${tableName} not found`}
-        description='It may have been deleted, or the name is wrong.'
-        backHref={dynamodbRoutes.tables}
-        backText='View tables'
-      />
-    );
-  }
-  if (!details.data) {
-    return (
-      <Container>
-        <ErrorState error={details.error} onRetry={() => details.refetch()} />
-      </Container>
-    );
-  }
+  const state = pageState(details, {
+    ready: Boolean(details.data),
+    title: `Table ${tableName} not found`,
+    backHref: dynamodbRoutes.tables,
+    backText: "View tables",
+  });
+  if (state || !details.data) return state;
 
   const table = details.data;
   const tabs: TabsProps.Tab[] = [

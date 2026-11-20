@@ -9,11 +9,13 @@ import { pluralize } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { functionNameOfMapping } from "../../lambda/helpers.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import {
   DEFAULT_STARTING_POSITION,
   STARTING_POSITION_OPTIONS,
   STREAM_BATCH_SIZE,
+  ALREADY_TRIGGERED,
 } from "../../lambda/constants.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
 import {
@@ -24,6 +26,7 @@ import {
 } from "../constants.ts";
 import {
   useAddStreamTrigger,
+  useStreamTriggers,
   useUpdateStream,
   useUpdateTimeToLive,
 } from "../hooks/useTableSettings.ts";
@@ -172,16 +175,19 @@ interface TriggerProps {
 export function StreamTriggerModal({ table, streamArn, onDismiss }: TriggerProps) {
   const functions = useFunctions();
   const addTrigger = useAddStreamTrigger(table, streamArn);
+  const triggers = useStreamTriggers(table, streamArn);
   const form = useZodForm(streamTriggerSchema, {
     functionName: "",
     startingPosition: DEFAULT_STARTING_POSITION,
     batchSize: String(STREAM_BATCH_SIZE.default),
     enabled: true,
   });
+  const linked = new Set((triggers.data ?? []).map(functionNameOfMapping));
   const functionOptions = (functions.data ?? []).map((item) => ({
     value: item.FunctionName!,
     label: item.FunctionName!,
-    description: item.Runtime,
+    disabled: linked.has(item.FunctionName!),
+    description: linked.has(item.FunctionName!) ? ALREADY_TRIGGERED : item.Runtime,
   }));
 
   const submit = form.handleSubmit((values) =>

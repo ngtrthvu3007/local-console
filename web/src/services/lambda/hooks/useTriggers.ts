@@ -22,6 +22,8 @@ import { SNS_QUERY_ROOT } from "../../sns/hooks/useTopics.ts";
 import { topicNameOfArn } from "../../sns/topics.ts";
 import { useS3 } from "../../s3/hooks/useS3.ts";
 import {
+  overlapMessage,
+  overlappingRule,
   toNotificationConfiguration,
   toNotificationRules,
   type NotificationRule,
@@ -47,6 +49,7 @@ export interface TriggerRow {
   state?: string; // chỉ event source mapping (SQS, DynamoDB) có trạng thái bật/tắt
   rule?: NotificationRule; // S3: rule notification trỏ tới function
   uuid?: string; // SQS, DynamoDB: id của event source mapping
+  sourceArn?: string; // SQS, DynamoDB: ARN của queue / stream mà mapping đọc
   subscriptionArn?: string; // SNS: subscription của topic tới function
 }
 
@@ -119,6 +122,7 @@ function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
       .join(DETAIL_SEPARATOR),
     state: mapping.State,
     uuid: mapping.UUID,
+    sourceArn: mapping.EventSourceArn,
   };
 }
 
@@ -257,7 +261,11 @@ export function useAddTrigger(functionName: string, functionArn: string) {
         prefix: values.prefix,
         suffix: values.suffix,
       };
-      return updateBucketRules(s3, values.bucket, (rules) => [...rules, rule]);
+      return updateBucketRules(s3, values.bucket, (rules) => {
+        const overlap = overlappingRule(rules, rule);
+        if (overlap) throw new Error(overlapMessage(overlap));
+        return [...rules, rule];
+      });
     }
     if (values.source === "dynamodb") {
       return createStreamTrigger(lambda, {

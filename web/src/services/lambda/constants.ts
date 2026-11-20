@@ -91,6 +91,8 @@ export type TriggerRowSource = keyof typeof SOURCE_LABELS;
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;
 export const S3_TRIGGER_EVENTS = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"] as const;
 export const SQS_BATCH_SIZE = { min: 1, max: 10, default: 10 } as const;
+// Mỗi cặp nguồn (queue / stream) + function chỉ có một trigger: AWS từ chối cái thứ hai, Floci thì nhận
+export const ALREADY_TRIGGERED = "Already has a trigger for this source";
 // Trigger từ DynamoDB Stream
 export const DYNAMODB_ARN_PATTERN = /^arn:aws:dynamodb:/;
 export const STREAM_BATCH_SIZE = { min: 1, max: 10000, default: 100 } as const;

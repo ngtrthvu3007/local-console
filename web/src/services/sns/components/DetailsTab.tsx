@@ -4,10 +4,12 @@ import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
+import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { topicSample } from "../codeSamples.ts";
 import { topicTypeLabel, type Topic } from "../topics.ts";
 
 const DETAILS_COLUMNS = 3;
@@ -61,7 +63,10 @@ export function DetailsTab({ topic }: { topic: Topic }) {
             </Header>
           }
         >
-          <KeyValuePairs columns={compact ? 1 : CONNECT_COLUMNS} items={connectItems} />
+          <SpaceBetween size='m'>
+            <KeyValuePairs columns={compact ? 1 : CONNECT_COLUMNS} items={connectItems} />
+            <CodeSamples sample={topicSample(topic)} />
+          </SpaceBetween>
         </Container>
       </SpaceBetween>
     </div>

@@ -5,9 +5,10 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import { SQS_BATCH_SIZE } from "../../lambda/constants.ts";
+import { ALREADY_TRIGGERED, SQS_BATCH_SIZE } from "../../lambda/constants.ts";
+import { functionNameOfMapping } from "../../lambda/helpers.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
-import { useAddQueueTrigger } from "../hooks/useQueueTriggers.ts";
+import { useAddQueueTrigger, useQueueTriggers } from "../hooks/useQueueTriggers.ts";
 import type { Queue } from "../queues.ts";
 import { queueTriggerSchema } from "../schemas.ts";
 
@@ -25,15 +26,19 @@ function ViewFunctionButton({ functionName }: { functionName: string }) {
 export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss: () => void }) {
   const functions = useFunctions();
   const addTrigger = useAddQueueTrigger(queue);
+  const triggers = useQueueTriggers(queue);
   const form = useZodForm(queueTriggerSchema, {
     functionName: "",
     batchSize: String(SQS_BATCH_SIZE.default),
     enabled: true,
   });
+  // AWS từ chối trigger thứ hai cho cùng queue và function (Floci thì nhận, thành hai consumer)
+  const linked = new Set((triggers.data ?? []).map(functionNameOfMapping));
   const functionOptions = (functions.data ?? []).map((item) => ({
     value: item.FunctionName!,
     label: item.FunctionName!,
-    description: item.Runtime,
+    disabled: linked.has(item.FunctionName!),
+    description: linked.has(item.FunctionName!) ? ALREADY_TRIGGERED : item.Runtime,
   }));
 
   const submit = form.handleSubmit((values) =>

@@ -418,7 +418,7 @@ Khai báo trong `registry.ts` (một dòng, `navigation` có 1 mục); icon `web
 | `FLOCI_ACCOUNT_ID`                                                                                          | `SourceArn` của SES identity                              |
 | `CopyButton`, `Figure`, `EmptyState`, `emptyOrError`, `NotFound`, `useIsCompact`, `useNotify`, `formatDate` | Pool ID, ARN, token, trạng thái, thông báo, ngày          |
 
-### Đề xuất thêm vào README › Traps (user tự sửa)
+### Đề xuất thêm vào development.md › Traps (user tự sửa)
 
 ```markdown
 - **Cognito identity pools don't work locally.** Floci 2.4.0 manages identity pools but answers `GetId`, `GetCredentialsForIdentity`, `GetOpenIdToken` and `ListIdentities` with `UnknownOperationException`, so apps using Amplify Storage or `fromCognitoIdentityPool` fail against Floci. The console has no identity pool screen.
@@ -457,7 +457,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1`, gọi 
 **Chưa kiểm, kiểm khi làm:**
 
 - SDK v3 qua proxy `/aws` (JSON 1.1 như DynamoDB).
-- **`InitiateAuth`, `RespondToAuthChallenge` trong SDK v3 có thể không ký** (API không cần credential) → Floci tìm client ở region mặc định (7 #19). Nếu lỗi: thêm header `Authorization` mang region như peek SQS (README › Traps).
+- **`InitiateAuth`, `RespondToAuthChallenge` trong SDK v3 có thể không ký** (API không cần credential) → Floci tìm client ở region mặc định (7 #19). Nếu lỗi: thêm header `Authorization` mang region như peek SQS (development.md › Traps).
 - `NEW_PASSWORD_REQUIRED` qua `InitiateAuth` (đã kiểm với `AdminInitiateAuth`) và với pool đăng nhập bằng username (có nhận `sub` không).
 - `ListUserPools` của Floci có trả `LambdaConfig` không (3.11); không có thì gọi `DescribeUserPool` từng pool.
 - `DeleteUserPool` khi pool còn domain.

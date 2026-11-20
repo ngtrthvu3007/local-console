@@ -45,6 +45,10 @@ import { protocolLabel, type Subscription, type Topic } from "../topics.ts";
 // Các modal chỉ mount khi mở
 
 const PROTOCOL_OPTIONS = Object.entries(PROTOCOLS).map(([value, label]) => ({ value, label }));
+// Luật của AWS (Floci không chặn): topic FIFO chỉ giao tới SQS, topic standard không giao tới queue FIFO
+const SQS_PROTOCOL: Protocol = "sqs";
+const FIFO_TOPIC_SQS_ONLY = "FIFO topics deliver only to SQS queues";
+const FIFO_QUEUE_NEEDS_FIFO_TOPIC = "Only FIFO topics can deliver to FIFO queues";
 const SCOPE_OPTIONS = Object.entries(FILTER_SCOPES).map(([id, text]) => ({ id, text }));
 
 const isLocalUrl = (text: string) => {
@@ -81,11 +85,19 @@ export function CreateSubscriptionModal({
   const protocol = useWatch({ control: form.control, name: "protocol" });
   const url = useWatch({ control: form.control, name: "url" });
 
-  const queueOptions = (queues.data ?? []).map((queue) => ({
-    value: queue.arn,
-    label: queue.name,
-    description: queue.arn,
-  }));
+  const protocolOptions = PROTOCOL_OPTIONS.map((option) => {
+    const blocked = topic.fifo && option.value !== SQS_PROTOCOL;
+    return { ...option, disabled: blocked, description: blocked ? FIFO_TOPIC_SQS_ONLY : undefined };
+  });
+  const queueOptions = (queues.data ?? []).map((queue) => {
+    const blocked = queue.fifo && !topic.fifo;
+    return {
+      value: queue.arn,
+      label: queue.name,
+      disabled: blocked,
+      description: blocked ? FIFO_QUEUE_NEEDS_FIFO_TOPIC : queue.arn,
+    };
+  });
   const functionOptions = (functions.data ?? []).map((item) => ({
     value: item.FunctionArn!,
     label: item.FunctionName,
@@ -122,7 +134,7 @@ export function CreateSubscriptionModal({
         control={form.control}
         name='protocol'
         label='Protocol'
-        options={PROTOCOL_OPTIONS}
+        options={protocolOptions}
       />
       {protocol === "sqs" && (
         <FormSelect

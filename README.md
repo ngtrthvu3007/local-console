@@ -1,70 +1,129 @@
-# Local Console
+# ☁️ Local Console
 
-An AWS-Console-style web UI for local development, built on [Floci](https://github.com/floci-io/floci) (local AWS emulator) and [Cloudscape](https://cloudscape.design).
+**The AWS Console for your local AWS.** Local Console runs next to [Floci](https://github.com/floci-io/floci), a local AWS emulator, and lets you see and change what your app does against it: the emails it sent, the messages waiting in a queue, the items in a table, the logs of the function that just ran. It is built with [Cloudscape](https://cloudscape.design), the design system of the AWS Console, so it looks and works the way you already know.
 
-## Run
+Your app keeps using the normal AWS SDK. Nothing goes to AWS, nothing costs money, no real credentials needed.
 
-Requires Docker Desktop (Windows/macOS) or Docker Engine (Linux).
+[![Floci 2.4.0](https://img.shields.io/badge/Floci-2.4.0-ff9900)](https://github.com/floci-io/floci)
+[![Docker](https://img.shields.io/badge/runs%20on-Docker-2496ed?logo=docker&logoColor=white)](https://docs.docker.com/get-started/get-docker/)
+[![Cloudscape](https://img.shields.io/badge/UI-Cloudscape-0972d3)](https://cloudscape.design)
 
-```bash
-git clone <repo-url> localconsole
-cd localconsole
-docker compose up --build
+![Console Home](docs/images/console-home.png)
+
+## 💡 Why
+
+Floci emulates AWS on your machine, but on its own you only have the AWS CLI to look inside. While coding you want quick answers: _Did the sign-up flow send the email? What is in that queue? Why didn't the S3 upload trigger my function?_ Local Console answers them in a click, and makes the error paths easy to try (failed messages, dead-letter queues, bounced emails), which are hard to test on real AWS.
+
+## ✨ Features
+
+|     | Service                                                  | What you can do                                                                                                                                         |
+| --- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🪣  | [Amazon S3](https://docs.aws.amazon.com/s3/)             | Buckets, folders and objects: upload, preview, download, versions, metadata, pre-signed URLs. Bucket tags, lifecycle, CORS, policy, event notifications |
+| λ   | [AWS Lambda](https://docs.aws.amazon.com/lambda/)        | Create functions, edit code in the browser, test with saved events (sync or async), read logs, triggers from S3 / SQS / DynamoDB / SNS                  |
+| 🗄️  | [Amazon DynamoDB](https://docs.aws.amazon.com/dynamodb/) | Tables and indexes, scan and query with filters, create and edit items as JSON, import / export, TTL, streams                                           |
+| 📬  | [Amazon SQS](https://docs.aws.amazon.com/sqs/)           | Standard and FIFO queues, peek without consuming, send and poll messages, dead-letter queues and redrive                                                |
+| 📣  | [Amazon SNS](https://docs.aws.amazon.com/sns/)           | Topics, subscriptions (SQS, Lambda, HTTP) with filter policies, publish, inbox of text messages (SMS)                                                   |
+| ✉️  | [Amazon SES](https://docs.aws.amazon.com/ses/)           | Mailbox of every email your app sent (HTML preview, text, headers), sender identities, templates                                                        |
+| ⚡  | [ElastiCache](https://docs.aws.amazon.com/elasticache/)  | Valkey / Redis OSS clusters: endpoints, browse and edit keys                                                                                            |
+| 🐇  | [Amazon MQ](https://docs.aws.amazon.com/amazon-mq/)      | RabbitMQ brokers: queues and exchanges, publish and peek messages                                                                                       |
+
+Across the console:
+
+- 🔗 **Wired like AWS:** S3 notifications → Lambda / SQS / SNS, queue and stream triggers for Lambda, SNS fan-out. Connected resources link to each other, and references to deleted resources are flagged instead of failing silently.
+- 🔍 **Search** any service from the top bar (press `/`); your recently visited services are on Console Home.
+- 🔌 **Connect your app:** Console Home gives the environment variables to paste, for apps on your machine and inside Docker.
+- 🧩 **Code samples:** every resource has a Connect card with Node.js (AWS SDK v3) and Python (boto3) code, its name / URL / ARN filled in.
+- 🧹 **Reset data:** wipe everything in Floci from Console Home, without restarting containers.
+- 🌗 **Light / dark** (follows your system), works on phones and tablets.
+- 🩺 **Floci down?** Every page shows the command to start it, and comes back by itself.
+
+## 🚀 Quick start
+
+Requires [Docker](https://docs.docker.com/get-started/get-docker/). Save this as `docker-compose.yml`:
+
+```yaml
+services:
+  floci:
+    image: floci/floci:2.4.0
+    ports: ["127.0.0.1:4566:4566", "127.0.0.1:6379-6399:6379-6399"]
+    environment:
+      FLOCI_SERVICES_UI_ENABLED: "false"
+      FLOCI_STORAGE_MODE: hybrid # keep data across restarts
+      FLOCI_HOSTNAME: localhost.floci.io
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Lambda, Redis, RabbitMQ containers
+      - floci-data:/app/data
+    networks:
+      default:
+        aliases: [localhost.floci.io]
+
+  console:
+    image: <console-image>
+    ports: ["127.0.0.1:3701:3701"]
+    environment:
+      AWS_ENDPOINT_URL: http://localhost.floci.io:4566
+      FLOCI_PUBLIC_URL: http://localhost:4566
+      AWS_REGION: ${AWS_REGION:-ap-southeast-1} # same region as your app
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: [floci]
+
+volumes:
+  floci-data:
 ```
 
-- Console: http://localhost:3701
-- Floci (point your app here): http://localhost:4566
+```bash
+docker compose up -d
+```
 
-Reset all data: `docker compose down -v`
+- 🖥️ Console: **<http://localhost:3701>**
+- 🔌 Floci (point your app here): <http://localhost:4566>
 
-## Point your app at Floci
+Data survives restarts. To start from scratch, use **Reset data** on Console Home, or `docker compose down -v`.
+
+## 🔌 Connect your app
 
 ```env
-AWS_ENDPOINT_URL=http://localhost:4566   # app runs on your machine
-# AWS_ENDPOINT_URL=http://floci:4566     # app runs inside the same docker compose
+AWS_ENDPOINT_URL=http://localhost:4566    # inside the same compose: http://localhost.floci.io:4566
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_REGION=ap-southeast-1
+AWS_DEFAULT_REGION=ap-southeast-1   # Python (boto3) reads this one
 ```
 
-To receive SNS messages on an HTTP endpoint of an app running on your machine, subscribe `http://host.docker.internal:<port>/...`: from inside Floci, `localhost` is Floci itself. The app must confirm the subscription (call the `SubscribeURL` of the `SubscriptionConfirmation` message) before it receives anything.
+S3 clients also need `forcePathStyle: true`. The console's **Connect your app** card shows these with a copy button.
 
-The console and your app must use the same region (default `ap-southeast-1`, the parent region of the Hanoi Local Zone). To use another region:
+<details>
+<summary>Other region, SNS to your app, offline</summary>
 
-```bash
-# bash
-AWS_REGION=ap-northeast-1 docker compose up --build
+- **Region:** the console and your app must match. `AWS_REGION=ap-northeast-1 docker compose up -d` (PowerShell: `$env:AWS_REGION="ap-northeast-1"; docker compose up -d`).
+- **SNS → HTTP on your machine:** subscribe `http://host.docker.internal:<port>/...` (inside Floci, `localhost` is Floci), then confirm via the `SubscribeURL` of the first message.
+- **Offline:** Floci's URLs use `localhost.floci.io` (public DNS → `127.0.0.1`). Without DNS, add `127.0.0.1 localhost.floci.io` to your [hosts file](<https://en.wikipedia.org/wiki/Hosts_(file)>).
+- **First use** downloads extra images: Lambda runtime, Valkey, RabbitMQ.
+
+</details>
+
+## 🧭 How it works
+
+```text
+your app ──AWS SDK──► Floci :4566 ◄──/aws proxy── Local Console :3701 ◄── browser
+                       (emulated AWS;                (Node server + React UI)
+                        Lambda, Redis, RabbitMQ
+                        containers)
 ```
 
-```powershell
-# PowerShell
-$env:AWS_REGION="ap-northeast-1"; docker compose up --build
-```
+The console server serves the UI, forwards the browser's AWS SDK calls to Floci (`/aws`), and adds a few endpoints AWS has no API for, such as Redis keys and RabbitMQ queues (`/api`). Everything the console shows comes from Floci, so your app and the console always see the same data.
 
-## Development
+## ⚠️ Limitations
 
-Requires Node.js 24+.
+- 🏠 **Local development only:** no authentication, no IAM. The console only answers requests from `localhost`, and both ports are published on `127.0.0.1`; don't expose it on a network.
+- 🧩 **Only what Floci supports:** a service or option Floci doesn't emulate isn't in the console either. Where Floci differs from AWS (for example, it doesn't clean up references to deleted resources), the console tells you in the UI.
+- 🗺️ **More services coming:** EventBridge, Cognito, CloudFormation, API Gateway… see the [roadmap](docs/superpowers/roadmap.md).
 
-```bash
-npm install
-docker compose up -d floci   # Floci only
-npm run dev:server           # terminal 1: API on :3701
-npm run dev:web              # terminal 2: UI on :5173 (proxies /api and /aws to :3701)
-```
+## 🛠️ Development
 
-Checks: `npm run typecheck` · `npm test`
+Setup, tests and known traps: [docs/development.md](docs/development.md).
 
-Design: [docs/superpowers/specs/2026-11-09-localconsole-design.md](docs/superpowers/specs/2026-11-09-localconsole-design.md)
+## 🙏 Built with
 
-## Traps & open issues
-
-- **`/api` and `/aws` only answer the console itself.** `server/src/middleware/localOnly.ts` rejects (403) requests from another site (`Sec-Fetch-Site`) and foreign `Host` headers (DNS rebinding). Open the console via `localhost`, `127.0.0.1` or `[::1]`; any other hostname gets 403. `/api/health` stays open for Floci's probe. Floci's own port `4566` is not covered.
-- **Bundle is large (open):** JS ~2.2 MB, CSS ~1.3 MB, served uncompressed — 6 perf FAILs in [tests/REPORT.md](tests/REPORT.md) §10. Next step: `lazy()` each service's routes so a page only loads its own service. Compression skipped while the console is localhost-only.
-- **Logo `<img>` has no `width`/`height` (2 perf WARNs, won't fix):** Cloudscape `TopNavigation` renders it and its `logo` prop only takes `src`/`alt`; `mark.svg` already has a fixed size and layout shift is 0.
-- **E2E fails on any `console.error` (`tests/e2e/fixtures.ts`).** The only exceptions are S3's 404 for a bucket without lifecycle/tags (`?lifecycle`, `?tagging`): S3 answers "not configured" with 404, the app shows it as empty, but the browser still logs the request. Don't widen the filter; avoid the error instead (e.g. Lambda Monitor checks `DescribeLogGroups` before `FilterLogEvents`).
-- **Floci doesn't clean up references.** Deleting a function, queue or topic leaves S3 notification rules, SNS subscriptions and Lambda triggers pointing at it. The console shows them as "(not found)" (`Link` components probe the target), the S3 properties tab offers "Remove broken rules" (S3 rejects every save while one exists), and the delete modals warn first (`useReferencedNames`). Probing a deleted target makes the browser log a 400/404 `console.error`, so an E2E that deliberately leaves dangling references needs an exception like the S3 one above.
-- **MQ quirks come from Floci, not the console.** `RebootBroker` returns success without restarting the container (the console only asks for confirmation). The RabbitMQ container is published on `0.0.0.0`, not `127.0.0.1` like Redis, on the first free port of 5672–5699 (it may be 5673) and 15672–15699.
-- **SNS text messages can't be deleted one by one.** Floci's `DELETE /_aws/sns` ignores `?id=` and clears the SMS inbox of every region, so the SMS page only has "Delete all" (with a warning), and the SMS tests never clean up after themselves (`it/leftovers.mjs` only lists them). `GET /_aws/sns` does accept `?phone=` and `?id=`.
-- **`awslambda-<region>-tasks` bucket.** Floci creates it with the first function and it shows in the S3 bucket list; the console doesn't hide it.
-- **ElastiCache "Created" and node status show "—"** because Floci doesn't return them.
-- **SQS peek needs a region header.** `GET /aws/_aws/sqs/messages` (Floci-only) looks the queue up in Floci's default region unless an `Authorization` header names the console region (`web/src/services/sqs/peek.ts`; signature is not checked).
+[Floci](https://github.com/floci-io/floci) · [Cloudscape](https://cloudscape.design) · [AWS SDK for JavaScript v3](https://github.com/aws/aws-sdk-js-v3) · [Tabler Icons](https://tabler.io/icons) · [React](https://react.dev) · [Vite](https://vite.dev)

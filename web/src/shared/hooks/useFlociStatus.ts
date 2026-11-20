@@ -30,6 +30,9 @@ export function useFlociStatus() {
     servicesRunning: serviceStates.filter((serviceState) => serviceState === FLOCI_SERVICE_RUNNING)
       .length,
     servicesTotal: serviceStates.length,
+    // Console server không trả lời /api/health (chỉ gặp khi chạy UI bằng npm run dev:web)
+    serverDown: health.isError,
+    checking: health.isFetching,
     refresh: () => queryClient.invalidateQueries(),
   };
 }

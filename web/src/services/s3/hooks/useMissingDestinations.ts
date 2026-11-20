@@ -15,14 +15,19 @@ export function useMissingDestinations(rules: NotificationRule[]) {
   const { lambda } = useLambda();
   const sqs = useSQS();
   const sns = useSNS();
-  const results = useQueries({
-    queries: rules.map((rule) => {
-      if (rule.destination === "lambda") {
-        return functionExistsQuery(lambda, functionNameOfArn(rule.arn));
-      }
-      if (rule.destination === "sqs") return queueExistsQuery(sqs, queueNameOfArn(rule.arn));
-      return topicExistsQuery(sns, rule.arn);
-    }),
-  });
-  return rules.filter((_rule, index) => results[index].data === false);
+  const queryOf = (rule: NotificationRule) => {
+    if (rule.destination === "lambda") {
+      return functionExistsQuery(lambda, functionNameOfArn(rule.arn));
+    }
+    if (rule.destination === "sqs") return queueExistsQuery(sqs, queueNameOfArn(rule.arn));
+    return topicExistsQuery(sns, rule.arn);
+  };
+  // Nhiều rule cùng đích chỉ hỏi một lần: useQueries cảnh báo khi key trùng
+  const keyOf = (rule: NotificationRule) => JSON.stringify(queryOf(rule).queryKey);
+  const unique = [...new Map(rules.map((rule) => [keyOf(rule), rule])).values()];
+  const results = useQueries({ queries: unique.map(queryOf) });
+  const missing = new Set(
+    unique.filter((_rule, index) => results[index].data === false).map(keyOf),
+  );
+  return rules.filter((rule) => missing.has(keyOf(rule)));
 }

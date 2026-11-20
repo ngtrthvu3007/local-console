@@ -19,6 +19,7 @@ import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import { sqsRoutes } from "../../sqs/routes.ts";
 import {
+  ALREADY_TRIGGERED,
   DEFAULT_STARTING_POSITION,
   S3_TRIGGER_EVENTS,
   SQS_BATCH_SIZE,
@@ -53,13 +54,14 @@ const INITIAL_VALUES = {
 };
 
 interface Props {
+  linkedSourceArns: readonly string[]; // queue / stream đã có trigger tới function này
   saving: boolean;
   onSave: (values: AddTriggerInput) => void;
   onDismiss: () => void;
 }
 
 // Chỉ mount khi mở
-export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
+export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }: Props) {
   const follow = useFollow();
   const buckets = useBuckets();
   const queues = useQueues();
@@ -67,12 +69,17 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
   const form = useZodForm(triggerSchema, INITIAL_VALUES);
   const source = useWatch({ control: form.control, name: "source" });
   // Bảng chưa bật stream thì khóa trong dropdown, không tự bật stream thay người dùng
-  const tableOptions = (tables.data ?? []).map((table) => ({
-    value: table.TableName!,
-    label: table.TableName!,
-    disabled: !table.LatestStreamArn || !table.StreamSpecification?.StreamEnabled,
-    description: table.StreamSpecification?.StreamEnabled ? undefined : STREAM_OFF,
-  }));
+  const linked = (arn?: string) => Boolean(arn && linkedSourceArns.includes(arn));
+  const tableOptions = (tables.data ?? []).map((table) => {
+    const streamOn = Boolean(table.LatestStreamArn && table.StreamSpecification?.StreamEnabled);
+    const triggered = linked(table.LatestStreamArn);
+    return {
+      value: table.TableName!,
+      label: table.TableName!,
+      disabled: !streamOn || triggered,
+      description: !streamOn ? STREAM_OFF : triggered ? ALREADY_TRIGGERED : undefined,
+    };
+  });
   const streamArnOf = (tableName: string) =>
     tables.data?.find((table) => table.TableName === tableName)?.LatestStreamArn;
 
@@ -85,7 +92,8 @@ export function AddTriggerModal({ saving, onSave, onDismiss }: Props) {
   const queueOptions = (queues.data ?? []).map((queue) => ({
     value: queue.arn,
     label: queue.name,
-    description: queue.arn,
+    disabled: linked(queue.arn),
+    description: linked(queue.arn) ? ALREADY_TRIGGERED : queue.arn,
   }));
   const bucketOptions = (buckets.data ?? []).map((bucket) => ({
     value: bucket.Name!,

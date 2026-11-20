@@ -33,7 +33,7 @@ Nguồn: 3 agent (khảo sát đầu, độ ảnh hưởng, nghiên cứu sâu) 
 - S3 Bucket: tên (BucketPolicy cùng tên → lọc type). Lambda Function: tên. Lambda::Url: ARN function. EventSourceMapping: UUID (GetEventSourceMapping → FunctionArn → tab triggers). DynamoDB Table: tên. SQS Queue: URL `http://localhost:4566/000000000000/<name>`. ElastiCache CacheCluster: id. LogGroup: tên (`/aws/lambda/<fn>` → tab monitor). SNS Topic: ARN; Subscription: ARN topic + `:<uuid>`. SES EmailIdentity: địa chỉ. Cognito UserPool: pool id; UserPoolClient: client id (link khi stack có đúng 1 pool). EventBus: tên. Events Rule: chỉ tên (kể cả bus riêng → dò ListEventBuses + ListRules NamePrefix). Scheduler Schedule: chỉ tên (ListSchedules NamePrefix trả GroupName). ApiGateway RestApi / V2 Api: id 10 ký tự. StepFunctions StateMachine: ARN. Nested stack: physical id = ARN stack con. IAM/Permission/QueuePolicy/TopicPolicy: không có trang.
 - DescribeStackResources?PhysicalResourceId: không thuộc stack → HTTP 400 (console.error → E2E fail) → lý do dùng index.
 
-## Bẫy cho README › Traps
+## Bẫy cho development.md › Traps
 - Xóa tay resource do stack tạo: stack vẫn CREATE_COMPLETE; tạo tay lại cùng tên rồi DeleteStack → resource tạo tay bị xóa luôn.
 - Bucket có object → DeleteStack DELETE_FAILED.
 - Stack CREATE_COMPLETE ở local chưa chắc deploy được trên AWS (Ref sai thành literal, OnFailure/DisableRollback bỏ qua, stub).

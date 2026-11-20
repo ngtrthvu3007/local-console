@@ -8,14 +8,12 @@ import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Spinner from "@cloudscape-design/components/spinner";
+import { pageState } from "@shared/components/PageState.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
-import { isNotFoundError } from "@shared/aws.ts";
 import { copyToClipboard } from "@shared/clipboard.ts";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { NotFound } from "@shared/components/NotFound.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { TagsTable } from "@shared/components/TagsTable.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
@@ -88,17 +86,14 @@ export function ObjectDetail() {
     { text: fileName, href: s3Routes.object(bucket, key) },
   ]);
 
-  if (head.isLoading) return <Spinner size='large' />;
-  if (head.isError && isNotFoundError(head.error)) {
-    return (
-      <NotFound
-        title={`Object ${fileName} not found`}
-        description={`${s3Uri(bucket, key)} doesn't exist, or its latest version is a delete marker.`}
-        backHref={s3Routes.bucket(bucket, { prefix: folder })}
-        backText='Back to folder'
-      />
-    );
-  }
+  const state = pageState(head, {
+    ready: Boolean(head.data),
+    title: `Object ${fileName} not found`,
+    description: `${s3Uri(bucket, key)} doesn't exist, or its latest version is a delete marker.`,
+    backHref: s3Routes.bucket(bucket, { prefix: folder }),
+    backText: "Back to folder",
+  });
+  if (state) return state;
 
   const object = head.data;
   const uri = s3Uri(bucket, key);

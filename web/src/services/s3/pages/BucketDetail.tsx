@@ -1,10 +1,9 @@
 import { useParams, useSearchParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { NotFound } from "@shared/components/NotFound.tsx";
+import { pageState } from "@shared/components/PageState.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { ObjectsTab } from "../components/ObjectsTab.tsx";
 import { PermissionsTab } from "../components/PermissionsTab.tsx";
@@ -31,17 +30,14 @@ export function BucketDetail() {
   const selectTab = (nextTab: string) =>
     setSearchParams(nextTab === BUCKET_TABS.objects ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
-  if (exists.isLoading) return <Spinner size='large' />;
-  if (exists.data === false) {
-    return (
-      <NotFound
-        title={`Bucket ${bucket} not found`}
-        description='It may have been deleted, or the name is wrong.'
-        backHref={s3Routes.buckets}
-        backText='View buckets'
-      />
-    );
-  }
+  const state = pageState(exists, {
+    ready: exists.data === true,
+    notFound: exists.data === false,
+    title: `Bucket ${bucket} not found`,
+    backHref: s3Routes.buckets,
+    backText: "View buckets",
+  });
+  if (state) return state;
 
   const uri = s3Uri(bucket, prefix);
 

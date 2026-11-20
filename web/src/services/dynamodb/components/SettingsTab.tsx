@@ -7,7 +7,6 @@ import Header from "@cloudscape-design/components/header";
 import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
-import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
@@ -17,19 +16,20 @@ import type {
   TableDescription,
 } from "@aws-sdk/client-dynamodb";
 import type { EventSourceMappingConfiguration } from "@aws-sdk/client-lambda";
+import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
-import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import {
   EVENT_SOURCE_STATES,
   STARTING_POSITIONS,
   type StartingPosition,
 } from "../../lambda/constants.ts";
-import { functionNameOfMapping } from "../../lambda/helpers.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
+import { BrokenTriggersAlert } from "../../lambda/components/BrokenTriggersAlert.tsx";
+import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
+import { FUNCTION_TABS } from "../../lambda/routes.ts";
 import {
   PROJECTION_LABELS,
   STREAM_VIEW_TYPES,
@@ -37,7 +37,8 @@ import {
   type StreamViewTypeId,
 } from "../constants.ts";
 import { useStreamTriggers, useTimeToLive } from "../hooks/useTableSettings.ts";
-import { keySchemaOf } from "../hooks/useTables.ts";
+import { keyAttributesOf, keySchemaOf } from "../hooks/useTables.ts";
+import { tableSample } from "../codeSamples.ts";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { KeyLabel, keyText } from "./KeyLabel.tsx";
 import { StreamModal, StreamTriggerModal, TimeToLiveModal } from "./SettingsModals.tsx";
@@ -57,7 +58,6 @@ const startingPositionText = (mapping: EventSourceMappingConfiguration) =>
 
 export function SettingsTab({ table }: { table: TableDescription }) {
   const tableName = table.TableName!;
-  const follow = useFollow();
   const { ref, compact } = useIsCompact(ITEM_LIST_WIDTH_PX);
   const keys = keySchemaOf(table);
   const timeToLive = useTimeToLive(tableName);
@@ -185,12 +185,7 @@ export function SettingsTab({ table }: { table: TableDescription }) {
       header: "Function",
       isRowHeader: true,
       cell: (mapping) => (
-        <Link
-          href={lambdaRoutes.function(functionNameOfMapping(mapping), FUNCTION_TABS.triggers)}
-          onFollow={follow}
-        >
-          {functionNameOfMapping(mapping)}
-        </Link>
+        <FunctionLink arn={mapping.FunctionArn ?? ""} tab={FUNCTION_TABS.triggers} />
       ),
     },
     {
@@ -231,6 +226,7 @@ export function SettingsTab({ table }: { table: TableDescription }) {
         <Container header={<Header variant='h2'>General information</Header>}>
           <KeyValuePairs columns={GENERAL_COLUMNS} items={generalItems} />
         </Container>
+        <ConnectCard sample={tableSample(tableName, keyAttributesOf(keys))} />
 
         <Table
           variant='container'
@@ -267,6 +263,7 @@ export function SettingsTab({ table }: { table: TableDescription }) {
           </Container>
         </ColumnLayout>
 
+        <BrokenTriggersAlert mappings={triggers.data ?? []} onRemoved={triggers.refetch} />
         {streamOn && (
           <Table
             variant='container'

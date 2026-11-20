@@ -91,3 +91,26 @@ export function toNotificationConfiguration(
     }),
   };
 }
+
+// Luật của AWS (Floci không chặn): hai rule có chung loại event mà vùng key (prefix, suffix) chồng
+// nhau thì S3 từ chối cả cấu hình ("Configurations overlap"), bất kể đích. "s3:ObjectCreated:*" chứa
+// "s3:ObjectCreated:Put"; prefix/suffix rỗng khớp mọi key nên chồng với mọi giá trị.
+const WILDCARD = "*";
+const coversEvent = (wide: string, event: string) =>
+  wide === event || (wide.endsWith(WILDCARD) && event.startsWith(wide.slice(0, -WILDCARD.length)));
+const nested = (a = "", b = "", contains: (outer: string, inner: string) => boolean) =>
+  contains(a, b) || contains(b, a);
+
+export const overlappingRule = (
+  rules: readonly NotificationRule[],
+  rule: Pick<NotificationRule, "events" | "prefix" | "suffix">,
+) =>
+  rules.find(
+    (other) =>
+      other.events.some((a) => rule.events.some((b) => coversEvent(a, b) || coversEvent(b, a))) &&
+      nested(other.prefix, rule.prefix, (outer, inner) => outer.startsWith(inner)) &&
+      nested(other.suffix, rule.suffix, (outer, inner) => outer.endsWith(inner)),
+  );
+
+export const overlapMessage = (other: NotificationRule) =>
+  `Overlaps ${other.id || other.arn}: same event type and overlapping prefix/suffix. AWS rejects this.`;

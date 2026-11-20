@@ -133,8 +133,9 @@ export function ClusterList() {
           <Box variant='small' display='block' color='text-body-secondary'>
             <SpaceBetween direction='horizontal' size='xxs' alignItems='center'>
               {cluster.endpoint && <EndpointCell cluster={cluster} />}
-              {cluster.endpoint && DETAIL_SEPARATOR}
-              {pluralize(cluster.nodes.length, "node")}
+              {/* SpaceBetween cần key từ con: chữ trần phải bọc thẻ */}
+              {cluster.endpoint && <span>{DETAIL_SEPARATOR}</span>}
+              <span>{pluralize(cluster.nodes.length, "node")}</span>
             </SpaceBetween>
           </Box>
         </div>

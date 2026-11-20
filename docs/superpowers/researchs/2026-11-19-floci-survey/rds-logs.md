@@ -167,7 +167,7 @@ Ghi chú: SQL editor qua Data API là đường ngắn nhất. Chỉ cần cầu
 | Export task | Không làm | Floci không hỗ trợ | — | — |
 
 **Tách dùng chung từ Lambda Monitor** (`web/src/services/lambda/hooks/useFunctionLogs.ts`, `components/MonitorTab.tsx`, `constants.ts`, `helpers.ts`):
-- `logGroupExists` (DescribeLogGroups trước để tránh 400 → `console.error`, xem README "E2E fails on any console.error") → dùng chung.
+- `logGroupExists` (DescribeLogGroups trước để tránh 400 → `console.error`, xem development.md "E2E fails on any console.error") → dùng chung.
 - `useFunctionLogs` → hook `useLogEvents(logGroupName, {rangeId, filterPattern, autoRefresh, logStreamNames?})`; queryKey hiện gắn `functionQueryKey` → cần đổi sang key theo log group.
 - `LOG_RANGES`, `DEFAULT_LOG_RANGE`, `LOG_REFRESH_INTERVAL_MS`, `logMessageText`, cột `timestamp/message/stream`, `eventId` → chuyển sang `@shared` hoặc service `cloudwatch-logs`.
 - `MonitorTab` → bảng log chung nhận `logGroup` + empty state truyền vào; Lambda Monitor và trang RDS chỉ bọc lại. Có thể thêm nút "Open in CloudWatch Logs" từ Lambda/RDS.
