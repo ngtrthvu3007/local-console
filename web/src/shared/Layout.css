@@ -22,6 +22,8 @@
   /* Motion của console: Cloudscape chỉ animate mũi tên, popover, modal; nội dung mở/đóng, tab,
      trang và dòng bảng thì hiện tức thì. Dòng bảng hiện lần lượt, mỗi dòng trễ thêm một nhịp */
   --service-icon-size: 24px; /* ô icon service; glyph bên trong là SERVICE_GLYPH_SIZE_PX */
+  /* Viền focus của CodeSnippet = color-text-link-default của Cloudscape (đổi theo sáng / tối) */
+  --focus-ring-color: #006ce0;
   --nav-group-title-color: #656871;
   --motion-duration: 200ms;
   --motion-offset: 4px;
@@ -33,6 +35,13 @@
   --terminal-background: #0f141a;
   --terminal-text: #f9f9fa;
   --terminal-prompt: var(--brand-color);
+}
+
+/* Giao diện tối (Cloudscape gắn class awsui-dark-mode lên body): màu tự đặt đổi theo.
+   Màu = text-body-secondary của Cloudscape ở chế độ tối */
+body.awsui-dark-mode {
+  --nav-group-title-color: #b4b4bb;
+  --focus-ring-color: #42b4ff;
 }
 
 /* Thanh loading dưới thanh trên cùng (LoadingBar trong Layout.tsx) */
@@ -71,9 +80,10 @@
 }
 
 /* Ô lệnh kiểu terminal trên trang "Floci isn't running": cùng màu nền với thanh trên cùng */
+/* Ô terminal (TerminalBlock): nhiều dòng thì nút copy nằm góc trên, một dòng thì thẳng hàng chữ */
 .console-command {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 8px 8px 8px 16px;
   border-radius: 8px;
@@ -82,7 +92,11 @@
 }
 .console-command code {
   flex: 1;
+  align-self: center;
   min-inline-size: 0;
+  /* Xuống dòng ở dấu cách trước; chỉ ngắt giữa từ (URL dài) khi một từ dài hơn khung.
+     Cuộn ngang thì phần cuối lệnh bị che trên điện thoại; nút copy vẫn chép nguyên văn */
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-family: Monaco, Menlo, Consolas, "Courier Prime", Courier, "Courier New", monospace;
   font-size: 14px;
@@ -238,10 +252,6 @@ html {
 [role="dialog"] :is(h2, label) {
   overflow-wrap: anywhere;
 }
-.console-count {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
 /* Nhóm service: mũi tên mở/đóng nằm cuối dòng, icon + tên thẳng cột với link thường */
 body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"]:not(#\9) {
   flex-direction: row-reverse;
@@ -353,15 +363,21 @@ body .local-console nav[aria-label="Side navigation"] h3[class*="awsui_section-g
   border-radius: 6px;
   color: #fff;
 }
+/* Ô icon trong slot icon của Cloudscape (gợi ý ô search): slot chỉ rộng 16px,
+   nới theo ô để icon không đè chữ */
+body [class*="awsui_icon_"]:has(> .console-service-icon):not(#\9) {
+  inline-size: auto;
+  block-size: auto;
+  padding-block: 0;
+}
+/* Icon + tên service (Recently visited trên Home) */
 .console-service {
   display: grid;
   grid-template-columns: var(--service-icon-size) minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: center;
 }
-.console-service__count {
-  margin-top: 8px;
-}
+
 @media (max-width: 688px) {
   /* Trong bảng, label chọn dòng của Cloudscape đã phủ cả ô; ép 44px sẽ đẩy radio tràn khỏi dòng. */
   :is(.local-console, [role="dialog"])
@@ -378,6 +394,12 @@ body .local-console nav[aria-label="Side navigation"] h3[class*="awsui_section-g
   body .local-console nav[aria-label="Side navigation"] a:not(#\9) {
     min-block-size: 44px;
     align-items: center;
+  }
+  /* Link service trong thẻ Recently visited của Home: chữ một dòng, cần vùng chạm 44px */
+  body .local-console .console-service a:not(#\9) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--touch-target);
   }
   /* Link cao 44px trên mobile nên mũi tên phải căn giữa theo chữ */
   body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] [class*="awsui_expand-button_"]:not(#\9) {

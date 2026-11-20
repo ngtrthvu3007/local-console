@@ -6,9 +6,7 @@ import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { DEV_SERVER_START_COMMAND, FLOCI_START_COMMAND } from "../constants.ts";
-import { CopyButton } from "./CopyButton.tsx";
-
-const COPY_COMMAND_LABEL = "Copy command";
+import { TerminalBlock } from "./TerminalBlock.tsx";
 
 interface Props {
   title: string;
@@ -19,9 +17,17 @@ interface Props {
   onCheck: () => void;
 }
 
-// Trang thay cho nội dung khi console không chạy được: một lệnh để chạy lại, kiểm tra lại bằng tay.
-// Console vẫn tự kiểm tra định kỳ nên trang tự trở lại khi Floci / server lên
-function Unavailable({ title, description, command, notes, checking, onCheck }: Props) {
+// Trang thay cho nội dung khi console không chạy được: một lệnh để chạy lại,
+// kiểm tra lại bằng tay. Console vẫn tự kiểm tra định kỳ nên trang tự trở lại
+// khi Floci / server lên
+function Unavailable({
+  title,
+  description,
+  command,
+  notes,
+  checking,
+  onCheck,
+}: Props) {
   return (
     <ContentLayout
       header={
@@ -32,16 +38,7 @@ function Unavailable({ title, description, command, notes, checking, onCheck }: 
     >
       <Container>
         <SpaceBetween size='s'>
-          {/* Ô lệnh kiểu terminal: dấu $ chỉ để nhìn, nút copy chỉ chép lệnh */}
-          <div className='console-command'>
-            <code>
-              <span className='console-command__prompt' aria-hidden>
-                $
-              </span>
-              <span>{command}</span>
-            </code>
-            <CopyButton variant='icon' text={command} label={COPY_COMMAND_LABEL} />
-          </div>
+          <TerminalBlock code={command} prompt />
           <Box variant='small' color='text-body-secondary'>
             <ul className='console-unavailable__notes'>
               {notes.map((note, index) => (
@@ -83,7 +80,13 @@ export function FlociDown({
   );
 }
 
-export function ServerDown({ checking, onCheck }: { checking: boolean; onCheck: () => void }) {
+export function ServerDown({
+  checking,
+  onCheck,
+}: {
+  checking: boolean;
+  onCheck: () => void;
+}) {
   return (
     <Unavailable
       title="Can't reach the console server"

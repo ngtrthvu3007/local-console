@@ -114,7 +114,7 @@ Events (14)                                   [🔍 Find events] [☐ Failures o
 - `DescribeStackEvents` (vòng `NextToken`). **Giữ thứ tự API trả** (mới nhất trên); không sort lại theo timestamp vì nhiều event cùng ms (7 #3).
 - Timestamp hiện tới mili giây. Reason `pre-line`, dòng `*_FAILED` tô đỏ (`StatusIndicator` error).
 - **Failures only** (`Toggle`): chỉ `*_FAILED`.
-- Reason của custom resource chứa `ECONNREFUSED` và `:443`: thêm gợi ý dưới reason "Node.js custom resources (CDK autoDeleteObjects, BucketDeployment…) need Floci started with FLOCI_TLS_ENABLED=true." kèm link README › Traps (7 #20).
+- Reason của custom resource chứa `ECONNREFUSED` và `:443`: thêm gợi ý dưới reason "Node.js custom resources (CDK autoDeleteObjects, BucketDeployment…) need Floci started with FLOCI_TLS_ENABLED=true." kèm link development.md › Traps (7 #20).
 - Event của resource `AWS::CloudFormation::Stack`: logical ID kèm link sang stack con (physical ID của event là ARN stack con) — nguyên nhân gốc nằm trong events của stack con (7 #13).
 
 ### 3.4 Tab Resources
@@ -154,7 +154,7 @@ Resources (9)                                                     [🔍 Find res
 - SDK CloudFormation **nạp lười** trong `queryFn` (`await import("@aws-sdk/client-cloudformation")`) để không vào bundle chính của các trang service.
 - `staleTime` `RESOURCE_INDEX_STALE_MS`; làm mới khi xóa stack trên console.
 - Không có stack nào: một request, luôn 200.
-- **Không dùng `DescribeStackResources?PhysicalResourceId=`**: resource không thuộc stack → HTTP 400 → trình duyệt log `console.error` → E2E fail (README › Traps, 7 #14). User chốt 2026-11-19.
+- **Không dùng `DescribeStackResources?PhysicalResourceId=`**: resource không thuộc stack → HTTP 400 → trình duyệt log `console.error` → E2E fail (development.md › Traps, 7 #14). User chốt 2026-11-19.
 
 **`StackLink`** (`web/src/services/cloudformation/components/StackLink.tsx`, user chốt): nhận `type` và `physicalId`, tra index, render "Stack: <link>" hoặc `null` (không thuộc stack, đang tải, lỗi).
 
@@ -251,7 +251,7 @@ Thêm cho service `floci` trong `docker-compose.yml` (mục 9):
 
 ```yaml
 environment:
-  FLOCI_TLS_ENABLED: ${FLOCI_TLS_ENABLED:-false} # bật khi deploy app CDK có custom resource Node (README › Traps)
+  FLOCI_TLS_ENABLED: ${FLOCI_TLS_ENABLED:-false} # bật khi deploy app CDK có custom resource Node (development.md › Traps)
 ```
 
 ### Cấu trúc thư mục
@@ -280,7 +280,7 @@ Khai báo trong `registry.ts` (một dòng, `navigation` có 1 mục); icon `web
 | `s3Routes`, `lambdaRoutes`, `dynamodbRoutes`, `sqsRoutes`, `elasticacheRoutes`, `queueNameOfUrl`        | Link resource (3.10)        |
 | `CopyButton`, `EmptyState`, `emptyOrError`, `NotFound`, `useIsCompact`, `useNotify`, `DETAIL_SEPARATOR` | Copy, trạng thái, thông báo |
 
-### Đề xuất thêm vào README › Traps (user tự sửa)
+### Đề xuất thêm vào development.md › Traps (user tự sửa)
 
 - Stack `CREATE_COMPLETE` trên Floci chưa chắc deploy được trên AWS: resource bị stub, `Ref` tới parameter không khai báo thành chuỗi literal, `OnFailure` / `DisableRollback` / `RetainResources` bị bỏ qua.
 - Xóa tay một resource do stack tạo: stack vẫn `CREATE_COMPLETE`. Tạo tay lại cùng tên rồi `DeleteStack` thì resource tạo tay bị xóa luôn.

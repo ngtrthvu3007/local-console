@@ -195,7 +195,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     triggers,
     <EmptyState
       title='No triggers'
-      description='Add an S3, SQS or DynamoDB trigger to run this function.'
+      description='Add an S3, SQS, DynamoDB or SNS trigger to run this function.'
     />,
   );
 
