@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconBroadcast } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useTopics } from "./hooks/useTopics.ts";
 import { CreateTopic } from "./pages/CreateTopic.tsx";
@@ -12,7 +13,8 @@ export const snsService: ServiceDefinition = {
   name: "SNS",
   fullName: "Amazon SNS",
   description: "Topics: fan out to queues, functions and HTTP endpoints, filter policies, publish",
-  iconPath: "/icons/sns.svg",
+  icon: IconBroadcast,
+  category: "integration",
   navigation: [
     { text: "Topics", href: snsRoutes.topics },
     { text: "Text messaging (SMS)", href: snsRoutes.sms },

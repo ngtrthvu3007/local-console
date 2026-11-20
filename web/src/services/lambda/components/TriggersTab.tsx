@@ -234,7 +234,12 @@ export function TriggersTab({ functionName, functionArn }: Props) {
         header={header}
       />
       {openModal === MODALS.add && (
-        <AddTriggerModal saving={addTrigger.isPending} onSave={add} onDismiss={closeModal} />
+        <AddTriggerModal
+          linkedSourceArns={(triggers.data ?? []).flatMap((row) => row.sourceArn ?? [])}
+          saving={addTrigger.isPending}
+          onSave={add}
+          onDismiss={closeModal}
+        />
       )}
       {single && (
         <ConfirmModal

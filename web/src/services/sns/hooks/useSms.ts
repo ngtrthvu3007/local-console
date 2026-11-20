@@ -23,7 +23,7 @@ export function useSmsInbox(autoRefresh = false) {
   });
 }
 
-// Floci bỏ qua ?id= và xóa tin của mọi region: không có cách xóa từng tin (spec SMS 7 #2)
+// DELETE /_aws/sns của Floci chỉ có xóa hết tin của mọi region, không nhận ?id= như SES (spec SMS 7 #2)
 export function useClearSms() {
   const queryClient = useQueryClient();
   return useMutation({

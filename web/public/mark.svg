@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M9 22a5 5 0 0 1-.6-9.96A7 7 0 0 1 22 10.5a5.5 5.5 0 0 1 1 10.9"/>
-  <rect x="11" y="18" width="10" height="9" rx="1.5" fill="#ff9900" stroke="#ff9900"/>
+<!-- Logo Local Console: ô cam + glyph "cloud-code" của Tabler Icons (MIT, https://tabler.io/icons) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff9900"/>
+      <stop offset="1" stop-color="#e8590c"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#tile)"/>
+  <path transform="translate(4 4)" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 18.004H6.657C4.085 18 2 15.993 2 13.517s2.085-4.482 4.657-4.482c.393-1.762 1.794-3.2 3.675-3.773c1.88-.572 3.956-.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99a3.47 3.47 0 0 1 3.307 2.444M20 21l2-2l-2-2m-3 0l-2 2l2 2"/>
 </svg>

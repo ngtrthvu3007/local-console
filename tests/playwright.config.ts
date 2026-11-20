@@ -22,6 +22,8 @@ export default defineConfig({
   use: {
     baseURL,
     launchOptions: { executablePath: process.env.CHROME_PATH },
+    // Tắt motion của console (fade, trượt, smooth scroll) để đo vị trí và chụp ảnh ổn định
+    contextOptions: { reducedMotion: "reduce" },
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

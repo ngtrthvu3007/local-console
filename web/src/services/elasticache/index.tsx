@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconBolt } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useClusters } from "./hooks/useClusters.ts";
 import { ClusterDetail } from "./pages/ClusterDetail.tsx";
@@ -11,7 +12,8 @@ export const elasticacheService: ServiceDefinition = {
   name: "ElastiCache",
   fullName: "Amazon ElastiCache",
   description: "Valkey and Redis OSS caches: endpoints, keys and values",
-  iconPath: "/icons/elasticache.svg",
+  icon: IconBolt,
+  category: "database",
   navigation: [{ text: "Clusters", href: elasticacheRoutes.clusters }],
   quickLinks: [{ text: "Create cluster", href: elasticacheRoutes.createCluster }],
   routes: [

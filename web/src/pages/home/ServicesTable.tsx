@@ -22,7 +22,7 @@ function ServiceCell({
   const follow = useFollow();
   return (
     <div className='console-service'>
-      <ServiceIcon src={service.iconPath} />
+      <ServiceIcon service={service} />
       <div>
         <Link href={servicePath(service)} onFollow={follow}>
           {service.fullName}

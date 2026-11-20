@@ -15,6 +15,7 @@ import {
   type NotificationDestination,
 } from "./constants.ts";
 import { asFolderKey } from "./helpers.ts";
+import { overlapMessage, overlappingRule, type NotificationRule } from "./notificationRules.ts";
 
 const DESTINATION_IDS = Object.keys(NOTIFICATION_DESTINATIONS) as [
   NotificationDestination,
@@ -78,12 +79,23 @@ export const transferSchema = (sourceBucket: string, sourcePrefix: string) =>
       { message: "Pick a different destination.", path: ["destinationFolder"] },
     );
 
+// Metadata đi trong header HTTP (x-amz-meta-<key>): trình duyệt chỉ nhận chữ Latin-1 trong header
+// (chữ Việt làm request lỗi trước khi gửi), AWS cũng yêu cầu US-ASCII; tên key phải là token header
+const HEADER_VALUE = /^[\x20-\x7E]*$/;
+const HEADER_NAME = /^[A-Za-z0-9!#$%&'*+.^_`|~-]*$/;
+const ASCII_ONLY = "Use ASCII characters only: S3 sends metadata as HTTP headers.";
+
 export const metadataSchema = z.object({
-  contentType: z.string().trim(),
-  entries: z.array(z.object({ key: z.string().trim(), value: z.string() })),
+  contentType: z.string().trim().regex(HEADER_VALUE, ASCII_ONLY),
+  entries: z.array(
+    z.object({
+      key: z.string().trim().regex(HEADER_NAME, "Use letters, numbers and - _ . only, no spaces."),
+      value: z.string().regex(HEADER_VALUE, ASCII_ONLY),
+    }),
+  ),
 });
 
-export const notificationSchema = (existingIds: string[]) =>
+export const notificationSchema = (existingIds: string[], existingRules: NotificationRule[]) =>
   z
     .object({
       id: z
@@ -96,7 +108,10 @@ export const notificationSchema = (existingIds: string[]) =>
       destination: z.enum(DESTINATION_IDS),
       arn: z.string().trim(),
     })
-    .superRefine(({ destination, arn }, context) => {
+    .superRefine(({ destination, arn, events, prefix, suffix }, context) => {
+      const overlap = overlappingRule(existingRules, { events, prefix, suffix });
+      if (overlap)
+        context.addIssue({ code: "custom", path: ["prefix"], message: overlapMessage(overlap) });
       const target = NOTIFICATION_DESTINATIONS[destination];
       if (target.arnPattern.test(arn)) return;
       context.addIssue({

@@ -8,7 +8,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-// Chỉ mount khi mở. Floci không xóa được từng tin (spec SMS 7 #2)
+// Chỉ mount khi mở. DELETE /_aws/sns của Floci chỉ có xóa hết, không nhận id (spec SMS 7 #2)
 export function ClearSmsModal({ count, onDismiss }: Props) {
   const clear = useClearSms();
 
@@ -33,8 +33,8 @@ export function ClearSmsModal({ count, onDismiss }: Props) {
       onDismiss={onDismiss}
     >
       <Alert type='warning'>
-        Floci can't delete a single text message. This deletes every text message in every region,
-        not only the {count} shown here.
+        Floci only supports deleting all text messages at once. This deletes every text message in
+        every region, not only the {count} shown here.
       </Alert>
     </ConfirmModal>
   );

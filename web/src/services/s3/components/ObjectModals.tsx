@@ -304,9 +304,11 @@ function MetadataForm({
     />
   );
 
+  const entryError = (part: "key" | "value") => (_entry: unknown, index: number) =>
+    form.formState.errors.entries?.[index]?.[part]?.message;
   const definition = [
-    { label: "Key", control: entryInput("key") },
-    { label: "Value", control: entryInput("value") },
+    { label: "Key", control: entryInput("key"), errorText: entryError("key") },
+    { label: "Value", control: entryInput("value"), errorText: entryError("value") },
   ];
 
   return (

@@ -1,15 +1,12 @@
+import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
-import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { NotFound } from "@shared/components/NotFound.tsx";
-import { ErrorState } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { nounFor } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
@@ -64,24 +61,15 @@ export function ClusterDetail() {
   const selectTab = (nextTab: string) =>
     setSearchParams(nextTab === CLUSTER_TABS.keys ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
-  if (details.isLoading) return <Spinner size='large' />;
-  if (!cluster) {
-    if (details.isError) {
-      return (
-        <Container>
-          <ErrorState error={details.error} onRetry={() => details.refetch()} />
-        </Container>
-      );
-    }
-    return (
-      <NotFound
-        title={`Cluster ${clusterId} not found`}
-        description='It may have been deleted, or the name is wrong.'
-        backHref={elasticacheRoutes.clusters}
-        backText='View clusters'
-      />
-    );
-  }
+  // Floci trả danh sách: cluster không có trong danh sách (mà không lỗi) là không tồn tại
+  const state = pageState(details, {
+    ready: Boolean(cluster),
+    notFound: !cluster && !details.isError,
+    title: `Cluster ${clusterId} not found`,
+    backHref: elasticacheRoutes.clusters,
+    backText: "View clusters",
+  });
+  if (state || !cluster) return state;
 
   const keyCount = info.data?.keys;
   const tabs: TabsProps.Tab[] = [

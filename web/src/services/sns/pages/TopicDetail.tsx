@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
+import { pageState } from "@shared/components/PageState.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
-import { NotFound } from "@shared/components/NotFound.tsx";
-import { ErrorState } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
@@ -104,24 +101,14 @@ export function TopicDetail() {
 
   useBreadcrumbs(topicCrumbs(topicName));
 
-  if (details.isLoading) return <Spinner size='large' />;
-  if (details.isError && isTopicMissing(details.error)) {
-    return (
-      <NotFound
-        title={`Topic ${topicName} not found`}
-        description='It may have been deleted, or the name is wrong.'
-        backHref={snsRoutes.topics}
-        backText='View topics'
-      />
-    );
-  }
-  if (!details.data) {
-    return (
-      <Container>
-        <ErrorState error={details.error} onRetry={() => details.refetch()} />
-      </Container>
-    );
-  }
+  const state = pageState(details, {
+    ready: Boolean(details.data),
+    notFound: details.isError && isTopicMissing(details.error),
+    title: `Topic ${topicName} not found`,
+    backHref: snsRoutes.topics,
+    backText: "View topics",
+  });
+  if (state || !details.data) return state;
 
   return <TopicView topic={details.data} />;
 }

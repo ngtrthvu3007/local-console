@@ -49,15 +49,22 @@ const exampleArn = (destination: NotificationDestination, region: string) =>
 
 interface Props {
   existingIds: string[];
+  existingRules: NotificationRule[];
   saving: boolean;
   onSave: (rule: NotificationRule) => void;
   onDismiss: () => void;
 }
 
 // Chỉ mount khi mở
-export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Props) {
+export function NotificationModal({
+  existingIds,
+  existingRules,
+  saving,
+  onSave,
+  onDismiss,
+}: Props) {
   const { region } = useLoadedConfig();
-  const form = useZodForm(notificationSchema(existingIds), INITIAL_VALUES);
+  const form = useZodForm(notificationSchema(existingIds, existingRules), INITIAL_VALUES);
   const destination = useWatch({ control: form.control, name: "destination" });
   const functions = useFunctions();
   const functionOptions = (functions.data ?? []).map((item) => ({

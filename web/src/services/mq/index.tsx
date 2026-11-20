@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconArrowsExchange } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useBrokers } from "./hooks/useBrokers.ts";
 import { BrokerDetail } from "./pages/BrokerDetail.tsx";
@@ -11,7 +12,8 @@ export const mqService: ServiceDefinition = {
   name: "Amazon MQ",
   fullName: "Amazon MQ",
   description: "RabbitMQ brokers: queues, publish and peek messages",
-  iconPath: "/icons/mq.svg",
+  icon: IconArrowsExchange,
+  category: "integration",
   navigation: [{ text: "Brokers", href: mqRoutes.brokers }],
   quickLinks: [{ text: "Create broker", href: mqRoutes.createBroker }],
   routes: [

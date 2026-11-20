@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconMail } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useMailbox } from "./hooks/useMailbox.ts";
 import { Identities } from "./pages/Identities.tsx";
@@ -11,7 +12,8 @@ export const sesService: ServiceDefinition = {
   name: "SES",
   fullName: "Amazon Simple Email Service",
   description: "Local mailbox for emails your app sends, sender identities and templates",
-  iconPath: "/icons/ses.svg",
+  icon: IconMail,
+  category: "business",
   navigation: [
     { text: "Mailbox", href: sesRoutes.mailbox },
     { text: "Identities", href: sesRoutes.identities },

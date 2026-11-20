@@ -1,9 +1,9 @@
+import { PageSpinner } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Spinner from "@cloudscape-design/components/spinner";
 import type { KeyValue } from "@server/routes/redis/contract.ts";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
 import { formatBytes } from "@shared/format.ts";
@@ -59,7 +59,7 @@ interface Props {
 
 // Thân panel: nội dung theo kiểu của key
 export function KeyValueBody({ cluster, name, query, value }: Props) {
-  if (query.isLoading) return <Spinner size='large' />;
+  if (query.isLoading) return <PageSpinner />;
   if (isKeyNotFound(query.error)) {
     return (
       <EmptyState

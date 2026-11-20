@@ -1,4 +1,5 @@
 import { Navigate } from "react-router";
+import { IconLambda } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { useFunctions } from "./hooks/useFunctions.ts";
 import { CreateFunction } from "./pages/CreateFunction.tsx";
@@ -11,7 +12,8 @@ export const lambdaService: ServiceDefinition = {
   name: "Lambda",
   fullName: "AWS Lambda",
   description: "Functions: edit code, test with events, logs and S3/SQS triggers",
-  iconPath: "/icons/lambda.svg",
+  icon: IconLambda,
+  category: "compute",
   navigation: [{ text: "Functions", href: lambdaRoutes.functions }],
   quickLinks: [{ text: "Create function", href: lambdaRoutes.createFunction }],
   routes: [

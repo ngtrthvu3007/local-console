@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -17,6 +17,7 @@ import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { formatDuration, pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { BODY_EDITOR_HEIGHT_PX } from "../constants.ts";
 import {
@@ -122,8 +123,7 @@ export function PollModal({ queue, onDismiss }: QueueProps) {
     setSelected([]);
     poll.mutate(undefined, { onSuccess: setMessages });
   };
-  const runOnOpen = poll.mutate;
-  useEffect(() => runOnOpen(undefined, { onSuccess: setMessages }), [runOnOpen]);
+  useRunOnMount(() => poll.mutate(undefined, { onSuccess: setMessages }));
 
   const remove = () =>
     deleteMessages.mutate(
