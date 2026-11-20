@@ -1,31 +1,38 @@
 import { Navigate } from "react-router";
 import { IconBroadcast } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
-import { useTopics } from "./hooks/useTopics.ts";
-import { CreateTopic } from "./pages/CreateTopic.tsx";
-import { SmsInbox } from "./pages/SmsInbox.tsx";
-import { TopicDetail } from "./pages/TopicDetail.tsx";
-import { TopicList } from "./pages/TopicList.tsx";
+import { lazyPage } from "@shared/lazyPage.ts";
 import { SNS_ROUTE_PATTERNS, SNS_SERVICE_ID, snsRoutes } from "./routes.ts";
 
 export const snsService: ServiceDefinition = {
   id: SNS_SERVICE_ID,
   name: "SNS",
   fullName: "Amazon SNS",
-  description: "Topics: fan out to queues, functions and HTTP endpoints, filter policies, publish",
+  description:
+    "Topics: fan out to queues, functions and HTTP endpoints, filter policies, publish",
   icon: IconBroadcast,
   category: "integration",
   navigation: [
     { text: "Topics", href: snsRoutes.topics },
     { text: "Text messaging (SMS)", href: snsRoutes.sms },
   ],
-  quickLinks: [{ text: "Create topic", href: snsRoutes.createTopic }],
   routes: [
     { index: true, element: <Navigate to={snsRoutes.topics} replace /> },
-    { path: SNS_ROUTE_PATTERNS.topics, element: <TopicList /> },
-    { path: SNS_ROUTE_PATTERNS.createTopic, element: <CreateTopic /> },
-    { path: SNS_ROUTE_PATTERNS.topic, element: <TopicDetail /> },
-    { path: SNS_ROUTE_PATTERNS.sms, element: <SmsInbox /> },
+    {
+      path: SNS_ROUTE_PATTERNS.topics,
+      ...lazyPage(() => import("./pages/TopicList.tsx"), "TopicList"),
+    },
+    {
+      path: SNS_ROUTE_PATTERNS.createTopic,
+      ...lazyPage(() => import("./pages/CreateTopic.tsx"), "CreateTopic"),
+    },
+    {
+      path: SNS_ROUTE_PATTERNS.topic,
+      ...lazyPage(() => import("./pages/TopicDetail.tsx"), "TopicDetail"),
+    },
+    {
+      path: SNS_ROUTE_PATTERNS.sms,
+      ...lazyPage(() => import("./pages/SmsInbox.tsx"), "SmsInbox"),
+    },
   ],
-  useResourceCount: () => ({ count: useTopics().data?.length, noun: "topic" }),
 };

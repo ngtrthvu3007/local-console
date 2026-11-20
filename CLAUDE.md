@@ -7,7 +7,7 @@
 
 ## Start of every session
 
-- Read [README.md](README.md): setup, commands, tests, **Traps & open issues** (last section).
+- Read [README.md](README.md) (what the project is, how to run it) and [docs/development.md](docs/development.md): setup, commands, tests, **Traps & open issues** (last section).
 
 ## Before writing code
 

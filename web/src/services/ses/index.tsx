@@ -1,17 +1,15 @@
 import { Navigate } from "react-router";
 import { IconMail } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
-import { useMailbox } from "./hooks/useMailbox.ts";
-import { Identities } from "./pages/Identities.tsx";
-import { Mailbox } from "./pages/Mailbox.tsx";
-import { Templates } from "./pages/Templates.tsx";
+import { lazyPage } from "@shared/lazyPage.ts";
 import { SES_ROUTE_PATTERNS, SES_SERVICE_ID, sesRoutes } from "./routes.ts";
 
 export const sesService: ServiceDefinition = {
   id: SES_SERVICE_ID,
   name: "SES",
   fullName: "Amazon Simple Email Service",
-  description: "Local mailbox for emails your app sends, sender identities and templates",
+  description:
+    "Local mailbox for emails your app sends, sender identities and templates",
   icon: IconMail,
   category: "business",
   navigation: [
@@ -19,12 +17,19 @@ export const sesService: ServiceDefinition = {
     { text: "Identities", href: sesRoutes.identities },
     { text: "Templates", href: sesRoutes.templates },
   ],
-  quickLinks: [{ text: "Identities", href: sesRoutes.identities }],
   routes: [
     { index: true, element: <Navigate to={sesRoutes.mailbox} replace /> },
-    { path: SES_ROUTE_PATTERNS.mailbox, element: <Mailbox /> },
-    { path: SES_ROUTE_PATTERNS.identities, element: <Identities /> },
-    { path: SES_ROUTE_PATTERNS.templates, element: <Templates /> },
+    {
+      path: SES_ROUTE_PATTERNS.mailbox,
+      ...lazyPage(() => import("./pages/Mailbox.tsx"), "Mailbox"),
+    },
+    {
+      path: SES_ROUTE_PATTERNS.identities,
+      ...lazyPage(() => import("./pages/Identities.tsx"), "Identities"),
+    },
+    {
+      path: SES_ROUTE_PATTERNS.templates,
+      ...lazyPage(() => import("./pages/Templates.tsx"), "Templates"),
+    },
   ],
-  useResourceCount: () => ({ count: useMailbox().data?.length, noun: "email" }),
 };

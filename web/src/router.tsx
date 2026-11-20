@@ -1,13 +1,16 @@
 import { createBrowserRouter } from "react-router";
 import { HOME_PATH } from "@shared/constants.ts";
 import { NotFound } from "@shared/components/NotFound.tsx";
+import { PageSpinner } from "@shared/components/PageState.tsx";
 import { Layout } from "@shared/Layout.tsx";
-import { Home } from "./pages/home/Home.tsx";
+import { lazyPage } from "@shared/lazyPage.ts";
 import { servicePath, services } from "./registry.ts";
 
 export const router = createBrowserRouter([
   {
     element: <Layout />,
+    // Lần tải đầu: chờ code của trang (tải lười) trước khi router vẽ Layout
+    hydrateFallbackElement: <PageSpinner logo />,
     errorElement: (
       <Layout>
         <NotFound
@@ -19,8 +22,14 @@ export const router = createBrowserRouter([
       </Layout>
     ),
     children: [
-      { path: HOME_PATH, element: <Home /> },
-      ...services.map((service) => ({ path: servicePath(service), children: service.routes })),
+      {
+        path: HOME_PATH,
+        ...lazyPage(() => import("./pages/home/Home.tsx"), "Home"),
+      },
+      ...services.map((service) => ({
+        path: servicePath(service),
+        children: service.routes,
+      })),
       {
         path: "*",
         element: (

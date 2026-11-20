@@ -7,13 +7,14 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFlociStatus } from "@shared/hooks/useFlociStatus.ts";
 import { ConnectYourApp } from "./ConnectYourApp.tsx";
 import { FlociCard } from "./FlociCard.tsx";
-import { ServicesTable } from "./ServicesTable.tsx";
+import { RecentServices } from "./RecentServices.tsx";
 
 const FULL_WIDTH = 12;
 const MAIN_COLUMN = 8;
 const SIDE_COLUMN = 4;
 
-// Breakpoint của Grid tính theo bề ngang vùng nội dung (~1110px ở màn 1440), nên dùng "s"
+// Breakpoint của Grid tính theo bề ngang vùng nội dung (~1110px ở màn 1440)
+// nên dùng mốc "s"
 const TWO_COLUMNS: GridProps.ElementDefinition[] = [
   { colspan: { default: FULL_WIDTH, s: MAIN_COLUMN } },
   { colspan: { default: FULL_WIDTH, s: SIDE_COLUMN } },
@@ -29,23 +30,29 @@ export function Home() {
     running: `Floci ${floci.version ?? ""} at ${config.flociPublicUrl} · checked ${floci.checkedAt}`,
   };
 
-  const refreshButton = <Button iconName='refresh' ariaLabel='Refresh' onClick={floci.refresh} />;
+  const refreshButton = (
+    <Button iconName='refresh' ariaLabel='Refresh' onClick={floci.refresh} />
+  );
 
   const header = (
-    <Header variant='h1' description={sublines[floci.state]} actions={refreshButton}>
+    <Header
+      variant='h1'
+      description={sublines[floci.state]}
+      actions={refreshButton}
+    >
       Console Home
     </Header>
   );
 
   return (
     <ContentLayout header={header}>
-      <SpaceBetween size='l'>
-        <ServicesTable />
-        <Grid gridDefinition={TWO_COLUMNS}>
+      <Grid gridDefinition={TWO_COLUMNS}>
+        <SpaceBetween size='l'>
+          <RecentServices />
           <ConnectYourApp />
-          <FlociCard />
-        </Grid>
-      </SpaceBetween>
+        </SpaceBetween>
+        <FlociCard />
+      </Grid>
     </ContentLayout>
   );
 }

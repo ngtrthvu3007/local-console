@@ -16,6 +16,7 @@ import type {
   TableDescription,
 } from "@aws-sdk/client-dynamodb";
 import type { EventSourceMappingConfiguration } from "@aws-sdk/client-lambda";
+import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
@@ -36,7 +37,8 @@ import {
   type StreamViewTypeId,
 } from "../constants.ts";
 import { useStreamTriggers, useTimeToLive } from "../hooks/useTableSettings.ts";
-import { keySchemaOf } from "../hooks/useTables.ts";
+import { keyAttributesOf, keySchemaOf } from "../hooks/useTables.ts";
+import { tableSample } from "../codeSamples.ts";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { KeyLabel, keyText } from "./KeyLabel.tsx";
 import { StreamModal, StreamTriggerModal, TimeToLiveModal } from "./SettingsModals.tsx";
@@ -224,6 +226,7 @@ export function SettingsTab({ table }: { table: TableDescription }) {
         <Container header={<Header variant='h2'>General information</Header>}>
           <KeyValuePairs columns={GENERAL_COLUMNS} items={generalItems} />
         </Container>
+        <ConnectCard sample={tableSample(tableName, keyAttributesOf(keys))} />
 
         <Table
           variant='container'

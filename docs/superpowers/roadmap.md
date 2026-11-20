@@ -82,18 +82,18 @@ MCP server: sau SQS và SES (tool có giá trị nhất dựa trên hai service 
 
 ## 7. Quy trình làm một service (cho người mới)
 
-Theo đúng cách đã làm đợt 1. Đọc trước: [README](../../README.md) (mục Traps & open issues), [CLAUDE.md](../../CLAUDE.md), spec chính.
+Theo đúng cách đã làm đợt 1. Đọc trước: [docs/development.md](../development.md) (mục Traps & open issues), [CLAUDE.md](../../CLAUDE.md), spec chính.
 
 1. **Spec** — `docs/superpowers/specs/<ngày>-<service>-design.md`, theo mẫu [SQS](specs/2026-11-17-sqs-design.md) hoặc [MQ](specs/2026-11-09-mq-design.md): Mục tiêu, Phạm vi (chọn theo mục 1), Màn hình, Cách hoạt động, Lỗi, Kỹ thuật, Rủi ro, Thứ tự làm, Quyết định.
 2. **Kiểm rủi ro trên Floci thật** qua proxy `/aws` trước khi chốt spec (vd: SQS peek cần header region). Ghi kết quả vào mục Rủi ro.
 3. **Duyệt spec** với lead.
-4. **Code** — một folder trong `web/src/services/<service>/` (pages, components, hooks, schemas, constants) và **một dòng trong `web/src/registry.ts`**; sidebar, Home, router tự đọc từ đó. Dùng lại component trong `web/src/shared/`.
+4. **Code** — một folder trong `web/src/services/<service>/` (pages, components, hooks, schemas, constants) và **một dòng trong `web/src/registry.ts`**; sidebar, Home, router tự đọc từ đó. Route của service khai báo bằng `lazyPage` (trang tải lười), số resource trên Home thêm vào `web/src/pages/home/resourceCounts.ts`, để SDK của service không vào bundle chính. Dùng lại component trong `web/src/shared/`.
 5. **Test** — unit cho logic thuần (`web/test/`), integration với Floci thật (`tests/it/`), một luồng E2E chính (`tests/e2e/`). Xem [tests/README.md](../../tests/README.md).
 6. **Kiểm giao diện** ở 1440, 1024, 390px, không trang nào cuộn ngang.
-7. **Cập nhật** spec (Trạng thái: đã làm, Kết quả thử) và README nếu có bẫy mới.
+7. **Cập nhật** spec (Trạng thái: đã làm, Kết quả thử) và [docs/development.md](../development.md) nếu có bẫy mới.
 
 ## 8. Việc chung nên làm trước khi đông người
 
 | Việc                                  | Lý do                                                                                   |
 | ------------------------------------- | --------------------------------------------------------------------------------------- |
-| Tách route theo service bằng `lazy()` | Mỗi service thêm làm bundle lớn thêm (đang 2.2 MB JS, xem README › Traps & open issues) |
+| Tách route theo service bằng `lazy()` | Mỗi service thêm làm bundle lớn thêm (đang 2.2 MB JS, xem docs/development.md › Traps & open issues) |

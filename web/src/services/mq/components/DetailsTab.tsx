@@ -6,10 +6,12 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import type { DescribeBrokerResponse } from "@aws-sdk/client-mq";
+import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { brokerSample, brokerUrl } from "../codeSamples.ts";
 import { ENGINE_LABEL, HOST_PORT_HINT } from "../constants.ts";
 
 const CONNECT_COLUMNS = 2;
@@ -22,10 +24,11 @@ export function DetailsTab({ broker }: { broker: DescribeBrokerResponse }) {
   // Khung hẹp: một cột, để endpoint không bị bẻ giữa chữ
   const { ref, compact } = useIsCompact(ITEM_LIST_WIDTH_PX);
   const instance = broker.BrokerInstances?.[0];
+  const endpoint = instance?.Endpoints?.[0];
 
   // Floci báo địa chỉ trong mạng compose: đúng cho app chạy trong cùng docker compose
   const connectItems: KeyValuePairsProps.Item[] = [
-    { label: "AMQP endpoint", value: copyable(instance?.Endpoints?.[0]) },
+    { label: "AMQP endpoint", value: copyable(endpoint) },
     { label: "Management console", value: copyable(instance?.ConsoleURL) },
   ];
   const generalItems: KeyValuePairsProps.Item[] = [
@@ -51,6 +54,7 @@ export function DetailsTab({ broker }: { broker: DescribeBrokerResponse }) {
           <SpaceBetween size='m'>
             <KeyValuePairs columns={compact ? 1 : CONNECT_COLUMNS} items={connectItems} />
             <Box color='text-body-secondary'>{HOST_PORT_HINT}</Box>
+            {endpoint && <CodeSamples sample={brokerSample(brokerUrl(endpoint))} />}
           </SpaceBetween>
         </Container>
         <Container header={<Header variant='h2'>General</Header>}>

@@ -16,6 +16,7 @@ import type { FunctionConfiguration } from "@aws-sdk/client-lambda";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
+import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -29,6 +30,7 @@ import {
   TIMEOUT_LIMITS_SECONDS,
 } from "../constants.ts";
 import { useUpdateConfiguration } from "../hooks/useFunctions.ts";
+import { functionSample } from "../codeSamples.ts";
 import { environmentSchema, generalConfigurationSchema } from "../schemas.ts";
 
 const GENERAL_COLUMNS = 4;
@@ -253,6 +255,9 @@ export function ConfigurationTab({ configuration }: { configuration: FunctionCon
       <Container header={generalHeader}>
         <KeyValuePairs columns={GENERAL_COLUMNS} items={generalItems} />
       </Container>
+      {configuration.FunctionName && (
+        <ConnectCard sample={functionSample(configuration.FunctionName)} />
+      )}
       <Table
         variant='container'
         items={variables}
