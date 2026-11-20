@@ -61,5 +61,6 @@ if (process.argv.includes("--delete")) {
   for (const arn of topics) await sns.send(new DeleteTopicCommand({ TopicArn: arn }));
   for (const name of identities) await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
   for (const name of templates) await ses.send(new DeleteEmailTemplateCommand({ TemplateName: name }));
-  for (const id of emails) await fetch(`${consoleUrl}/aws/_aws/ses?id=${encodeURIComponent(id)}`, { method: "DELETE" });  console.log("deleted");
+  for (const id of emails) await fetch(`${consoleUrl}/aws/_aws/ses?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+  console.log("deleted");
 }
