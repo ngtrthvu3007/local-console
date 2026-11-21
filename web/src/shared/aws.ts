@@ -47,3 +47,17 @@ export async function orEmptyWhenNotFound<T>(request: () => Promise<T>, emptyVal
     throw error;
   }
 }
+
+// Gom mọi trang của một API phân trang kiểu NextToken (ListBuses, ListRules, ListSchedules…)
+export async function allPages<T>(
+  fetchPage: (nextToken?: string) => Promise<{ items: T[]; nextToken?: string }>,
+): Promise<T[]> {
+  const items: T[] = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await fetchPage(nextToken);
+    items.push(...page.items);
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return items;
+}

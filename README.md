@@ -19,17 +19,18 @@ Floci emulates AWS on your machine, but on its own you only have the AWS CLI to 
 |     | Service                                                  | What you can do                                                                                                                                         |
 | --- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🪣  | [Amazon S3](https://docs.aws.amazon.com/s3/)             | Buckets, folders and objects: upload, preview, download, versions, metadata, pre-signed URLs. Bucket tags, lifecycle, CORS, policy, event notifications |
-| λ   | [AWS Lambda](https://docs.aws.amazon.com/lambda/)        | Create functions, edit code in the browser, test with saved events (sync or async), read logs, triggers from S3 / SQS / DynamoDB / SNS                  |
+| λ   | [AWS Lambda](https://docs.aws.amazon.com/lambda/)        | Create functions, edit code in the browser, test with saved events (sync or async), read logs, triggers from S3 / SQS / DynamoDB / SNS (filter patterns, partial batch, retry and on-failure destinations), asynchronous invocation settings with success / failure destinations                 |
 | 🗄️  | [Amazon DynamoDB](https://docs.aws.amazon.com/dynamodb/) | Tables and indexes, scan and query with filters, create and edit items as JSON, import / export, TTL, streams                                           |
 | 📬  | [Amazon SQS](https://docs.aws.amazon.com/sqs/)           | Standard and FIFO queues, peek without consuming, send and poll messages, dead-letter queues and redrive                                                |
 | 📣  | [Amazon SNS](https://docs.aws.amazon.com/sns/)           | Topics, subscriptions (SQS, Lambda, HTTP) with filter policies, publish, inbox of text messages (SMS)                                                   |
-| ✉️  | [Amazon SES](https://docs.aws.amazon.com/ses/)           | Mailbox of every email your app sent (HTML preview, text, headers), sender identities, templates                                                        |
+| 📅  | [Amazon EventBridge](https://docs.aws.amazon.com/eventbridge/) | Event buses and send events, rules with a pattern tester and targets (Lambda, SQS, SNS), EventBridge Scheduler (one-time, rate, cron) with schedule groups |
+| ✉️  | [Amazon SES](https://docs.aws.amazon.com/ses/)           | Mailbox of every email your app sent (HTML preview, text, headers), sender identities with a default configuration set, templates, configuration sets that send events (send, delivery, bounce, complaint) to SNS or the default event bus                                                       |
 | ⚡  | [ElastiCache](https://docs.aws.amazon.com/elasticache/)  | Valkey / Redis OSS clusters: endpoints, browse and edit keys                                                                                            |
 | 🐇  | [Amazon MQ](https://docs.aws.amazon.com/amazon-mq/)      | RabbitMQ brokers: queues and exchanges, publish and peek messages                                                                                       |
 
 Across the console:
 
-- 🔗 **Wired like AWS:** S3 notifications → Lambda / SQS / SNS, queue and stream triggers for Lambda, SNS fan-out. Connected resources link to each other, and references to deleted resources are flagged instead of failing silently.
+- 🔗 **Wired like AWS:** S3 notifications → Lambda / SQS / SNS, queue and stream triggers for Lambda, SNS fan-out. Connected resources link to each other (queues, topics and functions also list the S3 notifications, Lambda destinations and SES sets that send to them), and references to deleted resources are flagged instead of failing silently.
 - 🔍 **Search** any service from the top bar (press `/`); your recently visited services are on Console Home.
 - 🔌 **Connect your app:** Console Home gives the environment variables to paste, for apps on your machine and inside Docker.
 - 🧩 **Code samples:** every resource has a Connect card with Node.js (AWS SDK v3) and Python (boto3) code, its name / URL / ARN filled in.
@@ -118,7 +119,7 @@ The console server serves the UI, forwards the browser's AWS SDK calls to Floci 
 
 - 🏠 **Local development only:** no authentication, no IAM. The console only answers requests from `localhost`, and both ports are published on `127.0.0.1`; don't expose it on a network.
 - 🧩 **Only what Floci supports:** a service or option Floci doesn't emulate isn't in the console either. Where Floci differs from AWS (for example, it doesn't clean up references to deleted resources), the console tells you in the UI.
-- 🗺️ **More services coming:** EventBridge, Cognito, CloudFormation, API Gateway… see the [roadmap](docs/superpowers/roadmap.md).
+- 🗺️ **More services coming:** Cognito, CloudFormation, API Gateway… see the [roadmap](docs/superpowers/roadmap.md).
 
 ## 🛠️ Development
 

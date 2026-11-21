@@ -113,6 +113,23 @@ export function notifyOutcome<TResult>(options: {
   };
 }
 
+// Chạy lần lượt từng mục, gom lỗi theo tên: kết quả đúng hình notifyBulkOutcome cần
+export async function runEach<T>(
+  items: readonly T[],
+  nameOf: (item: T) => string,
+  run: (item: T) => Promise<unknown>,
+) {
+  const failures: string[] = [];
+  for (const item of items) {
+    try {
+      await run(item);
+    } catch (error) {
+      failures.push(`${nameOf(item)}: ${errorMessage(error)}`);
+    }
+  }
+  return { count: items.length - failures.length, failures };
+}
+
 // Như notifyOutcome, cho thao tác hàng loạt có thể lỗi một phần
 export function notifyBulkOutcome<TResult extends { failures: string[] }>(options: {
   success: (result: TResult) => string;

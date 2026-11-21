@@ -20,3 +20,16 @@ export function reformatJson(text: string): string {
     return text;
   }
 }
+
+// Object JSON (không phải mảng hay giá trị đơn); rỗng thì không báo lỗi
+export function jsonObjectError(
+  text: string,
+  notObjectMessage = "Must be a JSON object.",
+): string | undefined {
+  const syntax = jsonError(text);
+  if (syntax || !text.trim()) return syntax;
+  const parsed: unknown = JSON.parse(text);
+  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ? undefined
+    : notObjectMessage;
+}

@@ -3,6 +3,7 @@ import type { Icon } from "@tabler/icons-react";
 import type { ServiceCategory } from "@shared/constants.ts";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
+import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
@@ -33,6 +34,7 @@ export const services: ServiceDefinition[] = [
   dynamodbService,
   sqsService,
   snsService,
+  eventbridgeService,
   elasticacheService,
   mqService,
   sesService,

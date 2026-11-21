@@ -118,6 +118,18 @@ describe("toNotificationConfiguration", () => {
     expect(toNotificationConfiguration([])).not.toHaveProperty("EventBridgeConfiguration");
   });
 
+  it("turns the EventBridge setting on and off, keeping the rules", () => {
+    expect(toNotificationConfiguration([], {}, true).EventBridgeConfiguration).toEqual({});
+    const current = { EventBridgeConfiguration: {} };
+    expect(toNotificationConfiguration([], current, false)).not.toHaveProperty(
+      "EventBridgeConfiguration",
+    );
+    // Bật lại không đổi gì khi bucket đã có cấu hình EventBridge
+    expect(toNotificationConfiguration([], current, true).EventBridgeConfiguration).toBe(
+      current.EventBridgeConfiguration,
+    );
+  });
+
   it("round-trips with toNotificationRules", () => {
     const rules = [
       rule({ id: "a", prefix: "in/" }),

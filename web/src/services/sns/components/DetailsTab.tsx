@@ -5,6 +5,8 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
+import { EventSources } from "../../eventbridge/components/EventSources.tsx";
+import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -14,6 +16,8 @@ import { topicTypeLabel, type Topic } from "../topics.ts";
 
 const DETAILS_COLUMNS = 3;
 const CONNECT_COLUMNS = 2;
+// Topic nhận từ S3 (notification), Lambda (đích async, đích lỗi của trigger) và SES (configuration set)
+const TOPIC_SENDER_KINDS = ["s3", "lambda", "ses"] as const;
 const ENDPOINT_VARIABLE = "AWS_ENDPOINT_URL";
 
 const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
@@ -68,6 +72,8 @@ export function DetailsTab({ topic }: { topic: Topic }) {
             <CodeSamples sample={topicSample(topic)} />
           </SpaceBetween>
         </Container>
+        <EventSources targetArn={topic.arn} />
+        <OtherSenders arn={topic.arn} kinds={TOPIC_SENDER_KINDS} />
       </SpaceBetween>
     </div>
   );

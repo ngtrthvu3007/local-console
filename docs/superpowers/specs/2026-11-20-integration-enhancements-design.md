@@ -40,7 +40,7 @@ Mọi thao tác gọi Floci bằng AWS SDK qua proxy `/aws`. **Server không ph�
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | DLQ của function (`DeadLetterConfig`)                                                           | Floci chạy đúng (mục 7 #11) nhưng trùng việc với đích **On failure**; AWS khuyên dùng destination             |
 | SES notification topic kiểu cũ (`SetIdentityNotificationTopic`, API v1)                         | Floci chạy đúng (mục 7 #12) nhưng trùng việc với configuration set mặc định (#10), cũng không phải sửa code   |
-| Trang SQS / SNS / Lambda hiện "ai đang gửi vào đây" (Lambda destination, SES configuration set) | Phải quét cấu hình async của mọi function / mọi configuration set ở trình duyệt (nguyên tắc: tránh quét chéo) |
+| ~~Trang SQS / SNS / Lambda hiện "ai đang gửi vào đây"~~ | **Đã làm 2026-11-21** (khối "Other senders": S3 notification, Lambda async / đích lỗi trigger, SES; trang bus hiện Lambda + SES). Quét ở trình duyệt khi mở trang, ẩn khi rỗng |
 
 ### Không làm
 
@@ -107,7 +107,7 @@ Configuration sets (2)                                     [↻] [Delete] [Creat
 ```
 
 - **Create:** tên (theo luật AWS: chữ, số, `-`, `_`, tối đa 64). Tạo xong mở panel của set đó.
-- **Panel (split panel, như Templates):** danh sách event destination; **Add destination** (modal): tên, loại event (`Multiselect`: Send, Delivery, Bounce, Complaint: bốn loại Floci phát), đích (`Tiles`: SNS topic / Event bus, rồi `Select` resource, link "Create a topic" / "Create an event bus"); bật / tắt; xóa. Destination tạo ngoài console có loại khác (Reject…) vẫn hiện đúng.
+- **Panel (split panel, như Templates):** danh sách event destination; **Add destination** (modal): tên, loại event (`Multiselect`: Send, Delivery, Bounce, Complaint: bốn loại Floci phát), đích (`Tiles`: SNS topic / Event bus (chỉ bus `default`: SES không nhận bus khác), rồi `Select` resource, link "Create a topic" / "Create an event bus"); bật / tắt; xóa. Destination tạo ngoài console có loại khác (Reject…) vẫn hiện đúng.
 - Gợi ý trong panel: gửi tới `success@simulator.amazonses.com` để nhận Delivery, `bounce@simulator.amazonses.com` (hoặc `suppressionlist@`) để nhận Bounce, `complaint@simulator.amazonses.com` để nhận Complaint. Đích event bus: event có `source: "aws.ses"`, `detail-type: "Email Sent"`…, tạo rule theo `source` để bắt.
 - Cột "Used by": identity nào đang dùng set làm mặc định (đọc từ `GetEmailIdentity` đã gọi ở trang Identities, không gọi thêm).
 - Xóa set đang được identity dùng: cảnh báo trong modal xóa.
@@ -210,4 +210,7 @@ Bắt đầu khi trang EventBridge đã xong (cần danh sách bus và link bus)
 | Làm sau EventBridge, gồm đích EventBridge                                      | User chốt 2026-11-20; Floci chạy đúng (mục 7 #18–#19)                   |
 | Đích chọn từ dropdown resource, không nhập ARN                                 | Như các modal nối service hiện có; ARN dựng từ resource                 |
 | SES: configuration set + mặc định cho identity, chưa làm notification topic v1 | Một cách là đủ; configuration set làm được cả SNS lẫn EventBridge       |
+| SES đích event bus chỉ chọn được bus `default` | Floci (và AWS) từ chối bus khác khi tạo destination; kiểm 2026-11-21 |
+| Đích Event bus cho rule target (bus → bus), loại trừ chính bus của rule | Floci chuyển event sang bus khác (kiểm 2026-11-21: queue nhận 1 message) |
+| Không làm SNS → SMS / email | Floci cho subscribe nhưng luôn để "pending confirmation" (token không xác nhận được), publish không vào hộp thư SMS hay SES (kiểm 2026-11-21): UI sẽ tạo subscription không bao giờ nhận gì |
 | DLQ của function để sau                                                        | Đích On failure làm cùng việc, AWS khuyên dùng                          |

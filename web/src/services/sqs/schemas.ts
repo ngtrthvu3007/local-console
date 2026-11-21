@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { formatBytes } from "@shared/format.ts";
 import { SQS_BATCH_SIZE } from "../lambda/constants.ts";
-import { wholeNumberIn } from "../lambda/schemas.ts";
+import {
+  issueAdder,
+  mappingOptionsIssues,
+  mappingOptionsShape,
+  wholeNumberIn,
+} from "../lambda/schemas.ts";
 import {
   FIFO_SUFFIX,
   MAX_RECEIVE_COUNT,
@@ -99,8 +104,11 @@ export const sendMessageSchema = ({ fifo, contentBasedDedup, maxMessageSize }: S
         addIssue("dedupId", "Enter a deduplication ID, or turn on content-based deduplication.");
     });
 
-export const queueTriggerSchema = z.object({
-  functionName: z.string().min(1, "Choose a function."),
-  batchSize: wholeNumberIn(SQS_BATCH_SIZE, "messages"),
-  enabled: z.boolean(),
-});
+export const queueTriggerSchema = z
+  .object({
+    functionName: z.string().min(1, "Choose a function."),
+    batchSize: wholeNumberIn(SQS_BATCH_SIZE, "messages"),
+    enabled: z.boolean(),
+    ...mappingOptionsShape,
+  })
+  .superRefine((values, context) => mappingOptionsIssues("sqs", values, issueAdder(context)));

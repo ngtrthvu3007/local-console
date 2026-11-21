@@ -1,5 +1,5 @@
 import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { jsonError } from "@shared/json.ts";
+import { jsonObjectError } from "@shared/json.ts";
 import { FILTER_SUMMARY_MAX_LENGTH } from "./constants.ts";
 
 const VALUE_SEPARATOR = " | ";
@@ -31,12 +31,5 @@ export function summarizeFilterPolicy(text?: string): string {
 }
 
 // Rỗng = bỏ filter. Luật chi tiết của policy do SNS kiểm, lỗi gốc hiện trong modal
-export function filterPolicyError(text: string): string | undefined {
-  if (!text.trim()) return undefined;
-  const syntax = jsonError(text);
-  if (syntax) return syntax;
-  const parsed: unknown = JSON.parse(text);
-  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-    ? undefined
-    : "A filter policy is a JSON object.";
-}
+export const filterPolicyError = (text: string) =>
+  jsonObjectError(text, "A filter policy is a JSON object.");

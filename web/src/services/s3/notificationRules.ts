@@ -60,11 +60,13 @@ export function toNotificationRules(
   ];
 }
 
-// current: cấu hình đang có của bucket. UI không sửa EventBridge, nhưng ghi đè cả cấu hình
-// mà không mang theo thì mất `EventBridgeConfiguration` do CDK / app đã bật
+// current: cấu hình đang có của bucket; ghi đè cả cấu hình mà không mang theo thì mất
+// `EventBridgeConfiguration` do CDK / app đã bật. eventBridge: bật / tắt gửi event sang EventBridge,
+// bỏ trống thì giữ nguyên như current
 export function toNotificationConfiguration(
   rules: NotificationRule[],
   current: NotificationConfiguration = {},
+  eventBridge: boolean = Boolean(current.EventBridgeConfiguration),
 ): NotificationConfiguration {
   const common = (rule: NotificationRule) => ({
     Id: rule.id || undefined,
@@ -86,9 +88,7 @@ export function toNotificationConfiguration(
       ...common(rule),
       TopicArn: rule.arn,
     })),
-    ...(current.EventBridgeConfiguration && {
-      EventBridgeConfiguration: current.EventBridgeConfiguration,
-    }),
+    ...(eventBridge && { EventBridgeConfiguration: current.EventBridgeConfiguration ?? {} }),
   };
 }
 

@@ -364,4 +364,13 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1`, gọi 
 | Sửa rule / schedule: gộp với dữ liệu hiện có, không dựng mới từ form | Rule / schedule do IaC tạo có trường form không có (retry, DLQ, role thật); dựng mới sẽ âm thầm xóa chúng. User duyệt 2026-11-19 |
 | Xóa bus thì xóa luôn rule của bus                                    | Giống xóa group; modal liệt kê số rule sẽ mất. User duyệt 2026-11-19                                                             |
 | Test pattern tự bọc event mẫu                                        | `TestEventPattern` bắt đủ trường envelope; dev chỉ nên viết phần của mình. User duyệt 2026-11-19                                 |
+| Bus `default` vẫn hiện trong bảng, checkbox khóa                     | Giống AWS; chọn nhầm bus `default` để xóa là lỗi dễ gặp. Làm khi code 2026-11-20                                                 |
+| Xóa bus và xóa rule dùng chung một hàm (`rules.ts`)                  | Gỡ target rồi xóa rule một chỗ, tránh lệch giữa xóa bus và xóa rule. Làm khi code 2026-11-20                                     |
+| State rule dùng ô tick "Enabled" thay Toggle                         | Repo chưa có `FormToggle`; một ô không đáng thêm component. Làm khi code 2026-11-20                                           |
+| Test pattern reset kết quả khi pattern hoặc event mẫu đổi            | Kết quả cũ dễ gây hiểu nhầm. Làm khi code 2026-11-20                                                                             |
+| Ngày giờ của schedule `at` là một ô text, chưa có Start / End date  | Repo chưa có field date / time; Start / End do IaC tạo vẫn được giữ nguyên khi sửa. Làm khi code 2026-11-20                      |
+| Lambda › Triggers: hàng rule / schedule không chọn được                | Chỉ xem (3.9); bật / tắt / xóa ở trang EventBridge. Làm khi code 2026-11-20                                                       |
+| Modal xóa queue / function / topic cảnh báo khi còn rule / schedule trỏ tới | Floci không dọn tham chiếu (README Traps); nối giữa các service. Đề xuất của Claude, làm khi code 2026-11-20                     |
+| S3 › Event notifications: công tắc Amazon EventBridge (Toggle)        | Có trong 3.9 nhưng lần trước chưa làm; không có thì chỉ dùng UI không bật được S3 → EventBridge. Làm khi test flow 2026-11-20       |
+| Hoãn target Step Functions (bước 7) tới khi có service Step Functions | Chưa có service để tạo state machine, chỉ dán ARN thì không kiểm chứng được; làm cùng dropdown và link. User chốt 2026-11-21      |
 | Không sửa server                                                     | EventBridge và Scheduler là AWS API thuần, đi qua proxy `/aws`                                                                   |

@@ -22,6 +22,9 @@
   /* Motion của console: Cloudscape chỉ animate mũi tên, popover, modal; nội dung mở/đóng, tab,
      trang và dòng bảng thì hiện tức thì. Dòng bảng hiện lần lượt, mỗi dòng trễ thêm một nhịp */
   --service-icon-size: 24px; /* ô icon service; glyph bên trong là SERVICE_GLYPH_SIZE_PX */
+  /* Nút chọn giao diện trên thanh trên: rộng bằng nhãn dài nhất ("System", đo 115px).
+     Nhãn ngắn hơn ("Light", "Dark") làm nút co lại và đẩy các nút bên cạnh dịch chỗ. */
+  --color-mode-button-width: 116px;
   /* Viền focus của CodeSnippet = color-text-link-default của Cloudscape (đổi theo sáng / tối) */
   --focus-ring-color: #006ce0;
   --nav-group-title-color: #656871;
@@ -244,6 +247,12 @@ html {
   html {
     scrollbar-gutter: stable;
   }
+  /* Modal của Cloudscape khoá cuộn và thêm padding-right bằng bề rộng thanh cuộn vào body (inline),
+     vì nó nghĩ thanh cuộn sẽ biến mất. Gutter đã cố định nên chỗ đó không đổi: padding này chỉ làm
+     nội dung co 15px (search, header, bảng đổi cỡ) mỗi lần mở modal. !important để đè style inline. */
+  body {
+    padding-right: 0 !important;
+  }
 }
 
 /* Mobile uses the same Cloudscape components, with room for fingers and long identifiers. */
@@ -316,6 +325,21 @@ body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navi
   }
   :is(.local-console, [role="dialog"]) [class*="awsui_button-trigger_"]:not(#\9) {
     min-block-size: 44px;
+  }
+  /* Ô chọn đứng cạnh nút trong một hàng (vd: Schedule group + Create group): cao bằng nút (32px),
+     vùng chạm vẫn 44px nhờ ::after như nút. Ô chọn trong form giữ 44px. */
+  .console-inline-select [class*="awsui_button-trigger_"]:not(#\9) {
+    min-block-size: var(--phone-button-size);
+    position: relative;
+  }
+  .console-inline-select [class*="awsui_button-trigger_"]:not(#\9)::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: max(100%, var(--touch-target));
+    block-size: max(100%, var(--touch-target));
+    transform: translate(-50%, -50%);
   }
   /* Header xuống dòng trên phone: tiêu đề → hàng nút, và hàng nút → ô tìm, mặc định chỉ 4px / 8px nên trông dính. */
   body .local-console [class*="awsui_main_"]:has(> [class*="awsui_actions_"]):not(#\9) {
@@ -406,4 +430,11 @@ body [class*="awsui_icon_"]:has(> .console-service-icon):not(#\9) {
     align-items: center;
     padding-block-start: 0;
   }
+}
+
+/* Nút chọn giao diện: chiều rộng cố định để đổi System / Light / Dark không làm các nút khác
+   trên thanh trên dịch chỗ. Bản chỉ có icon (màn hẹp) giữ cỡ nhỏ của nó. */
+body button[aria-label^="Appearance"]:not([class*="awsui_button-no-text_"]):not(#\9) {
+  min-inline-size: var(--color-mode-button-width);
+  text-align: center;
 }

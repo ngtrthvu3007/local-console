@@ -1,9 +1,18 @@
+import { useState } from "react";
 import Alert from "@cloudscape-design/components/alert";
+import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
+import Container from "@cloudscape-design/components/container";
+import Header from "@cloudscape-design/components/header";
+import Link from "@cloudscape-design/components/link";
+import Toggle from "@cloudscape-design/components/toggle";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import type { TableProps } from "@cloudscape-design/components/table";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
+import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { NOTIFICATION_DESTINATIONS } from "../../constants.ts";
 import {
@@ -16,6 +25,8 @@ import {
   toNotificationRules,
   type NotificationRule,
 } from "../../notificationRules.ts";
+import { useS3EventRules } from "../../../eventbridge/hooks/useRules.ts";
+import { eventbridgeRoutes } from "../../../eventbridge/routes.ts";
 import { FunctionLink } from "../../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../../sqs/components/QueueLink.tsx";
 import { queueNameOfArn } from "../../../sqs/queues.ts";
@@ -61,7 +72,11 @@ const COLUMNS: TableProps.ColumnDefinition<NotificationRule>[] = [
 const DESCRIPTION =
   "Trigger a Lambda function, an SQS queue or an SNS topic when objects are created or removed.";
 
+const EVENTBRIDGE_DESCRIPTION =
+  "Send every event of this bucket to Amazon EventBridge, where rules match them by source aws.s3.";
+
 export function NotificationsSection({ bucket }: { bucket: string }) {
+  const follow = useFollow();
   const notifications = useBucketNotifications(bucket);
   const saveNotifications = useSaveBucketNotifications(bucket);
   const rules = toNotificationRules(notifications.data);
@@ -71,6 +86,18 @@ export function NotificationsSection({ bucket }: { bucket: string }) {
     saveNotifications.mutate(
       toNotificationConfiguration(next, notifications.data),
       notifyOutcome({ success, errorHeader: SAVE_ERROR_HEADER, then }),
+    );
+
+  const eventBridgeOn = Boolean(notifications.data?.EventBridgeConfiguration);
+  const s3Rules = useS3EventRules(bucket, eventBridgeOn).data ?? [];
+  const [confirmingOff, setConfirmingOff] = useState(false);
+  const toggleEventBridge = (enabled: boolean) =>
+    saveNotifications.mutate(
+      toNotificationConfiguration(rules, notifications.data, enabled),
+      notifyOutcome({
+        success: `${enabled ? "Turned on" : "Turned off"} Amazon EventBridge for this bucket`,
+        errorHeader: SAVE_ERROR_HEADER,
+      }),
     );
 
   return (
@@ -97,6 +124,47 @@ export function NotificationsSection({ bucket }: { bucket: string }) {
           queue or topic.
         </Alert>
       )}
+      <Container
+        header={
+          <Header variant='h2' description={EVENTBRIDGE_DESCRIPTION}>
+            Amazon EventBridge
+          </Header>
+        }
+      >
+        <SpaceBetween size='xs'>
+          <Toggle
+            checked={eventBridgeOn}
+            disabled={!notifications.data || saveNotifications.isPending}
+            // Tắt khi còn rule bắt event của bucket thì rule im lặng ngừng nhận: hỏi lại trước
+            onChange={({ detail }) =>
+              !detail.checked && s3Rules.length
+                ? setConfirmingOff(true)
+                : toggleEventBridge(detail.checked)
+            }
+          >
+            {eventBridgeOn ? "On" : "Off"}
+          </Toggle>
+          <Link href={eventbridgeRoutes.createRule()} onFollow={follow}>
+            Create a rule to match these events
+          </Link>
+        </SpaceBetween>
+      </Container>
+      <ConfirmModal
+        visible={confirmingOff}
+        header='Turn off Amazon EventBridge?'
+        actionText='Turn off'
+        loading={saveNotifications.isPending}
+        onDismiss={() => setConfirmingOff(false)}
+        onConfirm={() => {
+          toggleEventBridge(false);
+          setConfirmingOff(false);
+        }}
+      >
+        <Box>
+          {pluralize(s3Rules.length, "rule")} match events from this bucket and stop receiving them:
+        </Box>
+        <DeletePreview lines={s3Rules.map((rule) => `${rule.name} (bus ${rule.bus})`)} />
+      </ConfirmModal>
       <RulesSection
         title='Event notifications'
         description={DESCRIPTION}

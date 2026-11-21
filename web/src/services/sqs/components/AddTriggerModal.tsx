@@ -6,7 +6,9 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { ALREADY_TRIGGERED, SQS_BATCH_SIZE } from "../../lambda/constants.ts";
+import { MappingOptionsFields } from "../../lambda/components/MappingOptionsFields.tsx";
 import { functionNameOfMapping } from "../../lambda/helpers.ts";
+import { DEFAULT_MAPPING_OPTIONS } from "../../lambda/mappingOptions.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
 import { useAddQueueTrigger, useQueueTriggers } from "../hooks/useQueueTriggers.ts";
 import type { Queue } from "../queues.ts";
@@ -31,6 +33,7 @@ export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss:
     functionName: "",
     batchSize: String(SQS_BATCH_SIZE.default),
     enabled: true,
+    ...DEFAULT_MAPPING_OPTIONS,
   });
   // AWS từ chối trigger thứ hai cho cùng queue và function (Floci thì nhận, thành hai consumer)
   const linked = new Set((triggers.data ?? []).map(functionNameOfMapping));
@@ -75,6 +78,7 @@ export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss:
         label='Batch size'
         constraintText={`${SQS_BATCH_SIZE.min}–${SQS_BATCH_SIZE.max} messages per invocation.`}
       />
+      <MappingOptionsFields form={form} source='sqs' />
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
     </FormModal>
   );
