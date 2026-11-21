@@ -1,0 +1,196 @@
+# Ghi chú khảo sát Floci 2.4.0 — RDS & CloudWatch Logs (2026-11-19)
+
+Ghi chú tạm để viết spec. Kiểm thật trên Floci chính (`floci/floci:2.4.0`, `FLOCI_STORAGE_MODE=hybrid`, region `ap-southeast-1`), request ký giả, Python stdlib + `docker exec` (dùng client có sẵn trong container DB do Floci sinh ra, không cài gì).
+
+Tài liệu đọc: https://floci.io/floci/services/rds/ , https://floci.io/floci/services/rds-data/ , https://floci.io/floci/services/cloudwatch/ (Logs + Metrics chung một trang).
+
+---
+
+## A. RDS
+
+### A1. Action / tính năng
+
+| Action / tính năng | KQ | Bằng chứng |
+|---|---|---|
+| `CreateDBInstance` postgres | ✅ | **Đồng bộ**: request chờ 14,2 s rồi trả thẳng `DBInstanceStatus=available` (không qua `creating`). Bật container `floci-aws-rds-db-<DbiResourceId>-xxxx` (image `postgres:16-alpine` có sẵn), engine 16.3 |
+| `CreateDBInstance` mysql | ✅ | 18,3 s (có kéo image `mysql:8.0.36`), `available`, port 7002 |
+| `CreateDBCluster` aurora-postgresql | ✅ | Trả 1,2 s `available`, **không bật container ngay**; container cluster bật lười khi có thao tác cần DB (lần gọi Data API đầu). `DBClusterMembers` rỗng vẫn dùng được |
+| MariaDB, Aurora MySQL, SQL Server | chưa kiểm | Tài liệu nói có (mariadb:11, aurora-mysql→mysql:8.0, mssql 2022) |
+| Endpoint trả về | ⚠️ | `Endpoint.Address=172.28.0.2` (IP container Floci trong mạng compose `local-console_default`), `Port=7001, 7002…` (cổng proxy của Floci, dải 7001–7099). Không phải `localhost` |
+| Kết nối từ **máy dev** (host) | ❌ | `127.0.0.1:7001..7007` → `ConnectionRefusedError` (compose chỉ publish 4566, 6379-6399). `172.28.0.2` từ macOS cũng không tới được |
+| Kết nối từ **container trong compose** | ✅ | Từ container cùng mạng: `psql -h 172.28.0.2 -p 7001 … 'select 1'` → `1`; `-h floci -p 7001` cũng OK; `mysql -h 172.28.0.2 -P 7002 … select 1` → `1`. Proxy tự kiểm master password (sai → `FATAL: password authentication failed`) |
+| `DescribeDBInstances` / `DescribeDBClusters` | ✅ | Đủ field: Engine/Version, Endpoint, DBName, MasterUsername, TagList, ParameterGroups, SubnetGroup, `MasterUserSecret`, `HttpEndpointEnabled` |
+| `ModifyDBInstance` đổi `MasterUserPassword` | ✅ | 0,0 s, áp ngay; psql bằng pass mới OK, pass cũ bị từ chối. Không có `PendingModifiedValues` |
+| `RebootDBInstance` | ✅ | 1,2 s, trả `available`; container khởi động lại (log stream mới) |
+| `StopDBInstance` / `StartDBInstance` | ✅ | Stop: `stopping` → `stopped` < 1 s (xóa container, giữ volume + endpoint/port). Start: `starting` → `available` < 1 s. Dữ liệu còn nguyên |
+| `CreateDBSnapshot` / `DescribeDBSnapshots` / `DeleteDBSnapshot` | ✅ | 0,2 s, `available`, `manual` (dump logic) |
+| `RestoreDBInstanceFromDBSnapshot` | ✅ | 1,3 s, instance mới port 7006, có đủ dữ liệu (`count(*)=3`) |
+| Parameter group (create/modify/describe/delete) | ✅ | `log_statement=all` lưu & đọc lại được (`Source=user`). Tài liệu: Postgres chỉ áp `rds.logical_replication`, MySQL/MariaDB áp khi start |
+| Subnet group | ✅ | Subnet bịa → `InvalidSubnet`; dùng `subnet-default-ap-southeast-1-a/b` → `Complete` |
+| `ManageMasterUserPassword` | ✅ | Instance & cluster tạo secret `rds!db-<id>` / `rds!cluster-<id>` trong Secrets Manager, `SecretString` = `{host, port, username, password, dbname, engine, dbInstanceIdentifier}`, tag `aws:rds:primaryDBClusterArn`, `OwningService=rds`. Xóa instance → secret tự xóa |
+| Tag (`AddTagsToResource`/`ListTagsForResource`) | ✅ | Tag lúc tạo + tag thêm đều trả về |
+| `DescribeDBLogFiles` / `DownloadDBLogFilePortion` | ✅ | `error/postgresql.log.2026-11-19-08`, nội dung là stdout container |
+| `DescribeEvents` | ⚠️ | 200 nhưng rỗng (kể cả sau stop/start/reboot/snapshot) |
+| `DescribeDBEngineVersions` / `DescribeOrderableDBInstanceOptions` | ✅ | Postgres 13.20…18.4; 9 instance class — đủ để làm dropdown form tạo |
+| `CloudwatchLogsExportConfiguration` | ⚠️ | Lưu `EnabledCloudwatchLogsExports.member=postgresql` nhưng không đổi gì (xem A2) |
+| `DeleteDBInstance` / `DeleteDBCluster` | ⚠️ | 200 `deleting`, biến mất ngay; container bị xóa nhưng **volume Docker còn lại** (hybrid mode giữ volume) — phải `docker volume rm` tay |
+
+### A2. Điểm nối
+
+| Điểm nối | KQ | Bằng chứng |
+|---|---|---|
+| **RDS Data API** (`rds-data`) trên **instance thường** | ✅ | `POST /Execute` với `resourceArn` = ARN `db:` + secret tự tạo `{"username","password"}` chạy được: DDL (`numberOfRecordsUpdated:0, generatedFields:[]`), INSERT, SELECT. **Không cần Aurora, không cần `EnableHttpEndpoint`** |
+| Data API trên Aurora cluster | ✅ | `resourceArn` cluster + secret managed `rds!cluster-…` → `select 1` OK (bật container lười, lần đầu vẫn 0,0 s ở lần đo) |
+| Data API — dạng kết quả | ✅ | `records: [[{"longValue":1},{"stringValue":"…"},{"isNull":true}]]`; `includeResultMetadata` → `columnMetadata` (name, label, type, typeName, nullable, precision, isAutoIncrement, tableName…). Timestamp/jsonb trả `stringValue` |
+| Data API — tham số `:name` | ✅ | `stringValue`, `::jsonb` cast OK |
+| Data API — transaction | ✅ | `BeginTransaction` → `transactionId`; `RollbackTransaction` → `Rollback Complete`, dữ liệu không ghi |
+| Data API — `BatchExecute` | ✅ | `updateResults` 2 phần tử |
+| Data API — `formatRecordsAs=JSON` | ❌ | 400 `BadRequestException: formattedRecords is not supported` |
+| Data API — nhiều câu lệnh | ❌ | 400 `ValidationException: Multistatements aren't supported.` (giống AWS) |
+| Data API — lỗi SQL | ✅ | 400 `DatabaseErrorException: ERROR: relation "nosuch" does not exist` |
+| Data API — secret | ⚠️ | **Bắt buộc `secretArn` thật** trong Secrets Manager: secret không tồn tại → `SecretsErrorException`. Không lấy master password của RDS |
+| Data API — `database` | ✅ | Tùy chọn khi instance có `DBName`; sai tên → `DatabaseErrorException: database "nodb" does not exist` |
+| Data API trên instance **stopped** | ⚠️ | Vẫn trả 200 (Floci bật lại container lười) — AWS sẽ báo lỗi |
+| Secrets Manager (master password) | ✅ | Xem `ManageMasterUserPassword` ở A1 |
+| **Lambda → DB** | ✅ | Lambda `nodejs22.x` (container ở mạng `local-console_default`) mở TCP: `172.28.0.2:7001` → Postgres trả `S` cho SSLRequest; `172.28.0.2:7002` → handshake MySQL `8.0.36`; `floci:7001` OK; `localhost:7001`, `host.docker.internal:7001` → `ECONNREFUSED`. ⇒ Lambda dùng đúng endpoint `Describe*` trả về là kết nối được |
+| CloudFormation `AWS::RDS::DBInstance` | ✅ | Stack 2,3 s `CREATE_COMPLETE`, tạo instance thật (container + port 7004); `Fn::GetAtt Endpoint.Address/Endpoint.Port` = `172.28.0.2`/`7004`. Xóa stack → xóa instance |
+| CloudFormation `AWS::RDS::DBCluster` | ⚠️ | Tạo thật, `EnableHttpEndpoint` nhận; nhưng `ManageMasterUserPassword: true` **không tạo secret**, và `Fn::GetAtt MasterUserSecret.SecretArn` trả nguyên chuỗi `"Cl.MasterUserSecret.SecretArn"` |
+| CloudWatch Logs | ⚠️ | Floci **tự** tạo log group `/aws/rds/instance/<id>/error` cho **mọi** instance **và cả cluster** (kể cả không bật export), mỗi lần container start là một stream `YYYY/MM/DD/<hex8>`, nội dung = stdout của container (log khởi tạo, lỗi). Bật export `postgresql` không tạo group `/aws/rds/instance/<id>/postgresql` như AWS |
+| EventBridge (`aws.rds`) | ❌ | Rule `{"source":["aws.rds"]}` → SQS: Stop/Start/Reboot instance, Stop/Start cluster, snapshot → **0 event**. `PutEvents` tay với `source=aws.rds` thì tới queue (rule chạy đúng). Tài liệu nói có event cho stop/start → bản 2.4.0 chưa có |
+| RDS event subscription → SNS | chưa kiểm | Tài liệu: lưu nhưng không publish |
+
+### A3. Floci khác tài liệu / khác AWS
+
+- Create **đồng bộ**, trả `available` ngay (AWS: `creating` vài phút). UI không cần poll trạng thái, nhưng request tạo instance treo 14–18 s (lâu hơn nếu phải kéo image) → cần timeout đủ dài / spinner.
+- Endpoint là **IP container Floci trong mạng compose** (`172.28.0.2`), không phải hostname. Tài liệu: compose phải publish `7001-7099` và có `FLOCI_SERVICES_RDS_ENDPOINT_HOST` để đổi host quảng bá; "In Docker, Floci looks up the published host port" — compose hiện tại **không** publish dải này ⇒ máy dev không vào được DB.
+- `ManageMasterUserPassword=true` kèm `MasterUserPassword` vẫn nhận (AWS: `InvalidParameterCombination`), secret chứa đúng pass đã nhập.
+- `ModifyDBInstance MasterUserPassword` trên instance có managed secret vẫn nhận, **secret không cập nhật** (lệch với DB).
+- Log group tên `/aws/rds/instance/<id>/error` cho cả cluster (AWS: `/aws/rds/cluster/<id>/<type>`) và tạo không cần bật export.
+- Không có EventBridge event (tài liệu nói có cho stop/start).
+- Data API: không kiểm `HttpEndpointEnabled`, chạy cả instance thường (AWS chỉ Aurora/có hỗ trợ). INSERT … RETURNING trả `records` nhưng `numberOfRecordsUpdated: 0`.
+- Delete không xóa volume Docker (hybrid). Stop không chuyển hẳn trạng thái chậm như AWS.
+
+### A4. Gợi ý thô
+
+| Tính năng | Đề xuất | Lý do | Backend? | Công |
+|---|---|---|---|---|
+| Danh sách instance/cluster + chi tiết (endpoint, port, engine, DBName, user, status, tag) | **Làm** | Dev cần lấy connection info để nối app (tiêu chí 2) | Không (SDK `@aws-sdk/client-rds` qua `/aws`) | S |
+| "Connection string" theo ngữ cảnh (từ container compose / Lambda: `172.28.0.2:700x` hoặc `floci:700x`; từ máy dev: cần publish cổng) | **Làm** | Nối service khác; giống vấn đề `localhost` của ElastiCache | Không cho UI; **cần sửa `docker-compose.yml`** (publish `127.0.0.1:7001-7099:7001-7099` + thử `FLOCI_SERVICES_RDS_ENDPOINT_HOST`) — phải kiểm lại sau khi restart Floci | S (+ kiểm) |
+| Tạo / xóa instance (postgres, mysql), Stop/Start/Reboot, đổi password | **Làm** | Dev dựng DB nhanh khi test (đoán) | Không | M |
+| Hiển thị / mở secret managed (link sang Secrets Manager hoặc hiện `SecretString`) | **Làm** | Nối Secrets Manager / Lambda / Data API | Không | S |
+| **SQL editor qua Data API** | **Làm** | Chạy được trên instance thường + transaction + metadata; không cần cầu nối như Redis | Không cần backend. Nhưng **bắt buộc có secret**: instance không bật `ManageMasterUserPassword` thì UI phải tự tạo secret (Secrets Manager) từ user/pass dev nhập, hoặc chỉ hỗ trợ instance có managed secret | M |
+| Xem log DB | Làm (rẻ) | Dùng lại log viewer CloudWatch chung với group `/aws/rds/instance/<id>/error`; hoặc `DownloadDBLogFilePortion` | Không | S |
+| Snapshot create/restore/delete | Để sau (đoán) | Ít dùng khi dev local | Không | S |
+| Parameter group, subnet group, option group, proxy, global cluster, blue/green | Không làm | Không phải luồng dev thường ngày; Postgres gần như không áp param | — | — |
+| Data API trả JSON (`formatRecordsAs`) | Không làm | Floci không hỗ trợ; tự map `records`+`columnMetadata` ở client | — | — |
+
+Ghi chú: SQL editor qua Data API là đường ngắn nhất. Chỉ cần cầu nối backend (giống Redis) nếu muốn chạy nhiều câu một lần, giữ session hoặc dùng `\d`-style metadata.
+
+### A5. Chưa kiểm được
+
+- Kết nối từ máy dev sau khi publish `7001-7099` + `FLOCI_SERVICES_RDS_ENDPOINT_HOST=localhost`: cần sửa compose và **restart Floci** — bị cấm trong lần kiểm này.
+- MariaDB, Aurora MySQL, SQL Server, IAM DB auth, `RotateMasterUserPassword`, read replica, event subscription → SNS: chưa chạy (ngoài trọng tâm / tốn thời gian kéo image).
+- Console server chạy ở chế độ dev (`npm run dev:server` trên host) cũng **không** tới được DB vì cùng lý do cổng — chỉ suy ra, không thử trực tiếp.
+
+---
+
+## B. CloudWatch Logs
+
+### B1. Action / tính năng
+
+| Action / tính năng | KQ | Bằng chứng |
+|---|---|---|
+| `CreateLogGroup` (+tags), trùng tên | ✅ | 200; trùng → `ResourceAlreadyExistsException` |
+| `DeleteLogGroup`, `PutLogGroupDeletionProtection` | ✅ | Đang bảo vệ → `ValidationException …deletion protection enabled` |
+| `PutRetentionPolicy` / `DeleteRetentionPolicy` | ⚠️ | Chạy, nhưng nhận cả `retentionInDays=8` (AWS chỉ nhận giá trị trong danh sách cố định → lỗi) |
+| `ListTagsLogGroup` / `ListTagsForResource` | ✅ | `{"env":"dev"}` |
+| `DescribeLogGroups` | ✅ | Có `creationTime`, `storedBytes` (cập nhật theo dữ liệu), `retentionInDays`, `metricFilterCount`, `logGroupArn`; `limit` + `nextToken` phân trang đúng; `logGroupNamePrefix` đúng |
+| `DescribeLogGroups logGroupNamePattern` | ❌ | Bị bỏ qua — trả về group không liên quan |
+| `CreateLogStream` / `DescribeLogStreams` / `DeleteLogStream` | ✅ | `orderBy=LastEventTime, descending` đúng; có `firstEventTimestamp`, `lastEventTimestamp`, `storedBytes` |
+| `PutLogEvents` | ✅ | Nhận; không kiểm thứ tự thời gian trong batch, không từ chối event quá cũ (AWS có `rejectedLogEventsInfo`) |
+| `GetLogEvents` | ✅ | `startFromHead=true` lấy đầu, mặc định lấy cuối; `nextForwardToken f/3`, `nextBackwardToken b/0` |
+| `FilterLogEvents` chuỗi | ✅ | `ERROR`, `ERROR db` (AND), `?WARN ?boom` (OR), `ERROR -boom` (loại), `"db timeout"` (cụm) — đều đúng |
+| `FilterLogEvents` JSON | ✅ | `{ $.level = "ERROR" }`, `{ $.code >= 500 }` đúng |
+| `FilterLogEvents` space-delimited | ✅ | `[ip, method, path, status=5*, ms]` khớp đúng 1 dòng |
+| `FilterLogEvents` regex `%…%` | ✅ | `%ERR.R%` |
+| Pattern sai | ✅ | 400 `Invalid filter pattern at position 11: expected a value` |
+| Khoảng thời gian `startTime`/`endTime` | ✅ | Đúng 3 event trong khoảng |
+| `logStreamNames` | ✅ | Chỉ trả event của `s2` |
+| `logStreamNamePrefix` | ❌ | Bị bỏ qua — trả cả `s1` |
+| Phân trang `limit` + `nextToken` | ✅ | Trang 1, trang 2 liên tiếp, có `nextToken` |
+| **Logs Insights** `StartQuery`/`GetQueryResults` | ⚠️ | `fields … | sort @timestamp desc | limit 3` → `Complete`; `filter level = "ERROR" | fields code, msg` (trường JSON tự tách) → đúng; `dedup` chạy. **`filter @message like /ERROR/` → `Failed`**, `stats` → `Failed`, `parse` → `Failed`; `@logStream`, `@log` **rỗng** (filter `@logStream = "s2"` → 0 dòng). Nhiều group (`logGroupNames`) chạy. Có `statistics` |
+| `DescribeQueries`, `PutQueryDefinition`, `GetLogRecord`, `GetLogGroupFields` | ❌ | 400 (`UnsupportedOperation` / lỗi) — tài liệu nói có query definition → bản mới hơn |
+| **Live Tail** `StartLiveTail` | ❌ | 400 `UnsupportedOperation: Operation StartLiveTail is not supported.` |
+| Metric filter (`Put/Describe`, `TestMetricFilter`) | ✅ | Xem B2; `TestMetricFilter` trả `matches` |
+| Subscription filter (`Put/Describe`) | ✅ | Xem B2; `distribution=ByLogStream` |
+| Export task (`CreateExportTask`, `DescribeExportTasks`) | ❌ | 400 `UnsupportedOperation` |
+
+### B2. Điểm nối — ai ghi log, ai nhận log
+
+| Nguồn / đích | KQ | Log group / bằng chứng |
+|---|---|---|
+| **Lambda** (mặc định) | ✅ | `/aws/lambda/<fn>`, stream `YYYY/MM/DD/[$LATEST]<hex8>`, message dạng text `"<ISO>\t<requestId>\tINFO\t<msg>"`. **Không có dòng `START`/`END`/`REPORT`** như AWS. Group không có retention |
+| Lambda `LoggingConfig` (group riêng + `LogFormat: JSON`) | ✅ | Ghi vào `lc-probe-logs-custom`, message JSON `{"timestamp","level","requestId","message"}`. Console đang đọc đúng `LoggingConfig.LogGroup` (`logGroupOf` trong `web/src/services/lambda/helpers.ts`) |
+| **RDS** | ⚠️ | Tự ghi `/aws/rds/instance/<id>/error` (stdout container, cả cluster) — xem A2 |
+| **API Gateway REST** access log + execution log | ❌ | Stage có `accessLogSettings` (destination + format) + `loglevel INFO`; gọi API 200 `{"ok":true}` (cả URL `/restapis/<id>/dev/_user_request_/` và `<id>.execute-api.localhost.floci.io:4566/dev/`) → group access **0 event**, không có `API-Gateway-Execution-Logs_*`. Khớp kết quả lần kiểm trước |
+| **Step Functions** `loggingConfiguration` (level ALL) | ❌ | State machine chạy (`FAILED` như thiết kế) → group `/aws/vendedlogs/states/…` **0 stream** |
+| ECS (awslogs), EC2 | chưa kiểm | Roadmap ghi ECS "log ra CloudWatch" — chưa xác minh lần này |
+| Nguồn khác thấy sẵn trong Floci | — | Có group `/aws/docdb/cluster/<id>/audit` (của agent khác) ⇒ DocDB cũng tự ghi log |
+| **Subscription filter → Lambda** | ✅ | Filter `ERROR` → Lambda nhận `event.awslogs.data` (base64 + gzip), giải nén ra `{"messageType":"DATA_MESSAGE","owner","logGroup","logStream","subscriptionFilters","logEvents":[2 event ERROR]}` — chỉ event khớp. Giao đồng bộ trong `PutLogEvents`, trễ < 5 s |
+| Subscription → Kinesis / Firehose | chưa kiểm | Tài liệu nói có giao |
+| **Metric filter → CloudWatch metric** | ✅ | 3 event (2 khớp, `defaultValue 0`) → `GetMetricStatistics` `Sum=2.0, SampleCount=3.0`; `ListMetrics` có `ProbeErrors` |
+| Metric filter → **Alarm** | ✅ | Alarm `Sum ≥ 1 / 60 s`: lúc đầu `INSUFFICIENT_DATA (Unchecked)`, ~30 s sau `ALARM` "Threshold Crossed: 1 datapoint(s) breaching the threshold." |
+
+### B3. Floci khác tài liệu / khác AWS
+
+- Tài liệu nói có `PutQueryDefinition`/`DescribeQueryDefinitions` → 2.4.0 trả `UnsupportedOperation`.
+- Insights: không có `like /regex/`, `stats`, `parse`; `@logStream`/`@log` rỗng (AWS luôn có). Query không hợp lệ vẫn trả `queryId` rồi `Failed`, không báo lỗi cú pháp.
+- `logGroupNamePattern` (DescribeLogGroups) và `logStreamNamePrefix` (FilterLogEvents) bị bỏ qua.
+- Retention nhận giá trị tùy ý; `PutLogEvents` không từ chối event quá cũ / sai thứ tự.
+- Lambda log thiếu `START/END/REPORT` (không có duration/memory).
+- API Gateway, Step Functions không ghi log dù đã cấu hình.
+- Tài liệu: tối đa 20.000 event/account (`FLOCI_SERVICES_CLOUDWATCHLOGS_MAX_STORED_EVENTS`) — log cũ sẽ bị đẩy ra; `FilterLogEvents` luôn trả cũ → mới.
+
+### B4. Gợi ý thô
+
+| Tính năng | Đề xuất | Lý do | Backend? | Công |
+|---|---|---|---|---|
+| Danh sách log group (tên, `creationTime`, `storedBytes`, retention), tìm theo prefix, xóa | **Làm** | Xem log mọi service: Lambda, RDS, DocDB, app tự ghi (tiêu chí 1, 2). Lọc theo pattern thì làm ở client (Floci bỏ qua `logGroupNamePattern`) | Không | S |
+| Xem event của 1 group (tất cả stream gộp) + filter pattern + khoảng thời gian + auto refresh | **Làm** | Tách đúng phần đang có ở Lambda Monitor | Không | S |
+| Danh sách stream + xem 1 stream (`GetLogEvents`, đầu/cuối) | **Làm** | Dev hay xem theo lần chạy (đoán); API chạy đúng | Không | S |
+| Gợi ý filter pattern (chuỗi / JSON / space-delimited) | Làm (chỉ placeholder/help) | Floci chạy đủ 4 kiểu pattern | Không | S |
+| Retention, tag | Để sau (đoán) | Ít dùng ở local | Không | S |
+| Logs Insights | Để sau | Chỉ có `fields/filter/sort/dedup/limit`, thiếu `stats/parse/like`, `@logStream` rỗng — gần như trùng FilterLogEvents | Không | M |
+| Live Tail | Không làm | Floci không hỗ trợ; auto refresh 5 s (đã có) đủ thay | — | — |
+| Subscription filter (xem/tạo → Lambda) | Để sau | Chạy thật, có ích để nối Lambda, nhưng ít dự án dùng (đoán). Có thể chỉ hiện danh sách trong trang group (S) | Không | S–M |
+| Metric filter (xem/tạo) | Để sau | Chạy thật + alarm chạy, nhưng chưa có trang CloudWatch metric/alarm để thấy kết quả | Không | M |
+| Export task | Không làm | Floci không hỗ trợ | — | — |
+
+**Tách dùng chung từ Lambda Monitor** (`web/src/services/lambda/hooks/useFunctionLogs.ts`, `components/MonitorTab.tsx`, `constants.ts`, `helpers.ts`):
+- `logGroupExists` (DescribeLogGroups trước để tránh 400 → `console.error`, xem development.md "E2E fails on any console.error") → dùng chung.
+- `useFunctionLogs` → hook `useLogEvents(logGroupName, {rangeId, filterPattern, autoRefresh, logStreamNames?})`; queryKey hiện gắn `functionQueryKey` → cần đổi sang key theo log group.
+- `LOG_RANGES`, `DEFAULT_LOG_RANGE`, `LOG_REFRESH_INTERVAL_MS`, `logMessageText`, cột `timestamp/message/stream`, `eventId` → chuyển sang `@shared` hoặc service `cloudwatch-logs`.
+- `MonitorTab` → bảng log chung nhận `logGroup` + empty state truyền vào; Lambda Monitor và trang RDS chỉ bọc lại. Có thể thêm nút "Open in CloudWatch Logs" từ Lambda/RDS.
+- Lưu ý: hiện tải hết trang trong khoảng rồi đảo (ponytail note) — vẫn ổn với giới hạn 20.000 event/account của Floci.
+
+### B5. Chưa kiểm được
+
+- ECS awslogs, EC2, subscription → Kinesis/Firehose: ngoài phạm vi thời gian; ECS cần chạy task thật.
+- `StopQuery`, `PutDestination`, `PutResourcePolicy`, KMS: không cần cho console.
+- Ảnh hưởng giới hạn 20.000 event/account khi nhiều nguồn cùng ghi: không thử.
+
+---
+
+## C. Đã dọn
+
+- Đã xóa: 4 DB instance (`lc-probe-rds-pg/-my/-pgrest/-cfn`), 2 cluster (`lc-probe-rds-aur/-cfncl`), stack `lc-probe-rds-stack`, 2 snapshot, parameter group, subnet group, secret `lc-probe-rds-pgsecret` (secret managed `rds!…` Floci tự xóa), 2 Lambda, SQS queue, EventBridge rule, alarm, state machine, REST API, 15 log group `lc-probe-*`, `/aws/lambda/lc-probe-*`, `/aws/rds/instance/lc-probe-rds-*`.
+- Container DB Floci tự xóa khi delete; **6 volume Docker** `floci-aws-rds-*` do probe tạo còn lại → đã `docker volume rm` tay.
+- Kiểm lại: 0 resource prefix `lc-probe-rds-`/`lc-probe-logs-` ở RDS, Secrets Manager, Lambda, SQS, EventBridge, CloudWatch alarm, Step Functions, API Gateway, CloudFormation, Logs, S3; 0 container/volume của probe.
+- Còn lại, **không phải của probe**: volume `floci-aws-rds-cluster-D2CB3C30D57D4C5F8902B155-6f9124` (có trước khi probe tạo cluster, không khớp ID cluster nào của probe) — không đụng.
+- Còn lại không xóa được / không cần xóa: metric `LcProbeLogs/ProbeErrors` (CloudWatch không có API xóa metric, tự hết hạn); image `mysql:8.0.36` do Floci kéo về khi tạo instance MySQL.
+- Floci không bị tắt/restart.
+
+## RDS — kết nối từ máy dev (main kiểm 2026-11-19, container Floci riêng)
+- `FLOCI_SERVICES_RDS_ENDPOINT_HOST=localhost` + publish 7001-7010: endpoint `localhost:7001`, máy dev đăng nhập + query ✅, nhưng **Lambda trong Floci không tới `localhost:7001`** (ECONNREFUSED) — chỉ `localhost.floci.io:7001` tới được → app CDK truyền endpoint vào Lambda sẽ hỏng. Loại.
+- **Chỉ publish cổng, giữ endpoint mặc định (IP container Floci):** máy dev `localhost:7001` đăng nhập + query ✅; Lambda tới endpoint IP ✅. → Compose thêm `127.0.0.1:7001-7099:7001-7099`; console hiện endpoint Floci trả + dòng "From your machine: localhost:<port>".
+- Create postgres trên Floci mới chỉ 1,7 s (image đã có).

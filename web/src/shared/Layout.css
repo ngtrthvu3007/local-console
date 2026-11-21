@@ -9,10 +9,218 @@
 :root {
   --sidebar-motion-duration: 240ms;
   --sidebar-motion-easing: cubic-bezier(0.2, 0, 0, 1);
-  /* Phone: vùng chạm tối thiểu, chiều cao nút nhìn thấy, khoảng cách = space-s của Cloudscape */
+  /* Phone: vùng chạm tối thiểu, chiều cao nút nhìn thấy (bằng desktop, vùng chạm 44px do ::after lo),
+     khoảng cách = space-s của Cloudscape */
   --touch-target: 44px;
-  --phone-button-size: 36px;
+  --phone-button-size: 32px;
   --phone-space: 12px;
+  /* Nhịp dọc của trang: breadcrumb → tiêu đề, tiêu đề → nội dung, mô tả → ô tìm → bảng.
+     Mặc định của Cloudscape chỉ 4px / 16px / 12px nên trang trông dính. */
+  --page-crumbs-gap: 12px;
+  --page-header-gap: 24px;
+  --page-tools-gap: 16px;
+  /* Motion của console: Cloudscape chỉ animate mũi tên, popover, modal; nội dung mở/đóng, tab,
+     trang và dòng bảng thì hiện tức thì. Dòng bảng hiện lần lượt, mỗi dòng trễ thêm một nhịp */
+  --service-icon-size: 24px; /* ô icon service; glyph bên trong là SERVICE_GLYPH_SIZE_PX */
+  /* Nút chọn giao diện trên thanh trên: rộng bằng nhãn dài nhất ("System", đo 115px).
+     Nhãn ngắn hơn ("Light", "Dark") làm nút co lại và đẩy các nút bên cạnh dịch chỗ. */
+  --color-mode-button-width: 116px;
+  /* Viền focus của CodeSnippet = color-text-link-default của Cloudscape (đổi theo sáng / tối) */
+  --focus-ring-color: #006ce0;
+  --nav-group-title-color: #656871;
+  --motion-duration: 200ms;
+  --motion-offset: 4px;
+  --motion-row-stagger: 25ms;
+  /* Loading (thanh trên cùng, spinner trang) chỉ hiện khi chờ lâu hơn mức này: tải nhanh không nhấp nháy */
+  --loading-delay: 150ms;
+  --brand-color: #ff9900; /* màu ô logo (mark.svg) */
+  /* Ô lệnh terminal: nền như thanh trên cùng của Cloudscape, dấu $ màu logo */
+  --terminal-background: #0f141a;
+  --terminal-text: #f9f9fa;
+  --terminal-prompt: var(--brand-color);
+}
+
+/* Giao diện tối (Cloudscape gắn class awsui-dark-mode lên body): màu tự đặt đổi theo.
+   Màu = text-body-secondary của Cloudscape ở chế độ tối */
+body.awsui-dark-mode {
+  --nav-group-title-color: #b4b4bb;
+  --focus-ring-color: #42b4ff;
+}
+
+/* Thanh loading dưới thanh trên cùng (LoadingBar trong Layout.tsx) */
+.console-loading-bar {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 2px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-duration);
+}
+.console-loading-bar[data-active] {
+  opacity: 1;
+  transition-delay: var(--loading-delay);
+}
+.console-loading-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--brand-color);
+}
+
+/* Spinner giữa vùng nội dung (PageSpinner) */
+.console-page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-block: 64px;
+}
+.console-page-loading__logo {
+  inline-size: 48px;
+  block-size: 48px;
+}
+
+/* Ô lệnh kiểu terminal trên trang "Floci isn't running": cùng màu nền với thanh trên cùng */
+/* Ô terminal (TerminalBlock): nhiều dòng thì nút copy nằm góc trên, một dòng thì thẳng hàng chữ */
+.console-command {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 8px;
+  background: var(--terminal-background);
+  color: var(--terminal-text);
+}
+.console-command code {
+  flex: 1;
+  align-self: center;
+  min-inline-size: 0;
+  /* Xuống dòng ở dấu cách trước; chỉ ngắt giữa từ (URL dài) khi một từ dài hơn khung.
+     Cuộn ngang thì phần cuối lệnh bị che trên điện thoại; nút copy vẫn chép nguyên văn */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: Monaco, Menlo, Consolas, "Courier Prime", Courier, "Courier New", monospace;
+  font-size: 14px;
+}
+.console-command__prompt {
+  margin-inline-end: 8px;
+  color: var(--terminal-prompt);
+  user-select: none;
+}
+/* Nút copy dạng icon của Cloudscape mặc định xanh, chìm trên nền tối */
+body .console-command [class*="awsui_button_"]:not(#\9) {
+  color: var(--terminal-text);
+}
+
+/* Ghi chú dưới lệnh trên trang "Floci isn't running" */
+.console-unavailable__notes {
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+@keyframes console-enter {
+  from {
+    opacity: 0;
+    translate: 0 var(--motion-offset);
+  }
+}
+@keyframes console-loading-sweep {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 250% 0;
+  }
+}
+
+/* Người dùng bật giảm chuyển động (hệ điều hành) thì không có hiệu ứng nào dưới đây */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Đổi trang (useFollow bật View Transitions): cross-fade nhanh hơn mặc định 250ms */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--motion-duration);
+    animation-timing-function: var(--sidebar-motion-easing);
+  }
+
+  /* Expand / collapse của ExpandableSection (cả nhóm SNS, SES trên sidebar): Cloudscape chỉ đổi
+     display none ↔ block. Fade + trượt nhẹ; allow-discrete giữ nội dung tới khi fade ra xong.
+     Không animate chiều cao: cần overflow clip, sẽ cắt dropdown nằm trong phần mở rộng */
+  .local-console [role="group"][class*="awsui_content_"] {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--motion-offset));
+    transition:
+      opacity var(--motion-duration) var(--sidebar-motion-easing),
+      translate var(--motion-duration) var(--sidebar-motion-easing),
+      display var(--motion-duration) allow-discrete;
+  }
+  .local-console [role="group"][class*="awsui_content-expanded_"] {
+    opacity: 1;
+    translate: 0 0;
+  }
+  @starting-style {
+    .local-console [role="group"][class*="awsui_content-expanded_"] {
+      opacity: 0;
+      translate: 0 calc(-1 * var(--motion-offset));
+    }
+  }
+
+  /* Thanh loading chạy qua lại; giảm chuyển động thì là một vạch đứng yên */
+  .console-loading-bar::before {
+    inset-inline-end: auto;
+    inline-size: 40%;
+    animation: console-loading-sweep 1.1s var(--sidebar-motion-easing) infinite;
+  }
+
+  /* Spinner trang hiện sau một nhịp, mờ dần vào */
+  .console-page-loading {
+    animation: console-enter var(--motion-duration) var(--sidebar-motion-easing) var(--loading-delay)
+      backwards;
+  }
+
+  /* Đổi tab */
+  .local-console [class*="awsui_tabs-content-active_"] {
+    animation: console-enter var(--motion-duration) var(--sidebar-motion-easing);
+  }
+
+  /* Dòng bảng mới hiện ra (tải trang, đổi trang bảng, lọc): lần lượt, chỉ trễ 8 dòng đầu.
+     Dòng giữ key khi refresh / sort nên không chạy lại */
+  .console-table tbody tr {
+    animation: console-enter var(--motion-duration) var(--sidebar-motion-easing) backwards;
+  }
+  .console-table tbody tr:nth-child(2) { animation-delay: calc(1 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(3) { animation-delay: calc(2 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(4) { animation-delay: calc(3 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(5) { animation-delay: calc(4 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(6) { animation-delay: calc(5 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(7) { animation-delay: calc(6 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(n + 8) { animation-delay: calc(7 * var(--motion-row-stagger)); }
+}
+
+/* Breadcrumb nằm sát tiêu đề trang. Phone: breadcrumb là thanh sticky riêng, padding sẽ làm lệch chữ. */
+@media (min-width: 689px) {
+  body .local-console [class*="awsui_breadcrumbs_"]:not(#\9) {
+    padding-block-end: var(--page-crumbs-gap);
+  }
+}
+/* Tiêu đề trang → container đầu tiên: ContentLayout (trang detail) và Form (trang tạo) */
+body .local-console [class*="awsui_header-wrapper_"]:not(#\9) {
+  padding-block-end: var(--page-header-gap);
+}
+body .local-console form [class*="awsui_root_"] > [class*="awsui_header_"]:has(h1):not(#\9) {
+  margin-block-end: var(--page-header-gap);
+}
+/* Bảng full-page: mô tả → ô tìm, ô tìm → hàng tiêu đề cột */
+body .local-console [class*="awsui_header-controls_"][class*="awsui_variant-full-page_"]:not(#\9) {
+  padding-block-end: var(--page-tools-gap);
+}
+body .local-console [class*="awsui_tools_"]:not(#\9) {
+  padding-block-start: var(--page-tools-gap);
 }
 
 /* Panel trượt ra khi mở, và nút ☰ hiện dần khi đóng */
@@ -39,6 +247,12 @@ html {
   html {
     scrollbar-gutter: stable;
   }
+  /* Modal của Cloudscape khoá cuộn và thêm padding-right bằng bề rộng thanh cuộn vào body (inline),
+     vì nó nghĩ thanh cuộn sẽ biến mất. Gutter đã cố định nên chỗ đó không đổi: padding này chỉ làm
+     nội dung co 15px (search, header, bảng đổi cỡ) mỗi lần mở modal. !important để đè style inline. */
+  body {
+    padding-right: 0 !important;
+  }
 }
 
 /* Mobile uses the same Cloudscape components, with room for fingers and long identifiers. */
@@ -47,13 +261,16 @@ html {
 [role="dialog"] :is(h2, label) {
   overflow-wrap: anywhere;
 }
-.console-count {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+/* Nhóm service: mũi tên mở/đóng nằm cuối dòng, icon + tên thẳng cột với link thường */
+body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"]:not(#\9) {
+  flex-direction: row-reverse;
+  justify-content: space-between;
 }
 @media (max-width: 688px) {
-  /* Bỏ nút "…" của breadcrumb: cao 44px làm chevron lệch và đè viền thanh breadcrumb. */
-  :is(.local-console, [role="dialog"]) button:not([class*="awsui_breadcrumb-group_"] *) {
+  /* Bỏ nút "…" của breadcrumb: cao 44px làm chevron lệch và đè viền thanh breadcrumb.
+     Bỏ nút icon inline (copy ARN…): nó nằm giữa dòng chữ, ép cỡ sẽ đẩy chữ xuống dòng lệch. */
+  :is(.local-console, [role="dialog"])
+    button:not([class*="awsui_breadcrumb-group_"] *):not([class*="awsui_variant-inline-icon_"]) {
     min-height: var(--phone-button-size);
     min-width: var(--phone-button-size);
   }
@@ -88,7 +305,9 @@ html {
   }
   /* Icon-only buttons need both dimensions; Cloudscape's logical min-inline-size
      otherwise overrides the physical min-width and leaves a narrow oval. */
-  body :is(.local-console, [role="dialog"]) button[class*="awsui_button-no-text_"]:not(#\9) {
+  body
+    :is(.local-console, [role="dialog"])
+    button[class*="awsui_button-no-text_"]:not([class*="awsui_variant-inline-icon_"]):not(#\9) {
     inline-size: var(--phone-button-size);
     block-size: var(--phone-button-size);
     min-inline-size: var(--phone-button-size);
@@ -98,7 +317,6 @@ html {
     align-items: center;
     justify-content: center;
     padding: 0;
-    border-radius: 50%;
   }
   :is(.local-console, [role="dialog"])
     input:not([type="checkbox"]):not([type="radio"]):not(.ace_text-input):not(#\9) {
@@ -108,12 +326,24 @@ html {
   :is(.local-console, [role="dialog"]) [class*="awsui_button-trigger_"]:not(#\9) {
     min-block-size: 44px;
   }
+  /* Ô chọn đứng cạnh nút trong một hàng (vd: Schedule group + Create group): cao bằng nút (32px),
+     vùng chạm vẫn 44px nhờ ::after như nút. Ô chọn trong form giữ 44px. */
+  .console-inline-select [class*="awsui_button-trigger_"]:not(#\9) {
+    min-block-size: var(--phone-button-size);
+    position: relative;
+  }
+  .console-inline-select [class*="awsui_button-trigger_"]:not(#\9)::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: max(100%, var(--touch-target));
+    block-size: max(100%, var(--touch-target));
+    transform: translate(-50%, -50%);
+  }
   /* Header xuống dòng trên phone: tiêu đề → hàng nút, và hàng nút → ô tìm, mặc định chỉ 4px / 8px nên trông dính. */
   body .local-console [class*="awsui_main_"]:has(> [class*="awsui_actions_"]):not(#\9) {
     row-gap: var(--phone-space);
-  }
-  body .local-console [class*="awsui_tools_"]:not(#\9) {
-    padding-block-start: var(--phone-space);
   }
   /* Ô tìm nằm trong SpaceBetween (cạnh toggle) không tự giãn; cho nó lấp hết hàng như các bảng khác. */
   .local-console [class*="awsui_tools-filtering_"] [class*="awsui_child_"]:has([class*="awsui_input-type-search_"]) {
@@ -136,15 +366,42 @@ html {
   }
 }
 
+/* Tên danh mục trên sidebar (Compute, Database…): nhãn nhỏ viết hoa màu phụ thay vì heading 18px
+   lấn tên service. Màu = text-body-secondary của Cloudscape (biến của nó có hash theo phiên bản) */
+body .local-console nav[aria-label="Side navigation"] h3[class*="awsui_section-group-title_"]:not(#\9) {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nav-group-title-color);
+}
+
+/* Ô icon service, bo góc như nút */
+.console-service-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--service-icon-size);
+  block-size: var(--service-icon-size);
+  border-radius: 6px;
+  color: #fff;
+}
+/* Ô icon trong slot icon của Cloudscape (gợi ý ô search): slot chỉ rộng 16px,
+   nới theo ô để icon không đè chữ */
+body [class*="awsui_icon_"]:has(> .console-service-icon):not(#\9) {
+  inline-size: auto;
+  block-size: auto;
+  padding-block: 0;
+}
+/* Icon + tên service (Recently visited trên Home) */
 .console-service {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-columns: var(--service-icon-size) minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: center;
 }
-.console-service__count {
-  margin-top: 8px;
-}
+
 @media (max-width: 688px) {
   /* Trong bảng, label chọn dòng của Cloudscape đã phủ cả ô; ép 44px sẽ đẩy radio tràn khỏi dòng. */
   :is(.local-console, [role="dialog"])
@@ -162,4 +419,22 @@ html {
     min-block-size: 44px;
     align-items: center;
   }
+  /* Link service trong thẻ Recently visited của Home: chữ một dòng, cần vùng chạm 44px */
+  body .local-console .console-service a:not(#\9) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--touch-target);
+  }
+  /* Link cao 44px trên mobile nên mũi tên phải căn giữa theo chữ */
+  body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] [class*="awsui_expand-button_"]:not(#\9) {
+    align-items: center;
+    padding-block-start: 0;
+  }
+}
+
+/* Nút chọn giao diện: chiều rộng cố định để đổi System / Light / Dark không làm các nút khác
+   trên thanh trên dịch chỗ. Bản chỉ có icon (màn hẹp) giữ cỡ nhỏ của nó. */
+body button[aria-label^="Appearance"]:not([class*="awsui_button-no-text_"]):not(#\9) {
+  min-inline-size: var(--color-mode-button-width);
+  text-align: center;
 }

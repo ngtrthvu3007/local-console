@@ -1,24 +1,35 @@
 import { Navigate } from "react-router";
+import { IconLambda } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
-import { useFunctions } from "./hooks/useFunctions.ts";
-import { CreateFunction } from "./pages/CreateFunction.tsx";
-import { FunctionDetail } from "./pages/FunctionDetail.tsx";
-import { FunctionList } from "./pages/FunctionList.tsx";
-import { LAMBDA_ROUTE_PATTERNS, LAMBDA_SERVICE_ID, lambdaRoutes } from "./routes.ts";
+import { lazyPage } from "@shared/lazyPage.ts";
+import {
+  LAMBDA_ROUTE_PATTERNS,
+  LAMBDA_SERVICE_ID,
+  lambdaRoutes,
+} from "./routes.ts";
 
 export const lambdaService: ServiceDefinition = {
   id: LAMBDA_SERVICE_ID,
   name: "Lambda",
   fullName: "AWS Lambda",
-  description: "Functions: edit code, test with events, logs and S3/SQS triggers",
-  iconPath: "/icons/lambda.svg",
+  description:
+    "Functions: edit code, test with events, logs and S3/SQS triggers",
+  icon: IconLambda,
+  category: "compute",
   navigation: [{ text: "Functions", href: lambdaRoutes.functions }],
-  quickLinks: [{ text: "Create function", href: lambdaRoutes.createFunction }],
   routes: [
     { index: true, element: <Navigate to={lambdaRoutes.functions} replace /> },
-    { path: LAMBDA_ROUTE_PATTERNS.functions, element: <FunctionList /> },
-    { path: LAMBDA_ROUTE_PATTERNS.createFunction, element: <CreateFunction /> },
-    { path: LAMBDA_ROUTE_PATTERNS.function, element: <FunctionDetail /> },
+    {
+      path: LAMBDA_ROUTE_PATTERNS.functions,
+      ...lazyPage(() => import("./pages/FunctionList.tsx"), "FunctionList"),
+    },
+    {
+      path: LAMBDA_ROUTE_PATTERNS.createFunction,
+      ...lazyPage(() => import("./pages/CreateFunction.tsx"), "CreateFunction"),
+    },
+    {
+      path: LAMBDA_ROUTE_PATTERNS.function,
+      ...lazyPage(() => import("./pages/FunctionDetail.tsx"), "FunctionDetail"),
+    },
   ],
-  useResourceCount: () => ({ count: useFunctions().data?.length, noun: "function" }),
 };

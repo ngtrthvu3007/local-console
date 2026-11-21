@@ -138,6 +138,7 @@ export function FunctionList() {
 
   const functionsToDelete = selected.map((item) => ({
     name: item.FunctionName!,
+    arn: item.FunctionArn!,
     logGroup: logGroupOf(item),
   }));
 

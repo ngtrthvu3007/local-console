@@ -1,9 +1,11 @@
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
 import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
+import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import { useQueueLinks } from "../hooks/useQueueTriggers.ts";
 import { useDeleteQueues } from "../hooks/useQueues.ts";
 import type { Queue } from "../queues.ts";
@@ -24,6 +26,7 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
   const hiddenCount = names.length - DELETE_PREVIEW_COUNT;
   const withTriggers = links.data?.withTriggers ?? [];
   const deadLetterQueues = links.data?.deadLetterQueues ?? [];
+  const referenced = useReferencedNames(queues).data ?? [];
 
   const submit = () =>
     deleteQueues.mutate(
@@ -63,9 +66,10 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
       {deadLetterQueues.length > 0 && (
         <Alert type='warning'>
           {deadLetterQueues.join(LIST_SEPARATOR)} {deadLetterQueues.length === 1 ? "is" : "are"} the
-          dead-letter queue of other queues. Failed messages from those queues have nowhere to go.
+          dead-letter queue of other queues. Floci then drops their failed messages for good.
         </Alert>
       )}
+      <ReferencedWarning names={referenced} />
       <Alert type='warning'>Every message in these queues is deleted. This can't be undone.</Alert>
     </ConfirmModal>
   );

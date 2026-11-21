@@ -9,6 +9,7 @@ import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { REDIS_ERROR_CODES } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
+import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
 import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
@@ -16,6 +17,7 @@ import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { cacheSample } from "../codeSamples.ts";
 import { CLUSTER_STATUS_AVAILABLE, NODE_ROLE_LABELS, REDIS_URL_SCHEME } from "../constants.ts";
 import {
   addressText,
@@ -72,6 +74,9 @@ function ConnectBlock({
             From containers in the same docker compose:{" "}
             {copyable(connectionString(flociHost, endpoint.port))}
           </Box>
+        )}
+        {endpoint && (
+          <CodeSamples sample={cacheSample(connectionString(endpoint.host, endpoint.port))} />
         )}
       </SpaceBetween>
     </Container>

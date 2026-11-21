@@ -1,3 +1,4 @@
+import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useCallback, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
@@ -6,12 +7,9 @@ import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import Spinner from "@cloudscape-design/components/spinner";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
-import { isNotFoundError } from "@shared/aws.ts";
-import { NotFound } from "@shared/components/NotFound.tsx";
-import { ErrorState } from "@shared/components/TableStates.tsx";
+import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -40,7 +38,9 @@ export function BrokerDetail() {
   const reboot = useRebootBroker(brokerId);
   const [authorization, setAuthorization] = useBrokerAuthorization(brokerId);
   const [signInError, setSignInError] = useState<string>();
+  const [username, setUsername] = useState<string>();
   const [deleting, setDeleting] = useState(false);
+  const [rebooting, setRebooting] = useState(false);
   const broker = details.data;
   const name = broker?.BrokerName ?? brokerId;
 
@@ -55,32 +55,24 @@ export function BrokerDetail() {
   const selectTab = (nextTab: string) =>
     setSearchParams(nextTab === BROKER_TABS.queues ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
-  if (details.isLoading) return <Spinner size='large' />;
-  if (details.isError && isNotFoundError(details.error)) {
-    return (
-      <NotFound
-        title={`Broker ${brokerId} not found`}
-        description='It may have been deleted, or the ID is wrong.'
-        backHref={mqRoutes.brokers}
-        backText='View brokers'
-      />
-    );
-  }
-  if (!broker) {
-    return (
-      <Container>
-        <ErrorState error={details.error} onRetry={() => details.refetch()} />
-      </Container>
-    );
-  }
+  const state = pageState(details, {
+    ready: Boolean(broker),
+    title: `Broker ${brokerId} not found`,
+    description: "It may have been deleted, or the ID is wrong.",
+    backHref: mqRoutes.brokers,
+    backText: "View brokers",
+  });
+  if (state || !broker) return state;
 
   const running = broker.BrokerState === BROKER_RUNNING;
   const signIn = (
     <SignIn
       brokerName={name}
       error={signInError}
-      onSignIn={(value) => {
+      username={username}
+      onSignIn={(value, user) => {
         setSignInError(undefined);
+        setUsername(user);
         setAuthorization(value);
       }}
     />
@@ -120,13 +112,17 @@ export function BrokerDetail() {
   const rebootBroker = () =>
     reboot.mutate(
       undefined,
-      notifyOutcome({ success: `Rebooting ${name}`, errorHeader: `Couldn't reboot ${name}` }),
+      notifyOutcome({
+        success: `Rebooting ${name}`,
+        errorHeader: `Couldn't reboot ${name}`,
+        then: () => setRebooting(false),
+      }),
     );
 
   const headerActions = (
     <ResponsiveActions>
       {authorization && <Button onClick={() => setAuthorization(undefined)}>Sign out</Button>}
-      <Button loading={reboot.isPending} disabled={!running} onClick={rebootBroker}>
+      <Button disabled={!running} onClick={() => setRebooting(true)}>
         Reboot
       </Button>
       <Button onClick={() => setDeleting(true)}>Delete</Button>
@@ -154,6 +150,16 @@ export function BrokerDetail() {
         tabs={tabs}
         onChange={({ detail }) => selectTab(detail.activeTabId)}
       />
+      <ConfirmModal
+        visible={rebooting}
+        header={`Reboot ${name}?`}
+        actionText='Reboot'
+        loading={reboot.isPending}
+        onConfirm={rebootBroker}
+        onDismiss={() => setRebooting(false)}
+      >
+        Apps connected to the broker are disconnected while it restarts.
+      </ConfirmModal>
       {deleting && (
         <DeleteBrokersModal
           brokers={[{ id: brokerId, name }]}

@@ -11,7 +11,7 @@ import { useLambda } from "./useLambda.ts";
 
 // Function chưa chạy lần nào thì chưa có log group. Hỏi trước bằng DescribeLogGroups (trả 200, rỗng)
 // thay vì để FilterLogEvents trả 400: request lỗi làm trình duyệt ghi console.error mỗi lần mở tab
-async function logGroupExists(logs: CloudWatchLogsClient, logGroupName: string) {
+export async function logGroupExists(logs: CloudWatchLogsClient, logGroupName: string) {
   const { logGroups = [] } = await logs.send(
     new DescribeLogGroupsCommand({ logGroupNamePrefix: logGroupName }),
   );

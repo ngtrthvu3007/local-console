@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
-import { NotFound } from "@shared/components/NotFound.tsx";
-import { ErrorState } from "@shared/components/TableStates.tsx";
+import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -127,24 +124,14 @@ export function QueueDetail() {
 
   useBreadcrumbs(queueCrumbs(queueName));
 
-  if (details.isLoading) return <Spinner size='large' />;
-  if (details.isError && isQueueMissing(details.error)) {
-    return (
-      <NotFound
-        title={`Queue ${queueName} not found`}
-        description='It may have been deleted, or the name is wrong.'
-        backHref={sqsRoutes.queues}
-        backText='View queues'
-      />
-    );
-  }
-  if (!details.data) {
-    return (
-      <Container>
-        <ErrorState error={details.error} onRetry={() => details.refetch()} />
-      </Container>
-    );
-  }
+  const state = pageState(details, {
+    ready: Boolean(details.data),
+    notFound: details.isError && isQueueMissing(details.error),
+    title: `Queue ${queueName} not found`,
+    backHref: sqsRoutes.queues,
+    backText: "View queues",
+  });
+  if (state || !details.data) return state;
 
   return (
     <QueueView

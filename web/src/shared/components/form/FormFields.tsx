@@ -20,6 +20,7 @@ import SegmentedControl, {
   type SegmentedControlProps,
 } from "@cloudscape-design/components/segmented-control";
 import Select, { type SelectProps } from "@cloudscape-design/components/select";
+import Textarea from "@cloudscape-design/components/textarea";
 import Tiles, { type TilesProps } from "@cloudscape-design/components/tiles";
 
 // Nối react-hook-form với component của Cloudscape: giá trị qua Controller, lỗi zod hiện ở errorText
@@ -89,6 +90,30 @@ interface AutosuggestFieldProps<TValues extends FieldValues> extends InputProps<
   enteredTextLabel: (value: string) => string; // dòng "Use: …" khi giá trị gõ tay không có trong gợi ý
 }
 
+interface TextareaFieldProps<TValues extends FieldValues> extends FieldProps<TValues> {
+  placeholder?: string;
+  rows?: number;
+}
+
+export function FormTextarea<TValues extends FieldValues>(props: TextareaFieldProps<TValues>) {
+  const { placeholder, rows, ...fieldProps } = props;
+  return (
+    <ControlledField {...fieldProps}>
+      {(field, invalid) => (
+        <Textarea
+          ref={field.ref}
+          value={field.value ?? ""}
+          placeholder={placeholder}
+          rows={rows}
+          invalid={invalid}
+          onChange={({ detail }) => field.onChange(detail.value)}
+          onBlur={field.onBlur}
+        />
+      )}
+    </ControlledField>
+  );
+}
+
 // Ô nhập có gợi ý, vẫn gõ tay được giá trị bất kỳ
 export function FormAutosuggest<TValues extends FieldValues>(
   props: AutosuggestFieldProps<TValues>,
@@ -139,7 +164,7 @@ function FilePicker({ files, accept, onChange }: FilePickerProps) {
           event.target.value = "";
         }}
       />
-      <Button iconName='add-plus' onClick={() => input.current?.click()}>
+      <Button iconName='add-plus' formAction='none' onClick={() => input.current?.click()}>
         Choose file
       </Button>
       {tokens.length > 0 && (
@@ -197,14 +222,21 @@ export function FormSelect<TValues extends FieldValues>(props: SelectFieldProps<
   );
 }
 
-export function FormMultiselect<TValues extends FieldValues>(props: OptionsProps<TValues>) {
-  const { options, ...fieldProps } = props;
+interface MultiselectFieldProps<TValues extends FieldValues> extends OptionsProps<TValues> {
+  placeholder?: string;
+}
+
+export function FormMultiselect<TValues extends FieldValues>(
+  props: MultiselectFieldProps<TValues>,
+) {
+  const { options, placeholder, ...fieldProps } = props;
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
         <Multiselect
           ref={field.ref}
           invalid={invalid}
+          placeholder={placeholder}
           options={options}
           selectedOptions={options.filter((option) => field.value?.includes(option.value))}
           onChange={({ detail }) =>

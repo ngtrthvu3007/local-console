@@ -12,6 +12,7 @@ export function useFollow() {
   return (event: FollowEvent, href = event.detail.href) => {
     if (event.detail.external || !href) return;
     event.preventDefault();
-    navigate(href);
+    // Trình duyệt cross-fade trang cũ sang trang mới (View Transitions); CSS chỉnh thời gian ở Layout.css
+    navigate(href, { viewTransition: true });
   };
 }

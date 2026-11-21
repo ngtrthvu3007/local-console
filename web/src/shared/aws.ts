@@ -23,6 +23,21 @@ export function isNotFoundError(error: unknown): boolean {
   );
 }
 
+// true nếu request chạy được, false nếu resource không còn; lỗi khác (mạng, 500) vẫn ném ra.
+// `isMissing` cho dịch vụ có kiểu lỗi riêng (SQS trả 400, không phải 404)
+export async function existsUnlessMissing(
+  request: () => Promise<unknown>,
+  isMissing: (error: unknown) => boolean = isNotFoundError,
+): Promise<boolean> {
+  try {
+    await request();
+    return true;
+  } catch (error) {
+    if (isMissing(error)) return false;
+    throw error;
+  }
+}
+
 // Cấu hình chưa từng đặt thì AWS trả lỗi, coi như rỗng
 export async function orEmptyWhenNotFound<T>(request: () => Promise<T>, emptyValue: T): Promise<T> {
   try {
@@ -31,4 +46,18 @@ export async function orEmptyWhenNotFound<T>(request: () => Promise<T>, emptyVal
     if (isNotFoundError(error)) return emptyValue;
     throw error;
   }
+}
+
+// Gom mọi trang của một API phân trang kiểu NextToken (ListBuses, ListRules, ListSchedules…)
+export async function allPages<T>(
+  fetchPage: (nextToken?: string) => Promise<{ items: T[]; nextToken?: string }>,
+): Promise<T[]> {
+  const items: T[] = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await fetchPage(nextToken);
+    items.push(...page.items);
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return items;
 }

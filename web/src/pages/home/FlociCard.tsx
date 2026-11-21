@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
@@ -9,12 +10,14 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useFlociStatus } from "@shared/hooks/useFlociStatus.ts";
+import { ResetFlociModal } from "./ResetFlociModal.tsx";
 
 const valueOrDash = (value?: string) =>
   value ?? <Box color='text-status-inactive'>{NOT_AVAILABLE}</Box>;
 
 export function FlociCard() {
   const floci = useFlociStatus();
+  const [resetting, setResetting] = useState(false);
 
   const statuses = {
     checking: <StatusIndicator type='loading'>Checking</StatusIndicator>,
@@ -43,9 +46,30 @@ export function FlociCard() {
     { label: "Services running", value: valueOrDash(servicesRunning) },
   ];
 
+  // Chỉ reset được khi Floci đang chạy
+  const resetButton = (
+    <Button
+      disabled={floci.state !== "running"}
+      onClick={() => setResetting(true)}
+    >
+      Reset data
+    </Button>
+  );
+
   return (
-    <Container fitHeight header={<Header variant='h2'>Floci</Header>}>
+    <Container
+      fitHeight
+      header={
+        <Header variant='h2' actions={resetButton}>
+          Floci
+        </Header>
+      }
+    >
       <KeyValuePairs columns={1} items={items} />
+      <ResetFlociModal
+        visible={resetting}
+        onDismiss={() => setResetting(false)}
+      />
     </Container>
   );
 }

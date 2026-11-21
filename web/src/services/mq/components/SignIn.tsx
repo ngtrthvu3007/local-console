@@ -12,14 +12,15 @@ import { signInSchema } from "../schemas.ts";
 interface Props {
   brokerName: string;
   error?: string; // lần đăng nhập trước sai user/pass
-  onSignIn: (authorization: string) => void;
+  username?: string; // user của lần trước: form mount lại sau khi sai, không bắt gõ lại
+  onSignIn: (authorization: string, username: string) => void;
 }
 
 // User/pass chỉ kiểm tra khi gọi RabbitMQ lần đầu; sai thì quay lại form này kèm lỗi
-export function SignIn({ brokerName, error, onSignIn }: Props) {
-  const form = useZodForm(signInSchema, { username: "", password: "" });
+export function SignIn({ brokerName, error, username = "", onSignIn }: Props) {
+  const form = useZodForm(signInSchema, { username, password: "" });
   const submit = form.handleSubmit((values) =>
-    onSignIn(basicAuthorization(values.username, values.password)),
+    onSignIn(basicAuthorization(values.username, values.password), values.username),
   );
 
   return (

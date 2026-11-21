@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import { fetchJson } from "@shared/api.ts";
 import {
   REDIS_ERROR_CODES,
@@ -14,6 +20,12 @@ import { REDIS_API_PATH, START_CURSOR } from "../constants.ts";
 
 // Mọi dữ liệu Redis của một cluster nằm dưới key này: ghi xong thì làm mới cả nhóm
 const redisQueryKey = (cluster: string) => ["elasticache", "redis", cluster];
+// Giá trị của từng key (panel); không có name = mọi key của cluster
+const keyValuesQueryKey = (cluster: string) => [...redisQueryKey(cluster), "key"];
+const keyValueQueryKey = (cluster: string, name: string | undefined) => [
+  ...keyValuesQueryKey(cluster),
+  name,
+];
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -66,7 +78,7 @@ export function mergeKeyPages(pages: KeyValue[]): KeyValue {
 
 export function useKeyValue(cluster: string, name: string | undefined) {
   return useInfiniteQuery({
-    queryKey: [...redisQueryKey(cluster), "key", name],
+    queryKey: keyValueQueryKey(cluster, name),
     enabled: Boolean(name),
     initialPageParam: START_CURSOR,
     queryFn: ({ pageParam }) =>
@@ -87,12 +99,26 @@ export function useServerInfo(cluster: string, enabled: boolean) {
   });
 }
 
-// Ghi xong thì làm mới mọi dữ liệu Redis của cluster (danh sách key, key đang mở, số key)
-function useRedisMutation<TInput>(cluster: string, request: (input: TInput) => Promise<unknown>) {
+// Ghi xong thì làm mới mọi dữ liệu Redis của cluster (danh sách key, key đang mở, số key).
+// Trừ key vừa bị xóa: panel của nó chỉ đóng sau khi ghi xong, làm mới trước đó sẽ ra 404.
+function useRedisMutation<TInput>(
+  cluster: string,
+  request: (input: TInput) => Promise<unknown>,
+  removedKeys: (input: TInput) => QueryKey[] = () => [],
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: request,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: redisQueryKey(cluster) }),
+    onSuccess: (_result, input) => {
+      const queryCache = queryClient.getQueryCache();
+      const removed = new Set(
+        removedKeys(input).flatMap((queryKey) => queryCache.findAll({ queryKey })),
+      );
+      return queryClient.invalidateQueries({
+        queryKey: redisQueryKey(cluster),
+        predicate: (query) => !removed.has(query),
+      });
+    },
   });
 }
 
@@ -102,8 +128,11 @@ export const useCreateKey = (cluster: string) =>
   );
 
 export const useDeleteKeys = (cluster: string) =>
-  useRedisMutation(cluster, (names: string[]) =>
-    send<{ deleted: number }>(redisUrl(cluster, "keys/delete"), "POST", { names }),
+  useRedisMutation(
+    cluster,
+    (names: string[]) =>
+      send<{ deleted: number }>(redisUrl(cluster, "keys/delete"), "POST", { names }),
+    (names) => names.map((name) => keyValueQueryKey(cluster, name)),
   );
 
 export const useUpdateKey = (cluster: string, name: string) =>
@@ -117,4 +146,8 @@ export const useSetTtl = (cluster: string, name: string) =>
   );
 
 export const useFlushDatabase = (cluster: string) =>
-  useRedisMutation(cluster, () => send(redisUrl(cluster, "flush"), "POST"));
+  useRedisMutation(
+    cluster,
+    () => send(redisUrl(cluster, "flush"), "POST"),
+    () => [keyValuesQueryKey(cluster)],
+  );

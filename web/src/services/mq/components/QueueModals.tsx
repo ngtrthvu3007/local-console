@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
@@ -15,6 +14,7 @@ import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { pluralize } from "@shared/format.ts";
 import { prettyJson } from "@shared/json.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { DEFAULT_EXCHANGE_LABEL, PAYLOAD_EDITOR_HEIGHT_PX, PEEK_COUNT } from "../constants.ts";
 import { useCreateQueue, useExchanges, usePeek, usePublish } from "../hooks/useRabbit.ts";
@@ -180,8 +180,7 @@ export function PeekModal({
   const form = useZodForm(peekSchema, { count: String(PEEK_COUNT.default) });
   const run = form.handleSubmit(({ count }) => peek.mutate({ queue, count }));
   // Mở modal là xem ngay với số mặc định
-  const runOnOpen = peek.mutate;
-  useEffect(() => runOnOpen({ queue, count: PEEK_COUNT.default }), [runOnOpen, queue]);
+  useRunOnMount(() => peek.mutate({ queue, count: PEEK_COUNT.default }));
 
   const messages = peek.data ?? [];
   return (

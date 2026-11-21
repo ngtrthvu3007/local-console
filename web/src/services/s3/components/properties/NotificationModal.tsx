@@ -13,6 +13,7 @@ import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../../lambda/hooks/useFunctions.ts";
+import { useTopics } from "../../../sns/hooks/useTopics.ts";
 import { useQueues } from "../../../sqs/hooks/useQueues.ts";
 import {
   DEFAULT_NOTIFICATION_EVENTS,
@@ -40,21 +41,30 @@ const INITIAL_VALUES = {
 
 // Luật của AWS: queue FIFO không làm đích S3 notification được
 const FIFO_NOT_SUPPORTED = "FIFO queues can't receive S3 events";
+// Luật của AWS: S3 chỉ gửi tới topic Standard
+const FIFO_TOPIC_NOT_SUPPORTED = "FIFO topics can't receive S3 events";
 
 const exampleArn = (destination: NotificationDestination, region: string) =>
   `arn:aws:${destination}:${region}:${FLOCI_ACCOUNT_ID}:${NOTIFICATION_DESTINATIONS[destination].arnExample}`;
 
 interface Props {
   existingIds: string[];
+  existingRules: NotificationRule[];
   saving: boolean;
   onSave: (rule: NotificationRule) => void;
   onDismiss: () => void;
 }
 
 // Chỉ mount khi mở
-export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Props) {
+export function NotificationModal({
+  existingIds,
+  existingRules,
+  saving,
+  onSave,
+  onDismiss,
+}: Props) {
   const { region } = useLoadedConfig();
-  const form = useZodForm(notificationSchema(existingIds), INITIAL_VALUES);
+  const form = useZodForm(notificationSchema(existingIds, existingRules), INITIAL_VALUES);
   const destination = useWatch({ control: form.control, name: "destination" });
   const functions = useFunctions();
   const functionOptions = (functions.data ?? []).map((item) => ({
@@ -69,6 +79,14 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
     label: queue.name,
     disabled: queue.fifo,
     description: queue.fifo ? FIFO_NOT_SUPPORTED : queue.arn,
+  }));
+
+  const topics = useTopics();
+  const topicOptions = (topics.data ?? []).map((topic) => ({
+    value: topic.arn,
+    label: topic.name,
+    disabled: topic.fifo,
+    description: topic.fifo ? FIFO_TOPIC_NOT_SUPPORTED : topic.arn,
   }));
 
   const submit = form.handleSubmit((values) => onSave(values));
@@ -116,7 +134,7 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
         label='Destination'
         items={DESTINATION_ITEMS}
       />
-      {/* Lambda có gợi ý chọn function, vẫn gõ ARN tay được; SQS chọn queue; SNS chưa có service nên nhập ARN */}
+      {/* Lambda có gợi ý chọn function, vẫn gõ ARN tay được; SQS chọn queue; SNS chọn topic */}
       {destination === "lambda" && (
         <FormAutosuggest
           control={form.control}
@@ -138,11 +156,13 @@ export function NotificationModal({ existingIds, saving, onSave, onDismiss }: Pr
         />
       )}
       {destination === "sns" && (
-        <FormInput
+        <FormSelect
           control={form.control}
           name='arn'
-          label={`${destinationLabel} ARN`}
-          placeholder={exampleArn(destination, region)}
+          label='Topic'
+          placeholder='Choose a topic'
+          empty='No topics'
+          options={topicOptions}
         />
       )}
     </FormModal>

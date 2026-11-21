@@ -4,7 +4,11 @@
 import { S3Client, ListBucketsCommand, ListObjectVersionsCommand, DeleteObjectsCommand, DeleteBucketCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, ListTablesCommand, DeleteTableCommand } from "@aws-sdk/client-dynamodb";
 import { LambdaClient, ListFunctionsCommand, DeleteFunctionCommand } from "@aws-sdk/client-lambda";
+import { SESv2Client, ListConfigurationSetsCommand, DeleteConfigurationSetCommand, ListEmailIdentitiesCommand, ListEmailTemplatesCommand, DeleteEmailIdentityCommand, DeleteEmailTemplateCommand } from "@aws-sdk/client-sesv2";
 import { SQSClient, ListQueuesCommand, DeleteQueueCommand } from "@aws-sdk/client-sqs";
+import { SNSClient, ListTopicsCommand, DeleteTopicCommand } from "@aws-sdk/client-sns";
+import { SchedulerClient, ListScheduleGroupsCommand, ListSchedulesCommand, DeleteScheduleCommand, DeleteScheduleGroupCommand } from "@aws-sdk/client-scheduler";
+import { EventBridgeClient, ListEventBusesCommand, ListRulesCommand, ListTargetsByRuleCommand, RemoveTargetsCommand, DeleteRuleCommand, DeleteEventBusCommand } from "@aws-sdk/client-eventbridge";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
 const { region } = await (await fetch(`${consoleUrl}/api/config`)).json();
@@ -17,6 +21,10 @@ const s3 = new S3Client({ ...config, forcePathStyle: true });
 const dynamodb = new DynamoDBClient(config);
 const lambda = new LambdaClient(config);
 const sqs = new SQSClient(config);
+const sns = new SNSClient(config);
+const ses = new SESv2Client(config);
+const eventbridge = new EventBridgeClient(config);
+const scheduler = new SchedulerClient(config);
 
 const buckets = mine(((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name));
 const tables = mine((await dynamodb.send(new ListTablesCommand({}))).TableNames ?? []);
@@ -25,8 +33,32 @@ const queues = [];
 for (const prefix of PREFIXES) {
   queues.push(...((await sqs.send(new ListQueuesCommand({ QueueNamePrefix: prefix }))).QueueUrls ?? []));
 }
+const identities = mine(((await ses.send(new ListEmailIdentitiesCommand({}))).EmailIdentities ?? []).map((item) => item.IdentityName));
+const configurationSets = mine((await ses.send(new ListConfigurationSetsCommand({}))).ConfigurationSets ?? []);
+const templates = mine(((await ses.send(new ListEmailTemplatesCommand({}))).TemplatesMetadata ?? []).map((item) => item.TemplateName));
+// Hộp thư không có tên: lọc theo Source, xóa theo id
+const mailbox = (await (await fetch(`${consoleUrl}/aws/_aws/ses`)).json()).messages ?? [];
+const emails = mailbox.filter((mail) => PREFIXES.some((prefix) => mail.Source?.startsWith(prefix))).map((mail) => mail.Id).filter(Boolean);
 
-console.log(JSON.stringify({ buckets, tables, functions, queues }, null, 2));
+// Tên topic là phần cuối của ARN
+const topics = ((await sns.send(new ListTopicsCommand({}))).Topics ?? [])
+  .map((topic) => topic.TopicArn)
+  .filter((arn) => mine([arn?.split(":").pop()]).length);
+
+// Rule của test trên bus default (bus của test thì xóa luôn cả bus)
+const defaultRules = mine(((await eventbridge.send(new ListRulesCommand({ EventBusName: "default" }))).Rules ?? []).map((rule) => rule.Name));
+const buses = mine(((await eventbridge.send(new ListEventBusesCommand({}))).EventBuses ?? []).map((bus) => bus.Name));
+
+// Schedule của test trên group default (group của test thì xóa luôn cả group, kéo theo schedule)
+const defaultSchedules = mine(((await scheduler.send(new ListSchedulesCommand({ GroupName: "default" }))).Schedules ?? []).map((schedule) => schedule.Name));
+const scheduleGroups = mine(((await scheduler.send(new ListScheduleGroupsCommand({}))).ScheduleGroups ?? []).map((group) => group.Name));
+
+// SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
+const SMS_TEST_PHONE_PREFIX = "+8490000";
+const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
+const texts = smsInbox.filter((sms) => sms.PhoneNumber?.startsWith(SMS_TEST_PHONE_PREFIX)).map((sms) => sms.Id).filter(Boolean);
+
+console.log(JSON.stringify({ buckets, tables, functions, queues, topics, buses, defaultRules, defaultSchedules, scheduleGroups, identities, configurationSets, templates, emails, texts }, null, 2));
 
 if (process.argv.includes("--delete")) {
   for (const bucket of buckets) {
@@ -39,5 +71,24 @@ if (process.argv.includes("--delete")) {
   for (const table of tables) await dynamodb.send(new DeleteTableCommand({ TableName: table }));
   for (const name of functions) await lambda.send(new DeleteFunctionCommand({ FunctionName: name }));
   for (const url of queues) await sqs.send(new DeleteQueueCommand({ QueueUrl: url }));
+  for (const arn of topics) await sns.send(new DeleteTopicCommand({ TopicArn: arn }));
+  // Rule phải gỡ hết target mới xóa được
+  const deleteRule = async (bus, name) => {
+    const { Targets = [] } = await eventbridge.send(new ListTargetsByRuleCommand({ EventBusName: bus, Rule: name }));
+    if (Targets.length) await eventbridge.send(new RemoveTargetsCommand({ EventBusName: bus, Rule: name, Ids: Targets.map((target) => target.Id) }));
+    await eventbridge.send(new DeleteRuleCommand({ EventBusName: bus, Name: name }));
+  };
+  for (const name of defaultRules) await deleteRule("default", name);
+  for (const bus of buses) {
+    const { Rules = [] } = await eventbridge.send(new ListRulesCommand({ EventBusName: bus }));
+    for (const { Name } of Rules) await deleteRule(bus, Name);
+    await eventbridge.send(new DeleteEventBusCommand({ Name: bus }));
+  }
+  for (const name of defaultSchedules) await scheduler.send(new DeleteScheduleCommand({ GroupName: "default", Name: name }));
+  for (const name of scheduleGroups) await scheduler.send(new DeleteScheduleGroupCommand({ Name: name }));
+  for (const name of identities) await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
+  for (const name of configurationSets) await ses.send(new DeleteConfigurationSetCommand({ ConfigurationSetName: name }));
+  for (const name of templates) await ses.send(new DeleteEmailTemplateCommand({ TemplateName: name }));
+  for (const id of emails) await fetch(`${consoleUrl}/aws/_aws/ses?id=${encodeURIComponent(id)}`, { method: "DELETE" });
   console.log("deleted");
 }

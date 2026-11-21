@@ -12,20 +12,32 @@ import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import Link from "@cloudscape-design/components/link";
+import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { s3Routes } from "../../s3/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
-import { EVENT_SOURCE_STATES, TRIGGER_SOURCES } from "../constants.ts";
+import { TopicLink } from "../../sns/components/TopicLink.tsx";
+import {
+  EVENT_SOURCE_STATES,
+  EVENTBRIDGE_SOURCES,
+  SOURCE_LABELS,
+  TRIGGER_SOURCES,
+  type TriggerRowSource,
+} from "../constants.ts";
 import {
   useAddTrigger,
   useDeleteTrigger,
+  useEditTrigger,
   useSetTriggerEnabled,
   useTriggers,
   type TriggerRow,
 } from "../hooks/useTriggers.ts";
 import type { TriggerFormOutput } from "../schemas.ts";
+import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
 import { AddTriggerModal } from "./AddTriggerModal.tsx";
+import { EditTriggerModal } from "./EditTriggerModal.tsx";
 
-const MODALS = { add: "add", delete: "delete" } as const;
+const MODALS = { add: "add", edit: "edit", delete: "delete" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
 function StateCell({ row }: { row: TriggerRow }) {
@@ -37,13 +49,49 @@ function StateCell({ row }: { row: TriggerRow }) {
 const sourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "source",
   header: "Source",
-  cell: (row) => TRIGGER_SOURCES[row.source],
+  cell: (row) => SOURCE_LABELS[row.source],
 };
+
+const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
+  s3: "bucket",
+  sqs: "queue",
+  dynamodb: "table",
+  kinesis: "stream",
+  sns: "topic",
+  eventbridge: "rule",
+  scheduler: "schedule",
+};
+
+// Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
+const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>> = {
+  s3: (bucket) => s3Routes.bucket(bucket),
+  dynamodb: (table) => dynamodbRoutes.table(table),
+};
+
+function ResourceCell({ row }: { row: TriggerRow }) {
+  const follow = useFollow();
+  if (row.href)
+    return (
+      <Link href={row.href} onFollow={follow}>
+        {row.resource}
+      </Link>
+    );
+  if (row.source === "sqs") return <QueueLink name={row.resource} />;
+  if (row.source === "sns") return <TopicLink name={row.resource} />;
+  const href = RESOURCE_HREFS[row.source]?.(row.resource);
+  if (!href) return <>{row.resource}</>;
+  return (
+    <Link href={href} onFollow={follow}>
+      {row.resource}
+    </Link>
+  );
+}
+
 const resourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "resource",
   header: "Resource",
   isRowHeader: true,
-  cell: (row) => (row.source === "sqs" ? <QueueLink name={row.resource} /> : row.resource),
+  cell: (row) => <ResourceCell row={row} />,
 };
 const detailsColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "details",
@@ -56,8 +104,13 @@ const stateColumn: TableProps.ColumnDefinition<TriggerRow> = {
   cell: (row) => <StateCell row={row} />,
 };
 
+// Function nhận đích async của function khác; S3, SNS, EventBridge đã có dòng trong bảng trên
+const FUNCTION_SENDER_KINDS = ["lambda"] as const;
+const EDITABLE_SOURCES: TriggerRowSource[] = ["sqs", "dynamodb"];
+
 const WIDE_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
-const COMPACT_COLUMNS = [sourceColumn, resourceColumn, stateColumn];
+// Details cũng hiện ở khung hẹp (bảng xếp dọc): filter, partial batch, đích lỗi không được ẩn
+const COMPACT_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
 
 // Nút "Upload a file" trong thông báo, để thử luồng S3 → Lambda ngay
 function UploadButton({ bucket }: { bucket: string }) {
@@ -79,6 +132,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const triggers = useTriggers(functionName, functionArn);
   const addTrigger = useAddTrigger(functionName, functionArn);
   const deleteTrigger = useDeleteTrigger(functionName);
+  const editTrigger = useEditTrigger(functionName);
   const setEnabled = useSetTriggerEnabled(functionName);
   const [selected, setSelected] = useState<TriggerRow[]>([]);
   const [openModal, setOpenModal] = useState<ModalId | null>(null);
@@ -107,8 +161,18 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     deleteTrigger.mutate(
       single,
       notifyOutcome({
-        success: `Deleted ${TRIGGER_SOURCES[single.source]} trigger`,
+        success: `Deleted ${SOURCE_LABELS[single.source]} trigger`,
         errorHeader: "Couldn't delete the trigger",
+        then: finish,
+      }),
+    );
+
+  const edit = (values: Parameters<typeof editTrigger.mutate>[0]) =>
+    editTrigger.mutate(
+      values,
+      notifyOutcome({
+        success: `Updated trigger ${values.row.resource}`,
+        errorHeader: "Couldn't update the trigger",
         then: finish,
       }),
     );
@@ -141,6 +205,13 @@ export function TriggersTab({ functionName, functionArn }: Props) {
       loading: setEnabled.isPending && isEnabled,
       onClick: () => toggle(false),
     },
+    {
+      id: "edit",
+      text: "Edit",
+      // Chỉ SQS và DynamoDB có tùy chọn để sửa; Kinesis chưa có form
+      disabled: !single?.mapping || !EDITABLE_SOURCES.includes(single.source),
+      onClick: () => setOpenModal(MODALS.edit),
+    },
     { id: "delete", text: "Delete", disabled: !single, onClick: () => setOpenModal(MODALS.delete) },
     { id: "add", text: "Add trigger", primary: true, onClick: () => setOpenModal(MODALS.add) },
   ];
@@ -148,7 +219,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in S3, messages arrive in SQS, or items change in DynamoDB.'
+      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, a topic publishes in SNS, or an EventBridge rule or schedule fires.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers
@@ -159,7 +230,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     triggers,
     <EmptyState
       title='No triggers'
-      description='Add an S3, SQS or DynamoDB trigger to run this function.'
+      description='Add an S3, SQS or DynamoDB trigger to run this function. SNS subscriptions and EventBridge rules are added from their own pages.'
     />,
   );
 
@@ -169,10 +240,14 @@ export function TriggersTab({ functionName, functionArn }: Props) {
       <Box>
         This removes the event notification from bucket <b>{single.resource}</b>: {single.details}
       </Box>
+    ) : single?.source === "sns" ? (
+      <Box>
+        This removes the subscription of topic <b>{single.resource}</b> to this function.
+      </Box>
     ) : (
       <Box>
-        This removes the {TRIGGER_SOURCES[single?.source ?? "sqs"]} trigger for{" "}
-        {single?.source === "dynamodb" ? "table" : "queue"} {single?.resource}.
+        This removes the {SOURCE_LABELS[single?.source ?? "sqs"]} trigger for{" "}
+        {RESOURCE_NOUNS[single?.source ?? "sqs"]} {single?.resource}.
       </Box>
     );
 
@@ -188,13 +263,29 @@ export function TriggersTab({ functionName, functionArn }: Props) {
         onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
         loading={triggers.isLoading}
         loadingText='Loading triggers'
+        // Rule / schedule chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
+        isItemDisabled={(row) => EVENTBRIDGE_SOURCES.includes(row.source)}
         columnDefinitions={compact ? COMPACT_COLUMNS : WIDE_COLUMNS}
         wrapLines
         empty={empty}
         header={header}
       />
+      <OtherSenders arn={functionArn} kinds={FUNCTION_SENDER_KINDS} />
       {openModal === MODALS.add && (
-        <AddTriggerModal saving={addTrigger.isPending} onSave={add} onDismiss={closeModal} />
+        <AddTriggerModal
+          linkedSourceArns={(triggers.data ?? []).flatMap((row) => row.sourceArn ?? [])}
+          saving={addTrigger.isPending}
+          onSave={add}
+          onDismiss={closeModal}
+        />
+      )}
+      {openModal === MODALS.edit && single && (
+        <EditTriggerModal
+          row={single}
+          saving={editTrigger.isPending}
+          onSave={({ batchSize, options }) => edit({ row: single, batchSize, options })}
+          onDismiss={closeModal}
+        />
       )}
       {single && (
         <ConfirmModal

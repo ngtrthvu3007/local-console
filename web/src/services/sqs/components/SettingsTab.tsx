@@ -7,11 +7,16 @@ import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
+import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { EventSources } from "../../eventbridge/components/EventSources.tsx";
+import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
+import { TopicSubscriptions } from "../../sns/components/TopicSubscriptions.tsx";
+import { queueSample } from "../codeSamples.ts";
 import { useDeadLetterSources } from "../hooks/useQueues.ts";
 import { queueNameOfArn, queueTypeLabel, queueUrlAt, type Queue } from "../queues.ts";
 import { QueueLink } from "./QueueLink.tsx";
@@ -24,6 +29,9 @@ const MODALS = { settings: "settings", deadLetter: "deadLetter" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
 const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
+
+// Queue nhận từ S3 (notification) và Lambda (đích async, đích lỗi của trigger)
+const QUEUE_SENDER_KINDS = ["s3", "lambda"] as const;
 
 export function SettingsTab({ queue }: { queue: Queue }) {
   const { flociPublicUrl, flociInternalUrl } = useLoadedConfig();
@@ -95,7 +103,10 @@ export function SettingsTab({ queue }: { queue: Queue }) {
             </Header>
           }
         >
-          <KeyValuePairs columns={compact ? 1 : CONNECT_COLUMNS} items={connectItems} />
+          <SpaceBetween size='m'>
+            <KeyValuePairs columns={compact ? 1 : CONNECT_COLUMNS} items={connectItems} />
+            <CodeSamples sample={queueSample(queue)} />
+          </SpaceBetween>
         </Container>
         <Container
           header={
@@ -134,6 +145,10 @@ export function SettingsTab({ queue }: { queue: Queue }) {
             </SpaceBetween>
           </Container>
         )}
+
+        <TopicSubscriptions endpointArn={queue.arn} />
+        <EventSources targetArn={queue.arn} />
+        <OtherSenders arn={queue.arn} kinds={QUEUE_SENDER_KINDS} />
 
         {modal === MODALS.settings && <EditSettingsModal queue={queue} onDismiss={closeModal} />}
         {modal === MODALS.deadLetter && (

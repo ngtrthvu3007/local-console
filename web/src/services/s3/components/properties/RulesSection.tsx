@@ -35,7 +35,9 @@ export function RulesSection<TRule>(props: Props<TRule>) {
   const [selected, setSelected] = useState<TRule[]>([]);
   const [modal, setModal] = useState<"create" | "delete" | null>(null);
   const selectedIds = selected.map(ruleId);
-  const lowerTitle = title.toLowerCase();
+  // Chỉ viết thường chữ đầu cho câu ("Delete lifecycle rules?"); giữ viết tắt
+  // như CORS
+  const lowerTitle = title.charAt(0).toLowerCase() + title.slice(1);
 
   const finish = () => {
     setModal(null);

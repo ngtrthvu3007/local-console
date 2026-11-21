@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { NotificationConfiguration } from "@aws-sdk/client-s3";
 import {
+  overlappingRule,
   toNotificationConfiguration,
   toNotificationRules,
   type NotificationRule,
@@ -111,6 +112,24 @@ describe("toNotificationConfiguration", () => {
     });
   });
 
+  it("keeps the EventBridge setting of the current configuration", () => {
+    const current = { EventBridgeConfiguration: {}, QueueConfigurations: [] };
+    expect(toNotificationConfiguration([], current).EventBridgeConfiguration).toEqual({});
+    expect(toNotificationConfiguration([])).not.toHaveProperty("EventBridgeConfiguration");
+  });
+
+  it("turns the EventBridge setting on and off, keeping the rules", () => {
+    expect(toNotificationConfiguration([], {}, true).EventBridgeConfiguration).toEqual({});
+    const current = { EventBridgeConfiguration: {} };
+    expect(toNotificationConfiguration([], current, false)).not.toHaveProperty(
+      "EventBridgeConfiguration",
+    );
+    // Bật lại không đổi gì khi bucket đã có cấu hình EventBridge
+    expect(toNotificationConfiguration([], current, true).EventBridgeConfiguration).toBe(
+      current.EventBridgeConfiguration,
+    );
+  });
+
   it("round-trips with toNotificationRules", () => {
     const rules = [
       rule({ id: "a", prefix: "in/" }),
@@ -120,5 +139,35 @@ describe("toNotificationConfiguration", () => {
       { ...rules[0], suffix: undefined },
       { ...rules[1], prefix: undefined },
     ]);
+  });
+});
+
+describe("overlappingRule", () => {
+  const existing: NotificationRule = {
+    id: "images",
+    destination: "sqs",
+    arn: QUEUE_ARN,
+    events: ["s3:ObjectCreated:*"],
+    prefix: "images/",
+    suffix: ".jpg",
+  };
+
+  it("flags a nested prefix on a covered event type, whatever the destination", () => {
+    expect(
+      overlappingRule([existing], { events: ["s3:ObjectCreated:Put"], prefix: "images/raw/" }),
+    ).toBe(existing);
+  });
+
+  it("treats an empty filter as matching every key", () => {
+    expect(overlappingRule([existing], { events: ["s3:ObjectCreated:*"] })).toBe(existing);
+  });
+
+  it("allows different suffixes, different prefixes or other event types", () => {
+    const add = (rule: Parameters<typeof overlappingRule>[1]) => overlappingRule([existing], rule);
+    expect(
+      add({ events: ["s3:ObjectCreated:*"], prefix: "images/", suffix: ".png" }),
+    ).toBeUndefined();
+    expect(add({ events: ["s3:ObjectCreated:*"], prefix: "videos/" })).toBeUndefined();
+    expect(add({ events: ["s3:ObjectRemoved:*"], prefix: "images/" })).toBeUndefined();
   });
 });
