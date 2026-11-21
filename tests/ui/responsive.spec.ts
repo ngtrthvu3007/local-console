@@ -15,9 +15,15 @@ const PAGES = [
   { slug: "elasticache-clusters", path: "/elasticache/clusters" },
   { slug: "mq-brokers", path: "/mq/brokers" },
   { slug: "sns-sms", path: "/sns/sms" },
+  { slug: "eventbridge-buses", path: "/eventbridge/buses" },
+  { slug: "eventbridge-rules", path: "/eventbridge/rules" },
+  { slug: "eventbridge-rule-create", path: "/eventbridge/rules/create" },
+  { slug: "eventbridge-schedules", path: "/eventbridge/schedules" },
+  { slug: "eventbridge-schedule-create", path: "/eventbridge/schedules/create" },
   { slug: "ses-mailbox", path: "/ses/mailbox" },
   { slug: "ses-identities", path: "/ses/identities" },
   { slug: "ses-templates", path: "/ses/templates" },
+  { slug: "ses-configuration-sets", path: "/ses/configuration-sets" },
 ];
 
 // Cloudscape gập side navigation dưới mốc này (PHONE_MAX_WIDTH_PX của console)

@@ -29,7 +29,9 @@ import {
   type TriggerSource,
 } from "../constants.ts";
 import type { AddTriggerInput } from "../hooks/useTriggers.ts";
+import { DEFAULT_MAPPING_OPTIONS } from "../mappingOptions.ts";
 import { triggerSchema, type TriggerFormOutput } from "../schemas.ts";
+import { MappingOptionsFields } from "./MappingOptionsFields.tsx";
 
 const SOURCE_ITEMS = Object.entries(TRIGGER_SOURCES).map(([value, label]) => ({ value, label }));
 const EVENT_OPTIONS = S3_TRIGGER_EVENTS.map((event) => ({ value: event, label: event }));
@@ -51,6 +53,7 @@ const INITIAL_VALUES = {
   startingPosition: DEFAULT_STARTING_POSITION,
   batchSize: String(SQS_BATCH_SIZE.default),
   enabled: true,
+  ...DEFAULT_MAPPING_OPTIONS,
 };
 
 interface Props {
@@ -155,6 +158,7 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
         label='Batch size'
         constraintText={`${SQS_BATCH_SIZE.min}–${SQS_BATCH_SIZE.max} messages per invocation.`}
       />
+      <MappingOptionsFields form={form} source='sqs' />
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
     </SpaceBetween>
   );
@@ -191,6 +195,7 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
           constraintText={`${STREAM_BATCH_SIZE.min}–${STREAM_BATCH_SIZE.max} records per invocation.`}
         />
       </ColumnLayout>
+      <MappingOptionsFields form={form} source='dynamodb' />
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
     </SpaceBetween>
   );

@@ -222,14 +222,21 @@ export function FormSelect<TValues extends FieldValues>(props: SelectFieldProps<
   );
 }
 
-export function FormMultiselect<TValues extends FieldValues>(props: OptionsProps<TValues>) {
-  const { options, ...fieldProps } = props;
+interface MultiselectFieldProps<TValues extends FieldValues> extends OptionsProps<TValues> {
+  placeholder?: string;
+}
+
+export function FormMultiselect<TValues extends FieldValues>(
+  props: MultiselectFieldProps<TValues>,
+) {
+  const { options, placeholder, ...fieldProps } = props;
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
         <Multiselect
           ref={field.ref}
           invalid={invalid}
+          placeholder={placeholder}
           options={options}
           selectedOptions={options.filter((option) => field.value?.includes(option.value))}
           onChange={({ detail }) =>

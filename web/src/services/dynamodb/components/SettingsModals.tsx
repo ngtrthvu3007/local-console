@@ -9,7 +9,9 @@ import { pluralize } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { MappingOptionsFields } from "../../lambda/components/MappingOptionsFields.tsx";
 import { functionNameOfMapping } from "../../lambda/helpers.ts";
+import { DEFAULT_MAPPING_OPTIONS } from "../../lambda/mappingOptions.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import {
   DEFAULT_STARTING_POSITION,
@@ -181,6 +183,7 @@ export function StreamTriggerModal({ table, streamArn, onDismiss }: TriggerProps
     startingPosition: DEFAULT_STARTING_POSITION,
     batchSize: String(STREAM_BATCH_SIZE.default),
     enabled: true,
+    ...DEFAULT_MAPPING_OPTIONS,
   });
   const linked = new Set((triggers.data ?? []).map(functionNameOfMapping));
   const functionOptions = (functions.data ?? []).map((item) => ({
@@ -231,6 +234,7 @@ export function StreamTriggerModal({ table, streamArn, onDismiss }: TriggerProps
           constraintText={`${STREAM_BATCH_SIZE.min}–${STREAM_BATCH_SIZE.max} records per invocation.`}
         />
       </ColumnLayout>
+      <MappingOptionsFields form={form} source='dynamodb' />
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
     </FormModal>
   );

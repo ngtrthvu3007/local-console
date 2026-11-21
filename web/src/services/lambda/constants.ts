@@ -84,10 +84,18 @@ export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 // Trigger
 export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
-// Nguồn chỉ hiện trong bảng Triggers, không thêm được từ trang Lambda (SNS tạo từ trang topic)
-const DISPLAY_ONLY_SOURCES = { kinesis: "Kinesis", sns: "SNS" } as const;
+// Nguồn chỉ hiện trong bảng Triggers, không thêm được từ trang Lambda (SNS tạo từ trang topic,
+// rule và schedule tạo từ trang EventBridge)
+const DISPLAY_ONLY_SOURCES = {
+  kinesis: "Kinesis",
+  sns: "SNS",
+  eventbridge: "EventBridge",
+  scheduler: "Scheduler",
+} as const;
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
+// Rule / schedule của EventBridge: chỉ xem ở đây, bật / tắt / xóa ở trang EventBridge
+export const EVENTBRIDGE_SOURCES: readonly TriggerRowSource[] = ["eventbridge", "scheduler"];
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;
 export const S3_TRIGGER_EVENTS = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"] as const;
 export const SQS_BATCH_SIZE = { min: 1, max: 10, default: 10 } as const;
@@ -169,3 +177,30 @@ export const eventTemplates = (region: string) => ({
 });
 export type EventTemplateName = keyof ReturnType<typeof eventTemplates>;
 export const DEFAULT_EVENT_TEMPLATE: EventTemplateName = "Hello world";
+
+// Tùy chọn nâng cao của trigger SQS / DynamoDB stream (spec integration-enhancements 3.2)
+// Filter criteria: AWS cho tối đa 5 pattern mỗi trigger, khớp một pattern là đủ
+export const FILTER_PATTERN_LIMIT = 5;
+// -1 = thử lại mãi mãi
+export const STREAM_RETRY_ATTEMPTS = { min: -1, max: 10000, default: -1 } as const;
+// -1 = giữ record mãi; còn lại 60 giây tới 7 ngày
+export const STREAM_RECORD_AGE_SECONDS = { forever: -1, min: 60, max: 604800 } as const;
+export const REPORT_BATCH_FAILURES = "ReportBatchItemFailures";
+
+export const ASYNC_RETRY_ATTEMPTS = { min: 0, max: 2, default: 2 } as const;
+export const ASYNC_EVENT_AGE_SECONDS = { min: 60, max: 21600, default: 21600 } as const;
+export const DESTINATION_KINDS = {
+  none: "None",
+  sqs: "SQS queue",
+  sns: "SNS topic",
+  lambda: "Lambda function",
+  eventbus: "Event bus",
+} as const;
+export type DestinationKind = keyof typeof DESTINATION_KINDS;
+// Stream chỉ gửi bản ghi lỗi tới queue hoặc topic
+export const ON_FAILURE_KIND_IDS = [
+  "none",
+  "sqs",
+  "sns",
+] as const satisfies readonly DestinationKind[];
+export type OnFailureKind = (typeof ON_FAILURE_KIND_IDS)[number];

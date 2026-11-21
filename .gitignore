@@ -7,3 +7,4 @@ dist/
 .playwright-mcp/
 .taste-skill/
 tests/results/
+*.deb

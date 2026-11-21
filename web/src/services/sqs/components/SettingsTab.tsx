@@ -13,6 +13,8 @@ import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { EventSources } from "../../eventbridge/components/EventSources.tsx";
+import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
 import { TopicSubscriptions } from "../../sns/components/TopicSubscriptions.tsx";
 import { queueSample } from "../codeSamples.ts";
 import { useDeadLetterSources } from "../hooks/useQueues.ts";
@@ -27,6 +29,9 @@ const MODALS = { settings: "settings", deadLetter: "deadLetter" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
 const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
+
+// Queue nhận từ S3 (notification) và Lambda (đích async, đích lỗi của trigger)
+const QUEUE_SENDER_KINDS = ["s3", "lambda"] as const;
 
 export function SettingsTab({ queue }: { queue: Queue }) {
   const { flociPublicUrl, flociInternalUrl } = useLoadedConfig();
@@ -142,6 +147,8 @@ export function SettingsTab({ queue }: { queue: Queue }) {
         )}
 
         <TopicSubscriptions endpointArn={queue.arn} />
+        <EventSources targetArn={queue.arn} />
+        <OtherSenders arn={queue.arn} kinds={QUEUE_SENDER_KINDS} />
 
         {modal === MODALS.settings && <EditSettingsModal queue={queue} onDismiss={closeModal} />}
         {modal === MODALS.deadLetter && (

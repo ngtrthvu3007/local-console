@@ -16,6 +16,7 @@ export const sesService: ServiceDefinition = {
     { text: "Mailbox", href: sesRoutes.mailbox },
     { text: "Identities", href: sesRoutes.identities },
     { text: "Templates", href: sesRoutes.templates },
+    { text: "Configuration sets", href: sesRoutes.configurationSets },
   ],
   routes: [
     { index: true, element: <Navigate to={sesRoutes.mailbox} replace /> },
@@ -30,6 +31,10 @@ export const sesService: ServiceDefinition = {
     {
       path: SES_ROUTE_PATTERNS.templates,
       ...lazyPage(() => import("./pages/Templates.tsx"), "Templates"),
+    },
+    {
+      path: SES_ROUTE_PATTERNS.configurationSets,
+      ...lazyPage(() => import("./pages/ConfigurationSets.tsx"), "ConfigurationSets"),
     },
   ],
 };

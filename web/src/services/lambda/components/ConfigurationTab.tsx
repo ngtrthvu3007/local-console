@@ -31,6 +31,7 @@ import {
 } from "../constants.ts";
 import { useUpdateConfiguration } from "../hooks/useFunctions.ts";
 import { functionSample } from "../codeSamples.ts";
+import { AsyncInvocationBlock } from "./AsyncInvocationBlock.tsx";
 import { environmentSchema, generalConfigurationSchema } from "../schemas.ts";
 
 const GENERAL_COLUMNS = 4;
@@ -267,6 +268,7 @@ export function ConfigurationTab({ configuration }: { configuration: FunctionCon
         empty={<EmptyState title='No environment variables' />}
         header={environmentHeader}
       />
+      {configuration.FunctionName && <AsyncInvocationBlock name={configuration.FunctionName} />}
       {openModal === MODALS.general && (
         <GeneralConfigurationModal configuration={configuration} onDismiss={closeModal} />
       )}

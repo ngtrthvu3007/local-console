@@ -3,6 +3,7 @@ import { useCollection } from "@cloudscape-design/collection-hooks";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
+import Link from "@cloudscape-design/components/link";
 import Header from "@cloudscape-design/components/header";
 import Pagination from "@cloudscape-design/components/pagination";
 import SpaceBetween from "@cloudscape-design/components/space-between";
@@ -12,8 +13,9 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
@@ -22,7 +24,8 @@ import { DeleteIdentitiesModal } from "../components/DeleteIdentitiesModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { identitySample, senderOf } from "../codeSamples.ts";
 import { IDENTITY_TYPE_LABELS, VERIFICATION_STATUS } from "../constants.ts";
-import { useIdentities } from "../hooks/useIdentities.ts";
+import { SetConfigurationSetModal } from "../components/SetConfigurationSetModal.tsx";
+import { useIdentities, useIdentityConfigurationSets } from "../hooks/useIdentities.ts";
 import { sesBaseCrumbs, sesRoutes } from "../routes.ts";
 
 const NAME_FIELD = "IdentityName";
@@ -49,8 +52,11 @@ export function Identities() {
   useBreadcrumbs(crumbs);
   const { ref, compact } = useIsCompact();
   const identities = useIdentities();
+  const defaults = useIdentityConfigurationSets();
+  const configurationSetLink = useFollow();
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [settingSet, setSettingSet] = useState(false);
 
   const emptyState = emptyOrError(
     identities,
@@ -127,6 +133,23 @@ export function Identities() {
     header: "Status",
     cell: (identity) => <StatusCell identity={identity} />,
   };
+  // Khung hẹp không có cột riêng: configuration set nằm ở dòng phụ, sau loại identity
+  const configurationSetText = (identity: IdentityInfo) =>
+    `Set: ${defaults.get(identity.IdentityName ?? "") || NOT_AVAILABLE}`;
+  const setColumn: TableProps.ColumnDefinition<IdentityInfo> = {
+    id: "configurationSet",
+    header: "Configuration set",
+    cell: (identity) => {
+      const set = defaults.get(identity.IdentityName ?? "");
+      return set ? (
+        <Link href={sesRoutes.configurationSetPage(set)} onFollow={configurationSetLink}>
+          {set}
+        </Link>
+      ) : (
+        NOT_AVAILABLE
+      );
+    },
+  };
   // Khung hẹp: tầng 1 là identity + status; tầng 2 là type, xám
   const compactColumns: TableProps.ColumnDefinition<IdentityInfo>[] = [
     {
@@ -135,7 +158,7 @@ export function Identities() {
         <div>
           {nameButton(identity)} <StatusCell identity={identity} />
           <Box variant='small' display='block' color='text-body-secondary'>
-            {typeLabel(identity)}
+            {[typeLabel(identity), configurationSetText(identity)].join(DETAIL_SEPARATOR)}
           </Box>
         </div>
       ),
@@ -144,6 +167,12 @@ export function Identities() {
 
   const barActions: BarAction[] = [
     refreshAction(identities),
+    {
+      id: "set-configuration-set",
+      text: "Set configuration set",
+      disabled: selected.length !== 1,
+      onClick: () => setSettingSet(true),
+    },
     { id: "delete", text: "Delete", disabled: !selected.length, onClick: () => setDeleting(true) },
     { id: "add", text: "Add email", primary: true, onClick: () => setAdding(true) },
   ];
@@ -170,12 +199,19 @@ export function Identities() {
         items={items}
         loading={identities.isLoading}
         loadingText='Loading identities'
-        columnDefinitions={compact ? compactColumns : [nameColumn, typeColumn, statusColumn]}
+        columnDefinitions={compact ? compactColumns : [nameColumn, typeColumn, statusColumn, setColumn]}
         wrapLines={compact}
         header={header}
         pagination={<Pagination {...paginationProps} />}
       />
       {adding && <AddEmailModal onDismiss={() => setAdding(false)} />}
+      {settingSet && selected[0]?.IdentityName && (
+        <SetConfigurationSetModal
+          identity={selected[0].IdentityName}
+          current={defaults.get(selected[0].IdentityName)}
+          onDismiss={() => setSettingSet(false)}
+        />
+      )}
       {deleting && (
         <DeleteIdentitiesModal
           identities={selected}
