@@ -5,9 +5,7 @@ import AppLayout, {
   type AppLayoutProps,
 } from "@cloudscape-design/components/app-layout";
 import BreadcrumbGroup from "@cloudscape-design/components/breadcrumb-group";
-import Flashbar, {
-  type FlashbarProps,
-} from "@cloudscape-design/components/flashbar";
+import Flashbar from "@cloudscape-design/components/flashbar";
 import SideNavigation from "@cloudscape-design/components/side-navigation";
 import SplitPanel from "@cloudscape-design/components/split-panel";
 import TopNavigation, {

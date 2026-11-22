@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
@@ -11,6 +10,7 @@ import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { DeleteRulesModal } from "../components/DeleteRulesModal.tsx";
 import { RuleDetailsTab } from "../components/RuleDetailsTab.tsx";
 import { TargetsTab } from "../components/TargetsTab.tsx";
@@ -76,11 +76,16 @@ function RuleView({ rule }: { rule: Rule }) {
   const header = (
     <Header
       variant='h1'
-      description={[
-        RULE_TYPES[ruleType(rule)],
-        rule.enabled ? "Enabled" : "Disabled",
-        `bus ${rule.bus}`,
-      ].join(DETAIL_SEPARATOR)}
+      description={
+        <>
+          {[
+            RULE_TYPES[ruleType(rule)],
+            rule.enabled ? "Enabled" : "Disabled",
+            `bus ${rule.bus}`,
+          ].join(DETAIL_SEPARATOR)}
+          <StackLink separated type='AWS::Events::Rule' physicalId={rule.name} />
+        </>
+      }
       actions={
         <ActionBar
           compact={compact}

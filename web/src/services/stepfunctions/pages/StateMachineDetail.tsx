@@ -12,6 +12,7 @@ import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { stateMachineSample } from "../codeSamples.ts";
 import { DefinitionTab } from "../components/DefinitionTab.tsx";
 import { ExecutionsTab } from "../components/ExecutionsTab.tsx";
@@ -70,10 +71,15 @@ function StateMachineView({ machine }: { machine: StateMachineDetails }) {
   const header = (
     <Header
       variant='h1'
-      description={[
-        STATE_MACHINE_TYPE_LABELS[machine.type],
-        `Created ${formatDate(machine.createdAt)}`,
-      ].join(DETAIL_SEPARATOR)}
+      description={
+        <>
+          {[
+            STATE_MACHINE_TYPE_LABELS[machine.type],
+            `Created ${formatDate(machine.createdAt)}`,
+          ].join(DETAIL_SEPARATOR)}
+          <StackLink separated type='AWS::StepFunctions::StateMachine' physicalId={machine.arn} />
+        </>
+      }
       actions={
         <ActionBar
           compact={compact}

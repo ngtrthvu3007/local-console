@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { PutTargetsCommand, RemoveTargetsCommand } from "@aws-sdk/client-eventbridge";
 import { listTargets } from "../rules.ts";
 import { EVENTBRIDGE_QUERY_ROOT, useInvalidateEventBridge } from "./useBuses.ts";

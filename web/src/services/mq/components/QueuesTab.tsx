@@ -8,7 +8,6 @@ import type { ButtonDropdownProps } from "@cloudscape-design/components/button-d
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
-import SpaceBetween from "@cloudscape-design/components/space-between";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import Toggle from "@cloudscape-design/components/toggle";

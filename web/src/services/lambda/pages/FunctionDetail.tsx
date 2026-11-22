@@ -15,6 +15,7 @@ import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { CodeTab } from "../components/CodeTab.tsx";
 import { ConfigurationTab } from "../components/ConfigurationTab.tsx";
 import { DeleteFunctionsModal } from "../components/FunctionModals.tsx";
@@ -129,7 +130,20 @@ export function FunctionDetail() {
   );
 
   const header = (
-    <Header variant='h1' description={configuration.Description} actions={headerActions}>
+    <Header
+      variant='h1'
+      description={
+        <>
+          {configuration.Description}
+          <StackLink
+            separated={Boolean(configuration.Description)}
+            type='AWS::Lambda::Function'
+            physicalId={name}
+          />
+        </>
+      }
+      actions={headerActions}
+    >
       {name}
     </Header>
   );

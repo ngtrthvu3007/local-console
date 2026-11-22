@@ -1,6 +1,6 @@
 # CloudFormation — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; IT `it/cloudformation.test.ts`, E2E `cloudformation*.spec.ts`, UI `ui/cloudformation.spec.ts`; `StackLink` ở `shared`, đã gắn vào S3, Lambda, DynamoDB, SQS, ElastiCache, SNS, EventBridge rule / schedule, Step Functions; chưa làm cho Cognito, API Gateway, RDS, EC2… vì các service đó chưa có) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
 
 ## 1. Mục tiêu
 
@@ -156,7 +156,7 @@ Resources (9)                                                     [🔍 Find res
 - Không có stack nào: một request, luôn 200.
 - **Không dùng `DescribeStackResources?PhysicalResourceId=`**: resource không thuộc stack → HTTP 400 → trình duyệt log `console.error` → E2E fail (development.md › Traps, 7 #14). User chốt 2026-11-19.
 
-**`StackLink`** (`web/src/services/cloudformation/components/StackLink.tsx`, user chốt): nhận `type` và `physicalId`, tra index, render "Stack: <link>" hoặc `null` (không thuộc stack, đang tải, lỗi).
+**`StackLink`** (`web/src/shared/StackLink.tsx`, user đổi chốt 2026-11-22: đặt ở `shared`; import `useResourceIndex` và route stack từ `services/cloudformation`, SDK vẫn nạp lười trong `queryFn` nên không vào bundle chính): nhận `type` và `physicalId`, tra index, render "Stack: <link>" hoặc `null` (không thuộc stack, đang tải, lỗi).
 
 | Trang                                 | Type                             | Physical ID truyền vào               |
 | ------------------------------------- | -------------------------------- | ------------------------------------ |
@@ -259,18 +259,21 @@ environment:
 ```bash
 web/src/services/cloudformation/
 ├── index.tsx, routes.ts, constants.ts       # STUB_REASON_MARKER, STACK_POLL_INTERVAL_MS, RESOURCE_INDEX_STALE_MS
-├── status.ts                  # statusGroup(), nhóm lọc
+├── status.ts                  # statusGroup(), isRunning() (không poll REVIEW_IN_PROGRESS), needsTls()
+├── stacks.ts                  # gọi SDK: list, describe, events, resources, xóa; client
 ├── resourceLinks.ts           # type + physical ID → href (3.10)
+├── resourceIndex.ts           # khóa và dựng index (thuần, 3.8)
 ├── stub.ts                    # gom logical ID bị stub từ events
 ├── hooks/
 │   ├── useCloudFormation.ts   # client qua /aws, nạp lười
 │   ├── useStacks.ts           # list, chi tiết, events, resources, template, xóa
 │   └── useResourceIndex.ts    # index cho StackLink (3.8)
 ├── pages/                     # StackList, StackDetail
-└── components/                # EventsTab, ResourcesTab, OutputsTab, DeleteStackModal, StackStatus, StackLink
+└── components/                # EventsTab, ResourcesTab, OutputsTab, DeleteStackModal, StackStatus
+web/src/shared/StackLink.tsx   # dùng chung (3.8)
 ```
 
-Khai báo trong `registry.ts` (một dòng, `navigation` có 1 mục); icon `web/public/icons/cloudformation.svg` theo cùng khung với các icon cũ. Repo đã có tiền lệ service import từ service khác (DynamoDB dùng route của Lambda), nên `resourceLinks.ts` import route của S3, Lambda, DynamoDB, SQS, ElastiCache và các trang đó import `StackLink`.
+Khai báo trong `registry.ts` (một dòng, `navigation` có 1 mục); icon là glyph Tabler (`IconTemplate`) trên ô màu của nhóm `management` (thêm vào `SERVICE_CATEGORIES`), không có file svg. Repo đã có tiền lệ service import từ service khác (DynamoDB dùng route của Lambda), nên `resourceLinks.ts` import route của S3, Lambda, DynamoDB, SQS, ElastiCache và các trang đó import `StackLink`.
 
 ### Dùng lại từ phần đã có
 
@@ -348,7 +351,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 | Cắt tab Parameters, Template và cột References                                                                                                                                                                                                                                          | Không ảnh hưởng flow deploy (CDK CLI ↔ Floci); dev xem trong code / `cdk.out/`. User chốt 2026-11-19                                                                    |
 | Không làm canvas                                                                                                                                                                                                                                                                        | User chốt 2026-11-19; References thay phần quan hệ                                                                                                                      |
 | `StackLink` tra bằng index, không dùng `DescribeStackResources?PhysicalResourceId=`                                                                                                                                                                                                     | Tránh HTTP 400 làm E2E fail; 0 request thêm sau lần đầu. User chốt 2026-11-19                                                                                           |
-| `StackLink` đặt ở `services/cloudformation/components`, không ở `shared`                                                                                                                                                                                                                | `shared` không import từ `services`; repo có tiền lệ import chéo service. User chốt 2026-11-19                                                                          |
+| `StackLink` đặt ở `web/src/shared/StackLink.tsx` (đổi từ `services/cloudformation/components`)                                                                                                                                                                                          | Mọi trang chi tiết dùng chung một component. Đây là chỗ đầu tiên `shared` import từ `services`: chỉ import hook index (SDK nạp lười). User đổi chốt 2026-11-22          |
 | Không đặt `StackLink` ở MQ                                                                                                                                                                                                                                                              | Broker luôn bị stub                                                                                                                                                     |
 | Badge stub dựa vào reason trong events, không dựa danh sách type                                                                                                                                                                                                                        | Tài liệu và 2.4.0 lệch nhiều type; physical ID stub không ổn định                                                                                                       |
 | Danh sách dùng `DescribeStacks`, không `ListStacks`                                                                                                                                                                                                                                     | `ListStacks` không có reason, `LastUpdatedTime`                                                                                                                         |
