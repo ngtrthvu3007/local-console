@@ -10,6 +10,7 @@ import { s3Service } from "./services/s3/index.tsx";
 import { sesService } from "./services/ses/index.tsx";
 import { snsService } from "./services/sns/index.tsx";
 import { sqsService } from "./services/sqs/index.tsx";
+import { stepfunctionsService } from "./services/stepfunctions/index.tsx";
 
 export interface ServiceLink {
   text: string;
@@ -35,6 +36,7 @@ export const services: ServiceDefinition[] = [
   sqsService,
   snsService,
   eventbridgeService,
+  stepfunctionsService,
   elasticacheService,
   mqService,
   sesService,

@@ -20,6 +20,7 @@ const PAGES = [
   { slug: "eventbridge-rule-create", path: "/eventbridge/rules/create" },
   { slug: "eventbridge-schedules", path: "/eventbridge/schedules" },
   { slug: "eventbridge-schedule-create", path: "/eventbridge/schedules/create" },
+  { slug: "stepfunctions-state-machines", path: "/stepfunctions/statemachines" },
   { slug: "ses-mailbox", path: "/ses/mailbox" },
   { slug: "ses-identities", path: "/ses/identities" },
   { slug: "ses-templates", path: "/ses/templates" },

@@ -1,0 +1,227 @@
+{
+ "status": "SUCCEEDED",
+ "events": [
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "ExecutionStarted",
+   "id": 1,
+   "previousEventId": 0,
+   "executionStartedEventDetails": {
+    "input": "{\"items\":[1,2]}",
+    "inputDetails": {
+     "truncated": false
+    },
+    "roleArn": "arn:aws:iam::000000000000:role/x"
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "ParallelStateEntered",
+   "id": 2,
+   "previousEventId": 0,
+   "stateEnteredEventDetails": {
+    "name": "Par",
+    "input": "{\"items\":[1,2]}",
+    "inputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "ParallelStateStarted",
+   "id": 3,
+   "previousEventId": 2
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapStateEntered",
+   "id": 4,
+   "previousEventId": 3,
+   "stateEnteredEventDetails": {
+    "name": "M",
+    "input": "{\"items\":[1,2]}",
+    "inputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapStateStarted",
+   "id": 5,
+   "previousEventId": 4,
+   "mapStateStartedEventDetails": {
+    "length": 2
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "PassStateEntered",
+   "id": 6,
+   "previousEventId": 3,
+   "stateEnteredEventDetails": {
+    "name": "Solo",
+    "input": "{\"items\":[1,2]}",
+    "inputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "PassStateExited",
+   "id": 7,
+   "previousEventId": 6,
+   "stateExitedEventDetails": {
+    "name": "Solo",
+    "output": "{\"items\":[1,2]}",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapIterationStarted",
+   "id": 8,
+   "previousEventId": 5,
+   "mapIterationStartedEventDetails": {
+    "name": "M",
+    "index": 0
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "PassStateEntered",
+   "id": 9,
+   "previousEventId": 8,
+   "stateEnteredEventDetails": {
+    "name": "In",
+    "input": "1",
+    "inputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "PassStateExited",
+   "id": 10,
+   "previousEventId": 9,
+   "stateExitedEventDetails": {
+    "name": "In",
+    "output": "1",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapIterationSucceeded",
+   "id": 11,
+   "previousEventId": 10,
+   "mapIterationSucceededEventDetails": {
+    "name": "M",
+    "index": 0
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapIterationStarted",
+   "id": 12,
+   "previousEventId": 5,
+   "mapIterationStartedEventDetails": {
+    "name": "M",
+    "index": 1
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "PassStateEntered",
+   "id": 13,
+   "previousEventId": 12,
+   "stateEnteredEventDetails": {
+    "name": "In",
+    "input": "2",
+    "inputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "PassStateExited",
+   "id": 14,
+   "previousEventId": 13,
+   "stateExitedEventDetails": {
+    "name": "In",
+    "output": "2",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapIterationSucceeded",
+   "id": 15,
+   "previousEventId": 14,
+   "mapIterationSucceededEventDetails": {
+    "name": "M",
+    "index": 1
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapStateSucceeded",
+   "id": 16,
+   "previousEventId": 15
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "MapStateExited",
+   "id": 17,
+   "previousEventId": 15,
+   "stateExitedEventDetails": {
+    "name": "M",
+    "output": "[1,2]",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "ParallelStateSucceeded",
+   "id": 18,
+   "previousEventId": 17
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "ParallelStateExited",
+   "id": 19,
+   "previousEventId": 17,
+   "stateExitedEventDetails": {
+    "name": "Par",
+    "output": "[[1,2],{\"items\":[1,2]}]",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:22.658Z",
+   "type": "ExecutionSucceeded",
+   "id": 20,
+   "previousEventId": 19,
+   "executionSucceededEventDetails": {
+    "output": "[[1,2],{\"items\":[1,2]}]",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  }
+ ]
+}

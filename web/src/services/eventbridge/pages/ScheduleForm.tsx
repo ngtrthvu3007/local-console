@@ -24,6 +24,7 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useTopics } from "../../sns/hooks/useTopics.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
+import { useStateMachines } from "../../stepfunctions/hooks/useStateMachines.ts";
 import { TargetResource } from "../components/TargetResource.tsx";
 import {
   AFTER_COMPLETION,
@@ -84,6 +85,7 @@ const EMPTY_TEXT: Record<ScheduleTargetKind, string> = {
   sqs: "No queues",
   sns: "No topics",
   eventbus: "No event buses",
+  stepfunctions: "No state machines",
 };
 
 function initialValues(group: string, existing?: Schedule): ScheduleFormValues {
@@ -127,6 +129,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
   const queues = useQueues();
   const topics = useTopics();
   const buses = useBuses();
+  const stateMachines = useStateMachines();
   const save = useSaveSchedule(Boolean(existing));
 
   const fifoArns = new Set((queues.data ?? []).filter((queue) => queue.fifo).map((q) => q.arn));
@@ -204,6 +207,10 @@ function ScheduleFormView({ group, existing }: FormProps) {
     sqs: (queues.data ?? []).map((queue) => ({ value: queue.arn, label: queue.name })),
     sns: (topics.data ?? []).map((topic) => ({ value: topic.arn, label: topic.name })),
     eventbus: (buses.data ?? []).map((bus) => ({ value: bus.arn, label: bus.name })),
+    stepfunctions: (stateMachines.data ?? []).map((machine) => ({
+      value: machine.arn,
+      label: machine.name,
+    })),
   };
   const groupOptions = (groups.data ?? [DEFAULT_SCHEDULE_GROUP]).map((name) => ({
     value: name,

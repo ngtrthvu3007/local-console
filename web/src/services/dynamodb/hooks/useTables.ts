@@ -7,6 +7,7 @@ import {
   type KeySchemaElement,
   type TableDescription,
 } from "@aws-sdk/client-dynamodb";
+import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import {
   BILLING_MODE_ON_DEMAND,
@@ -21,6 +22,17 @@ const tablesQueryKey = ["dynamodb", "tables"];
 // Mọi query về một bảng (chi tiết, item, TTL, stream…) nằm dưới key này
 export const tableQueryKey = (table: string, part: string) => ["dynamodb", "table", table, part];
 const DETAILS = "details";
+
+// Nơi khác tham chiếu tới bảng (bước Step Functions…) còn trỏ được không
+export function useTableExists(name: string) {
+  const client = useDynamoDB();
+  return useQuery({
+    queryKey: tableQueryKey(name, "exists"),
+    queryFn: () =>
+      existsUnlessMissing(() => client.send(new DescribeTableCommand({ TableName: name }))),
+    retry: false,
+  });
+}
 
 export interface KeyAttribute {
   name: string;
