@@ -28,6 +28,7 @@
     "@aws-sdk/client-eventbridge": "^3.1168.0",
     "@aws-sdk/client-scheduler": "^3.1168.0",
     "@aws-sdk/client-secrets-manager": "^3.1168.0",
+    "@aws-sdk/client-sfn": "^3.1168.0",
     "@aws-sdk/client-sns": "^3.1171.0",
     "@aws-sdk/client-ssm": "^3.1168.0"
   }

@@ -1,0 +1,65 @@
+import Link from "@cloudscape-design/components/link";
+import { MissingReference } from "@shared/components/MissingReference.tsx";
+import { useFollow } from "@shared/hooks/useFollow.ts";
+import { useTableExists } from "../../dynamodb/hooks/useTables.ts";
+import { dynamodbRoutes } from "../../dynamodb/routes.ts";
+import { useFunctionExists } from "../../lambda/hooks/useFunctions.ts";
+import { lambdaRoutes } from "../../lambda/routes.ts";
+import { QueueLink } from "../../sqs/components/QueueLink.tsx";
+import { TopicLink } from "../../sns/components/TopicLink.tsx";
+import type { TaskResource } from "../taskResource.ts";
+import { StateMachineLink } from "./StateMachineLink.tsx";
+
+const SERVICE_LABELS = {
+  lambda: "Lambda",
+  sqs: "SQS",
+  dynamodb: "DynamoDB",
+  sns: "SNS",
+  statemachine: "Step Functions",
+} as const;
+
+// Bước gọi function / bảng đã bị xóa thì báo "(not found)" thay vì link sang trang trống
+function LambdaTaskLink({ name }: { name: string }) {
+  const follow = useFollow();
+  if (useFunctionExists(name).data === false) return <MissingReference name={name} />;
+  return (
+    <Link href={lambdaRoutes.function(name)} onFollow={follow}>
+      {name}
+    </Link>
+  );
+}
+
+function TableTaskLink({ name }: { name: string }) {
+  const follow = useFollow();
+  if (useTableExists(name).data === false) return <MissingReference name={name} />;
+  return (
+    <Link href={dynamodbRoutes.table(name)} onFollow={follow}>
+      {name}
+    </Link>
+  );
+}
+
+const linkOf = (resource: Exclude<TaskResource, { kind: "other" }>) => {
+  switch (resource.kind) {
+    case "sqs":
+      return <QueueLink name={resource.name} />;
+    case "sns":
+      return <TopicLink name={resource.name} />;
+    case "statemachine":
+      return <StateMachineLink name={resource.name} />;
+    case "lambda":
+      return <LambdaTaskLink name={resource.name} />;
+    case "dynamodb":
+      return <TableTaskLink name={resource.name} />;
+  }
+};
+
+// Resource của bước Task: có trang trên console thì là link, còn lại là chữ (spec 3.5)
+export function TaskResourceLink({ resource }: { resource: TaskResource }) {
+  if (resource.kind === "other") return <>{resource.text}</>;
+  return (
+    <>
+      {SERVICE_LABELS[resource.kind]} › {linkOf(resource)}
+    </>
+  );
+}

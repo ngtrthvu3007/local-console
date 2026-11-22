@@ -1,6 +1,6 @@
 # Step Functions — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; chưa làm `StackLink` vì CloudFormation chưa có, mục 3.6 EventBridge đã xong) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
 
 ## 1. Mục tiêu
 
