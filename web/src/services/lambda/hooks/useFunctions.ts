@@ -21,9 +21,16 @@ import { DEFAULT_ROLE_ARN } from "../constants.ts";
 import { logGroupExists } from "./useFunctionLogs.ts";
 import { useLambda } from "./useLambda.ts";
 
-const functionsQueryKey = ["lambda", "functions"];
+// Mọi query của Lambda nằm dưới key gốc này (service khác đổi trigger thì invalidate cả gốc)
+export const LAMBDA_QUERY_ROOT = "lambda";
+const functionsQueryKey = [LAMBDA_QUERY_ROOT, "functions"];
 // Mọi query về một function (chi tiết, code, log, trigger…) nằm dưới key này
-export const functionQueryKey = (name: string, part: string) => ["lambda", "function", name, part];
+export const functionQueryKey = (name: string, part: string) => [
+  LAMBDA_QUERY_ROOT,
+  "function",
+  name,
+  part,
+];
 const DETAILS = "details";
 
 export function useFunctions() {

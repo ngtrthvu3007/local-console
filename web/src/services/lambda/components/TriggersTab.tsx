@@ -19,9 +19,9 @@ import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import {
   EVENT_SOURCE_STATES,
-  EVENTBRIDGE_SOURCES,
   SOURCE_LABELS,
   TRIGGER_SOURCES,
+  VIEW_ONLY_SOURCES,
   type TriggerRowSource,
 } from "../constants.ts";
 import {
@@ -60,6 +60,7 @@ const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
   sns: "topic",
   eventbridge: "rule",
   scheduler: "schedule",
+  cognito: "user pool",
 };
 
 // Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
@@ -263,8 +264,8 @@ export function TriggersTab({ functionName, functionArn }: Props) {
         onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
         loading={triggers.isLoading}
         loadingText='Loading triggers'
-        // Rule / schedule chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
-        isItemDisabled={(row) => EVENTBRIDGE_SOURCES.includes(row.source)}
+        // Nguồn chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
+        isItemDisabled={(row) => VIEW_ONLY_SOURCES.includes(row.source)}
         columnDefinitions={compact ? COMPACT_COLUMNS : WIDE_COLUMNS}
         wrapLines
         empty={empty}

@@ -63,6 +63,7 @@ export const SERVICE_CATEGORIES = {
   storage: { label: "Storage", color: "#3F8624" },
   database: { label: "Database", color: "#2E27AD" },
   integration: { label: "Application integration", color: "#E7157B" },
+  security: { label: "Security, identity, & compliance", color: "#DD344C" },
   business: { label: "Business applications", color: "#DD344C" },
 } as const;
 export type ServiceCategory = keyof typeof SERVICE_CATEGORIES;

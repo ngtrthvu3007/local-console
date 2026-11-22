@@ -90,11 +90,21 @@ export function Mailbox() {
   const { items, collectionProps, filterProps, paginationProps, filteredItemsCount, actions } =
     useCollection<Email>(emails ?? [], {
       filtering: {
+        defaultFilteringText: searchParams.get(SEARCH_PARAMS.search) ?? "",
         empty: emptyState,
         noMatch: (
           <EmptyState
             title='No matches'
-            action={<Button onClick={() => actions.setFiltering("")}>Clear filter</Button>}
+            action={
+              <Button
+                onClick={() => {
+                  actions.setFiltering("");
+                  deleteParam(SEARCH_PARAMS.search);
+                }}
+              >
+                Clear filter
+              </Button>
+            }
           />
         ),
         filteringFunction: matchesSearch,
@@ -112,15 +122,16 @@ export function Mailbox() {
   const selectEmail = (email: Email) =>
     // Đổi mail khi panel đang mở thì thay entry, để Back luôn đóng panel
     navigate(emailHref(email.Id), { replace: Boolean(openId) });
-  const closeEmail = () =>
+  const deleteParam = (name: string) =>
     setSearchParams(
       (current) => {
         const next = new URLSearchParams(current);
-        next.delete(SEARCH_PARAMS.email);
+        next.delete(name);
         return next;
       },
       { replace: true },
     );
+  const closeEmail = () => deleteParam(SEARCH_PARAMS.email);
   const finishDelete = (deleted: readonly Email[]) => {
     setDeleteTarget(null);
     actions.setSelectedItems([]);

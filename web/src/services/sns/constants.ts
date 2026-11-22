@@ -62,3 +62,12 @@ export const ENDPOINT_PREVIEW_LENGTH = 48;
 // Floci chỉ gọi tới host trong container; localhost là chính Floci
 export const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"] as const;
 export const HOST_FROM_CONTAINER = "host.docker.internal";
+
+// URL trỏ localhost: gọi từ trong container Floci sẽ về chính Floci (SNS HTTP, IdP OIDC của Cognito)
+export function isLocalUrl(text: string): boolean {
+  try {
+    return LOCAL_HOSTS.some((host) => host === new URL(text).hostname);
+  } catch {
+    return false;
+  }
+}
