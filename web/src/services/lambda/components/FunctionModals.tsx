@@ -9,6 +9,7 @@ import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import {
+  useCognitoTriggerUses,
   useDeleteFunctions,
   useFunctionsWithTriggers,
   type FunctionToDelete,
@@ -29,6 +30,7 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
   const [deleteTriggers, setDeleteTriggers] = useState(true);
   const withTriggers = useFunctionsWithTriggers(functions.map((item) => item.name)).data ?? [];
   const referenced = useReferencedNames(functions).data ?? [];
+  const cognitoUses = useCognitoTriggerUses(functions).data ?? [];
   const hiddenCount = functions.length - DELETE_PREVIEW_COUNT;
   const logGroupLabel =
     functions.length === 1 ? `log group ${functions[0].logGroup}` : "their log groups";
@@ -84,6 +86,15 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
         </Alert>
       )}
       <ReferencedWarning names={referenced} />
+      {cognitoUses.length > 0 && (
+        <Alert type='warning'>
+          Cognito user pools call{" "}
+          {cognitoUses
+            .map(({ poolName, label, fn }) => `${fn} as ${poolName}'s ${label} trigger`)
+            .join(LIST_SEPARATOR)}
+          . Sign-ups and sign-ins in those pools fail until their triggers are changed.
+        </Alert>
+      )}
       <Alert type='warning'>This can't be undone.</Alert>
     </ConfirmModal>
   );

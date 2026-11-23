@@ -35,6 +35,9 @@ ace.require("ace/mode/javascript").Mode.prototype.$quotes = JAVASCRIPT_PAIRED_QU
 // template đúng. Tắt nó: lỗi YAML thật do Floci báo khi deploy
 ace.require("ace/mode/yaml").Mode.prototype.createWorker = () => null;
 
+// Vạch cột 80 (print margin): theme tối vẽ thành đường sáng cắt ngang chữ, mà editor tự xuống dòng
+ace.config.setDefaultValue("renderer", "showPrintMargin", false);
+
 // "text": chế độ chữ thường có sẵn trong ace, không cần nạp thêm
 export type EditorLanguage = "json" | "javascript" | "python" | "yaml" | "text";
 

@@ -4,6 +4,9 @@ export const STACK_POLL_INTERVAL_MS = 2000;
 export const RESOURCE_INDEX_STALE_MS = 30_000;
 // Số lần hỏi tối đa khi chờ xóa stack
 export const DELETE_WAIT_MAX_POLLS = 30;
+// Floci không bỏ qua resource đã mất khi xóa stack (spec 7 #16): người dùng tự gỡ rồi xóa lại
+export const DELETE_FAILED_HINT =
+  "Floci couldn't delete these resources. Fix them, then delete the stack again. A resource deleted by hand must be created again with the same name first.";
 
 // Lý do Floci ghi cho resource bị stub (chỉ có ở events)
 export const STUB_REASON_MARKER = "was stubbed and nothing was created";
@@ -20,6 +23,8 @@ export const REVIEW_IN_PROGRESS_STATUS = "REVIEW_IN_PROGRESS";
 export const FAILED_STATUS_SUFFIX = "_FAILED";
 export const IN_PROGRESS_STATUS_SUFFIX = "_IN_PROGRESS";
 export const CDK_METADATA_TYPE = "AWS::CDK::Metadata";
+// Stack của cdk bootstrap (CDKToolkit) không có CDK::Metadata nhưng luôn có output này
+export const CDK_BOOTSTRAP_OUTPUT = "BootstrapVersion";
 
 // Luật tên stack của AWS
 export const STACK_NAME_PATTERN = /^[A-Za-z][-A-Za-z0-9]*$/;

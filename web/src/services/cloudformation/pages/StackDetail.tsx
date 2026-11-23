@@ -16,9 +16,13 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { DeleteStackModal } from "../components/DeleteStackModal.tsx";
 import { EventsTab } from "../components/EventsTab.tsx";
 import { OutputsTab } from "../components/OutputsTab.tsx";
-import { ResourcesTab } from "../components/ResourcesTab.tsx";
+import { PhysicalIdLink, ResourcesTab } from "../components/ResourcesTab.tsx";
 import { StackStatus } from "../components/StackStatus.tsx";
-import { REVIEW_IN_PROGRESS_STATUS } from "../constants.ts";
+import {
+  DELETE_FAILED_HINT,
+  DELETE_FAILED_STATUS,
+  REVIEW_IN_PROGRESS_STATUS,
+} from "../constants.ts";
 import {
   useStack,
   useStackDescription,
@@ -58,6 +62,32 @@ function StubAlert({ stack, running }: { stack: string; running: boolean }) {
   );
 }
 
+// Stack kẹt DELETE_FAILED: nêu từng resource lỗi kèm lý do và link để người dùng tự gỡ
+function DeleteFailedAlert({ stack }: { stack: string }) {
+  const events = useStackEvents(stack, false);
+  const resources = useStackResources(stack, false);
+  const reasons = useMemo(() => latestReasons(events.data ?? []), [events.data]);
+  const failed = (resources.data ?? []).filter((r) => r.ResourceStatus === DELETE_FAILED_STATUS);
+
+  return (
+    <Alert type='error'>
+      {DELETE_FAILED_HINT}
+      {failed.length > 0 && (
+        <ul>
+          {failed.map(
+            ({ LogicalResourceId: logicalId = "", PhysicalResourceId: id = "", ResourceType }) => (
+              <li key={logicalId}>
+                <PhysicalIdLink type={ResourceType} id={id} /> ({logicalId})
+                {reasons.has(logicalId) && `: ${reasons.get(logicalId)}`}
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+    </Alert>
+  );
+}
+
 function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof useStack> }) {
   const { ref, compact } = useIsCompact();
   const navigate = useNavigate();
@@ -70,7 +100,7 @@ function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof us
   const description = useStackDescription(name);
   // Dùng chung query với tab Resources nên không gọi thêm API
   const resources = useStackResources(name, running);
-  const lockReason = editLockReason(stack.StackStatus, resources.data);
+  const lockReason = editLockReason(stack, resources.data);
 
   const tabs: TabsProps.Tab[] = [
     {
@@ -137,6 +167,7 @@ function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof us
               This stack has a change set that nobody executed yet, so it has no resources.
             </Alert>
           )}
+          {stack.StackStatus === DELETE_FAILED_STATUS && <DeleteFailedAlert stack={name} />}
           <StubAlert stack={name} running={running} />
           <Tabs
             activeTabId={tab}

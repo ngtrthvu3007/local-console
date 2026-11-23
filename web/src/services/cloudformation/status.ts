@@ -1,5 +1,6 @@
 import type { StatusIndicatorProps } from "@cloudscape-design/components/status-indicator";
 import {
+  CDK_BOOTSTRAP_OUTPUT,
   CDK_EDIT_LOCK_REASON,
   CDK_METADATA_TYPE,
   FAILED_STATUS_SUFFIX,
@@ -25,17 +26,21 @@ export const needsTls = (reason = "") =>
   TLS_ERROR_MARKERS.every((marker) => reason.includes(marker));
 
 // CDK luôn thêm resource này: sửa template trên console sẽ bị cdk deploy ghi đè
-export const isCdkStack = (resources: readonly { ResourceType?: string }[]) =>
-  resources.some(({ ResourceType }) => ResourceType === CDK_METADATA_TYPE);
+export const isCdkStack = (
+  resources: readonly { ResourceType?: string }[],
+  outputs: readonly { OutputKey?: string }[] = [],
+) =>
+  resources.some(({ ResourceType }) => ResourceType === CDK_METADATA_TYPE) ||
+  outputs.some(({ OutputKey }) => OutputKey === CDK_BOOTSTRAP_OUTPUT);
 
-// Lý do không cho sửa template; undefined = sửa được. Resources chưa tải thì chưa biết có phải CDK không
+// Lý do không cho sửa template; undefined = sửa được. Stack hay resources chưa tải thì chưa biết có phải CDK không
 export function editLockReason(
-  status: string | undefined,
+  stack: { StackStatus?: string; Outputs?: readonly { OutputKey?: string }[] } | undefined,
   resources: readonly { ResourceType?: string }[] | undefined,
 ) {
-  if (isInProgress(status)) return RUNNING_EDIT_LOCK_REASON;
-  if (!resources) return LOADING_EDIT_LOCK_REASON;
-  if (isCdkStack(resources)) return CDK_EDIT_LOCK_REASON;
+  if (isInProgress(stack?.StackStatus)) return RUNNING_EDIT_LOCK_REASON;
+  if (!stack || !resources) return LOADING_EDIT_LOCK_REASON;
+  if (isCdkStack(resources, stack.Outputs)) return CDK_EDIT_LOCK_REASON;
   return undefined;
 }
 

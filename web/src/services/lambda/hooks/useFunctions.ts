@@ -17,6 +17,8 @@ import {
 } from "@aws-sdk/client-lambda";
 import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { useCognito } from "../../cognito/hooks/useCognito.ts";
+import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
 import { DEFAULT_ROLE_ARN } from "../constants.ts";
 import { logGroupExists } from "./useFunctionLogs.ts";
 import { useLambda } from "./useLambda.ts";
@@ -125,6 +127,25 @@ export interface FunctionToDelete {
 }
 
 // Floci không xóa trigger khi xóa function nên cảnh báo trước; chỉ cần biết có hay không nên đọc trang đầu
+// Floci không dọn trigger của pool khi xóa function: đăng ký / đăng nhập ở pool đó sẽ lỗi
+// (UnexpectedLambdaException), nên cảnh báo trước khi xóa
+export function useCognitoTriggerUses(functions: readonly { name: string; arn: string }[]) {
+  const cognito = useCognito();
+
+  return useQuery({
+    queryKey: functionQueryKey(functions.map(({ name }) => name).join(), "cognito-triggers"),
+    queryFn: async () => {
+      const uses = await Promise.all(
+        functions.map(async ({ name, arn }) =>
+          (await listPoolTriggers(cognito, arn)).map((trigger) => ({ ...trigger, fn: name })),
+        ),
+      );
+
+      return uses.flat();
+    },
+  });
+}
+
 export function useFunctionsWithTriggers(names: readonly string[]) {
   const { lambda } = useLambda();
 

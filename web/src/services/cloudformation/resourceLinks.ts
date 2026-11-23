@@ -1,3 +1,4 @@
+import { cognitoRoutes } from "../cognito/routes.ts";
 import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
@@ -43,6 +44,7 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::SNS::Topic": (id) => snsRoutes.topic(lastArnPart(id)),
   "AWS::SNS::Subscription": (id) => snsRoutes.topic(topicNameOfSubscriptionArn(id)),
   "AWS::SES::EmailIdentity": () => sesRoutes.identities,
+  "AWS::Cognito::UserPool": (id) => cognitoRoutes.pool(id),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
   "AWS::StepFunctions::StateMachine": (id) =>
     stepfunctionsRoutes.stateMachine(stateMachineNameOfArn(id)),

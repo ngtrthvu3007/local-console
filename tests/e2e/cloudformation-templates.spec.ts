@@ -15,6 +15,7 @@ import { expect, flash, test, uniqueName } from "./fixtures.ts";
 const created = uniqueName("tpl");
 const existing = uniqueName("tpl-existing");
 const cdkStack = uniqueName("tpl-cdk");
+const bootstrapStack = uniqueName("tpl-bootstrap");
 const jsonStack = uniqueName("tpl-json");
 const failed = uniqueName("tpl-failed");
 const recreated = uniqueName("tpl-recreated");
@@ -77,7 +78,16 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  for (const StackName of [created, existing, cdkStack, jsonStack, failed, recreated, leftDuring])
+  for (const StackName of [
+    created,
+    existing,
+    cdkStack,
+    bootstrapStack,
+    jsonStack,
+    failed,
+    recreated,
+    leftDuring,
+  ])
     await cloudformation.send(new DeleteStackCommand({ StackName })).catch(() => undefined);
 });
 
@@ -171,6 +181,14 @@ test("the starter template opens without warnings", async ({ page }) => {
   await expect(warnings).toHaveAccessibleName("Warnings: 0");
 });
 
+test("the editor has no print margin line", async ({ page }) => {
+  await page.goto("/cloudformation/stacks/create/template");
+  await expect(page.locator(".ace_content")).toContainText("!Ref Queue");
+
+  // Vạch cột 80 của Ace: theme tối vẽ thành một đường sáng cắt ngang chữ
+  await expect(page.locator(".ace_print-margin")).toBeHidden();
+});
+
 test("after deleting and creating a stack again, Edit template shows the new template", async ({
   page,
 }) => {
@@ -256,6 +274,25 @@ test.describe("errors from Floci", () => {
 test("a CDK stack cannot be edited here", async ({ page }) => {
   await page.goto(`/cloudformation/stacks/${cdkStack}`);
   // Nút có href nên Cloudscape vẽ thành link; bị khóa thì mang aria-disabled
+  const edit = page.getByRole("link", { name: "Edit template" });
+  await expect(edit).toHaveAttribute("aria-disabled", "true");
+  await expect(edit).toHaveAccessibleDescription(/Deployed by CDK: edit it in your CDK app/);
+});
+
+test("the CDK bootstrap stack (no CDK::Metadata, a BootstrapVersion output) cannot be edited here", async ({
+  page,
+}) => {
+  await cloudformation.send(
+    new CreateStackCommand({
+      StackName: bootstrapStack,
+      TemplateBody: JSON.stringify({
+        Resources: { Queue: { Type: "AWS::SQS::Queue" } },
+        Outputs: { BootstrapVersion: { Value: "30" } },
+      }),
+    }),
+  );
+
+  await page.goto(`/cloudformation/stacks/${bootstrapStack}`);
   const edit = page.getByRole("link", { name: "Edit template" });
   await expect(edit).toHaveAttribute("aria-disabled", "true");
   await expect(edit).toHaveAccessibleDescription(/Deployed by CDK: edit it in your CDK app/);
