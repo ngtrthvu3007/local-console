@@ -29,6 +29,7 @@ Floci emulates AWS on your machine, but on its own you only have the AWS CLI to 
 | 📚  | [AWS CloudFormation](https://docs.aws.amazon.com/cloudformation/) | Stacks that CDK or SAM deployed to Floci: events (why a deploy failed, nested stacks), resources linked to their service page, outputs, resources Floci stubbed (nothing was created for them), delete a stack. Bucket, function, table, queue, topic, rule and state machine pages say which stack made them |
 | ⚡  | [ElastiCache](https://docs.aws.amazon.com/elasticache/)           | Valkey / Redis OSS clusters: endpoints, browse and edit keys                                                                                                                                                                                                                                                  |
 | 🐇  | [Amazon MQ](https://docs.aws.amazon.com/amazon-mq/)               | RabbitMQ brokers: queues and exchanges, publish and peek messages                                                                                                                                                                                                                                             |
+| 🔐  | [Amazon Cognito](https://docs.aws.amazon.com/cognito/)            | User pools: users, groups, app clients, test sign-in with decoded tokens, Lambda triggers, invitation emails through SES, domain and federated sign-in with OIDC / Google through the hosted UI                                                                                                               |
 
 Across the console:
 
@@ -121,7 +122,7 @@ The console server serves the UI, forwards the browser's AWS SDK calls to Floci 
 
 - 🏠 **Local development only:** no authentication, no IAM. The console only answers requests from `localhost`, and both ports are published on `127.0.0.1`; don't expose it on a network.
 - 🧩 **Only what Floci supports:** a service or option Floci doesn't emulate isn't in the console either. Where Floci differs from AWS (for example, it doesn't clean up references to deleted resources), the console tells you in the UI.
-- 🗺️ **More services coming:** Cognito, API Gateway… see the [roadmap](docs/superpowers/roadmap.md).
+- 🗺️ **More services coming:** API Gateway… see the [roadmap](docs/superpowers/roadmap.md).
 
 ## 🛠️ Development
 

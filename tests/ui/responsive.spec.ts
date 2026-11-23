@@ -26,6 +26,7 @@ const PAGES = [
   { slug: "ses-identities", path: "/ses/identities" },
   { slug: "ses-templates", path: "/ses/templates" },
   { slug: "ses-configuration-sets", path: "/ses/configuration-sets" },
+  { slug: "cognito-pools", path: "/cognito/user-pools" },
 ];
 
 // Cloudscape gập side navigation dưới mốc này (PHONE_MAX_WIDTH_PX của console)
