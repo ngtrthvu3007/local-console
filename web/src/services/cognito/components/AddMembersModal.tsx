@@ -21,7 +21,15 @@ interface Props {
 }
 
 // Chỉ mount khi mở
-export function AddMembersModal({ poolId, header, label, options, noun, toPairs, onDismiss }: Props) {
+export function AddMembersModal({
+  poolId,
+  header,
+  label,
+  options,
+  noun,
+  toPairs,
+  onDismiss,
+}: Props) {
   const setMembership = useSetMembership(poolId);
   const form = useZodForm(schema, { selected: [] });
 

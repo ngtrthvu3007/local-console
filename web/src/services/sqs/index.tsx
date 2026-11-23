@@ -8,8 +8,7 @@ export const sqsService: ServiceDefinition = {
   id: SQS_SERVICE_ID,
   name: "SQS",
   fullName: "Amazon SQS",
-  description:
-    "Queues: peek and send messages, poll as a consumer, DLQ redrive, Lambda triggers",
+  description: "Queues: peek and send messages, poll as a consumer, DLQ redrive, Lambda triggers",
   icon: IconStack2,
   category: "integration",
   navigation: [{ text: "Queues", href: sqsRoutes.queues }],

@@ -6,7 +6,11 @@ import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
-import { DEFAULT_EXCHANGE, type PeekedMessage } from "@server/routes/rabbitmq/contract.ts";
+import {
+  DEFAULT_EXCHANGE,
+  PEEK_COUNT,
+  type PeekedMessage,
+} from "@server/routes/rabbitmq/contract.ts";
 import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
@@ -16,7 +20,7 @@ import { prettyJson } from "@shared/json.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_EXCHANGE_LABEL, PAYLOAD_EDITOR_HEIGHT_PX, PEEK_COUNT } from "../constants.ts";
+import { DEFAULT_EXCHANGE_LABEL, PAYLOAD_EDITOR_HEIGHT_PX } from "../constants.ts";
 import { useCreateQueue, useExchanges, usePeek, usePublish } from "../hooks/useRabbit.ts";
 import { createQueueSchema, peekSchema, publishSchema } from "../schemas.ts";
 
@@ -32,6 +36,7 @@ interface BrokerProps {
 export function CreateQueueModal({ broker, authorization, onDismiss }: BrokerProps) {
   const createQueue = useCreateQueue(broker, authorization);
   const form = useZodForm(createQueueSchema, { name: "", durable: true });
+
   const submit = form.handleSubmit((values) =>
     createQueue.mutate(
       values,
@@ -71,11 +76,13 @@ export function PublishModal({
 }: BrokerProps & { queue?: string }) {
   const publish = usePublish(broker, authorization);
   const exchanges = useExchanges(broker, authorization);
+
   const form = useZodForm(publishSchema, {
     exchange: DEFAULT_EXCHANGE,
     routingKey: queue ?? "",
     payload: "",
   });
+
   const options = (exchanges.data ?? []).map((exchange) => ({
     value: exchange.name || DEFAULT_EXCHANGE,
     label: exchangeLabel(exchange.name),
@@ -183,6 +190,7 @@ export function PeekModal({
   useRunOnMount(() => peek.mutate({ queue, count: PEEK_COUNT.default }));
 
   const messages = peek.data ?? [];
+
   return (
     <FormModal
       header={`Messages in ${queue}`}

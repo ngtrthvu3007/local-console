@@ -40,6 +40,16 @@
   --terminal-prompt: var(--brand-color);
 }
 
+/* Nút mặc định trông to cạnh input: bo góc, viền giống input, vẫn cao 32px để thẳng hàng.
+   Đặt thẳng token thay cho applyTheme (runtime theming nặng ~600 KB trong bundle chính).
+   Tên biến đổi theo bản Cloudscape: test/shared/buttonTokens.test.ts báo khi lệch */
+body:not(#\9) {
+  --border-radius-button-o0udma: 8px;
+  --border-width-button-7l951k: 1px;
+  --space-button-vertical-sx94m8: 5px;
+  --space-button-horizontal-0ykhor: 16px;
+}
+
 /* Giao diện tối (Cloudscape gắn class awsui-dark-mode lên body): màu tự đặt đổi theo.
    Màu = text-body-secondary của Cloudscape ở chế độ tối */
 body.awsui-dark-mode {
@@ -179,8 +189,8 @@ body .console-command [class*="awsui_button_"]:not(#\9) {
 
   /* Spinner trang hiện sau một nhịp, mờ dần vào */
   .console-page-loading {
-    animation: console-enter var(--motion-duration) var(--sidebar-motion-easing) var(--loading-delay)
-      backwards;
+    animation: console-enter var(--motion-duration) var(--sidebar-motion-easing)
+      var(--loading-delay) backwards;
   }
 
   /* Đổi tab */
@@ -193,16 +203,31 @@ body .console-command [class*="awsui_button_"]:not(#\9) {
   .console-table tbody tr {
     animation: console-enter var(--motion-duration) var(--sidebar-motion-easing) backwards;
   }
-  .console-table tbody tr:nth-child(2) { animation-delay: calc(1 * var(--motion-row-stagger)); }
-  .console-table tbody tr:nth-child(3) { animation-delay: calc(2 * var(--motion-row-stagger)); }
-  .console-table tbody tr:nth-child(4) { animation-delay: calc(3 * var(--motion-row-stagger)); }
-  .console-table tbody tr:nth-child(5) { animation-delay: calc(4 * var(--motion-row-stagger)); }
-  .console-table tbody tr:nth-child(6) { animation-delay: calc(5 * var(--motion-row-stagger)); }
-  .console-table tbody tr:nth-child(7) { animation-delay: calc(6 * var(--motion-row-stagger)); }
-  .console-table tbody tr:nth-child(n + 8) { animation-delay: calc(7 * var(--motion-row-stagger)); }
+  .console-table tbody tr:nth-child(2) {
+    animation-delay: calc(1 * var(--motion-row-stagger));
+  }
+  .console-table tbody tr:nth-child(3) {
+    animation-delay: calc(2 * var(--motion-row-stagger));
+  }
+  .console-table tbody tr:nth-child(4) {
+    animation-delay: calc(3 * var(--motion-row-stagger));
+  }
+  .console-table tbody tr:nth-child(5) {
+    animation-delay: calc(4 * var(--motion-row-stagger));
+  }
+  .console-table tbody tr:nth-child(6) {
+    animation-delay: calc(5 * var(--motion-row-stagger));
+  }
+  .console-table tbody tr:nth-child(7) {
+    animation-delay: calc(6 * var(--motion-row-stagger));
+  }
+  .console-table tbody tr:nth-child(n + 8) {
+    animation-delay: calc(7 * var(--motion-row-stagger));
+  }
 }
 
 /* Breadcrumb nằm sát tiêu đề trang. Phone: breadcrumb là thanh sticky riêng, padding sẽ làm lệch chữ. */
+/* 688px = PHONE_MAX_WIDTH_PX (shared/constants.ts): CSS không đọc được hằng TS, đổi thì đổi cả hai */
 @media (min-width: 689px) {
   body .local-console [class*="awsui_breadcrumbs_"]:not(#\9) {
     padding-block-end: var(--page-crumbs-gap);
@@ -269,12 +294,20 @@ body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navi
   border-inline-start-width: 0;
 }
 /* Mũi tên căn giữa theo chữ: Cloudscape để flex-start kèm padding 4px */
-body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] :is([class*="awsui_icon-container_"], [class*="awsui_icon-position_"]):not(#\9) {
+body
+  .local-console
+  nav[aria-label="Side navigation"]
+  [class*="awsui_header-navigation_"]
+  :is([class*="awsui_icon-container_"], [class*="awsui_icon-position_"]):not(#\9) {
   align-items: center;
   padding-block: 0;
 }
 /* Nhóm đang mở: ô icon nới lên 20px, icon 16px nằm sát trên */
-body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] [class*="awsui_icon-position_"]:not(#\9) {
+body
+  .local-console
+  nav[aria-label="Side navigation"]
+  [class*="awsui_header-navigation_"]
+  [class*="awsui_icon-position_"]:not(#\9) {
   block-size: 16px;
 }
 @media (max-width: 688px) {
@@ -357,10 +390,15 @@ body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navi
     row-gap: var(--phone-space);
   }
   /* Ô tìm nằm trong SpaceBetween (cạnh toggle) không tự giãn; cho nó lấp hết hàng như các bảng khác. */
-  .local-console [class*="awsui_tools-filtering_"] [class*="awsui_child_"]:has([class*="awsui_input-type-search_"]) {
+  .local-console
+    [class*="awsui_tools-filtering_"]
+    [class*="awsui_child_"]:has([class*="awsui_input-type-search_"]) {
     flex: 1 1 100%;
   }
-  .local-console [class*="awsui_tools-filtering_"] [class*="awsui_child_"]:has([class*="awsui_input-type-search_"]) > * {
+  .local-console
+    [class*="awsui_tools-filtering_"]
+    [class*="awsui_child_"]:has([class*="awsui_input-type-search_"])
+    > * {
     flex: 1 1 auto;
   }
   .local-console [class*="awsui_key-value-pairs_"] {
@@ -379,7 +417,10 @@ body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navi
 
 /* Tên danh mục trên sidebar (Compute, Database…): nhãn nhỏ viết hoa màu phụ thay vì heading 18px
    lấn tên service. Màu = text-body-secondary của Cloudscape (biến của nó có hash theo phiên bản) */
-body .local-console nav[aria-label="Side navigation"] h3[class*="awsui_section-group-title_"]:not(#\9) {
+body
+  .local-console
+  nav[aria-label="Side navigation"]
+  h3[class*="awsui_section-group-title_"]:not(#\9) {
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 0.04em;

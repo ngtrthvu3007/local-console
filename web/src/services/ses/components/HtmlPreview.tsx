@@ -5,9 +5,7 @@ import {
   HTML_PREVIEW_SANDBOX,
 } from "../constants.ts";
 
-// Iframe sandbox không đo được chiều cao nội dung nên khung cao cố định, cuộn
-// bên trong. Nền trắng cả khi console ở giao diện tối: mail viết cho nền trắng,
-// nền trong suốt thì chữ đen chìm
+// Iframe sandbox không đo được chiều cao nên cao cố định; nền luôn trắng vì mail viết cho nền trắng
 const frameStyle = {
   width: "100%",
   height: HTML_PREVIEW_HEIGHT,

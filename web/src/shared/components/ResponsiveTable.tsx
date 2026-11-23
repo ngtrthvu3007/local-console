@@ -17,19 +17,21 @@ function headerText(header: ReactNode): string {
   return "Column";
 }
 
-// Keep Cloudscape selection, pagination and keyboard behavior. On narrow containers,
-// show the row heading first and the remaining visible columns as labeled details.
+// Giữ selection, phân trang, phím tắt của Cloudscape; khung hẹp thì mỗi dòng là tiêu đề + các cột có nhãn
 export default function ResponsiveTable<T>(props: TableProps<T>) {
   const { ref, compact: phone } = useIsCompact(ITEM_LIST_WIDTH_PX);
+
   const visibleColumns = props.columnDisplay
     ? props.columnDisplay.flatMap(({ id, visible }) =>
         visible ? props.columnDefinitions.filter((column) => column.id === id) : [],
       )
     : props.columnDefinitions;
+
   const primary = visibleColumns.find((column) => column.isRowHeader) ?? visibleColumns[0];
   const details = visibleColumns.filter((column) => column !== primary);
-  // Inline editors need their original table cells.
+  // Bảng có sửa inline thì giữ dạng bảng: editor cần ô gốc của bảng
   const stacked = phone && primary && !visibleColumns.some((column) => column.editConfig);
+
   const columns = stacked
     ? [
         {
@@ -57,21 +59,26 @@ export default function ResponsiveTable<T>(props: TableProps<T>) {
         },
       ]
     : props.columnDefinitions;
+
   const sortable = visibleColumns.filter(
     (column) => column.sortingField || column.sortingComparator,
   );
+
   const sortIndex = sortable.findIndex((column) =>
     column.sortingComparator
       ? column.sortingComparator === props.sortingColumn?.sortingComparator
       : column.sortingField === props.sortingColumn?.sortingField,
   );
+
   const sortOptions = sortable.map((column, index) => ({
     value: String(index),
     label: headerText(column.header),
   }));
+
   const selectedCount = props.selectedItems?.length ?? 0;
   const mobileTools =
     phone && (selectedCount > 0 || (sortable.length > 1 && props.onSortingChange));
+
   const filter = mobileTools ? (
     <SpaceBetween size='s'>
       {props.filter}

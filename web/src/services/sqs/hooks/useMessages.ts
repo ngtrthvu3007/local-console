@@ -24,6 +24,7 @@ const PEEK = "peek";
 
 export function usePeek(queue: Queue, autoRefresh: boolean) {
   const { region } = useLoadedConfig();
+
   return useQuery({
     queryKey: queueQueryKey(queue.name, PEEK),
     queryFn: () => peekMessages(queue.url, region),
@@ -35,6 +36,7 @@ export function usePeek(queue: Queue, autoRefresh: boolean) {
 export function usePoll(queue: Queue) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: async () =>
       (
@@ -56,27 +58,31 @@ export function usePoll(queue: Queue) {
 export function useDeleteMessages(queue: Queue) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: async (messages: readonly Message[]) => {
       const failures: string[] = [];
       const deleted: string[] = [];
+
       for (const message of messages) {
         try {
           await client.send(
             new DeleteMessageCommand({ QueueUrl: queue.url, ReceiptHandle: message.ReceiptHandle }),
           );
+
           deleted.push(message.MessageId!);
         } catch (error) {
           failures.push(`${message.MessageId}: ${errorMessage(error)}`);
         }
       }
+
       return { count: deleted.length, deleted, failures };
     },
     onSuccess: () => invalidate(queue.name),
   });
 }
 
-export interface SendMessageInput {
+interface SendMessageInput {
   body: string;
   groupId: string;
   dedupId: string;
@@ -85,6 +91,7 @@ export interface SendMessageInput {
 export function useSendMessage(queue: Queue) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: ({ body, groupId, dedupId }: SendMessageInput) =>
       client.send(
@@ -103,6 +110,7 @@ export function useSendMessage(queue: Queue) {
 export function usePurge(queue: Queue) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: () => client.send(new PurgeQueueCommand({ QueueUrl: queue.url })),
     onSuccess: () => invalidate(queue.name),
@@ -113,6 +121,7 @@ export function usePurge(queue: Queue) {
 export function useStartRedrive(queue: Queue, sources: string[]) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: () => client.send(new StartMessageMoveTaskCommand({ SourceArn: queue.arn })),
     onSuccess: () => Promise.all([queue.name, ...sources].map(invalidate)),

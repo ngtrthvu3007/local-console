@@ -2,18 +2,13 @@ import { Navigate } from "react-router";
 import { IconDatabase } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import {
-  DYNAMODB_ROUTE_PATTERNS,
-  DYNAMODB_SERVICE_ID,
-  dynamodbRoutes,
-} from "./routes.ts";
+import { DYNAMODB_ROUTE_PATTERNS, DYNAMODB_SERVICE_ID, dynamodbRoutes } from "./routes.ts";
 
 export const dynamodbService: ServiceDefinition = {
   id: DYNAMODB_SERVICE_ID,
   name: "DynamoDB",
   fullName: "Amazon DynamoDB",
-  description:
-    "Tables: browse, query and edit items, TTL and streams for Lambda",
+  description: "Tables: browse, query and edit items, TTL and streams for Lambda",
   icon: IconDatabase,
   category: "database",
   navigation: [{ text: "Tables", href: dynamodbRoutes.tables }],

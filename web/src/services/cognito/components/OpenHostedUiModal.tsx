@@ -13,12 +13,21 @@ const NEW_TAB_FEATURES = "noopener";
 const toOption = (value: string) => ({ value, label: value });
 
 // Chỉ mount khi mở; ClientDetail đã khóa nút khi thiếu domain / callback / code flow
-export function OpenHostedUiModal({ client, onDismiss }: { client: UserPoolClientType; onDismiss: () => void }) {
+export function OpenHostedUiModal({
+  client,
+  onDismiss,
+}: {
+  client: UserPoolClientType;
+  onDismiss: () => void;
+}) {
   const { flociPublicUrl } = useLoadedConfig();
   const providers = client.SupportedIdentityProviders ?? [];
   const callbackUrls = client.CallbackURLs ?? [];
+
   // Select luôn có giá trị hợp lệ nên không cần schema
-  const form = useForm({ defaultValues: { provider: providers[0] ?? "", callbackUrl: callbackUrls[0] ?? "" } });
+  const form = useForm({
+    defaultValues: { provider: providers[0] ?? "", callbackUrl: callbackUrls[0] ?? "" },
+  });
 
   const open = form.handleSubmit(({ provider, callbackUrl }) => {
     window.open(
@@ -34,11 +43,17 @@ export function OpenHostedUiModal({ client, onDismiss }: { client: UserPoolClien
       NEW_TAB_TARGET,
       NEW_TAB_FEATURES,
     );
+
     onDismiss();
   });
 
   return (
-    <FormModal header='Open hosted UI' actionText='Open hosted UI' onSubmit={open} onDismiss={onDismiss}>
+    <FormModal
+      header='Open hosted UI'
+      actionText='Open hosted UI'
+      onSubmit={open}
+      onDismiss={onDismiss}
+    >
       <Box>
         After sign-in, Floci redirects to your callback with <code>?code=</code>. Exchange it at{" "}
         <code>{HOSTED_UI_PATHS.token}</code>.
@@ -47,9 +62,16 @@ export function OpenHostedUiModal({ client, onDismiss }: { client: UserPoolClien
         control={form.control}
         name='provider'
         label='Identity provider'
-        options={providers.map((value) => (value === COGNITO_PROVIDER ? { value, label: "Cognito form" } : toOption(value)))}
+        options={providers.map((value) =>
+          value === COGNITO_PROVIDER ? { value, label: "Cognito form" } : toOption(value),
+        )}
       />
-      <FormSelect control={form.control} name='callbackUrl' label='Callback URL' options={callbackUrls.map(toOption)} />
+      <FormSelect
+        control={form.control}
+        name='callbackUrl'
+        label='Callback URL'
+        options={callbackUrls.map(toOption)}
+      />
     </FormModal>
   );
 }

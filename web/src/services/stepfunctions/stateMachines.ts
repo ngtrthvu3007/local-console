@@ -6,8 +6,7 @@ import {
 import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 
 const ARN_SEPARATOR = ":";
-// "arn:aws:states:r:acct:execution:<state machine>:<name>" và Express
-// "arn:aws:states:r:acct:express:<state machine>:<id>:<id>": tên state machine ở vị trí 6
+// …:execution:<state machine>:<name>, Express …:express:<state machine>:<id>:<id> → tên ở vị trí 6
 const EXECUTION_ARN_MACHINE_INDEX = 6;
 
 export interface StateMachine {
@@ -28,6 +27,7 @@ export const stateMachineOfExecutionArn = (executionArn: string) =>
 
 export async function listStateMachines(client: SFNClient): Promise<StateMachine[]> {
   const machines: StateMachine[] = [];
+
   for await (const page of paginateListStateMachines({ client }, {})) {
     for (const item of page.stateMachines ?? []) {
       machines.push({
@@ -38,5 +38,6 @@ export async function listStateMachines(client: SFNClient): Promise<StateMachine
       });
     }
   }
+
   return machines;
 }

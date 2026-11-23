@@ -35,7 +35,7 @@ import {
   type FunctionTab,
 } from "../routes.ts";
 
-const OVERVIEW_COLUMNS = 4;
+const OVERVIEW_COLUMNS = 3;
 
 const isFunctionTab = (value: string | null): value is FunctionTab =>
   Object.values<string | null>(FUNCTION_TABS).includes(value);
@@ -65,14 +65,20 @@ export function FunctionDetail() {
     backHref: lambdaRoutes.functions,
     backText: "View functions",
   });
+
   if (state || !details.data?.Configuration) return state;
 
   const configuration = details.data.Configuration;
   const arn = configuration.FunctionArn ?? "";
   const logGroup = logGroupOf(configuration);
 
+  // ARN dài nên nằm một hàng riêng, không bị bẻ thành nhiều dòng trong một cột hẹp
+  const arnItem: KeyValuePairsProps.Item = {
+    label: "ARN",
+    value: <CopyButton variant='inline' text={arn} label={arn} />,
+  };
+
   const overviewItems: KeyValuePairsProps.Item[] = [
-    { label: "ARN", value: <CopyButton variant='inline' text={arn} label={arn} /> },
     { label: "Runtime", value: configuration.Runtime },
     { label: "Handler", value: configuration.Handler },
     { label: "Last modified", value: formatDate(configuration.LastModified) },
@@ -124,7 +130,6 @@ export function FunctionDetail() {
 
   const headerActions = (
     <ResponsiveActions>
-      <CopyButton label='Copy ARN' text={arn} />
       <Button onClick={() => setDeleting(true)}>Delete</Button>
     </ResponsiveActions>
   );
@@ -152,7 +157,10 @@ export function FunctionDetail() {
     <ContentLayout header={header}>
       <SpaceBetween size='l'>
         <Container header={<Header variant='h2'>Function overview</Header>}>
-          <KeyValuePairs columns={OVERVIEW_COLUMNS} items={overviewItems} />
+          <SpaceBetween size='l'>
+            <KeyValuePairs items={[arnItem]} />
+            <KeyValuePairs columns={OVERVIEW_COLUMNS} items={overviewItems} />
+          </SpaceBetween>
         </Container>
         <Tabs
           activeTabId={tab}

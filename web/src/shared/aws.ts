@@ -1,4 +1,6 @@
-import { AWS_PROXY_PATH } from "./constants.ts";
+import { useMemo } from "react";
+import { AWS_PROXY_PATH, AWS_TEST_CREDENTIALS } from "./constants.ts";
+import { useLoadedConfig } from "./hooks/useConfig.ts";
 
 const HTTP_NOT_FOUND = 404;
 // Lỗi "chưa cấu hình" của AWS: NoSuchTagSet, NoSuchBucketPolicy, NoSuchCORSConfiguration…
@@ -9,6 +11,22 @@ const RESOURCE_NOT_FOUND_ERROR = "ResourceNotFoundException";
 // SDK trong trình duyệt gọi Floci qua proxy của console
 export const proxyEndpoint = () => `${window.location.origin}${AWS_PROXY_PATH}`;
 
+interface AwsClientConfig {
+  region: string;
+  credentials: typeof AWS_TEST_CREDENTIALS;
+  endpoint: string;
+}
+
+// Service truyền class SDK của nó vào, nên SDK vẫn chỉ tải cùng trang của service đó
+export const awsClient = <T>(Client: new (config: AwsClientConfig) => T, region: string) =>
+  new Client({ region, credentials: AWS_TEST_CREDENTIALS, endpoint: proxyEndpoint() });
+
+export function useAwsClient<T>(Client: new (config: AwsClientConfig) => T): T {
+  const { region } = useLoadedConfig();
+
+  return useMemo(() => awsClient(Client, region), [Client, region]);
+}
+
 interface AwsError {
   name?: string;
   $metadata?: { httpStatusCode?: number };
@@ -16,6 +34,7 @@ interface AwsError {
 
 export function isNotFoundError(error: unknown): boolean {
   const awsError = error as AwsError;
+
   return (
     awsError?.$metadata?.httpStatusCode === HTTP_NOT_FOUND ||
     awsError?.name === RESOURCE_NOT_FOUND_ERROR ||
@@ -23,8 +42,7 @@ export function isNotFoundError(error: unknown): boolean {
   );
 }
 
-// true nếu request chạy được, false nếu resource không còn; lỗi khác (mạng, 500) vẫn ném ra.
-// `isMissing` cho dịch vụ có kiểu lỗi riêng (SQS trả 400, không phải 404)
+// false = resource không còn, lỗi khác vẫn ném. isMissing: service báo thiếu bằng mã khác (SQS trả 400)
 export async function existsUnlessMissing(
   request: () => Promise<unknown>,
   isMissing: (error: unknown) => boolean = isNotFoundError,
@@ -54,10 +72,12 @@ export async function allPages<T>(
 ): Promise<T[]> {
   const items: T[] = [];
   let nextToken: string | undefined;
+
   do {
     const page = await fetchPage(nextToken);
     items.push(...page.items);
     nextToken = page.nextToken;
   } while (nextToken);
+
   return items;
 }

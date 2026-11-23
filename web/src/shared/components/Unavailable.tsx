@@ -17,17 +17,8 @@ interface Props {
   onCheck: () => void;
 }
 
-// Trang thay cho nội dung khi console không chạy được: một lệnh để chạy lại,
-// kiểm tra lại bằng tay. Console vẫn tự kiểm tra định kỳ nên trang tự trở lại
-// khi Floci / server lên
-function Unavailable({
-  title,
-  description,
-  command,
-  notes,
-  checking,
-  onCheck,
-}: Props) {
+// Console vẫn kiểm tra định kỳ nên trang tự biến mất khi Floci / server chạy lại
+function Unavailable({ title, description, command, notes, checking, onCheck }: Props) {
   return (
     <ContentLayout
       header={
@@ -80,13 +71,7 @@ export function FlociDown({
   );
 }
 
-export function ServerDown({
-  checking,
-  onCheck,
-}: {
-  checking: boolean;
-  onCheck: () => void;
-}) {
+export function ServerDown({ checking, onCheck }: { checking: boolean; onCheck: () => void }) {
   return (
     <Unavailable
       title="Can't reach the console server"

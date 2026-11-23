@@ -26,7 +26,10 @@ export const FAKE_OIDC_PATHS = {
 } as const;
 
 // Một user cố định: đủ để Floci tạo user <Provider>_… với attribute mapping email ← email
-export const FAKE_OIDC_USER = { sub: "fake-oidc-user", email: "federated.user@example.com" } as const;
+export const FAKE_OIDC_USER = {
+  sub: "fake-oidc-user",
+  email: "federated.user@example.com",
+} as const;
 
 type PendingCode = { clientId: string; nonce: string | null };
 
@@ -50,9 +53,18 @@ const basicClientId = (header: string | undefined) => {
   return decodeURIComponent(clientId);
 };
 
-export async function startFakeOidc(): Promise<{ port: number; issuer: string; close(): Promise<void> }> {
+export async function startFakeOidc(): Promise<{
+  port: number;
+  issuer: string;
+  close(): Promise<void>;
+}> {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: RSA_KEY_BITS });
-  const jwk = { ...publicKey.export({ format: "jwk" }), kid: KEY_ID, alg: SIGNING_ALGORITHM, use: "sig" };
+  const jwk = {
+    ...publicKey.export({ format: "jwk" }),
+    kid: KEY_ID,
+    alg: SIGNING_ALGORITHM,
+    use: "sig",
+  };
   const codes = new Map<string, PendingCode>();
   const accessTokens = new Set<string>();
   let issuer = "";
@@ -69,7 +81,10 @@ export async function startFakeOidc(): Promise<{ port: number; issuer: string; c
     const redirectUri = url.searchParams.get("redirect_uri");
     if (!redirectUri) return sendJson(response, 400, { error: "invalid_request" });
     const code = randomUUID();
-    codes.set(code, { clientId: url.searchParams.get("client_id") ?? "", nonce: url.searchParams.get("nonce") });
+    codes.set(code, {
+      clientId: url.searchParams.get("client_id") ?? "",
+      nonce: url.searchParams.get("nonce"),
+    });
     const target = new URL(redirectUri);
     target.searchParams.set("code", code);
     const state = url.searchParams.get("state");
@@ -93,7 +108,8 @@ export async function startFakeOidc(): Promise<{ port: number; issuer: string; c
       id_token: signIdToken({
         ...FAKE_OIDC_USER,
         iss: issuer,
-        aud: form.get("client_id") ?? basicClientId(request.headers.authorization) ?? pending.clientId,
+        aud:
+          form.get("client_id") ?? basicClientId(request.headers.authorization) ?? pending.clientId,
         iat: now,
         exp: now + TOKEN_LIFETIME_SECONDS,
         ...(pending.nonce !== null && { nonce: pending.nonce }),
@@ -103,7 +119,8 @@ export async function startFakeOidc(): Promise<{ port: number; issuer: string; c
 
   const userinfo = (request: IncomingMessage, response: ServerResponse) => {
     const header = request.headers.authorization ?? "";
-    const isKnownToken = header.startsWith(BEARER_PREFIX) && accessTokens.has(header.slice(BEARER_PREFIX.length));
+    const isKnownToken =
+      header.startsWith(BEARER_PREFIX) && accessTokens.has(header.slice(BEARER_PREFIX.length));
     if (!isKnownToken) return sendJson(response, 401, { error: "invalid_token" });
     sendJson(response, 200, FAKE_OIDC_USER);
   };
@@ -128,7 +145,9 @@ export async function startFakeOidc(): Promise<{ port: number; issuer: string; c
     if (route === `POST ${FAKE_OIDC_PATHS.token}`) {
       const isForm = request.headers["content-type"]?.startsWith(FORM_CONTENT_TYPE);
       if (!isForm) return sendJson(response, 400, { error: "invalid_request" });
-      return token(request, response).catch(() => sendJson(response, 500, { error: "server_error" }));
+      return token(request, response).catch(() =>
+        sendJson(response, 500, { error: "server_error" }),
+      );
     }
     if (route === `GET ${FAKE_OIDC_PATHS.userinfo}`) return userinfo(request, response);
     sendJson(response, 404, { error: "not_found" });
@@ -136,7 +155,8 @@ export async function startFakeOidc(): Promise<{ port: number; issuer: string; c
 
   await new Promise<void>((resolve) => server.listen(0, LISTEN_HOST, resolve));
   const address = server.address();
-  if (address === null || typeof address === "string") throw new Error("Fake OIDC server has no TCP port");
+  if (address === null || typeof address === "string")
+    throw new Error("Fake OIDC server has no TCP port");
   port = address.port;
   issuer = `http://${HOST_FROM_CONTAINER}:${port}`;
 

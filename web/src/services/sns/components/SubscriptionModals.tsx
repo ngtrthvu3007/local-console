@@ -81,8 +81,10 @@ export function CreateSubscriptionModal({
     const blocked = topic.fifo && option.value !== SQS_PROTOCOL;
     return { ...option, disabled: blocked, description: blocked ? FIFO_TOPIC_SQS_ONLY : undefined };
   });
+
   const queueOptions = (queues.data ?? []).map((queue) => {
     const blocked = queue.fifo && !topic.fifo;
+
     return {
       value: queue.arn,
       label: queue.name,
@@ -90,6 +92,7 @@ export function CreateSubscriptionModal({
       description: blocked ? FIFO_QUEUE_NEEDS_FIFO_TOPIC : queue.arn,
     };
   });
+
   const functionOptions = (functions.data ?? []).map((item) => ({
     value: item.FunctionArn!,
     label: item.FunctionName,
@@ -103,6 +106,7 @@ export function CreateSubscriptionModal({
       http: values.url,
       https: values.url,
     }[values.protocol];
+
     createSubscription.mutate(
       { ...values, endpoint },
       notifyOutcome({
@@ -206,6 +210,7 @@ export function EditFilterModal({
   onDismiss: () => void;
 }) {
   const setFilter = useSetSubscriptionAttributes(subscription, topicName);
+
   const form = useZodForm(filterPolicySchema, {
     filterPolicy: reformatJson(subscription.filterPolicy ?? ""),
     filterScope: subscription.filterScope,
@@ -215,7 +220,9 @@ export function EditFilterModal({
     setFilter.mutate(
       filterPolicyAttributes(values),
       notifyOutcome({
-        success: values.filterPolicy.trim() ? "Saved the filter policy" : "Removed the filter policy",
+        success: values.filterPolicy.trim()
+          ? "Saved the filter policy"
+          : "Removed the filter policy",
         errorHeader: "Couldn't save the filter policy",
         then: onDismiss,
       }),

@@ -10,17 +10,20 @@ import {
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { useSES } from "./useSES.ts";
 
-export const identitiesQueryKey = ["ses", "identities"];
+const identitiesQueryKey = ["ses", "identities"];
 
 export function useIdentities() {
   const client = useSES();
+
   return useQuery({
     queryKey: identitiesQueryKey,
     queryFn: async () => {
       const identities: IdentityInfo[] = [];
+
       for await (const page of paginateListEmailIdentities({ client }, {})) {
         identities.push(...(page.EmailIdentities ?? []));
       }
+
       return identities;
     },
   });
@@ -29,6 +32,7 @@ export function useIdentities() {
 export function useCreateEmailIdentity() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (email: string) => {
       await client.send(new CreateEmailIdentityCommand({ EmailIdentity: email }));
@@ -40,9 +44,11 @@ export function useCreateEmailIdentity() {
 export function useDeleteIdentities() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (names: string[]) => {
       const failures: string[] = [];
+
       for (const name of names) {
         try {
           await client.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
@@ -50,6 +56,7 @@ export function useDeleteIdentities() {
           failures.push(`${name}: ${errorMessage(error)}`);
         }
       }
+
       return { count: names.length - failures.length, failures };
     },
     // exact: chỉ đọc lại danh sách, không đọc lại GetEmailIdentity của identity vừa xóa (404)
@@ -65,6 +72,7 @@ export function useIdentityConfigurationSets() {
   const client = useSES();
   const identities = useIdentities();
   const names = (identities.data ?? []).flatMap((identity) => identity.IdentityName ?? []);
+
   const results = useQueries({
     queries: names.map((name) => ({
       queryKey: identityKey(name),
@@ -75,6 +83,7 @@ export function useIdentityConfigurationSets() {
       retry: false,
     })),
   });
+
   return new Map<string, string | undefined>(
     names.map((name, index) => [name, results[index].data]),
   );
@@ -83,6 +92,7 @@ export function useIdentityConfigurationSets() {
 export function useSetIdentityConfigurationSet() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     // Không có ConfigurationSetName = gỡ configuration set mặc định
     mutationFn: ({ identity, configurationSet }: { identity: string; configurationSet?: string }) =>

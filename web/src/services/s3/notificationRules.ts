@@ -60,9 +60,7 @@ export function toNotificationRules(
   ];
 }
 
-// current: cấu hình đang có của bucket; ghi đè cả cấu hình mà không mang theo thì mất
-// `EventBridgeConfiguration` do CDK / app đã bật. eventBridge: bật / tắt gửi event sang EventBridge,
-// bỏ trống thì giữ nguyên như current
+// Phải truyền current: ghi đè thiếu sẽ mất EventBridgeConfiguration do CDK / app bật. eventBridge trống = giữ nguyên
 export function toNotificationConfiguration(
   rules: NotificationRule[],
   current: NotificationConfiguration = {},
@@ -73,8 +71,10 @@ export function toNotificationConfiguration(
     Events: rule.events,
     Filter: toFilter(rule),
   });
+
   const byDestination = (destination: NotificationDestination) =>
     rules.filter((rule) => rule.destination === destination);
+
   return {
     LambdaFunctionConfigurations: byDestination("lambda").map((rule) => ({
       ...common(rule),
@@ -92,9 +92,7 @@ export function toNotificationConfiguration(
   };
 }
 
-// Luật của AWS (Floci không chặn): hai rule có chung loại event mà vùng key (prefix, suffix) chồng
-// nhau thì S3 từ chối cả cấu hình ("Configurations overlap"), bất kể đích. "s3:ObjectCreated:*" chứa
-// "s3:ObjectCreated:Put"; prefix/suffix rỗng khớp mọi key nên chồng với mọi giá trị.
+// AWS từ chối (Floci thì không) 2 rule cùng loại event có prefix / suffix chồng nhau, bất kể đích
 const WILDCARD = "*";
 const coversEvent = (wide: string, event: string) =>
   wide === event || (wide.endsWith(WILDCARD) && event.startsWith(wide.slice(0, -WILDCARD.length)));

@@ -3,15 +3,18 @@ export const LOGO_PATH = "/mark.svg";
 export const HOME_PATH = "/";
 
 export const AWS_PROXY_PATH = "/aws";
+
 export const API_PATHS = {
   health: "/api/health",
   config: "/api/config",
 } as const;
+
 export const FLOCI_PATHS = {
   info: `${AWS_PROXY_PATH}/_floci/info`,
   health: `${AWS_PROXY_PATH}/_floci/health`,
   reset: `${AWS_PROXY_PATH}/_floci/state/reset`,
 } as const;
+
 export const FLOCI_SERVICE_RUNNING = "running";
 export const FLOCI_START_COMMAND = "docker compose up -d floci";
 export const FLOCI_RESTART_COMMAND = "docker compose restart floci";
@@ -23,6 +26,7 @@ export const AWS_TEST_CREDENTIALS = {
   accessKeyId: "test",
   secretAccessKey: "test",
 } as const;
+
 export const FLOCI_ACCOUNT_ID = "000000000000";
 
 // Region hiển thị kèm mã Local Zone
@@ -38,6 +42,8 @@ export const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 export const HEALTH_REFRESH_INTERVAL_MS = 10 * MILLISECONDS_PER_SECOND;
 export const SUCCESS_MESSAGE_LIFETIME_MS = 5 * MILLISECONDS_PER_SECOND;
 export const FLASHBAR_STACK_THRESHOLD = 3;
+// Phone: mỗi banner cao ~60px nên gộp ngay từ banner thứ 2, nội dung không bị đẩy xuống
+export const PHONE_FLASHBAR_STACK_THRESHOLD = 1;
 export const QUERY_RETRY_COUNT = 1;
 
 export const COPY_TEXTS = {
@@ -48,7 +54,7 @@ export const COPY_TEXTS = {
 
 // Khung hẹp hơn mức này thì gom nút vào dropdown và ẩn cột phụ của bảng
 export const COMPACT_WIDTH_PX = 900;
-// Mốc điện thoại của Cloudscape: dưới mức này panel luôn nằm dưới
+// Mốc điện thoại của Cloudscape: dưới mức này panel luôn nằm dưới. CSS viết cứng số này trong @media
 export const PHONE_MAX_WIDTH_PX = 688;
 // Panel bên phải rộng 480px; trên điện thoại cao 2/3 màn hình cho bảng có chỗ
 export const SPLIT_PANEL_SIDE_WIDTH_PX = 480;
@@ -67,6 +73,7 @@ export const SERVICE_CATEGORIES = {
   business: { label: "Business applications", color: "#DD344C" },
   management: { label: "Management & governance", color: "#C925D1" },
 } as const;
+
 export type ServiceCategory = keyof typeof SERVICE_CATEGORIES;
 
 // Modal xóa hàng loạt chỉ liệt kê vài mục đầu

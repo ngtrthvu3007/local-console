@@ -22,8 +22,8 @@ import { toCreateUserPoolInput, type CreatePoolForm } from "../schemas.ts";
 import { triggerLabelsOf } from "../triggers.ts";
 import { COGNITO_QUERY_ROOT, useCognito } from "./useCognito.ts";
 
-export const poolsQueryKey = [COGNITO_QUERY_ROOT, "pools"];
-export const poolQueryKey = (poolId: string) => [COGNITO_QUERY_ROOT, "pool", poolId];
+const poolsQueryKey = [COGNITO_QUERY_ROOT, "pools"];
+const poolQueryKey = (poolId: string) => [COGNITO_QUERY_ROOT, "pool", poolId];
 const NO_POOL_ERROR = "Cognito returned no pool";
 
 async function listUserPools(client: CognitoIdentityProviderClient) {
@@ -39,7 +39,7 @@ export function useUserPools() {
 }
 
 // Mỗi dòng = một loại trigger của một pool trỏ tới function
-export type PoolTrigger = { poolId: string; poolName: string; label: string };
+type PoolTrigger = { poolId: string; poolName: string; label: string };
 
 // Lambda › Triggers dùng; ARN có version / alias cũng tính (triggerLabelsOf)
 export async function listPoolTriggers(
@@ -48,6 +48,7 @@ export async function listPoolTriggers(
 ): Promise<PoolTrigger[]> {
   // Probe Floci 2.4.0 (2026-11-22): ListUserPools trả đủ LambdaConfig, không cần DescribeUserPool
   const pools = await listUserPools(cognito);
+
   return pools.flatMap(({ Id: poolId = "", Name: poolName = NOT_AVAILABLE, LambdaConfig }) =>
     triggerLabelsOf(LambdaConfig, functionArn).map((label) => ({ poolId, poolName, label })),
   );
@@ -55,6 +56,7 @@ export async function listPoolTriggers(
 
 export function useUserPool(poolId: string) {
   const client = useCognito();
+
   return useQuery({
     queryKey: poolQueryKey(poolId),
     retry: false,
@@ -69,11 +71,13 @@ export function useUserPool(poolId: string) {
 export function useCreateUserPool() {
   const client = useCognito();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (form: CreatePoolForm) => {
       const { UserPool } = await client.send(
         new CreateUserPoolCommand(toCreateUserPoolInput(form)),
       );
+
       if (!UserPool?.Id) throw new Error("Cognito returned no pool ID");
       return UserPool.Id;
     },
@@ -86,17 +90,20 @@ export async function deleteUserPool(client: CognitoIdentityProviderClient, pool
   // Kiểm tra trước khi xóa domain: xóa pool thất bại thì domain không được mất
   if (UserPool?.DeletionProtection === DeletionProtectionType.ACTIVE)
     throw new Error(DELETION_PROTECTION_ERROR);
+
   // AWS không cho xóa pool còn domain: xóa domain trước
   if (UserPool?.Domain)
     await client.send(
       new DeleteUserPoolDomainCommand({ UserPoolId: poolId, Domain: UserPool.Domain }),
     );
+
   await client.send(new DeleteUserPoolCommand({ UserPoolId: poolId }));
 }
 
 export function useDeleteUserPools() {
   const client = useCognito();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (pools: UserPoolDescriptionType[]) =>
       runEach(
@@ -115,11 +122,11 @@ export function useDeleteUserPools() {
 
 type PoolChange = Partial<UpdateUserPoolRequest>;
 
-// Gộp vào DescribeUserPool mới nhất: AWS reset trường không gửi (poolUpdate.ts).
-// change dạng hàm khi chính thay đổi cần đọc pool mới nhất (vd LambdaConfig giữ key ngoài form)
+// Gộp vào DescribeUserPool mới nhất vì AWS reset trường không gửi; change dạng hàm khi cần đọc pool mới nhất
 export function useUpdateUserPool(poolId: string) {
   const client = useCognito();
   const queryClient = useQueryClient();
+
   return useMutation<void, Error, PoolChange | ((fresh: UserPoolType) => PoolChange)>({
     mutationFn: async (change) => {
       const { UserPool } = await client.send(new DescribeUserPoolCommand({ UserPoolId: poolId }));
@@ -141,6 +148,7 @@ export function useUpdateUserPool(poolId: string) {
 export function useCreateDomain(poolId: string) {
   const client = useCognito();
   const queryClient = useQueryClient();
+
   return useMutation<void, Error, string>({
     mutationFn: async (domain) => {
       await client.send(new CreateUserPoolDomainCommand({ UserPoolId: poolId, Domain: domain }));
@@ -152,6 +160,7 @@ export function useCreateDomain(poolId: string) {
 export function useDeleteDomain(poolId: string) {
   const client = useCognito();
   const queryClient = useQueryClient();
+
   return useMutation<void, Error, string>({
     mutationFn: async (domain) => {
       await client.send(new DeleteUserPoolDomainCommand({ UserPoolId: poolId, Domain: domain }));

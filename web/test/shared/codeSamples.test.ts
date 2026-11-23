@@ -36,6 +36,7 @@ describe("code samples", () => {
       { name: "pk", type: "S" },
       { name: "sk", type: "N" },
     ]);
+
     expect(sample.node).toContain('const Key = { "pk": "example", "sk": 1 };');
     expect(sample.python).toContain('key = { "pk": "example", "sk": 1 }');
   });
@@ -50,8 +51,6 @@ describe("code samples", () => {
   });
 
   it("leaves user and password to fill in the AMQP URL", () => {
-    expect(brokerUrl("amqp://172.28.0.4:5672")).toBe(
-      "amqp://USER:PASSWORD@172.28.0.4:5672",
-    );
+    expect(brokerUrl("amqp://172.28.0.4:5672")).toBe("amqp://USER:PASSWORD@172.28.0.4:5672");
   });
 });

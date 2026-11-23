@@ -14,7 +14,7 @@ import { snsService } from "./services/sns/index.tsx";
 import { sqsService } from "./services/sqs/index.tsx";
 import { stepfunctionsService } from "./services/stepfunctions/index.tsx";
 
-export interface ServiceLink {
+interface ServiceLink {
   text: string;
   href: string;
 }

@@ -16,10 +16,10 @@ export const LAMBDA_TRIGGERS = [
   { key: "UserMigration", label: "User migration" },
 ] as const satisfies readonly TriggerDefinition[];
 
-export type TriggerKey = (typeof LAMBDA_TRIGGERS)[number]["key"];
+type TriggerKey = (typeof LAMBDA_TRIGGERS)[number]["key"];
 
 // Custom sender cần KMS: chỉ xem, giữ nguyên khi sửa
-export const CUSTOM_SENDER_TRIGGERS = [
+const CUSTOM_SENDER_TRIGGERS = [
   { key: "CustomEmailSender", label: "Custom email sender" },
   { key: "CustomSMSSender", label: "Custom SMS sender" },
 ] as const satisfies readonly TriggerDefinition[];
@@ -70,15 +70,19 @@ export function toLambdaConfig(
   const kept = Object.fromEntries(
     Object.entries(current ?? {}).filter(([key]) => !REPLACED_KEYS.has(key)),
   );
+
   const selected = Object.fromEntries(
     LAMBDA_TRIGGERS.filter(({ key }) => selection[key]).map(({ key }) => [key, selection[key]]),
   );
+
   const preTokenGenerationArn = selection.PreTokenGeneration;
+
   // Config V2 (IaC tạo) phải trỏ cùng function với PreTokenGeneration
   const preTokenGenerationConfig =
     current?.PreTokenGenerationConfig && preTokenGenerationArn
       ? { ...current.PreTokenGenerationConfig, LambdaArn: preTokenGenerationArn }
       : undefined;
+
   return {
     ...kept,
     ...selected,

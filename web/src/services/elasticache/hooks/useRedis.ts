@@ -22,6 +22,7 @@ import { REDIS_API_PATH, START_CURSOR } from "../constants.ts";
 const redisQueryKey = (cluster: string) => ["elasticache", "redis", cluster];
 // Giá trị của từng key (panel); không có name = mọi key của cluster
 const keyValuesQueryKey = (cluster: string) => [...redisQueryKey(cluster), "key"];
+
 const keyValueQueryKey = (cluster: string, name: string | undefined) => [
   ...keyValuesQueryKey(cluster),
   name,
@@ -99,21 +100,23 @@ export function useServerInfo(cluster: string, enabled: boolean) {
   });
 }
 
-// Ghi xong thì làm mới mọi dữ liệu Redis của cluster (danh sách key, key đang mở, số key).
-// Trừ key vừa bị xóa: panel của nó chỉ đóng sau khi ghi xong, làm mới trước đó sẽ ra 404.
+// Làm mới mọi dữ liệu Redis của cluster, trừ key vừa xóa (panel còn mở sẽ nhận 404)
 function useRedisMutation<TInput>(
   cluster: string,
   request: (input: TInput) => Promise<unknown>,
   removedKeys: (input: TInput) => QueryKey[] = () => [],
 ) {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: request,
     onSuccess: (_result, input) => {
       const queryCache = queryClient.getQueryCache();
+
       const removed = new Set(
         removedKeys(input).flatMap((queryKey) => queryCache.findAll({ queryKey })),
       );
+
       return queryClient.invalidateQueries({
         queryKey: redisQueryKey(cluster),
         predicate: (query) => !removed.has(query),

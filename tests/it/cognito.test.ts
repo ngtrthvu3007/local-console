@@ -27,8 +27,9 @@ import { toUpdateUserPoolInput } from "../../web/src/services/cognito/poolUpdate
 import { startFakeOidc } from "./fakeOidc.ts";
 import {
   ACCOUNT_ID,
-  AWS_PROXY_URL,
   consoleConfig,
+  deleteMails,
+  mailbox,
   uniqueName,
   viaConsole,
   waitFor,
@@ -68,14 +69,6 @@ let ses: SESv2Client;
 const poolIds: string[] = [];
 const sesIdentities: string[] = [];
 const invitedEmails: string[] = [];
-
-interface Mail {
-  Id: string;
-  Destination?: { ToAddresses?: string[] };
-}
-
-const mailbox = async (): Promise<Mail[]> =>
-  (await (await fetch(`${AWS_PROXY_URL}/_aws/ses`)).json()).messages;
 
 async function createPool(input: Omit<CreateUserPoolCommandInput, "PoolName"> = {}) {
   const { UserPool } = await cognito.send(
@@ -174,13 +167,10 @@ afterAll(async () => {
       .send(new DeleteEmailIdentityCommand({ EmailIdentity: identity }))
       .catch(() => undefined);
   // Lần chạy bình thường không gọi leftovers: tự xóa thư mời theo người nhận
-  const mails = (await mailbox()).filter((mail) =>
-    mail.Destination?.ToAddresses?.some((address) => invitedEmails.includes(address)),
+  await deleteMails(
+    (mail) =>
+      mail.Destination?.ToAddresses?.some((address) => invitedEmails.includes(address)) ?? false,
   );
-  for (const mail of mails)
-    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${encodeURIComponent(mail.Id)}`, {
-      method: "DELETE",
-    });
 });
 
 describe("Cognito user pools through /aws", () => {

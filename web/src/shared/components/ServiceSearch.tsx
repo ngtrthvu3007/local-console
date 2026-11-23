@@ -1,19 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import Autosuggest, {
-  type AutosuggestProps,
-} from "@cloudscape-design/components/autosuggest";
-import {
-  servicePath,
-  services,
-  type ServiceDefinition,
-} from "../../registry.ts";
+import Autosuggest, { type AutosuggestProps } from "@cloudscape-design/components/autosuggest";
+import { servicePath, services, type ServiceDefinition } from "../../registry.ts";
 import { SEARCH_SHORTCUT_KEY } from "../constants.ts";
-import {
-  matchServices,
-  RECENT_SERVICES_TITLE,
-  useRecentServices,
-} from "../recentServices.ts";
+import { matchServices, RECENT_SERVICES_TITLE, useRecentServices } from "../recentServices.ts";
 import { ServiceIcon } from "./ServiceIcon.tsx";
 
 const SEARCH_LABEL = "Search services";
@@ -49,9 +39,11 @@ export function ServiceSearch() {
         isTyping(event.target)
       )
         return;
+
       event.preventDefault();
       ref.current?.focus();
     };
+
     document.addEventListener("keydown", focusOnShortcut);
     return () => document.removeEventListener("keydown", focusOnShortcut);
   }, []);
@@ -74,10 +66,12 @@ export function ServiceSearch() {
     const path = detail.selectedOption?.value ?? firstMatch;
     if (!path) return;
     setValue("");
+
     // Rời ô search: gõ tiếp (kể cả "/") thuộc về trang vừa mở
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
+
     navigate(path, { viewTransition: true });
   };
 

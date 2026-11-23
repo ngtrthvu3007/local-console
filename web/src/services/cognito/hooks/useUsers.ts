@@ -20,27 +20,27 @@ import { LIST_USERS_PAGE_SIZE } from "../constants.ts";
 import { toAdminCreateUserInput, type CreateUserForm, type SetPasswordForm } from "../schemas.ts";
 import { COGNITO_QUERY_ROOT, useCognito } from "./useCognito.ts";
 
-export const usersQueryKey = (poolId: string) => [COGNITO_QUERY_ROOT, "users", poolId];
+const usersQueryKey = (poolId: string) => [COGNITO_QUERY_ROOT, "users", poolId];
 const userKeyPrefix = (poolId: string) => [COGNITO_QUERY_ROOT, "user", poolId];
-export const userQueryKey = (poolId: string, username: string) => [
-  ...userKeyPrefix(poolId),
-  username,
-];
 
-export type UserAction =
-  "confirm" | "enable" | "disable" | "resetPassword" | "signOut" | "delete";
+const userQueryKey = (poolId: string, username: string) => [...userKeyPrefix(poolId), username];
+
+export type UserAction = "confirm" | "enable" | "disable" | "resetPassword" | "signOut" | "delete";
 
 export function useUsers(poolId: string) {
   const client = useCognito();
+
   return useQuery({
     queryKey: usersQueryKey(poolId),
     queryFn: async () => {
       const users: UserType[] = [];
+
       for await (const page of paginateListUsers(
         { client },
         { UserPoolId: poolId, Limit: LIST_USERS_PAGE_SIZE },
       ))
         users.push(...(page.Users ?? []));
+
       return users;
     },
   });
@@ -48,6 +48,7 @@ export function useUsers(poolId: string) {
 
 export function useUser(poolId: string, username: string) {
   const client = useCognito();
+
   return useQuery({
     queryKey: userQueryKey(poolId, username),
     retry: false,
@@ -58,6 +59,7 @@ export function useUser(poolId: string, username: string) {
 // Mọi thao tác user xong thì làm mới danh sách và chi tiết
 function useInvalidateUsers(poolId: string) {
   const queryClient = useQueryClient();
+
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: usersQueryKey(poolId) }),
@@ -68,11 +70,13 @@ function useInvalidateUsers(poolId: string) {
 export function useCreateUser(poolId: string, signInWithEmail: boolean) {
   const client = useCognito();
   const invalidate = useInvalidateUsers(poolId);
+
   return useMutation({
     mutationFn: async (form: CreateUserForm) => {
       const { User } = await client.send(
         new AdminCreateUserCommand(toAdminCreateUserInput(poolId, form, signInWithEmail)),
       );
+
       if (!User) throw new Error("Cognito returned no user");
       return User;
     },
@@ -84,8 +88,10 @@ export function useUserActions(poolId: string) {
   const client = useCognito();
   const queryClient = useQueryClient();
   const invalidate = useInvalidateUsers(poolId);
+
   const commands = (action: UserAction, username: string) => {
     const input = { UserPoolId: poolId, Username: username };
+
     switch (action) {
       case "confirm":
         return new AdminConfirmSignUpCommand(input);
@@ -101,6 +107,7 @@ export function useUserActions(poolId: string) {
         return new AdminDeleteUserCommand(input);
     }
   };
+
   return useMutation({
     mutationFn: ({ action, usernames }: { action: UserAction; usernames: string[] }) =>
       runEach(
@@ -119,6 +126,7 @@ export function useUserActions(poolId: string) {
 export function useSetUserPassword(poolId: string, username: string) {
   const client = useCognito();
   const invalidate = useInvalidateUsers(poolId);
+
   return useMutation({
     mutationFn: ({ password, permanent }: SetPasswordForm) =>
       client.send(
@@ -136,6 +144,7 @@ export function useSetUserPassword(poolId: string, username: string) {
 export function useUpdateUserAttributes(poolId: string, username: string) {
   const client = useCognito();
   const invalidate = useInvalidateUsers(poolId);
+
   return useMutation({
     mutationFn: (attributes: AttributeType[]) =>
       client.send(
@@ -152,6 +161,7 @@ export function useUpdateUserAttributes(poolId: string, username: string) {
 export function useDeleteUserAttribute(poolId: string, username: string) {
   const client = useCognito();
   const invalidate = useInvalidateUsers(poolId);
+
   return useMutation({
     mutationFn: (name: string) =>
       client.send(

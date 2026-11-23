@@ -20,6 +20,7 @@ const executionsQueryKey = (machineArn: string, status: string) => [
   machineArn,
   status,
 ];
+
 const executionQueryKey = (arn: string, part: string) => [
   STEPFUNCTIONS_QUERY_ROOT,
   "execution",
@@ -35,6 +36,7 @@ const pollWhile = (running: boolean | undefined) => (running ? EXECUTION_POLL_IN
 
 export function useExecutionList(machineArn: string, statusFilter: ExecutionStatus | "") {
   const client = useSFN();
+
   return useQuery({
     queryKey: executionsQueryKey(machineArn, statusFilter),
     queryFn: () =>
@@ -46,6 +48,7 @@ export function useExecutionList(machineArn: string, statusFilter: ExecutionStat
             nextToken,
           }),
         );
+
         return { items: page.executions ?? [], nextToken: page.nextToken };
       }),
     refetchInterval: (query) =>
@@ -55,6 +58,7 @@ export function useExecutionList(machineArn: string, statusFilter: ExecutionStat
 
 export function useExecution(arn: string) {
   const client = useSFN();
+
   return useQuery({
     queryKey: executionQueryKey(arn, "details"),
     queryFn: () => client.send(new DescribeExecutionCommand({ executionArn: arn })),
@@ -65,6 +69,7 @@ export function useExecution(arn: string) {
 
 export function useExecutionHistory(arn: string, running: boolean) {
   const client = useSFN();
+
   const query = useQuery({
     queryKey: executionQueryKey(arn, "history"),
     queryFn: () =>
@@ -72,16 +77,19 @@ export function useExecutionHistory(arn: string, running: boolean) {
         const page = await client.send(
           new GetExecutionHistoryCommand({ executionArn: arn, nextToken }),
         );
+
         return { items: page.events ?? [], nextToken: page.nextToken };
       }),
     refetchInterval: pollWhile(running),
   });
-  // Execution đổi trạng thái giữa hai lần hỏi lại history: lần hỏi cuối có thể thiếu event cuối
-  // (bước cuối còn "Running" dù execution đã xong), nên hỏi thêm một lần khi chạy xong
+
+  // Lần hỏi history cuối có thể thiếu event cuối, nên hỏi thêm một lần khi execution xong
   const { refetch } = query;
+
   useEffect(() => {
     if (!running) void refetch();
   }, [running, refetch]);
+
   return query;
 }
 
@@ -93,6 +101,7 @@ interface StartInput {
 export function useStartExecution(machineArn: string) {
   const client = useSFN();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ name, input }: StartInput) =>
       (
@@ -112,6 +121,7 @@ export function useStartExecution(machineArn: string) {
 export function useStopExecution(arn: string) {
   const client = useSFN();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: () => client.send(new StopExecutionCommand({ executionArn: arn })),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [STEPFUNCTIONS_QUERY_ROOT] }),

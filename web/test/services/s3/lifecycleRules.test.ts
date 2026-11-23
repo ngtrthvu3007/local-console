@@ -36,9 +36,11 @@ describe("toLifecycleRule", () => {
   });
 
   it("prefers expiry days over delete markers, since S3 refuses both in one rule", () => {
-    expect(toLifecycleRule(form({ expireDays: 5, deleteExpiredMarkers: true })).Expiration).toEqual({
-      Days: 5,
-    });
+    expect(toLifecycleRule(form({ expireDays: 5, deleteExpiredMarkers: true })).Expiration).toEqual(
+      {
+        Days: 5,
+      },
+    );
   });
 
   it("leaves unset actions out", () => {
@@ -75,7 +77,10 @@ describe("describeLifecycleActions", () => {
 
   it("describes the delete-marker cleanup", () => {
     expect(
-      describeLifecycleActions({ Status: "Enabled", Expiration: { ExpiredObjectDeleteMarker: true } }),
+      describeLifecycleActions({
+        Status: "Enabled",
+        Expiration: { ExpiredObjectDeleteMarker: true },
+      }),
     ).toEqual(["Delete expired delete markers"]);
   });
 

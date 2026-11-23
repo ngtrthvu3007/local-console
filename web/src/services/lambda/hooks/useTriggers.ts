@@ -84,6 +84,7 @@ async function updateBucketRules(
   const { $metadata: _metadata, ...configuration } = await s3.send(
     new GetBucketNotificationConfigurationCommand({ Bucket: bucket }),
   );
+
   await s3.send(
     new PutBucketNotificationConfigurationCommand({
       Bucket: bucket,
@@ -128,6 +129,7 @@ export function mappingSourceOf(arn: string): Pick<TriggerRow, "source" | "resou
 
 function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
   const { source, resource } = mappingSourceOf(mapping.EventSourceArn ?? "");
+
   return {
     id: `mapping:${mapping.UUID}`,
     source,
@@ -143,16 +145,19 @@ function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
 // Local ít bucket nên đọc notification của mọi bucket song song
 async function listS3Triggers(s3: S3Client, functionArn: string) {
   const buckets = (await s3.send(new ListBucketsCommand({}))).Buckets ?? [];
+
   const perBucket = await Promise.all(
     buckets.map(async ({ Name: bucket = "" }) => {
       const configuration = await s3.send(
         new GetBucketNotificationConfigurationCommand({ Bucket: bucket }),
       );
+
       return toNotificationRules(configuration)
         .filter((rule) => targetsFunction(rule, functionArn))
         .map((rule, index) => s3Row(bucket, rule, index));
     }),
   );
+
   return perBucket.flat();
 }
 
@@ -162,6 +167,7 @@ async function listSnsTriggers(sns: SNSClient, functionArn: string) {
     sns,
     (endpoint) => endpoint === functionArn || endpoint.startsWith(`${functionArn}${ARN_SEPARATOR}`),
   );
+
   return subscriptions.map((subscription): TriggerRow => ({
     id: `sns:${subscription.arn}`,
     source: "sns",
@@ -180,6 +186,7 @@ async function listEventBridgeTriggers(
   const { rules, schedules } = await listEventSources(events, scheduler, (target) =>
     targetsArn(target, functionArn, true),
   );
+
   return [
     ...rules.map(({ bus, rule }): TriggerRow => ({
       id: `eventbridge:${bus}/${rule}`,
@@ -201,6 +208,7 @@ async function listEventBridgeTriggers(
 // Trigger của user pool trỏ tới function: sửa ở tab Triggers của pool
 async function listCognitoTriggers(cognito: CognitoIdentityProviderClient, functionArn: string) {
   const triggers = await listPoolTriggers(cognito, functionArn);
+
   return triggers.map(({ poolId, poolName, label }): TriggerRow => ({
     id: `cognito:${poolId}:${label}`,
     source: "cognito",
@@ -212,13 +220,16 @@ async function listCognitoTriggers(cognito: CognitoIdentityProviderClient, funct
 
 async function listMappingTriggers(lambda: LambdaClient, functionName: string) {
   const rows: TriggerRow[] = [];
+
   const paginator = paginateListEventSourceMappings(
     { client: lambda },
     { FunctionName: functionName },
   );
+
   for await (const page of paginator) {
     rows.push(...(page.EventSourceMappings ?? []).map(mappingRow));
   }
+
   return rows;
 }
 
@@ -231,6 +242,7 @@ export function useTriggers(functionName: string, functionArn: string) {
   const events = useEventBridge();
   const scheduler = useScheduler();
   const cognito = useCognito();
+
   return useQuery({
     queryKey: triggersQueryKey(functionName),
     queryFn: async () => {
@@ -241,6 +253,7 @@ export function useTriggers(functionName: string, functionArn: string) {
         listEventBridgeTriggers(events, scheduler, functionArn),
         listCognitoTriggers(cognito, functionArn),
       ]);
+
       return [...s3Rows, ...mappingRows, ...snsRows, ...eventBridgeRows, ...cognitoRows];
     },
   });
@@ -251,6 +264,7 @@ function useTriggerMutation<TInput>(
   run: (input: TInput) => Promise<unknown>,
 ) {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: run,
     onSuccess: () =>
@@ -309,6 +323,7 @@ export type AddTriggerInput = TriggerFormOutput & { streamArn?: string };
 export function useAddTrigger(functionName: string, functionArn: string) {
   const { lambda } = useLambda();
   const { s3 } = useS3();
+
   return useTriggerMutation(functionName, async (values: AddTriggerInput) => {
     if (values.source === "s3") {
       const rule: NotificationRule = {
@@ -319,12 +334,14 @@ export function useAddTrigger(functionName: string, functionArn: string) {
         prefix: values.prefix,
         suffix: values.suffix,
       };
+
       return updateBucketRules(s3, values.bucket, (rules) => {
         const overlap = overlappingRule(rules, rule);
         if (overlap) throw new Error(overlapMessage(overlap));
         return [...rules, rule];
       });
     }
+
     if (values.source === "dynamodb") {
       return createStreamTrigger(lambda, {
         functionName,
@@ -335,6 +352,7 @@ export function useAddTrigger(functionName: string, functionArn: string) {
         ...pickMappingOptions(values),
       });
     }
+
     return createQueueTrigger(lambda, {
       functionName,
       queueArn: values.queueArn,
@@ -349,18 +367,20 @@ export function useDeleteTrigger(functionName: string) {
   const { lambda } = useLambda();
   const { s3 } = useS3();
   const sns = useSNS();
+
   return useTriggerMutation(functionName, (row: TriggerRow) => {
     if (row.source === "s3")
       return updateBucketRules(s3, row.resource, (rules) =>
         rules.filter((rule) => !sameRule(rule, row.rule!)),
       );
+
     if (row.source === "sns")
       return sns.send(new UnsubscribeCommand({ SubscriptionArn: row.subscriptionArn }));
     return lambda.send(new DeleteEventSourceMappingCommand({ UUID: row.uuid }));
   });
 }
 
-export interface EditTriggerInput {
+interface EditTriggerInput {
   row: TriggerRow;
   batchSize: number;
   options: MappingOptions;
@@ -369,6 +389,7 @@ export interface EditTriggerInput {
 // UpdateEventSourceMapping ghi đè cả cấu hình nên gửi đủ các ô (xem toMappingParams)
 export function useEditTrigger(functionName: string) {
   const { lambda } = useLambda();
+
   return useTriggerMutation(functionName, ({ row, batchSize, options }: EditTriggerInput) =>
     lambda.send(
       new UpdateEventSourceMappingCommand({
@@ -382,6 +403,7 @@ export function useEditTrigger(functionName: string) {
 
 export function useSetTriggerEnabled(functionName: string) {
   const { lambda } = useLambda();
+
   return useTriggerMutation(functionName, ({ uuid, enabled }: { uuid: string; enabled: boolean }) =>
     lambda.send(new UpdateEventSourceMappingCommand({ UUID: uuid, Enabled: enabled })),
   );

@@ -26,10 +26,8 @@ export const PASSWORD_FORBIDDEN_CHARACTERS = [",", ":", "="];
 
 export const RABBIT_API_PATH = "/api/mq";
 export const DEFAULT_EXCHANGE_LABEL = "(AMQP default)";
-export const PEEK_COUNT = { default: 10, min: 1, max: 50 };
 export const PAYLOAD_EDITOR_HEIGHT_PX = 200;
 
-// Floci map cổng của từng broker ra máy dev nhưng không báo cổng nào, và không luôn bắt đầu từ 5672
-// (đã gặp broker đầu tiên ở 5673), nên không hứa số cụ thể (spec MQ, mục 6 #3)
+// Floci không báo cổng của broker và không luôn bắt đầu từ 5672 nên không ghi số cụ thể
 export const HOST_PORT_HINT =
   "From your machine: localhost, on a port in 5672–5699 (management 15672–15699). Run docker ps to see each broker's port.";

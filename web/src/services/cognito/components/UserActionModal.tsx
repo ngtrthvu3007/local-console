@@ -6,7 +6,10 @@ import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useUserActions, type UserAction } from "../hooks/useUsers.ts";
 
-const ACTION_COPY: Record<UserAction, { header: string; verb: string; done: string; description: string }> = {
+const ACTION_COPY: Record<
+  UserAction,
+  { header: string; verb: string; done: string; description: string }
+> = {
   confirm: {
     header: "Confirm sign-up",
     verb: "Confirm",

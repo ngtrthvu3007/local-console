@@ -19,7 +19,6 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   AUTH_FLOWS,
-  CLIENT_FORM_ERRORS,
   CLIENT_SECRET_MODES,
   COGNITO_PROVIDER,
   OAUTH_FLOWS,
@@ -67,6 +66,7 @@ function UrlListField({
   errorText?: string;
 }) {
   const rows = useFieldArray({ control, name });
+
   return (
     <FormField label={label} description={description} errorText={errorText}>
       <AttributeEditor
@@ -102,18 +102,34 @@ function UrlListField({
   );
 }
 
-function ClientFormView({ poolId, clientId, initial }: { poolId: string; clientId?: string; initial: ClientFormValues }) {
+function ClientFormView({
+  poolId,
+  clientId,
+  initial,
+}: {
+  poolId: string;
+  clientId?: string;
+  initial: ClientFormValues;
+}) {
   const follow = useFollow();
   const navigate = useNavigate();
   const create = useCreateClient(poolId);
   const update = useUpdateClient(poolId, clientId ?? "");
   const providers = useProviders(poolId);
-  const providerNames = (providers.data ?? []).flatMap((provider) => (provider.ProviderName ? [provider.ProviderName] : []));
+
+  const providerNames = (providers.data ?? []).flatMap((provider) =>
+    provider.ProviderName ? [provider.ProviderName] : [],
+  );
+
   const form = useZodForm(clientSchema, initial);
   const oauthFlows = useWatch({ control: form.control, name: "oauthFlows" });
   const editing = Boolean(clientId);
   const pending = create.isPending || update.isPending;
-  const backHref = clientId ? cognitoRoutes.client(poolId, clientId) : cognitoRoutes.pool(poolId, POOL_TABS.clients);
+
+  const backHref = clientId
+    ? cognitoRoutes.client(poolId, clientId)
+    : cognitoRoutes.pool(poolId, POOL_TABS.clients);
+
   const errors = form.formState.errors;
 
   const submit = form.handleSubmit((values) => {
@@ -121,12 +137,19 @@ function ClientFormView({ poolId, clientId, initial }: { poolId: string; clientI
       success: `${editing ? "Saved" : "Created"} app client ${values.name}`,
       errorHeader: `Couldn't ${editing ? "save" : "create"} ${values.name}`,
     };
+
     if (clientId)
-      update.mutate(values, notifyOutcome({ ...options, then: () => navigate(cognitoRoutes.client(poolId, clientId)) }));
+      update.mutate(
+        values,
+        notifyOutcome({ ...options, then: () => navigate(cognitoRoutes.client(poolId, clientId)) }),
+      );
     else
       create.mutate(
         values,
-        notifyOutcome({ ...options, then: (newClientId: string) => navigate(cognitoRoutes.client(poolId, newClientId)) }),
+        notifyOutcome({
+          ...options,
+          then: (newClientId: string) => navigate(cognitoRoutes.client(poolId, newClientId)),
+        }),
       );
   });
 
@@ -166,7 +189,9 @@ function ClientFormView({ poolId, clientId, initial }: { poolId: string; clientI
                     <Tiles
                       items={SECRET_ITEMS.map((item) => ({ ...item, disabled: editing }))}
                       value={field.value ? CLIENT_SECRET_MODES.generate : CLIENT_SECRET_MODES.none}
-                      onChange={({ detail }) => field.onChange(detail.value === CLIENT_SECRET_MODES.generate)}
+                      onChange={({ detail }) =>
+                        field.onChange(detail.value === CLIENT_SECRET_MODES.generate)
+                      }
                     />
                   </FormField>
                 )}
@@ -202,7 +227,9 @@ function ClientFormView({ poolId, clientId, initial }: { poolId: string; clientI
                   <FormField
                     errorText={fieldState.error?.message}
                     label='OAuth flows'
-                    description={keptFlows.length ? `Kept as is: ${keptFlows.join(", ")}.` : undefined}
+                    description={
+                      keptFlows.length ? `Kept as is: ${keptFlows.join(", ")}.` : undefined
+                    }
                   >
                     <SpaceBetween size='xs'>
                       {flowItems.map(([flow, text]) => (
@@ -266,6 +293,7 @@ export function ClientForm() {
     backHref: cognitoRoutes.pool(poolId, POOL_TABS.clients),
     backText: "View app clients",
   });
+
   if (state || !client.data) return state;
 
   return <ClientFormView poolId={poolId} clientId={clientId} initial={clientFormOf(client.data)} />;

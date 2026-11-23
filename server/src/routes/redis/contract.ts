@@ -1,5 +1,6 @@
 // Hợp đồng API Redis giữa server và web (web import lại file này qua alias @server).
-// Chỉ chứa type và hằng số thuần, không import gì của Node.
+// Chỉ chứa type, schema zod và hằng số thuần, không import gì của Node.
+import { z } from "zod";
 
 export const REDIS_KEY_TYPES = ["string", "hash", "list", "set", "zset"] as const;
 export type RedisKeyType = (typeof REDIS_KEY_TYPES)[number];
@@ -56,32 +57,52 @@ export type KeyValue =
   | (KeyBase & { kind: "zset"; length: number; items: ScoredMember[]; cursor: string | null })
   | (KeyBase & { kind: "unsupported" });
 
-export interface CreateKeyInput {
-  name: string;
-  type: RedisKeyType;
-  value: string; // string: giá trị; list/set/zset: phần tử đầu; hash: value của field đầu
-  field?: string; // hash
-  score?: number; // sorted set
-  ttl: number | null;
-}
+const nameSchema = z.string().min(1);
+const textSchema = z.string(); // giá trị Redis được phép rỗng
+const scoreSchema = z.number().finite();
+const ttlSecondsSchema = z.number().int().positive();
+const membersSchema = z.array(textSchema).min(1);
+const indexSchema = z.number().int().nonnegative();
 
-export type KeyUpdate =
-  | { operation: "setString"; value: string }
-  | { operation: "addField"; field: string; value: string }
-  | { operation: "setField"; field: string; value: string }
-  | { operation: "deleteFields"; fields: string[] }
-  | { operation: "push"; value: string; end: "head" | "tail" }
-  | { operation: "setIndex"; index: number; value: string }
-  | { operation: "deleteIndexes"; indexes: number[] }
-  | { operation: "addMembers"; members: string[] }
-  | { operation: "deleteMembers"; members: string[] }
-  | { operation: "addScoredMember"; member: string; score: number }
-  | { operation: "setScore"; member: string; score: number }
-  | { operation: "deleteScoredMembers"; members: string[] };
+export const createKeyInputSchema = z
+  .object({
+    name: nameSchema,
+    type: z.enum(REDIS_KEY_TYPES),
+    value: textSchema, // string: giá trị; list/set/zset: phần tử đầu; hash: value của field đầu
+    field: nameSchema.optional(), // hash
+    score: scoreSchema.optional(), // sorted set
+    ttl: ttlSecondsSchema.nullable(),
+  })
+  .refine((input) => input.type !== "hash" || input.field !== undefined, {
+    path: ["field"],
+    message: "A hash needs a field",
+  })
+  .refine((input) => input.type !== "zset" || input.score !== undefined, {
+    path: ["score"],
+    message: "A sorted set member needs a score",
+  });
 
-export interface TtlInput {
-  seconds: number | null; // null = bỏ hạn
-}
+export type CreateKeyInput = z.infer<typeof createKeyInputSchema>;
+
+export const keyUpdateSchema = z.discriminatedUnion("operation", [
+  z.object({ operation: z.literal("setString"), value: textSchema }),
+  z.object({ operation: z.literal("addField"), field: textSchema, value: textSchema }),
+  z.object({ operation: z.literal("setField"), field: textSchema, value: textSchema }),
+  z.object({ operation: z.literal("deleteFields"), fields: membersSchema }),
+  z.object({ operation: z.literal("push"), value: textSchema, end: z.enum(["head", "tail"]) }),
+  z.object({ operation: z.literal("setIndex"), index: indexSchema, value: textSchema }),
+  z.object({ operation: z.literal("deleteIndexes"), indexes: z.array(indexSchema).min(1) }),
+  z.object({ operation: z.literal("addMembers"), members: membersSchema }),
+  z.object({ operation: z.literal("deleteMembers"), members: membersSchema }),
+  z.object({ operation: z.literal("addScoredMember"), member: textSchema, score: scoreSchema }),
+  z.object({ operation: z.literal("setScore"), member: textSchema, score: scoreSchema }),
+  z.object({ operation: z.literal("deleteScoredMembers"), members: membersSchema }),
+]);
+
+export type KeyUpdate = z.infer<typeof keyUpdateSchema>;
+
+export const ttlInputSchema = z.object({ seconds: ttlSecondsSchema.nullable() }); // null = bỏ hạn
+export type TtlInput = z.infer<typeof ttlInputSchema>;
 
 export interface ServerInfo {
   engine: string; // "valkey" hoặc "redis"

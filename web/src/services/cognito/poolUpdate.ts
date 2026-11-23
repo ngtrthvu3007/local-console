@@ -10,7 +10,7 @@ import { SES_IDENTITY_PREFIX } from "./constants.ts";
 import type { EmailForm } from "./schemas.ts";
 
 // AWS reset trường không gửi trong Update*, nên phải gửi lại mọi trường request nhận
-export const UPDATE_USER_POOL_FIELDS = [
+const UPDATE_USER_POOL_FIELDS = [
   "Policies",
   "DeletionProtection",
   "LambdaConfig",
@@ -37,7 +37,7 @@ export const UPDATE_USER_POOL_FIELDS = [
   "AcrConfiguration",
 ] as const satisfies readonly Exclude<keyof UpdateUserPoolRequest, "UserPoolId">[];
 
-export const UPDATE_USER_POOL_CLIENT_FIELDS = [
+const UPDATE_USER_POOL_CLIENT_FIELDS = [
   "ClientName",
   "RefreshTokenValidity",
   "AccessTokenValidity",
@@ -64,12 +64,14 @@ export const UPDATE_USER_POOL_CLIENT_FIELDS = [
   "UserPoolId" | "ClientId"
 >[];
 
-// SDK thêm trường mà danh sách trên thiếu → lỗi biên dịch ở đây, không âm thầm reset cấu hình
+// SDK thêm trường mà danh sách thiếu → lỗi biên dịch, không âm thầm reset cấu hình (export để noUnusedLocals bỏ qua)
 type AssertNoMissingField<TMissing extends never> = TMissing;
-type UnlistedUserPoolFields = AssertNoMissingField<
+
+export type UnlistedUserPoolFields = AssertNoMissingField<
   Exclude<keyof UpdateUserPoolRequest, "UserPoolId" | (typeof UPDATE_USER_POOL_FIELDS)[number]>
 >;
-type UnlistedUserPoolClientFields = AssertNoMissingField<
+
+export type UnlistedUserPoolClientFields = AssertNoMissingField<
   Exclude<
     keyof UpdateUserPoolClientRequest,
     "UserPoolId" | "ClientId" | (typeof UPDATE_USER_POOL_CLIENT_FIELDS)[number]
@@ -83,11 +85,13 @@ const pickFields = (source: object, fields: readonly string[]) =>
 // AWS từ chối khi có cả UnusedAccountValidityDays (cũ) lẫn TemporaryPasswordValidityDays
 function withoutDeprecatedValidityDays(input: UpdateUserPoolRequest): UpdateUserPoolRequest {
   const adminCreateUserConfig = input.AdminCreateUserConfig;
+
   if (
     input.Policies?.PasswordPolicy?.TemporaryPasswordValidityDays === undefined ||
     adminCreateUserConfig?.UnusedAccountValidityDays === undefined
   )
     return input;
+
   const { UnusedAccountValidityDays, ...keptConfig } = adminCreateUserConfig;
   return { ...input, AdminCreateUserConfig: keptConfig };
 }
@@ -115,8 +119,7 @@ export function toUpdateUserPoolClientInput(
   };
 }
 
-// ConfigurationSet không có ô trong form: giữ lại khi vẫn dùng SES, kẻo dựng lại làm mất.
-// Cognito mặc định chỉ giữ Reply-To khi pool chưa dùng SES; từ SES chuyển sang thì bỏ hết
+// Giữ ConfigurationSet khi vẫn dùng SES (form không có ô này); chuyển khỏi SES thì bỏ hết như Cognito mặc định
 export function toEmailConfiguration(
   form: EmailForm,
   region: string,
@@ -129,6 +132,7 @@ export function toEmailConfiguration(
       ...(current?.EmailSendingAccount !== "DEVELOPER" &&
         current?.ReplyToEmailAddress && { ReplyToEmailAddress: current.ReplyToEmailAddress }),
     };
+
   return {
     EmailSendingAccount: "DEVELOPER",
     SourceArn: `arn:aws:ses:${region}:${accountId}:${SES_IDENTITY_PREFIX}${form.identity}`,

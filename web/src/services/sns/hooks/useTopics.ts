@@ -19,7 +19,7 @@ import { useSNS } from "./useSNS.ts";
 
 // Mọi query của SNS nằm dưới key gốc này
 export const SNS_QUERY_ROOT = "sns";
-export const topicsQueryKey = [SNS_QUERY_ROOT, "topics"];
+const topicsQueryKey = [SNS_QUERY_ROOT, "topics"];
 // Mọi query về một topic (chi tiết, subscription) nằm dưới key này
 const anyTopicQueryKey = [SNS_QUERY_ROOT, "topic"];
 export const topicQueryKey = (topic: string, part?: string) =>
@@ -53,6 +53,7 @@ async function describeTopic(client: SNSClient, arn: string) {
 
 export function useTopics() {
   const client = useSNS();
+
   return useQuery({
     queryKey: topicsQueryKey,
     queryFn: async () => {
@@ -69,6 +70,7 @@ export function useTopics() {
 export function useTopic(name: string) {
   const client = useSNS();
   const { region } = useLoadedConfig();
+
   return useQuery({
     queryKey: topicQueryKey(name, DETAILS),
     queryFn: () => describeTopic(client, topicArn(region, name)),
@@ -79,6 +81,7 @@ export function useTopic(name: string) {
 // Làm mới mọi query của topic và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
 export function useInvalidateTopic() {
   const queryClient = useQueryClient();
+
   return (topic: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: topicQueryKey(topic) }),
@@ -86,7 +89,7 @@ export function useInvalidateTopic() {
     ]);
 }
 
-export interface CreateTopicInput {
+interface CreateTopicInput {
   name: string;
   type: TopicType;
   contentBasedDedup: boolean;
@@ -95,6 +98,7 @@ export interface CreateTopicInput {
 export function useCreateTopic() {
   const client = useSNS();
   const invalidate = useInvalidateTopic();
+
   return useMutation({
     mutationFn: ({ name, type, contentBasedDedup }: CreateTopicInput) =>
       client.send(
@@ -113,9 +117,11 @@ export function useCreateTopic() {
 export function useDeleteTopics() {
   const client = useSNS();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (topics: readonly Topic[]) => {
       const failures: string[] = [];
+
       for (const topic of topics) {
         try {
           await client.send(new DeleteTopicCommand({ TopicArn: topic.arn }));
@@ -123,6 +129,7 @@ export function useDeleteTopics() {
           failures.push(`${topic.name}: ${errorMessage(error)}`);
         }
       }
+
       return { count: topics.length - failures.length, failures };
     },
     // Xóa topic kéo theo subscription của nó, kể cả khối SNS ở trang queue / function
@@ -140,14 +147,17 @@ export interface PublishInput {
 
 export function usePublish(topic: Topic) {
   const client = useSNS();
+
   return useMutation({
     mutationFn: ({ subject, body, attributes, groupId, dedupId }: PublishInput) => {
       const messageAttributes: Record<string, MessageAttributeValue> = {};
+
       for (const attribute of attributes)
         messageAttributes[attribute.name] = {
           DataType: attribute.type,
           StringValue: attribute.value,
         };
+
       return client.send(
         new PublishCommand({
           TopicArn: topic.arn,

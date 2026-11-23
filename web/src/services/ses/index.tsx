@@ -8,8 +8,7 @@ export const sesService: ServiceDefinition = {
   id: SES_SERVICE_ID,
   name: "SES",
   fullName: "Amazon Simple Email Service",
-  description:
-    "Local mailbox for emails your app sends, sender identities and templates",
+  description: "Local mailbox for emails your app sends, sender identities and templates",
   icon: IconMail,
   category: "business",
   navigation: [

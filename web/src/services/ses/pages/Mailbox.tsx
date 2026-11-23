@@ -38,6 +38,7 @@ const crumbs = [...sesBaseCrumbs, { text: "Mailbox", href: sesRoutes.mailbox }];
 function Recipients({ email }: { email: Email }) {
   const [first, ...others] = recipientsOf(email);
   if (!first) return <>{NOT_AVAILABLE}</>;
+
   return (
     <>
       {first}
@@ -55,6 +56,7 @@ function SubjectCell({ email }: { email: Email }) {
   if (email.RejectReason) {
     return <StatusIndicator type='error'>Rejected: {email.RejectReason}</StatusIndicator>;
   }
+
   return (
     <>
       {email.Attachments?.length ? `${ATTACHMENT_ICON} ` : ""}
@@ -114,14 +116,17 @@ export function Mailbox() {
     });
 
   const selected = collectionProps.selectedItems ?? [];
+
   const emailHref = (id: string) => {
     const next = new URLSearchParams(searchParams);
     next.set(SEARCH_PARAMS.email, id);
     return `?${next}`;
   };
+
   const selectEmail = (email: Email) =>
     // Đổi mail khi panel đang mở thì thay entry, để Back luôn đóng panel
     navigate(emailHref(email.Id), { replace: Boolean(openId) });
+
   const deleteParam = (name: string) =>
     setSearchParams(
       (current) => {
@@ -131,7 +136,9 @@ export function Mailbox() {
       },
       { replace: true },
     );
+
   const closeEmail = () => deleteParam(SEARCH_PARAMS.email);
+
   const finishDelete = (deleted: readonly Email[]) => {
     setDeleteTarget(null);
     actions.setSelectedItems([]);
@@ -140,6 +147,7 @@ export function Mailbox() {
 
   const panelHeader = (email: Email) =>
     email.RejectReason ? "Rejected email" : openContent.data?.subject || NO_SUBJECT;
+
   // Mô tả của SplitPanel nằm trong <p> nên chỉ dùng chữ, không dùng KeyValuePairs (div)
   const panelDescription = (email: Email) =>
     [
@@ -192,22 +200,26 @@ export function Mailbox() {
     header: "To",
     cell: (email) => <Recipients email={email} />,
   };
+
   const subjectColumn: TableProps.ColumnDefinition<Email> = {
     id: "subject",
     header: "Subject",
     isRowHeader: true,
     cell: subjectLink,
   };
+
   const fromColumn: TableProps.ColumnDefinition<Email> = {
     id: "from",
     header: "From",
     cell: (email) => email.Source ?? NOT_AVAILABLE,
   };
+
   const sentColumn: TableProps.ColumnDefinition<Email> = {
     id: "sent",
     header: "Sent",
     cell: (email) => formatDate(sentAt(email)),
   };
+
   // Khung hẹp: tầng 1 chỉ có subject (link mở mail); tầng 2 xám: người nhận và giờ gửi
   const compactColumns: TableProps.ColumnDefinition<Email>[] = [
     {

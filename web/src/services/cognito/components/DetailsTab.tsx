@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { EmailSendingAccountType, type UserPoolType } from "@aws-sdk/client-cognito-identity-provider";
+import {
+  EmailSendingAccountType,
+  type UserPoolType,
+} from "@aws-sdk/client-cognito-identity-provider";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
@@ -46,10 +49,16 @@ export function DetailsTab({ pool }: { pool: UserPoolType }) {
   const generalItems: KeyValuePairsProps.Item[] = [
     { label: "Pool ID", value: copyable(poolId) },
     { label: "ARN", value: pool.Arn ? copyable(pool.Arn) : NOT_AVAILABLE },
-    { label: "Sign-in with", value:
+    {
+      label: "Sign-in with",
+      value:
         [...(pool.UsernameAttributes ?? []), ...(pool.AliasAttributes ?? [])].join(", ") ||
-        DEFAULT_SIGN_IN_LABEL },
-    { label: "Auto-verified attributes", value: pool.AutoVerifiedAttributes?.join(", ") || NOT_AVAILABLE },
+        DEFAULT_SIGN_IN_LABEL,
+    },
+    {
+      label: "Auto-verified attributes",
+      value: pool.AutoVerifiedAttributes?.join(", ") || NOT_AVAILABLE,
+    },
     { label: "Created", value: formatDate(pool.CreationDate) },
   ];
 
@@ -92,6 +101,7 @@ export function DetailsTab({ pool }: { pool: UserPoolType }) {
 
   const email = pool.EmailConfiguration;
   const identity = email?.SourceArn?.split(SES_IDENTITY_PREFIX)[1];
+
   const emailItems: KeyValuePairsProps.Item[] =
     email?.EmailSendingAccount === EmailSendingAccountType.DEVELOPER
       ? [
@@ -122,9 +132,9 @@ export function DetailsTab({ pool }: { pool: UserPoolType }) {
           <SpaceBetween size='m'>
             <KeyValuePairs columns={1} items={endpointItems} />
             <Box color='text-body-secondary'>
-              Tokens carry this issuer even when your app reaches Floci at{" "}
-              <code>floci:4566</code>. Verify <code>iss</code> against it and fetch keys from the
-              JWKS URL your app can reach.
+              Tokens carry this issuer even when your app reaches Floci at <code>floci:4566</code>.
+              Verify <code>iss</code> against it and fetch keys from the JWKS URL your app can
+              reach.
             </Box>
           </SpaceBetween>
         </Container>
@@ -144,7 +154,10 @@ export function DetailsTab({ pool }: { pool: UserPoolType }) {
         </Container>
         <Container
           header={
-            <Header variant='h2' actions={<Button onClick={() => setEditingEmail(true)}>Edit</Button>}>
+            <Header
+              variant='h2'
+              actions={<Button onClick={() => setEditingEmail(true)}>Edit</Button>}
+            >
               Email
             </Header>
           }

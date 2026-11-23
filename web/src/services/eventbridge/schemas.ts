@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { jsonError, jsonObjectError } from "@shared/json.ts";
+import { jsonError } from "@shared/json.ts";
+import { enumOfKeys, jsonObjectText, wholeNumberIn } from "@shared/schemas.ts";
 import {
   BUS_NAME_MAX_LENGTH,
   NAME_PATTERN,
@@ -10,8 +11,6 @@ import {
   RULE_TYPES,
   SCHEDULE_EXPRESSION_PATTERN,
   SCHEDULE_KINDS,
-  type RuleType,
-  type ScheduleKind,
 } from "./constants.ts";
 import { patternError } from "./pattern.ts";
 import { timingErrors } from "./scheduleExpression.ts";
@@ -40,24 +39,15 @@ export const sendEventsSchema = z.object({
   bus: z.string().min(1, "Choose an event bus."),
   source: z.string().trim().min(1, "Enter a source."),
   detailType: z.string().trim().min(1, "Enter a detail type."),
-  detail: z
-    .string()
-    .trim()
-    .min(1, "Enter the event detail.")
-    .superRefine((text, context) => {
-      const error = jsonObjectError(text);
-      if (error) context.addIssue({ code: "custom", message: error });
-    }),
+  detail: jsonObjectText.min(1, "Enter the event detail."),
 });
-
-const RULE_TYPE_IDS = Object.keys(RULE_TYPES) as [RuleType, ...RuleType[]];
 
 export const ruleSchema = z
   .object({
     bus: z.string().min(1, "Choose an event bus."),
     name: nameSchema("a rule", NAME_MAX_LENGTH),
     description: z.string().trim(),
-    type: z.enum(RULE_TYPE_IDS),
+    type: enumOfKeys(RULE_TYPES),
     eventPattern: z.string(),
     scheduleExpression: z.string().trim(),
     enabled: z.boolean(),
@@ -65,6 +55,7 @@ export const ruleSchema = z
   .superRefine((values, context) => {
     const addIssue = (path: string, message: string) =>
       context.addIssue({ code: "custom", path: [path], message });
+
     if (values.type === "pattern") {
       const error = patternError(values.eventPattern);
       if (error) addIssue("eventPattern", error);
@@ -97,12 +88,11 @@ export const addTargetSchema = (fifoArns: ReadonlySet<string>) =>
 
 export type AddTargetForm = z.input<ReturnType<typeof addTargetSchema>>;
 
-const SCHEDULE_KIND_IDS = Object.keys(SCHEDULE_KINDS) as [ScheduleKind, ...ScheduleKind[]];
 // "other": đích form không biểu diễn được (ECS, Kinesis…), khóa khi sửa
 const SCHEDULE_TARGET_IDS = [...SCHEDULE_TARGET_KINDS, "other"] as const;
-const FLEXIBLE_MODE_IDS = Object.values(FLEXIBLE_MODES) as [string, ...string[]];
 
-const MAX_FLEXIBLE_MINUTES = 1440;
+const FLEXIBLE_MINUTES = { min: 1, max: 1440 };
+
 const JSON_INPUT_TARGET_KINDS: ReadonlySet<string> = new Set([
   "lambda",
   "eventbus",
@@ -116,14 +106,14 @@ export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
       name: nameSchema("a schedule", NAME_MAX_LENGTH),
       group: z.string().min(1, "Choose a schedule group."),
       description: z.string().trim(),
-      kind: z.enum(SCHEDULE_KIND_IDS),
+      kind: enumOfKeys(SCHEDULE_KINDS),
       atTime: z.string(),
       rateValue: z.string().trim(),
       rateUnit: z.enum(RATE_UNITS),
       cron: z.string(),
       timezone: z.string().min(1, "Choose a time zone."),
       deleteAfter: z.boolean(),
-      flexMode: z.enum(FLEXIBLE_MODE_IDS),
+      flexMode: z.enum(FLEXIBLE_MODES),
       flexMinutes: z.string().trim(),
       targetKind: z.enum(SCHEDULE_TARGET_IDS),
       targetArn: z.string(),
@@ -139,20 +129,20 @@ export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
 
       for (const [path, message] of Object.entries(timingErrors(values))) addIssue(path, message);
 
-      if (values.flexMode === FLEXIBLE_MODES.flexible) {
-        const minutes = Number(values.flexMinutes);
-        if (!Number.isInteger(minutes) || minutes < 1 || minutes > MAX_FLEXIBLE_MINUTES)
-          addIssue("flexMinutes", `Enter a whole number from 1 to ${MAX_FLEXIBLE_MINUTES}.`);
-      }
+      const flex = wholeNumberIn(FLEXIBLE_MINUTES).safeParse(values.flexMinutes);
+      if (values.flexMode === FLEXIBLE_MODES.flexible && !flex.success)
+        addIssue("flexMinutes", flex.error.issues[0].message);
 
       if (values.targetKind === "other") return;
       if (!values.targetArn) addIssue("targetArn", "Choose a resource.");
       if (fifoArns.has(values.targetArn) && !values.groupId)
         addIssue("groupId", "Enter a message group ID.");
+
       if (values.targetKind === "eventbus") {
         if (!values.source) addIssue("source", "Enter a source.");
         if (!values.detailType) addIssue("detailType", "Enter a detail type.");
       }
+
       // Luật của Floci: Lambda, event bus và state machine nhận Input là JSON; SQS, SNS nhận text bất kỳ
       if (JSON_INPUT_TARGET_KINDS.has(values.targetKind)) {
         const error = jsonError(values.input);

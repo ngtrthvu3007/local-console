@@ -31,7 +31,7 @@ import { useSQS } from "./useSQS.ts";
 
 // Mọi query của SQS nằm dưới key gốc này
 const SQS_QUERY_ROOT = "sqs";
-export const queuesQueryKey = [SQS_QUERY_ROOT, "queues"];
+const queuesQueryKey = [SQS_QUERY_ROOT, "queues"];
 // Mọi query về một queue (chi tiết, message, trigger…) nằm dưới key này
 const anyQueueQueryKey = [SQS_QUERY_ROOT, "queue"];
 export const queueQueryKey = (queue: string, part?: string) =>
@@ -64,11 +64,13 @@ async function describeQueue(client: SQSClient, url: string) {
   const { Attributes = {} } = await client.send(
     new GetQueueAttributesCommand({ QueueUrl: url, AttributeNames: [ALL_ATTRIBUTES] }),
   );
+
   return toQueue(url, Attributes);
 }
 
 export function useQueues() {
   const client = useSQS();
+
   return useQuery({
     queryKey: queuesQueryKey,
     queryFn: async () => {
@@ -84,6 +86,7 @@ export function useQueues() {
 // Đường dẫn dùng tên queue; URL lấy bằng GetQueueUrl, không tự ghép host
 export function useQueue(name: string, autoRefresh = false) {
   const client = useSQS();
+
   return useQuery({
     queryKey: queueQueryKey(name, DETAILS),
     queryFn: async () => {
@@ -98,6 +101,7 @@ export function useQueue(name: string, autoRefresh = false) {
 // Các queue đang dùng queue này làm DLQ
 export function useDeadLetterSources(queue: Queue) {
   const client = useSQS();
+
   return useQuery({
     queryKey: queueQueryKey(queue.name, DLQ_SOURCES),
     queryFn: async () => {
@@ -112,6 +116,7 @@ export function useDeadLetterSources(queue: Queue) {
 // Làm mới mọi query của queue và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
 export function useInvalidateQueue() {
   const queryClient = useQueryClient();
+
   return (queue: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: queueQueryKey(queue) }),
@@ -129,6 +134,7 @@ export interface CreateQueueInput {
 export function useCreateQueue() {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: ({ name, type, contentBasedDedup }: CreateQueueInput) =>
       client.send(
@@ -147,9 +153,11 @@ export function useCreateQueue() {
 export function useDeleteQueues() {
   const client = useSQS();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (queues: readonly Queue[]) => {
       const failures: string[] = [];
+
       for (const queue of queues) {
         try {
           await client.send(new DeleteQueueCommand({ QueueUrl: queue.url }));
@@ -157,6 +165,7 @@ export function useDeleteQueues() {
           failures.push(`${queue.name}: ${errorMessage(error)}`);
         }
       }
+
       return { count: queues.length - failures.length, failures };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queuesQueryKey }),
@@ -166,6 +175,7 @@ export function useDeleteQueues() {
 export function useUpdateSettings(queue: Queue) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: (settings: QueueSettings) =>
       client.send(
@@ -182,6 +192,7 @@ export function useUpdateSettings(queue: Queue) {
 export function useUpdateRedrivePolicy(queue: Queue) {
   const client = useSQS();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (policy?: RedrivePolicy) =>
       client.send(

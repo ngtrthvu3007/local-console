@@ -8,8 +8,7 @@ export const snsService: ServiceDefinition = {
   id: SNS_SERVICE_ID,
   name: "SNS",
   fullName: "Amazon SNS",
-  description:
-    "Topics: fan out to queues, functions and HTTP endpoints, filter policies, publish",
+  description: "Topics: fan out to queues, functions and HTTP endpoints, filter policies, publish",
   icon: IconBroadcast,
   category: "integration",
   navigation: [

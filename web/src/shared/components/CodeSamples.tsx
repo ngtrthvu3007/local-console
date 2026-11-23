@@ -30,13 +30,7 @@ export function CodeSamples({ sample }: { sample: CodeSample }) {
             highlight={highlight}
             wrapLines
             ariaLabel={`${label} code`}
-            actions={
-              <CopyButton
-                variant='icon'
-                text={sample[id]}
-                label={COPY_CODE_LABEL}
-              />
-            }
+            actions={<CopyButton variant='icon' text={sample[id]} label={COPY_CODE_LABEL} />}
           />
         ),
       }))}

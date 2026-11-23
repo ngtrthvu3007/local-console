@@ -15,26 +15,17 @@ import {
 } from "./client.ts";
 import {
   RABBIT_ERROR_CODES,
-  type CreateQueueInput,
-  type PeekInput,
-  type PublishInput,
+  createQueueInputSchema,
+  peekInputSchema,
+  publishInputSchema,
 } from "./contract.ts";
 
 // Payload thử tới 1 MB; JSON escape có thể làm body lớn hơn
 const BODY_LIMIT = "4mb";
-const PEEK_MAX_COUNT = 50;
 const BASIC_AUTH_PREFIX = "Basic ";
 
 const brokerParams = z.object({ broker: z.string().min(1) });
 const nameParams = brokerParams.extend({ name: z.string().min(1) });
-const createQueueSchema = z.object({ durable: z.boolean() }) satisfies z.ZodType<CreateQueueInput>;
-const publishSchema = z.object({
-  routingKey: z.string(),
-  payload: z.string(),
-}) satisfies z.ZodType<PublishInput>;
-const peekSchema = z.object({
-  count: z.number().int().min(1).max(PEEK_MAX_COUNT),
-}) satisfies z.ZodType<PeekInput>;
 
 // Cầu nối tới API quản lý của RabbitMQ: trình duyệt bị chặn CORS và cần đăng nhập
 export function rabbitRouter(callRabbit: CallRabbit): Router {
@@ -45,6 +36,7 @@ export function rabbitRouter(callRabbit: CallRabbit): Router {
   function rabbitFor(request: Request): Rabbit {
     const { broker } = brokerParams.parse(request.params);
     const authorization = request.headers.authorization;
+
     if (!authorization?.startsWith(BASIC_AUTH_PREFIX)) {
       throw new HttpError(
         HTTP_UNAUTHORIZED,
@@ -52,6 +44,7 @@ export function rabbitRouter(callRabbit: CallRabbit): Router {
         "Sign in to the broker first",
       );
     }
+
     return (path, init) => callRabbit(broker, authorization, path, init);
   }
 
@@ -65,7 +58,7 @@ export function rabbitRouter(callRabbit: CallRabbit): Router {
 
   router.put("/:broker/queues/:name", async (request, response) => {
     const { name } = nameParams.parse(request.params);
-    await createQueue(rabbitFor(request), name, createQueueSchema.parse(request.body));
+    await createQueue(rabbitFor(request), name, createQueueInputSchema.parse(request.body));
     response.status(HTTP_CREATED).json({ name });
   });
 
@@ -77,12 +70,12 @@ export function rabbitRouter(callRabbit: CallRabbit): Router {
 
   router.post("/:broker/exchanges/:name/publish", async (request, response) => {
     const { name } = nameParams.parse(request.params);
-    response.json(await publish(rabbitFor(request), name, publishSchema.parse(request.body)));
+    response.json(await publish(rabbitFor(request), name, publishInputSchema.parse(request.body)));
   });
 
   router.post("/:broker/queues/:name/peek", async (request, response) => {
     const { name } = nameParams.parse(request.params);
-    const { count } = peekSchema.parse(request.body);
+    const { count } = peekInputSchema.parse(request.body);
     response.json(await peek(rabbitFor(request), name, count));
   });
 

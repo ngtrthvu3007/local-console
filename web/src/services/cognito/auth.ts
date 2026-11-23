@@ -22,7 +22,7 @@ export const issuerUrl = (baseUrl: string, poolId: string) => `${baseUrl}/${pool
 export const wellKnownUrl = (baseUrl: string, poolId: string, path: string) =>
   `${baseUrl}/${poolId}/${path}`;
 
-export type JwtPayload = Record<string, unknown> & {
+type JwtPayload = Record<string, unknown> & {
   exp?: number;
   iat?: number;
   "cognito:groups"?: string[];
@@ -47,6 +47,7 @@ export async function secretHash(
   clientId: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
+
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(clientSecret),
@@ -54,11 +55,13 @@ export async function secretHash(
     false,
     ["sign"],
   );
+
   const signature = await crypto.subtle.sign(
     SECRET_HASH_ALGORITHM.name,
     key,
     encoder.encode(username + clientId),
   );
+
   return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }
 
@@ -80,6 +83,7 @@ export function hostedUiUrl(input: {
     scope: input.scopes.join(" "),
     state: input.state,
   });
+
   // Có identity_provider thì Floci chuyển thẳng sang IdP, bỏ qua form của Cognito
   if (input.identityProvider) params.set("identity_provider", input.identityProvider);
   return `${input.baseUrl}${HOSTED_UI_PATHS.authorize}?${params}`;
@@ -106,6 +110,7 @@ export function toSignInResult(output: InitiateAuthResponse, typedUsername: stri
   if (!output.ChallengeName) throw new Error(NO_TOKENS_ERROR);
   if (output.ChallengeName !== ChallengeNameType.NEW_PASSWORD_REQUIRED || !output.Session)
     throw new Error(unsupportedChallengeError(output.ChallengeName));
+
   return {
     kind: "newPassword",
     session: output.Session,

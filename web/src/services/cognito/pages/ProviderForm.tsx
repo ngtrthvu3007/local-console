@@ -24,7 +24,13 @@ import { isCognitoMissing } from "../hooks/useCognito.ts";
 import { useUserPool } from "../hooks/usePools.ts";
 import { useCreateProvider, useProvider, useUpdateProvider } from "../hooks/useProviders.ts";
 import { POOL_TABS, cognitoRoutes, poolCrumbs } from "../routes.ts";
-import { providerEditSchema, providerFormOf, providerSchema, toProviderFields, type ProviderForm as ProviderFormValues } from "../schemas.ts";
+import {
+  providerEditSchema,
+  providerFormOf,
+  providerSchema,
+  toProviderFields,
+  type ProviderForm as ProviderFormValues,
+} from "../schemas.ts";
 
 const TYPE_ITEMS = [
   { value: PROVIDER_TYPES.OIDC, label: "OIDC" },
@@ -44,6 +50,7 @@ const EMPTY_MAPPING = { poolAttribute: "", idpClaim: "" };
 
 function AttachButton({ poolId }: { poolId: string }) {
   const follow = useFollow();
+
   return (
     <Button href={cognitoRoutes.pool(poolId, POOL_TABS.clients)} onFollow={follow}>
       Attach to an app client
@@ -59,21 +66,30 @@ function OidcUrlField({
   field: (typeof OIDC_URL_FIELDS)[number];
 }) {
   const url = useWatch({ control, name: field.name });
+
   return (
     <SpaceBetween size='xs'>
       <FormInput control={control} name={field.name} label={field.label} />
       {field.calledFromContainer && isLocalUrl(url) && (
         <Alert type='warning'>
-          From the Floci container, this URL points at Floci, not at your machine. Use {HOST_FROM_CONTAINER} instead.
+          From the Floci container, this URL points at Floci, not at your machine. Use{" "}
+          {HOST_FROM_CONTAINER} instead.
         </Alert>
       )}
     </SpaceBetween>
   );
 }
 
-function MappingField({ control, attributes }: { control: Control<ProviderFormValues>; attributes: string[] }) {
+function MappingField({
+  control,
+  attributes,
+}: {
+  control: Control<ProviderFormValues>;
+  attributes: string[];
+}) {
   const rows = useFieldArray({ control, name: "mapping" });
   const options = attributes.map((value) => ({ value, label: value }));
+
   return (
     <AttributeEditor
       items={rows.fields}
@@ -81,12 +97,18 @@ function MappingField({ control, attributes }: { control: Control<ProviderFormVa
         {
           label: "User pool attribute",
           control: (_row, index) => (
-            <FormSelect control={control} name={`mapping.${index}.poolAttribute`} options={options} />
+            <FormSelect
+              control={control}
+              name={`mapping.${index}.poolAttribute`}
+              options={options}
+            />
           ),
         },
         {
           label: "IdP claim",
-          control: (_row, index) => <FormInput control={control} name={`mapping.${index}.idpClaim`} />,
+          control: (_row, index) => (
+            <FormInput control={control} name={`mapping.${index}.idpClaim`} />
+          ),
         },
       ]}
       addButtonText='Add mapping'
@@ -118,16 +140,24 @@ function ProviderFormView({
   const type = useWatch({ control: form.control, name: "type" });
   const backHref = cognitoRoutes.pool(poolId, POOL_TABS.providers);
   const redirectUri = `${flociPublicUrl}${HOSTED_UI_PATHS.idpResponse}`;
+
   // Giá trị mapping có sẵn mà schema không có vẫn phải là option, kẻo Select trống
-  const attributeOptions = [...new Set([...attributes, ...initial.mapping.map((row) => row.poolAttribute)])];
+  const attributeOptions = [
+    ...new Set([...attributes, ...initial.mapping.map((row) => row.poolAttribute)]),
+  ];
 
   const submit = form.handleSubmit((values) => {
     const name = toProviderFields(values).ProviderName;
     const then = () => navigate(backHref);
+
     if (editing)
       update.mutate(
         values,
-        notifyOutcome({ success: `Saved identity provider ${name}`, errorHeader: `Couldn't save ${name}`, then }),
+        notifyOutcome({
+          success: `Saved identity provider ${name}`,
+          errorHeader: `Couldn't save ${name}`,
+          then,
+        }),
       );
     else
       create.mutate(
@@ -149,13 +179,21 @@ function ProviderFormView({
       }}
     >
       <Form
-        header={<Header variant='h1'>{editing ? "Edit identity provider" : "Create identity provider"}</Header>}
+        header={
+          <Header variant='h1'>
+            {editing ? "Edit identity provider" : "Create identity provider"}
+          </Header>
+        }
         actions={
           <ResponsiveActions footer>
             <Button variant='link' href={backHref} onFollow={follow}>
               Cancel
             </Button>
-            <Button variant='primary' formAction='submit' loading={create.isPending || update.isPending}>
+            <Button
+              variant='primary'
+              formAction='submit'
+              loading={create.isPending || update.isPending}
+            >
               {editing ? "Save identity provider" : "Create identity provider"}
             </Button>
           </ResponsiveActions>
@@ -177,18 +215,18 @@ function ProviderFormView({
                       <Input value={initial.name} disabled />
                     </FormField>
                   ) : (
-                    <FormInput
-                      control={form.control}
-                      name='name'
-                      label='Name'
-                      autoFocus
-                    />
+                    <FormInput control={form.control} name='name' label='Name' autoFocus />
                   )}
                 </SpaceBetween>
               )}
               <FormInput control={form.control} name='clientId' label='Client ID' />
               <FormInput control={form.control} name='clientSecret' label='Client secret' />
-              <FormInput control={form.control} name='scopes' label='Scopes' description='Separated by spaces.' />
+              <FormInput
+                control={form.control}
+                name='scopes'
+                label='Scopes'
+                description='Separated by spaces.'
+              />
             </SpaceBetween>
           </Container>
           {type === PROVIDER_TYPES.OIDC ? (
@@ -211,7 +249,10 @@ function ProviderFormView({
           ) : (
             <Container
               header={
-                <Header variant='h2' description='Register this redirect URI in your Google OAuth client:'>
+                <Header
+                  variant='h2'
+                  description='Register this redirect URI in your Google OAuth client:'
+                >
                   Redirect URI
                 </Header>
               }
@@ -246,7 +287,15 @@ export function ProviderForm() {
     item.Name && !LOCKED_ATTRIBUTES.some((locked) => locked === item.Name) ? [item.Name] : [],
   );
 
-  if (!editing) return <ProviderFormView poolId={poolId} attributes={attributes} initial={providerFormOf()} editing={false} />;
+  if (!editing)
+    return (
+      <ProviderFormView
+        poolId={poolId}
+        attributes={attributes}
+        initial={providerFormOf()}
+        editing={false}
+      />
+    );
 
   const state = pageState(provider, {
     ready: Boolean(provider.data),
@@ -255,7 +304,15 @@ export function ProviderForm() {
     backHref: cognitoRoutes.pool(poolId, POOL_TABS.providers),
     backText: "View identity providers",
   });
+
   if (state || !provider.data) return state;
 
-  return <ProviderFormView poolId={poolId} attributes={attributes} initial={providerFormOf(provider.data)} editing />;
+  return (
+    <ProviderFormView
+      poolId={poolId}
+      attributes={attributes}
+      initial={providerFormOf(provider.data)}
+      editing
+    />
+  );
 }

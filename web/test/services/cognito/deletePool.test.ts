@@ -11,11 +11,15 @@ import { deleteUserPool } from "../../../src/services/cognito/hooks/usePools.ts"
 
 function clientWith(protection: DeletionProtectionType) {
   const client = new CognitoIdentityProviderClient({ region: "us-east-1" });
-  const send = vi.spyOn(client, "send").mockImplementation(async (command: unknown) =>
-    command instanceof DescribeUserPoolCommand
-      ? { UserPool: { Domain: "hosted", DeletionProtection: protection } }
-      : {},
-  );
+
+  const send = vi
+    .spyOn(client, "send")
+    .mockImplementation(async (command: unknown) =>
+      command instanceof DescribeUserPoolCommand
+        ? { UserPool: { Domain: "hosted", DeletionProtection: protection } }
+        : {},
+    );
+
   return { client, sent: () => send.mock.calls.map(([command]) => command.constructor) };
 }
 
@@ -29,6 +33,7 @@ describe("deleteUserPool", () => {
   it("deletes the domain then the pool when unprotected", async () => {
     const { client, sent } = clientWith(DeletionProtectionType.INACTIVE);
     await deleteUserPool(client, "p1");
+
     expect(sent()).toEqual([
       DescribeUserPoolCommand,
       DeleteUserPoolDomainCommand,

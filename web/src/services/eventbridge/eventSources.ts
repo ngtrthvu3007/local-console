@@ -11,10 +11,12 @@ interface RuleSource {
   bus: string;
   rule: string;
 }
+
 interface ScheduleSource {
   group: string;
   name: string;
 }
+
 export interface EventSources {
   rules: RuleSource[];
   schedules: ScheduleSource[];
@@ -24,8 +26,7 @@ export interface EventSources {
 export const targetsArn = (target: string, arn: string, qualified = false) =>
   target === arn || (qualified && target.startsWith(`${arn}${ARN_SEPARATOR}`));
 
-// Mọi cặp (bus, rule, ARN đích). Floci 2.4.0 không có ListRuleNamesByTarget (spec EventBridge 7 #9)
-// nên quét từng bus → rule → target; local ít nên quét song song
+// Floci 2.4.0 không có ListRuleNamesByTarget nên quét bus → rule → target (local ít, quét song song)
 export async function listRuleTargets(client: EventBridgeClient) {
   const perBus = await Promise.all(
     (await listBuses(client)).map(async ({ name: bus }) =>
@@ -40,6 +41,7 @@ export async function listRuleTargets(client: EventBridgeClient) {
       ),
     ),
   );
+
   return perBus.flat(2);
 }
 
@@ -59,9 +61,11 @@ export async function listEventSources(
     listRuleTargets(events),
     listScheduleTargets(scheduler),
   ]);
+
   const rules = new Map<string, RuleSource>();
   for (const { bus, rule, arn } of ruleTargets)
     if (matches(arn)) rules.set(`${bus}/${rule}`, { bus, rule });
+
   return {
     rules: [...rules.values()],
     schedules: scheduleTargets

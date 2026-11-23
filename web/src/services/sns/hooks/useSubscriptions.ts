@@ -31,12 +31,14 @@ const describeAll = (client: SNSClient, listed: ListedSubscription[]) =>
       const { Attributes = {} } = await client.send(
         new GetSubscriptionAttributesCommand({ SubscriptionArn: item.SubscriptionArn }),
       );
+
       return toSubscription(item, Attributes);
     }),
   );
 
 export function useSubscriptions(topicArn: string, topicName: string) {
   const client = useSNS();
+
   return useQuery({
     queryKey: topicQueryKey(topicName, SUBSCRIPTIONS),
     queryFn: async () => {
@@ -62,6 +64,7 @@ export async function listSubscriptionsOfEndpoint(
 // Các subscription đang đẩy vào một queue / function
 export function useSubscriptionsOfEndpoint(endpointArn: string) {
   const client = useSNS();
+
   return useQuery({
     queryKey: [SNS_QUERY_ROOT, ENDPOINT, endpointArn],
     queryFn: () => listSubscriptionsOfEndpoint(client, (endpoint) => endpoint === endpointArn),
@@ -72,6 +75,7 @@ export function useSubscriptionsOfEndpoint(endpointArn: string) {
 function useInvalidateSubscriptions() {
   const queryClient = useQueryClient();
   const invalidateTopic = useInvalidateTopic();
+
   return (topicName: string) =>
     Promise.all([
       invalidateTopic(topicName),
@@ -79,12 +83,12 @@ function useInvalidateSubscriptions() {
     ]);
 }
 
-export interface FilterPolicyInput {
+interface FilterPolicyInput {
   filterPolicy: string;
   filterScope: FilterScope;
 }
 
-export interface CreateSubscriptionInput extends FilterPolicyInput {
+interface CreateSubscriptionInput extends FilterPolicyInput {
   protocol: Protocol;
   endpoint: string;
   rawDelivery: boolean;
@@ -93,9 +97,11 @@ export interface CreateSubscriptionInput extends FilterPolicyInput {
 export function useCreateSubscription(topicArn: string, topicName: string) {
   const client = useSNS();
   const invalidate = useInvalidateSubscriptions();
+
   return useMutation({
     mutationFn: (input: CreateSubscriptionInput) => {
       const filterPolicy = input.filterPolicy.trim();
+
       return client.send(
         new SubscribeCommand({
           TopicArn: topicArn,
@@ -130,6 +136,7 @@ const setAttribute = (client: SNSClient, arn: string, name: string, value: strin
 export function useSetSubscriptionAttributes(subscription: Subscription, topicName: string) {
   const client = useSNS();
   const invalidate = useInvalidateSubscriptions();
+
   return useMutation({
     mutationFn: async (attributes: Record<string, string>) => {
       for (const [name, value] of Object.entries(attributes))
@@ -142,6 +149,7 @@ export function useSetSubscriptionAttributes(subscription: Subscription, topicNa
 // Policy rỗng = bỏ filter, nên không cần đặt scope
 export const filterPolicyAttributes = ({ filterPolicy, filterScope }: FilterPolicyInput) => {
   const policy = filterPolicy.trim();
+
   return {
     ...(policy && { [SUBSCRIPTION_ATTRIBUTES.filterScope]: filterScope }),
     [SUBSCRIPTION_ATTRIBUTES.filterPolicy]: policy,
@@ -155,9 +163,11 @@ export const rawDeliveryAttributes = (rawDelivery: boolean) => ({
 export function useDeleteSubscriptions(topicName: string) {
   const client = useSNS();
   const invalidate = useInvalidateSubscriptions();
+
   return useMutation({
     mutationFn: async (subscriptions: readonly Subscription[]) => {
       const failures: string[] = [];
+
       for (const subscription of subscriptions) {
         try {
           await client.send(new UnsubscribeCommand({ SubscriptionArn: subscription.arn }));
@@ -165,6 +175,7 @@ export function useDeleteSubscriptions(topicName: string) {
           failures.push(`${subscription.endpoint}: ${errorMessage(error)}`);
         }
       }
+
       return { count: subscriptions.length - failures.length, failures };
     },
     onSuccess: () => invalidate(topicName),

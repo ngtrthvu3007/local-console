@@ -24,6 +24,7 @@ export const TEXT_PREVIEW_MAX_BYTES = 1 * MEBIBYTE;
 export const IMAGE_PREVIEW_MAX_BYTES = 10 * MEBIBYTE;
 export const TEXT_CONTENT_TYPE_PATTERN =
   /^(text\/|application\/(json|xml|javascript|x-yaml|yaml|x-sh))/;
+
 export const TEXT_FILE_EXTENSIONS = [
   "txt",
   "json",
@@ -40,6 +41,7 @@ export const TEXT_FILE_EXTENSIONS = [
   "sh",
   "env",
 ];
+
 export const IMAGE_CONTENT_TYPE_PREFIX = "image/";
 export const JSON_CONTENT_TYPE = "application/json";
 export const JSON_FILE_EXTENSION = "json";
@@ -57,9 +59,11 @@ export const PRESIGN_EXPIRY_OPTIONS = [
   { value: String(SECONDS_PER_DAY), label: "1 day" },
   { value: String(7 * SECONDS_PER_DAY), label: "7 days" },
 ];
+
 export const DEFAULT_PRESIGN_EXPIRY = PRESIGN_EXPIRY_OPTIONS[2];
 export const PRESIGN_METHODS = ["GET", "PUT"] as const;
 export type PresignMethod = (typeof PRESIGN_METHODS)[number];
+
 export const PRESIGN_METHOD_LABELS: Record<PresignMethod, string> = {
   GET: "Download (GET)",
   PUT: "Upload (PUT)",
@@ -80,6 +84,7 @@ export const VERSIONING_STATUS = {
   suspended: "Suspended",
   disabled: "Disabled",
 } as const;
+
 export type VersioningStatus = (typeof VERSIONING_STATUS)[keyof typeof VERSIONING_STATUS];
 export const VERSIONING_DESCRIPTION =
   "Keep every version of an object, so you can restore one after it is overwritten or deleted.";
@@ -97,7 +102,8 @@ export const NOTIFICATION_EVENT_TYPES = [
   "s3:ObjectRemoved:Delete",
   "s3:ObjectRemoved:DeleteMarkerCreated",
 ] as const satisfies readonly Event[];
-export type NotificationEvent = (typeof NOTIFICATION_EVENT_TYPES)[number];
+
+type NotificationEvent = (typeof NOTIFICATION_EVENT_TYPES)[number];
 export const DEFAULT_NOTIFICATION_EVENTS: NotificationEvent[] = ["s3:ObjectCreated:*"];
 export const FILTER_RULE_NAMES = { prefix: "prefix", suffix: "suffix" } as const;
 
@@ -110,6 +116,7 @@ export const NOTIFICATION_DESTINATIONS = {
   sqs: { label: "SQS queue", arnPattern: /^arn:aws:sqs:/, arnExample: "my-queue" },
   sns: { label: "SNS topic", arnPattern: /^arn:aws:sns:/, arnExample: "my-topic" },
 } as const;
+
 export type NotificationDestination = keyof typeof NOTIFICATION_DESTINATIONS;
 
 // Lifecycle

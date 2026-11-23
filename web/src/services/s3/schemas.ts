@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { enumOfKeys, optionalWholeNumber } from "@shared/schemas.ts";
 import {
   ADJACENT_DOTS,
   BUCKET_NAME_MAX_LENGTH,
@@ -12,15 +13,9 @@ import {
   PATH_DELIMITER,
   PRESIGN_METHODS,
   VERSIONING_STATUS,
-  type NotificationDestination,
 } from "./constants.ts";
 import { asFolderKey } from "./helpers.ts";
 import { overlapMessage, overlappingRule, type NotificationRule } from "./notificationRules.ts";
-
-const DESTINATION_IDS = Object.keys(NOTIFICATION_DESTINATIONS) as [
-  NotificationDestination,
-  ...NotificationDestination[],
-];
 
 // Tên một mục trong folder: không rỗng, không chứa "/"
 const itemName = z
@@ -29,7 +24,7 @@ const itemName = z
   .min(1, "Enter a name.")
   .refine((name) => !name.includes(PATH_DELIMITER), `Names can't contain "${PATH_DELIMITER}".`);
 
-export const bucketNameSchema = z
+const bucketNameSchema = z
   .string()
   .trim()
   .min(1, "Enter a bucket name.")
@@ -79,8 +74,7 @@ export const transferSchema = (sourceBucket: string, sourcePrefix: string) =>
       { message: "Pick a different destination.", path: ["destinationFolder"] },
     );
 
-// Metadata đi trong header HTTP (x-amz-meta-<key>): trình duyệt chỉ nhận chữ Latin-1 trong header
-// (chữ Việt làm request lỗi trước khi gửi), AWS cũng yêu cầu US-ASCII; tên key phải là token header
+// Metadata đi trong header: trình duyệt chỉ nhận Latin-1, AWS đòi US-ASCII; key phải là token header
 const HEADER_VALUE = /^[\x20-\x7E]*$/;
 const HEADER_NAME = /^[A-Za-z0-9!#$%&'*+.^_`|~-]*$/;
 const ASCII_ONLY = "Use ASCII characters only: S3 sends metadata as HTTP headers.";
@@ -105,7 +99,7 @@ export const notificationSchema = (existingIds: string[], existingRules: Notific
       events: z.array(z.enum(NOTIFICATION_EVENT_TYPES)).min(1, "Choose at least one event type."),
       prefix: z.string().trim(),
       suffix: z.string().trim(),
-      destination: z.enum(DESTINATION_IDS),
+      destination: enumOfKeys(NOTIFICATION_DESTINATIONS),
       arn: z.string().trim(),
     })
     .superRefine(({ destination, arn, events, prefix, suffix }, context) => {
@@ -114,6 +108,7 @@ export const notificationSchema = (existingIds: string[], existingRules: Notific
         context.addIssue({ code: "custom", path: ["prefix"], message: overlapMessage(overlap) });
       const target = NOTIFICATION_DESTINATIONS[destination];
       if (target.arnPattern.test(arn)) return;
+
       context.addIssue({
         code: "custom",
         path: ["arn"],
@@ -122,14 +117,10 @@ export const notificationSchema = (existingIds: string[], existingRules: Notific
     });
 
 // Ô số ngày: để trống là không dùng hành động đó
-const optionalDays = z
-  .string()
-  .trim()
-  .refine(
-    (text) => !text || (Number.isInteger(Number(text)) && Number(text) >= MIN_LIFECYCLE_DAYS),
-    `Enter a whole number of days, ${MIN_LIFECYCLE_DAYS} or more.`,
-  )
-  .transform((text) => (text ? Number(text) : undefined));
+const optionalDays = optionalWholeNumber(
+  { min: MIN_LIFECYCLE_DAYS },
+  `Enter a whole number of days, ${MIN_LIFECYCLE_DAYS} or more.`,
+);
 
 export const lifecycleSchema = (existingIds: string[]) =>
   z
@@ -148,6 +139,7 @@ export const lifecycleSchema = (existingIds: string[]) =>
     })
     .superRefine((rule, context) => {
       const { expireDays, noncurrentDays, abortDays, deleteExpiredMarkers } = rule;
+
       if (!expireDays && !noncurrentDays && !abortDays && !deleteExpiredMarkers) {
         context.addIssue({
           code: "custom",
@@ -155,6 +147,7 @@ export const lifecycleSchema = (existingIds: string[]) =>
           message: "Set at least one action.",
         });
       }
+
       // S3 không cho dùng chung hai hành động này trong một rule
       if (expireDays && deleteExpiredMarkers) {
         context.addIssue({
@@ -169,9 +162,11 @@ export type LifecycleFormOutput = z.output<ReturnType<typeof lifecycleSchema>>;
 
 // Kiểm tra tối thiểu: Floci nhận mọi policy, còn AWS thật sẽ từ chối policy thiếu các phần này
 const POLICY_EFFECTS = ["Allow", "Deny"] as const;
+
 const policyStatement = z.looseObject({
   Effect: z.enum(POLICY_EFFECTS, { error: 'Each statement needs "Effect": "Allow" or "Deny".' }),
 });
+
 export const bucketPolicySchema = z.looseObject({
   Version: z.string({ error: 'Add "Version": "2012-10-17".' }),
   // Statement có thể là một object hoặc một mảng
@@ -180,6 +175,22 @@ export const bucketPolicySchema = z.looseObject({
     z.array(policyStatement).min(1, "Add at least one statement."),
   ),
 });
+
+// Kiểm tra tối thiểu: S3 bắt buộc AllowedMethods và AllowedOrigins ở mỗi rule
+const requiredList = (key: string) =>
+  z
+    .array(z.string(), { error: `Each rule needs "${key}": [...].` })
+    .min(1, `"${key}" can't be empty.`);
+
+export const corsRulesSchema = z
+  .array(
+    z.looseObject({
+      AllowedMethods: requiredList("AllowedMethods"),
+      AllowedOrigins: requiredList("AllowedOrigins"),
+    }),
+    { error: "CORS rules are a JSON array." },
+  )
+  .min(1, "Add at least one rule.");
 
 export const presignSchema = z.object({
   method: z.enum(PRESIGN_METHODS),

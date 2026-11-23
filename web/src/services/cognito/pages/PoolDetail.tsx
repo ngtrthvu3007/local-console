@@ -73,7 +73,12 @@ function PoolView({ pool, poolId }: { pool: UserPoolType; poolId: string }) {
                 compact={compact}
                 actions={[
                   { id: "delete", text: "Delete", onClick: () => setDeleting(true) },
-                  { id: "test-sign-in", text: "Test sign-in", primary: true, onClick: () => setTestingSignIn(true) },
+                  {
+                    id: "test-sign-in",
+                    text: "Test sign-in",
+                    primary: true,
+                    onClick: () => setTestingSignIn(true),
+                  },
                 ]}
               />
             }
@@ -91,7 +96,9 @@ function PoolView({ pool, poolId }: { pool: UserPoolType; poolId: string }) {
           }))}
           onChange={({ detail }) =>
             setSearchParams(
-              detail.activeTabId === POOL_TABS.users ? {} : { [SEARCH_PARAMS.tab]: detail.activeTabId },
+              detail.activeTabId === POOL_TABS.users
+                ? {}
+                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
             )
           }
         />
@@ -103,7 +110,9 @@ function PoolView({ pool, poolId }: { pool: UserPoolType; poolId: string }) {
           onDone={() => navigate(cognitoRoutes.pools)}
         />
       )}
-      {testingSignIn && <TestSignInModal poolId={poolId} onDismiss={() => setTestingSignIn(false)} />}
+      {testingSignIn && (
+        <TestSignInModal poolId={poolId} onDismiss={() => setTestingSignIn(false)} />
+      )}
     </div>
   );
 }
@@ -121,6 +130,7 @@ export function PoolDetail() {
     backHref: cognitoRoutes.pools,
     backText: "View user pools",
   });
+
   if (state || !details.data) return state;
 
   return <PoolView pool={details.data} poolId={poolId} />;

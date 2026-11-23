@@ -33,11 +33,13 @@ const SECONDS_ONLY_LIMIT_MS = 10 * MILLISECONDS_PER_SECOND;
 
 const ENTERED_EVENT = /^(.+)StateEntered$/;
 const EXITED_EVENT = /^(.+)StateExited$/;
+
 const ITERATION_SETTLED_EVENTS = new Set([
   "MapIterationSucceeded",
   "MapIterationFailed",
   "MapIterationAborted",
 ]);
+
 const TASK_SUCCESS_EVENTS = new Set([
   "TaskSucceeded",
   "LambdaFunctionSucceeded",
@@ -73,8 +75,7 @@ interface Node {
   order: number; // chỉ số vòng lặp Map; Floci phát vòng lặp không theo thứ tự
 }
 
-// Vị trí của một event trong cây: nằm trong dòng gom nào (`parent`), đang ở bước nào (`current`).
-// `branchesOf` / `iterationsOf`: event ngay trước nhánh / vòng lặp đầu tiên của Parallel / Map
+// parent: dòng gom chứa event; current: bước đang ở; branchesOf / iterationsOf: event ngay trước nhánh / vòng đầu
 interface Context {
   parent?: Node;
   current?: Node;
@@ -99,6 +100,7 @@ function newNode(
     branches: 0,
     order: 0,
   };
+
   parent?.kids.push(node);
   return node;
 }
@@ -109,6 +111,7 @@ function openStateNamed(context: Context, name?: string): Node | undefined {
   for (let node = context.current ?? context.parent; node; node = node.parent) {
     if (node.isState && !node.exited && node.row.name === name) return node;
   }
+
   return undefined;
 }
 
@@ -130,8 +133,10 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
     if (entered) {
       const details = event.stateEnteredEventDetails;
       let parent = previous.parent;
+
       if (previous.branchesOf) {
         const split = previous.branchesOf;
+
         parent = newNode(
           {
             id: `branch-${split.row.id}-${split.branches}`,
@@ -142,9 +147,11 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
           split,
           false,
         );
+
         split.branches += 1;
         nodes.push(parent);
       }
+
       const node = newNode(
         {
           id: String(event.id),
@@ -158,6 +165,7 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
         parent,
         true,
       );
+
       node.enteredAt = event.timestamp;
       nodes.push(node);
       states.push(node);
@@ -165,14 +173,17 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
     } else if (exited) {
       const details = event.stateExitedEventDetails;
       const node = openStateNamed(previous, details?.name);
+
       if (node) {
         node.exited = true;
         node.row.output = details?.output;
         node.row.outputTruncated = details?.outputDetails?.truncated;
+
         if (node.enteredAt && event.timestamp) {
           node.row.durationMs = event.timestamp.getTime() - node.enteredAt.getTime();
         }
       }
+
       context = { parent: node?.parent };
     } else if (type === "ParallelStateStarted") {
       context = { ...previous, branchesOf: previous.current };
@@ -180,6 +191,7 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
       context = { ...previous, iterationsOf: previous.current };
     } else if (type === "MapIterationStarted" && previous.iterationsOf) {
       const index = event.mapIterationStartedEventDetails?.index ?? 0;
+
       const iteration = newNode(
         {
           id: String(event.id),
@@ -190,11 +202,13 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
         previous.iterationsOf,
         false,
       );
+
       iteration.order = index;
       nodes.push(iteration);
       context = { parent: iteration };
     } else if (ITERATION_SETTLED_EVENTS.has(type)) {
       const iteration = previous.parent;
+
       if (iteration) {
         iteration.settled = true;
         // Event vòng lặp không mang error / cause, chỉ cho biết vòng lặp có lỗi hay không
@@ -213,11 +227,11 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
     if (event.id !== undefined) contexts.set(event.id, context);
   }
 
-  // Lỗi của execution thuộc bước chưa thoát vào sau cùng (vd: Map không có mảng) và mọi Fail state
-  // chưa thoát (event FailStateEntered không mang error / cause, mà Fail state là nguyên nhân lỗi)
+  // Lỗi gán cho bước chưa thoát vào sau cùng và mọi Fail state chưa thoát (FailStateEntered không có error / cause)
   if (executionFailure) {
     const open = states.filter((node) => !node.exited && !node.failure);
     const stalled = open[open.length - 1];
+
     for (const node of open) {
       if (node === stalled || node.row.type === FAIL_STATE_TYPE) node.failure = executionFailure;
     }
@@ -227,25 +241,31 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
   for (const node of [...nodes].reverse()) {
     node.kids.sort((a, b) => a.order - b.order);
     node.row.children = node.kids.map((kid) => kid.row);
+
     if (node.isState) node.settled = node.exited;
     else if (node.row.type === BRANCH_TYPE) {
       node.settled = node.kids.length > 0 && node.kids.every((kid) => kid.settled);
     }
+
     // Event vòng lặp / nhánh không mang error, và dòng gom dừng giữa chừng cũng vậy: lấy của bước
     // con lỗi đầu tiên
     const failedWithoutReason = !node.isState && node.failure && !node.failure.error;
     const stoppedContainer =
       !node.settled && !node.failure && node.kids.length > 0 && executionStatus !== "RUNNING";
+
     if (failedWithoutReason || stoppedContainer) {
       const failedKid = node.kids.find((kid) => kid.row.error);
       if (failedKid) node.failure = { error: failedKid.row.error, cause: failedKid.row.cause };
     }
+
     node.row.error = node.failure?.error;
     node.row.cause = node.failure?.cause;
+
     if (!node.settled) node.row.status = STEP_STATUS_OF_EXECUTION[executionStatus] ?? "running";
     else if (!node.failure) node.row.status = "succeeded";
     else node.row.status = node.isState ? "caught" : "failed";
   }
+
   return nodes.filter((node) => !node.parent).map((node) => node.row);
 }
 
@@ -253,8 +273,10 @@ export function buildSteps(events: readonly HistoryEvent[], executionStatus: str
 export function formatElapsed(milliseconds?: number): string {
   if (milliseconds === undefined) return NOT_AVAILABLE;
   if (milliseconds < MILLISECONDS_PER_SECOND) return `${milliseconds} ms`;
+
   if (milliseconds < SECONDS_ONLY_LIMIT_MS) {
     return `${(milliseconds / MILLISECONDS_PER_SECOND).toFixed(1)} s`;
   }
+
   return formatDuration(Math.round(milliseconds / MILLISECONDS_PER_SECOND));
 }

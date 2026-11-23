@@ -1,9 +1,10 @@
 import { queueNameOfUrl } from "../sqs/queues.ts";
 
-export interface StackResourceRef {
+interface StackResourceRef {
   type: string;
   physicalId: string;
 }
+
 export interface StackWithResources {
   name: string;
   resources: readonly StackResourceRef[];
@@ -19,11 +20,13 @@ export const indexKey = (type: string, physicalId: string) =>
 // (type, physical ID) → tên stack. Stack nào gặp trước giữ chỗ
 export function buildResourceIndex(stacks: readonly StackWithResources[]): Map<string, string> {
   const index = new Map<string, string>();
+
   for (const stack of stacks) {
     for (const { type, physicalId } of stack.resources) {
       const key = indexKey(type, physicalId);
       if (!index.has(key)) index.set(key, stack.name);
     }
   }
+
   return index;
 }

@@ -44,6 +44,7 @@ export function CreateUserModal({ poolId, signInWithEmail, onDismiss }: Props) {
             </Button>
           ),
         );
+
         onDismiss();
       },
     }),
@@ -58,7 +59,9 @@ export function CreateUserModal({ poolId, signInWithEmail, onDismiss }: Props) {
       onDismiss={onDismiss}
     >
       {createUser.isError && <Alert type='error'>{errorMessage(createUser.error)}</Alert>}
-      {!signInWithEmail && <FormInput control={form.control} name='username' label='Username' autoFocus />}
+      {!signInWithEmail && (
+        <FormInput control={form.control} name='username' label='Username' autoFocus />
+      )}
       <FormInput control={form.control} name='email' label='Email' autoFocus={signInWithEmail} />
       <FormCheckbox control={form.control} name='emailVerified' text='Mark email as verified' />
       <FormInput
@@ -75,7 +78,12 @@ export function CreateUserModal({ poolId, signInWithEmail, onDismiss }: Props) {
         description='The user must set a new password at first sign-in.'
         type='password'
       />
-      <FormCheckbox control={form.control} name='inviteEmail' label='Send invitation' text='Email' />
+      <FormCheckbox
+        control={form.control}
+        name='inviteEmail'
+        label='Send invitation'
+        text='Email'
+      />
       <FormCheckbox control={form.control} name='inviteSms' text='SMS' />
     </FormModal>
   );

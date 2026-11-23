@@ -24,6 +24,7 @@ import { useLambda } from "./useLambda.ts";
 // Mọi query của Lambda nằm dưới key gốc này (service khác đổi trigger thì invalidate cả gốc)
 export const LAMBDA_QUERY_ROOT = "lambda";
 const functionsQueryKey = [LAMBDA_QUERY_ROOT, "functions"];
+
 // Mọi query về một function (chi tiết, code, log, trigger…) nằm dưới key này
 export const functionQueryKey = (name: string, part: string) => [
   LAMBDA_QUERY_ROOT,
@@ -31,17 +32,21 @@ export const functionQueryKey = (name: string, part: string) => [
   name,
   part,
 ];
+
 const DETAILS = "details";
 
 export function useFunctions() {
   const { lambda } = useLambda();
+
   return useQuery({
     queryKey: functionsQueryKey,
     queryFn: async () => {
       const functions: FunctionConfiguration[] = [];
+
       for await (const page of paginateListFunctions({ client: lambda }, {})) {
         functions.push(...(page.Functions ?? []));
       }
+
       return functions;
     },
   });
@@ -49,6 +54,7 @@ export function useFunctions() {
 
 export function useFunction(name: string) {
   const { lambda } = useLambda();
+
   return useQuery({
     queryKey: functionQueryKey(name, DETAILS),
     queryFn: () => lambda.send(new GetFunctionCommand({ FunctionName: name })),
@@ -74,6 +80,7 @@ export function useFunctionExists(name: string) {
 // Làm mới chi tiết và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
 function useInvalidateFunction() {
   const queryClient = useQueryClient();
+
   return (name: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: functionQueryKey(name, DETAILS) }),
@@ -93,6 +100,7 @@ interface CreateFunctionInput {
 export function useCreateFunction() {
   const { lambda } = useLambda();
   const invalidate = useInvalidateFunction();
+
   return useMutation({
     mutationFn: (input: CreateFunctionInput) =>
       lambda.send(
@@ -116,10 +124,10 @@ export interface FunctionToDelete {
   logGroup: string;
 }
 
-// Để cảnh báo khi xóa: Floci không xóa trigger (SQS, DynamoDB…) của function, chúng thành trigger mồ côi.
-// Chỉ cần biết có hay không, nên mỗi function chỉ đọc trang đầu
+// Floci không xóa trigger khi xóa function nên cảnh báo trước; chỉ cần biết có hay không nên đọc trang đầu
 export function useFunctionsWithTriggers(names: readonly string[]) {
   const { lambda } = useLambda();
+
   return useQuery({
     queryKey: functionQueryKey(names.join(), "with-triggers"),
     queryFn: async () => {
@@ -128,9 +136,11 @@ export function useFunctionsWithTriggers(names: readonly string[]) {
           const { EventSourceMappings } = await lambda.send(
             new ListEventSourceMappingsCommand({ FunctionName: name }),
           );
+
           return { name, triggered: Boolean(EventSourceMappings?.length) };
         }),
       );
+
       return checks.filter((check) => check.triggered).map((check) => check.name);
     },
   });
@@ -139,6 +149,7 @@ export function useFunctionsWithTriggers(names: readonly string[]) {
 export function useDeleteFunctions() {
   const { lambda, logs } = useLambda();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (input: {
       functions: FunctionToDelete[];
@@ -146,6 +157,7 @@ export function useDeleteFunctions() {
       deleteTriggers: boolean;
     }) => {
       const failures: string[] = [];
+
       for (const { name, logGroup } of input.functions) {
         try {
           // Lấy danh sách trước khi xóa function; xóa trigger sau để function xóa lỗi thì trigger còn nguyên
@@ -153,13 +165,15 @@ export function useDeleteFunctions() {
             ? ((await lambda.send(new ListEventSourceMappingsCommand({ FunctionName: name })))
                 .EventSourceMappings ?? [])
             : [];
+
           await lambda.send(new DeleteFunctionCommand({ FunctionName: name }));
+
           // Floci (như AWS) giữ trigger của function đã xóa: chúng chạy lại khi tạo function cùng tên
           for (const { UUID } of mappings) {
             await lambda.send(new DeleteEventSourceMappingCommand({ UUID }));
           }
-          // Function chưa chạy lần nào thì chưa có log group: hỏi trước thay vì để DeleteLogGroup
-          // trả 400, request lỗi làm trình duyệt ghi console.error
+
+          // Chưa có log group thì bỏ qua, để DeleteLogGroup không trả 400 (trình duyệt ghi console.error)
           if (input.deleteLogGroups && (await logGroupExists(logs, logGroup))) {
             await logs.send(new DeleteLogGroupCommand({ logGroupName: logGroup }));
           }
@@ -167,6 +181,7 @@ export function useDeleteFunctions() {
           failures.push(`${name}: ${errorMessage(error)}`);
         }
       }
+
       return { count: input.functions.length - failures.length, failures };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: functionsQueryKey }),
@@ -179,6 +194,7 @@ type ConfigurationChanges = Omit<UpdateFunctionConfigurationCommandInput, "Funct
 export function useUpdateConfiguration(name: string) {
   const { lambda } = useLambda();
   const invalidate = useInvalidateFunction();
+
   return useMutation({
     mutationFn: (changes: ConfigurationChanges) =>
       lambda.send(new UpdateFunctionConfigurationCommand({ FunctionName: name, ...changes })),
@@ -190,6 +206,7 @@ export function useUpdateConfiguration(name: string) {
 export function useDeployCode(name: string) {
   const { lambda } = useLambda();
   const invalidate = useInvalidateFunction();
+
   return useMutation({
     mutationFn: (zipFile: Uint8Array) =>
       lambda.send(new UpdateFunctionCodeCommand({ FunctionName: name, ZipFile: zipFile })),

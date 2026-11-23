@@ -32,6 +32,7 @@ export function EditTriggersModal({ pool, poolId, onDismiss }: Props) {
   const update = useUpdateUserPool(poolId);
   const initial = triggerSelectionOf(pool.LambdaConfig);
   const form = useZodForm(triggersSchema, initial);
+
   const functionArns = (functions.data ?? []).flatMap(({ FunctionArn }) =>
     FunctionArn ? [FunctionArn] : [],
   );
@@ -41,12 +42,14 @@ export function EditTriggersModal({ pool, poolId, onDismiss }: Props) {
     const isListed = functionArns.includes(arn);
     const isMissing =
       functions.isSuccess && !functionArns.some((functionArn) => matchesFunction(arn, functionArn));
+
     return {
       value: arn,
       label: `${functionNameOfArn(arn)}${isMissing ? MISSING_SUFFIX : ""}`,
       description: isListed ? undefined : arn,
     };
   };
+
   // Giữ ARN ban đầu làm option để Save không âm thầm gỡ trigger
   const optionsOf = (currentArn: string) => [
     NONE_OPTION,

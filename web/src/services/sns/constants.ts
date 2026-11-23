@@ -14,6 +14,7 @@ export const PROTOCOLS = {
   http: "HTTP",
   https: "HTTPS",
 } as const;
+
 export type Protocol = keyof typeof PROTOCOLS;
 // readonly string[]: protocol của subscription có thể là loại khác (email, sms…) tạo ngoài console
 export const HTTP_PROTOCOLS: readonly string[] = ["http", "https"];
@@ -24,6 +25,7 @@ export const FILTER_SCOPES = {
   MessageAttributes: "Message attributes",
   MessageBody: "Message body",
 } as const;
+
 export type FilterScope = keyof typeof FILTER_SCOPES;
 export const DEFAULT_FILTER_SCOPE: FilterScope = "MessageAttributes";
 

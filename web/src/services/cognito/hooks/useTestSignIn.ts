@@ -12,6 +12,7 @@ import { NO_TOKENS_ERROR } from "../constants.ts";
 import { COGNITO_QUERY_ROOT, useCognito } from "./useCognito.ts";
 
 type SignInInput = { client: UserPoolClientType; username: string; password: string };
+
 type NewPasswordInput = {
   client: UserPoolClientType;
   username: string;
@@ -30,6 +31,7 @@ async function secretHashParameter(
 
 export function useSignIn(): UseMutationResult<SignInResult, Error, SignInInput> {
   const cognito = useCognito();
+
   return useMutation({
     mutationFn: async ({ client, username, password }: SignInInput): Promise<SignInResult> => {
       const result = await cognito.send(
@@ -43,6 +45,7 @@ export function useSignIn(): UseMutationResult<SignInResult, Error, SignInInput>
           },
         }),
       );
+
       return toSignInResult(result, username);
     },
   });
@@ -55,6 +58,7 @@ export function useRespondNewPassword(): UseMutationResult<
 > {
   const cognito = useCognito();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ client, username, session, newPassword }: NewPasswordInput) => {
       const { AuthenticationResult } = await cognito.send(
@@ -69,6 +73,7 @@ export function useRespondNewPassword(): UseMutationResult<
           },
         }),
       );
+
       if (!AuthenticationResult) throw new Error(NO_TOKENS_ERROR);
       return AuthenticationResult;
     },

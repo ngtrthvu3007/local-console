@@ -73,9 +73,11 @@ export function GroupsTab({ poolId }: { poolId: string }) {
     ) : (
       NOT_AVAILABLE
     );
+
   const precedence = (group: GroupType) => (
     <Figure>{group.Precedence?.toLocaleString() ?? NOT_AVAILABLE}</Figure>
   );
+
   const wideColumns: TableProps.ColumnDefinition<GroupType>[] = [
     { id: "name", header: "Name", sortingField: NAME_FIELD, isRowHeader: true, cell: nameLink },
     {
@@ -90,6 +92,7 @@ export function GroupsTab({ poolId }: { poolId: string }) {
       cell: precedence,
     },
   ];
+
   // Khung hẹp: tầng 1 tên + precedence, tầng 2 mô tả
   const compactColumns: TableProps.ColumnDefinition<GroupType>[] = [
     {

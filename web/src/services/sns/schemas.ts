@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { enumOfKeys } from "@shared/schemas.ts";
 import {
   ATTRIBUTE_DATA_TYPES,
   FIFO_SUFFIX,
@@ -12,19 +13,12 @@ import {
   TOPIC_NAME_MAX_LENGTH,
   TOPIC_NAME_PATTERN,
   TOPIC_TYPES,
-  type FilterScope,
-  type Protocol,
-  type TopicType,
 } from "./constants.ts";
 import { filterPolicyError } from "./filterPolicy.ts";
 
-const TOPIC_TYPE_IDS = Object.keys(TOPIC_TYPES) as [TopicType, ...TopicType[]];
-const PROTOCOL_IDS = Object.keys(PROTOCOLS) as [Protocol, ...Protocol[]];
-const FILTER_SCOPE_IDS = Object.keys(FILTER_SCOPES) as [FilterScope, ...FilterScope[]];
-
 export const createTopicSchema = z
   .object({
-    type: z.enum(TOPIC_TYPE_IDS),
+    type: enumOfKeys(TOPIC_TYPES),
     name: z.string().trim(),
     contentBasedDedup: z.boolean(),
   })
@@ -49,7 +43,7 @@ export type CreateTopicForm = z.input<typeof createTopicSchema>;
 
 // Sửa filter policy: rỗng = bỏ filter
 export const filterPolicySchema = z
-  .object({ filterPolicy: z.string(), filterScope: z.enum(FILTER_SCOPE_IDS) })
+  .object({ filterPolicy: z.string(), filterScope: enumOfKeys(FILTER_SCOPES) })
   .superRefine((values, context) => {
     const error = filterPolicyError(values.filterPolicy);
     if (error) context.addIssue({ code: "custom", path: ["filterPolicy"], message: error });
@@ -57,13 +51,13 @@ export const filterPolicySchema = z
 
 export const createSubscriptionSchema = z
   .object({
-    protocol: z.enum(PROTOCOL_IDS),
+    protocol: enumOfKeys(PROTOCOLS),
     queueArn: z.string(),
     functionArn: z.string(),
     url: z.string().trim(),
     rawDelivery: z.boolean(),
     filterPolicy: z.string(),
-    filterScope: z.enum(FILTER_SCOPE_IDS),
+    filterScope: enumOfKeys(FILTER_SCOPES),
   })
   .superRefine((values, context) => {
     const addIssue = (field: string, message: string) =>
@@ -76,8 +70,6 @@ export const createSubscriptionSchema = z
     const filterError = filterPolicyError(values.filterPolicy);
     if (filterError) addIssue("filterPolicy", filterError);
   });
-
-export type CreateSubscriptionForm = z.input<typeof createSubscriptionSchema>;
 
 // URL của HTTP subscription: đúng scheme và có host
 function isUrlOf(protocol: string, text: string) {
@@ -114,15 +106,19 @@ export const publishSchema = ({ fifo, contentBasedDedup }: PublishTarget) =>
         context.addIssue({ code: "custom", path, message });
       if (!values.body.trim()) addIssue(["body"], "Enter a message body.");
       const names = new Set<string>();
+
       values.attributes.forEach((attribute, index) => {
         if (!attribute.name) addIssue(["attributes", index, "name"], "Enter a name.");
         else if (names.has(attribute.name))
           addIssue(["attributes", index, "name"], "Names must be unique.");
+
         names.add(attribute.name);
+
         if (!attribute.value) addIssue(["attributes", index, "value"], "Enter a value.");
         else if (attribute.type === "Number" && !Number.isFinite(Number(attribute.value)))
           addIssue(["attributes", index, "value"], "Enter a number.");
       });
+
       if (!fifo) return;
       // Chặn trước khi gửi, SNS trả InvalidParameter
       if (!values.groupId) addIssue(["groupId"], "Enter a message group ID.");

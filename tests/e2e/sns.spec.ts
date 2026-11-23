@@ -34,7 +34,11 @@ async function publish(page: Page, body: string, type: string) {
   await dialog.getByPlaceholder("type", { exact: true }).fill("type");
   await dialog.getByPlaceholder("order", { exact: true }).fill(type);
   await dialog.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(flash(page).getByText(/^Published message /).last()).toBeVisible();
+  await expect(
+    flash(page)
+      .getByText(/^Published message /)
+      .last(),
+  ).toBeVisible();
   await dialog.getByRole("button", { name: "Close", exact: true }).click();
 }
 
@@ -127,7 +131,10 @@ test("a FIFO topic needs a message group ID before it publishes", async ({ page 
 test("delete the topics", async ({ page }) => {
   await page.goto("/sns/topics");
   for (const name of [topic, fifoTopic])
-    await page.getByRole("row", { name: new RegExp(name) }).getByRole("checkbox").check();
+    await page
+      .getByRole("row", { name: new RegExp(name) })
+      .getByRole("checkbox")
+      .check();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox").fill("delete");

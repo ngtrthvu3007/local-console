@@ -5,7 +5,7 @@ import { ADDRESS_SEPARATOR, UNNAMED_ATTACHMENT } from "./constants.ts";
 // Mail SendRawEmail chỉ có RawData, mail bị chặn chỉ có RejectReason (spec 7 #6, #17) nên mọi field khác đều có thể thiếu
 const addressListSchema = z.array(z.string()).nullish();
 
-export const emailSchema = z.object({
+const emailSchema = z.object({
   Id: z.string(),
   Region: z.string(),
   Timestamp: z.string(),
@@ -34,6 +34,7 @@ export const emailSchema = z.object({
     .nullish(),
   Headers: z.array(z.object({ Name: z.string(), Value: z.string() })).nullish(),
 });
+
 export type Email = z.infer<typeof emailSchema>;
 
 export const mailboxSchema = z.object({ messages: z.array(emailSchema) });
@@ -49,6 +50,7 @@ export function mailboxForRegion(messages: Email[], region: string): Email[] {
 
 export function recipientsOf(email: Email): string[] {
   const destination = email.Destination;
+
   return [destination?.ToAddresses, destination?.CcAddresses, destination?.BccAddresses].flatMap(
     (addresses) => addresses ?? [],
   );
@@ -58,6 +60,7 @@ export function matchesSearch(email: Email, search: string): boolean {
   // Ô tìm rỗng phải giữ cả mail không có field để tìm (mail bị chặn chỉ có RejectReason)
   if (!search) return true;
   const searchText = search.toLowerCase();
+
   return [...recipientsOf(email), email.Source, email.Subject].some((text) =>
     text?.toLowerCase().includes(searchText),
   );
@@ -84,16 +87,17 @@ export function headersFromFields(email: Email): HeaderLine[] {
     { name: "Date", value: new Date(sentAt(email)).toUTCString() },
     ...(email.Headers ?? []).map(({ Name, Value }) => ({ name: Name, value: Value })),
   ];
+
   return lines.filter((line): line is HeaderLine => Boolean(line.value));
 }
 
-export interface EmailAttachment {
+interface EmailAttachment {
   fileName: string;
   mimeType: string;
   content: ArrayBuffer | Uint8Array<ArrayBuffer>;
 }
 
-export interface EmailContent {
+interface EmailContent {
   subject?: string;
   to: string[];
   html?: string;
@@ -104,6 +108,7 @@ export interface EmailContent {
 
 export async function readEmail(email: Email): Promise<EmailContent> {
   if (!email.RawData) return contentFromFields(email);
+
   try {
     return await contentFromMime(email.RawData);
   } catch {
@@ -117,6 +122,7 @@ async function contentFromMime(rawData: string): Promise<EmailContent> {
   // Chỉ tải postal-mime khi mở mail có RawData
   const { default: PostalMime } = await import("postal-mime");
   const mime = await PostalMime.parse(bytes);
+
   return {
     subject: mime.subject,
     to: (mime.to ?? [])
