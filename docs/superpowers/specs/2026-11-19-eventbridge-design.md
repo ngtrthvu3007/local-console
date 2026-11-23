@@ -56,7 +56,7 @@ Làm màn hình EventBridge giống AWS EventBridge Console, gồm cả **EventB
 | ---------------------------------------------- | ---------------------------------------------------------------- |
 | Partner bus, bus policy, permission            | Dev local không dùng; policy chỉ áp dụng khi bật IAM enforcement |
 | Schema registry, Pipes                         | Dev local không dùng                                             |
-| Target ECS, Batch, Firehose, Redshift, AppSync | Ngoài phạm vi console ([roadmap](../roadmap.md) mục 4–5)         |
+| Target ECS, Batch, Firehose, Redshift, AppSync | Ngoài phạm vi console ([roadmap](../roadmap.md) mục 5–6)         |
 | `AddPermission` cho Lambda khi gắn target      | Floci không kiểm quyền; console không tạo policy giả (mục 9)     |
 
 ---
