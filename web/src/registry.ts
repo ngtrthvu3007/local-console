@@ -9,9 +9,11 @@ import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
+import { secretsManagerService } from "./services/secretsmanager/index.tsx";
 import { sesService } from "./services/ses/index.tsx";
 import { snsService } from "./services/sns/index.tsx";
 import { sqsService } from "./services/sqs/index.tsx";
+import { ssmService } from "./services/ssm/index.tsx";
 import { stepfunctionsService } from "./services/stepfunctions/index.tsx";
 
 interface ServiceLink {
@@ -44,6 +46,8 @@ export const services: ServiceDefinition[] = [
   mqService,
   sesService,
   cognitoService,
+  secretsManagerService,
+  ssmService,
 ];
 
 export const servicePath = (service: ServiceDefinition) => `/${service.id}`;

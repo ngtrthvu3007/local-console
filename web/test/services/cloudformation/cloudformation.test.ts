@@ -62,6 +62,18 @@ describe("stub", () => {
 });
 
 describe("resourceHref", () => {
+  it("links secrets by ARN and parameters by name", () => {
+    expect(
+      resourceHref(
+        "AWS::SecretsManager::Secret",
+        "arn:aws:secretsmanager:ap-southeast-1:000000000000:secret:app/db-AbC123",
+      ),
+    ).toBe("/secretsmanager/secrets/detail?name=app%2Fdb");
+    expect(resourceHref("AWS::SSM::Parameter", "/app/dev/db-host")).toBe(
+      "/ssm/parameters/detail?name=%2Fapp%2Fdev%2Fdb-host",
+    );
+  });
+
   it("links resources whose physical ID matches a route", () => {
     expect(resourceHref("AWS::S3::Bucket", "photos")).toBe("/s3/buckets/photos");
 

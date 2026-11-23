@@ -27,6 +27,10 @@ const PAGES = [
   { slug: "ses-templates", path: "/ses/templates" },
   { slug: "ses-configuration-sets", path: "/ses/configuration-sets" },
   { slug: "cognito-pools", path: "/cognito/user-pools" },
+  { slug: "secretsmanager-secrets", path: "/secretsmanager/secrets" },
+  { slug: "secretsmanager-create", path: "/secretsmanager/secrets/create" },
+  { slug: "ssm-parameters", path: "/ssm/parameters" },
+  { slug: "ssm-create", path: "/ssm/parameters/create" },
 ];
 
 // Cloudscape gập side navigation dưới mốc này (PHONE_MAX_WIDTH_PX của console)
