@@ -1,6 +1,6 @@
 # CloudFormation — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; IT `it/cloudformation.test.ts`, E2E `cloudformation*.spec.ts`, UI `ui/cloudformation.spec.ts`; `StackLink` ở `shared`, đã gắn vào S3, Lambda, DynamoDB, SQS, ElastiCache, SNS, EventBridge rule / schedule, Step Functions; chưa làm cho Cognito, API Gateway, RDS, EC2… vì các service đó chưa có) · Tạo / sửa stack từ template YAML (3.6): đã làm 2026-11-23 (E2E `cloudformation-templates.spec.ts`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; IT `it/cloudformation.test.ts`, E2E `cloudformation*.spec.ts`, UI `ui/cloudformation.spec.ts`; `StackLink` ở `shared`, đã gắn vào S3, Lambda, DynamoDB, SQS, ElastiCache, SNS, EventBridge rule / schedule, Step Functions, Cognito (2026-11-23); chưa làm cho API Gateway, RDS, EC2… vì các service đó chưa có) · Tạo / sửa stack từ template YAML (3.6): đã làm 2026-11-23 (E2E `cloudformation-templates.spec.ts`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
 
 ## 1. Mục tiêu
 
@@ -161,7 +161,7 @@ Template (YAML)
 - **Tạo:** nút **Create stack** (nút chính) ở danh sách stack. Ô tên stack (luật của AWS: bắt đầu bằng chữ cái, chỉ chữ, số và `-`, tối đa 128 ký tự) và editor điền sẵn **template mẫu** (1 queue + 1 output). Deploy = `CreateStack` (`TemplateBody`).
 - **Sửa:** nút **Edit template** trên header trang stack. Editor nạp template đang deploy bằng `GetTemplate` (`TemplateStage: Original`, Floci trả nguyên văn kể cả comment, 7 #11). Tên stack chỉ đọc. Deploy = `UpdateStack`. Dưới editor có một dòng nhắc: _"Deploying this stack again from a file replaces changes made here."_
 - **Khóa Edit template**, kèm lý do ở mô tả nút; mở thẳng URL `/edit` thì trang cũng khóa nút Deploy và hiện lý do (cùng hàm `editLockReason`). Đang tải resources thì cũng khóa:
-  - Stack do CDK tạo (resource có `AWS::CDK::Metadata`, CDK luôn thêm): _"Deployed by CDK: edit it in your CDK app. `cdk deploy` would overwrite changes made here."_
+  - Stack do CDK tạo: resource có `AWS::CDK::Metadata` (CDK luôn thêm vào stack của app), hoặc output `BootstrapVersion` (stack `cdk bootstrap` như `CDKToolkit`, không có CDK::Metadata): _"Deployed by CDK: edit it in your CDK app. `cdk deploy` would overwrite changes made here."_
   - Stack đang `*_IN_PROGRESS` (kể cả `REVIEW_IN_PROGRESS`).
 - **Editor chỉ YAML:** `CodeEditor` có sẵn, thêm mode `yaml` của Ace. JSON là YAML hợp lệ nên template JSON vẫn mở và deploy được, chỉ không tô màu riêng; không chuyển JSON ↔ YAML.
 - **Sau khi bấm Deploy:** `CreateStack` của Floci chạy đồng bộ (7 #1), nút Deploy ở trạng thái loading tới khi xong, rồi sang trang stack, **tab Events**: thành công hay resource lỗi đều đọc ở đó.
@@ -183,6 +183,7 @@ Template (YAML)
 
 - `ConfirmModal` có sẵn: gõ `delete` để xác nhận, như các service khác.
 - `DeleteStack`, rồi theo dõi tới khi xong. `DELETE_FAILED`: thông báo kèm reason của stack (Floci ghi resource lỗi, vd bucket còn object). Resource có `DeletionPolicy: Retain` được Floci giữ lại, events có dòng `DELETE_SKIPPED` (7 #19).
+- Stack kẹt `DELETE_FAILED`: trang chi tiết có `Alert` lỗi liệt kê từng resource `DELETE_FAILED` (physical ID có link như 3.10, logical ID, lý do lấy từ events), kèm cách gỡ: sửa resource rồi xóa lại; resource bị xóa tay phải tạo lại cùng tên trước (Floci không bỏ qua resource đã mất, 7 #16).
 - Xóa xong về danh sách, làm mới index (3.8).
 
 ### 3.8 StackLink và index resource
@@ -236,7 +237,7 @@ Map đủ enum của AWS dù Floci chỉ trả một phần (7 #8). Hàm thuần
 | `AWS::CloudFormation::Stack`                                                                                                                         | ARN stack con                             | trang stack con (tên lấy từ ARN)                                           |
 | `AWS::SNS::Topic`, `Subscription`                                                                                                                    | ARN topic; ARN subscription               | khi SNS vào `main`: trang topic (bỏ `:<uuid>` của subscription)            |
 | `AWS::SES::EmailIdentity`                                                                                                                            | địa chỉ                                   | khi SES vào `main`: trang Identities                                       |
-| `AWS::Cognito::UserPool`                                                                                                                             | pool id                                   | khi Cognito vào `main`: trang pool                                         |
+| `AWS::Cognito::UserPool`                                                                                                                             | pool id                                   | trang pool (đã làm 2026-11-23)                                             |
 | `AWS::Events::EventBus`                                                                                                                              | tên bus                                   | khi EventBridge vào `main`: trang Rules lọc theo bus                       |
 | `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`                                                                                                 | id                                        | khi API Gateway có trang                                                   |
 | Resource bị stub, `Lambda::EventSourceMapping`, `Cognito::UserPoolClient`, `Events::Rule`, `Scheduler::Schedule`, IAM, Permission, policy, type khác | —                                         | text (physical ID không khớp thẳng route, phải gọi thêm API mới link được) |
@@ -265,15 +266,15 @@ Mọi list API đều viết vòng `NextToken` cho đúng chuẩn AWS dù Floci 
 
 ## 5. Trạng thái và lỗi
 
-| Tình huống                                          | Hiển thị                                                  |
-| --------------------------------------------------- | --------------------------------------------------------- |
-| Stack không có (`ValidationError … does not exist`) | Trang chi tiết: "Stack … not found" kèm link về danh sách |
-| Stack `REVIEW_IN_PROGRESS`                          | `Alert` info + empty state các tab (3.2)                  |
-| Stack đang chạy                                     | Tự làm mới (3.1, 3.2)                                     |
-| Resource bị stub                                    | `Alert` đầu trang + badge, không link (3.2, 3.4)          |
-| Xóa stack còn bucket có object                      | Thông báo kèm reason (3.7)                                |
-| `DELETE_FAILED` (bucket còn object)                 | Thông báo kèm reason, link sang bucket (3.7)              |
-| Index lỗi                                           | `StackLink` ẩn; trang service không báo lỗi               |
+| Tình huống                                           | Hiển thị                                                                            |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Stack không có (`ValidationError … does not exist`)  | Trang chi tiết: "Stack … not found" kèm link về danh sách                           |
+| Stack `REVIEW_IN_PROGRESS`                           | `Alert` info + empty state các tab (3.2)                                            |
+| Stack đang chạy                                      | Tự làm mới (3.1, 3.2)                                                               |
+| Resource bị stub                                     | `Alert` đầu trang + badge, không link (3.2, 3.4)                                    |
+| Xóa stack còn bucket có object                       | Thông báo kèm reason (3.7)                                                          |
+| `DELETE_FAILED` (bucket còn object, resource đã mất) | Thông báo kèm reason; `Alert` trang chi tiết nêu từng resource, link, cách gỡ (3.7) |
+| Index lỗi                                            | `StackLink` ẩn; trang service không báo lỗi                                         |
 
 ---
 
@@ -357,7 +358,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 | 13  | **Nested stack**                                        | Chạy; tên con `<cha>-<Logical>`; physical ID của resource `AWS::CloudFormation::Stack` là ARN con. Stack cha chỉ ghi "Nested stack … rolled back"; nguyên nhân nằm ở events của con                                                                                                                                                                                                                                                                                                                                 |
 | 14  | **Tra ngược theo physical ID**                          | `DescribeStackResources?PhysicalResourceId=` chạy nhưng: resource không thuộc stack → **HTTP 400**; tìm thấy thì trả cả stack (phải lọc type: `BucketPolicy` cùng ID với `Bucket`); stack đã xóa vẫn trả. → dùng index (3.8)                                                                                                                                                                                                                                                                                        |
 | 15  | **Physical ID theo type**                               | Như bảng 3.10 (kiểm thật từng type). SQS URL luôn `localhost:4566` dù Host gọi là gì                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 16  | **Xóa resource do stack quản lý**                       | Xóa tay queue / bảng: stack vẫn `CREATE_COMPLETE`; `DeleteStack` sau đó bỏ qua resource đã mất; **queue tạo tay lại cùng tên bị `DeleteStack` xóa luôn**. Bucket có object → `DELETE_FAILED`                                                                                                                                                                                                                                                                                                                        |
+| 16  | **Xóa resource do stack quản lý**                       | Xóa tay queue / bảng: stack vẫn `CREATE_COMPLETE`; `DeleteStack` sau đó `DELETE_FAILED` ("The specified queue does not exist", kiểm lại 2026-11-23; `RetainResources` bị bỏ qua); **tạo tay lại cùng tên rồi xóa lại thì được, resource đó bị xóa luôn**. Bucket có object → `DELETE_FAILED`                                                                                                                                                                                                                        |
 | 17  | **Drift, type registry**                                | `UnknownAction`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 18  | **Persistence**                                         | **Ổn (đã restart thật 2026-11-19).** Stack (thành công, rollback, `REVIEW_IN_PROGRESS`, tạo qua change set), events, resources, template, exports, `ListStacks` giống hệt trước restart. Stack đã xóa (giữ 30 s) không lưu                                                                                                                                                                                                                                                                                          |
 | 19  | **`DeletionPolicy: Retain`**                            | **Ổn.** Resource có `Retain` được giữ khi xóa stack, event `DELETE_SKIPPED` (bucket của CDK bootstrap). Khác với `RetainResources` của `DeleteStack` (bị bỏ qua)                                                                                                                                                                                                                                                                                                                                                    |

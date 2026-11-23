@@ -25,8 +25,21 @@ import "./StackStatus.css";
 
 const PAGE_SIZE = 100;
 
-export function ResourcesTab({ stack, running }: { stack: string; running: boolean }) {
+// Physical ID có link khi khớp route trang service (spec 3.10)
+export function PhysicalIdLink({ type = "", id }: { type?: string; id: string }) {
   const follow = useFollow();
+  const href = resourceHref(type, id);
+
+  return href ? (
+    <Link href={href} onFollow={follow}>
+      <BreakableText text={id} />
+    </Link>
+  ) : (
+    <BreakableText text={id} />
+  );
+}
+
+export function ResourcesTab({ stack, running }: { stack: string; running: boolean }) {
   const { ref, compact } = useIsCompact();
   const resources = useStackResources(stack, running);
   const events = useStackEvents(stack, running);
@@ -53,14 +66,7 @@ export function ResourcesTab({ stack, running }: { stack: string; running: boole
         </span>
       );
     }
-    const href = resourceHref(resource.ResourceType ?? "", id);
-    return href ? (
-      <Link href={href} onFollow={follow}>
-        <BreakableText text={id} />
-      </Link>
-    ) : (
-      <BreakableText text={id} />
-    );
+    return <PhysicalIdLink type={resource.ResourceType} id={id} />;
   };
 
   const status = (resource: StackResourceSummary) => {

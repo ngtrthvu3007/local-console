@@ -88,6 +88,10 @@ describe("resourceHref", () => {
     expect(resourceHref("AWS::Events::EventBus", "bus-1")).toBe("/eventbridge/rules?bus=bus-1");
     expect(resourceHref("AWS::SES::EmailIdentity", "a@b.com")).toBe("/ses/identities");
 
+    expect(resourceHref("AWS::Cognito::UserPool", "ap-southeast-1_abc123")).toBe(
+      "/cognito/user-pools/ap-southeast-1_abc123",
+    );
+
     expect(resourceHref("AWS::Lambda::Url", "arn:aws:lambda:r:000000000000:function:my-fn")).toBe(
       "/lambda/functions/my-fn",
     );
@@ -219,14 +223,33 @@ describe("stack template form", () => {
     ).toBeNull();
   });
 
-  it("locks editing while the stack runs, while its resources load, and for CDK stacks", () => {
+  it("locks editing while the stack runs, while it loads, and for CDK stacks", () => {
     const queue = [{ ResourceType: "AWS::SQS::Queue" }];
     const cdk = [...queue, { ResourceType: "AWS::CDK::Metadata" }];
+    const done = { StackStatus: "CREATE_COMPLETE" };
 
-    expect(editLockReason("UPDATE_IN_PROGRESS", queue)).toBe(RUNNING_EDIT_LOCK_REASON);
-    expect(editLockReason("REVIEW_IN_PROGRESS", queue)).toBe(RUNNING_EDIT_LOCK_REASON);
-    expect(editLockReason("CREATE_COMPLETE", undefined)).toBe(LOADING_EDIT_LOCK_REASON);
-    expect(editLockReason("CREATE_COMPLETE", cdk)).toBe(CDK_EDIT_LOCK_REASON);
-    expect(editLockReason("CREATE_COMPLETE", queue)).toBeUndefined();
+    expect(editLockReason({ StackStatus: "UPDATE_IN_PROGRESS" }, queue)).toBe(
+      RUNNING_EDIT_LOCK_REASON,
+    );
+
+    expect(editLockReason({ StackStatus: "REVIEW_IN_PROGRESS" }, queue)).toBe(
+      RUNNING_EDIT_LOCK_REASON,
+    );
+
+    expect(editLockReason(done, undefined)).toBe(LOADING_EDIT_LOCK_REASON);
+    expect(editLockReason(undefined, queue)).toBe(LOADING_EDIT_LOCK_REASON);
+    expect(editLockReason(done, cdk)).toBe(CDK_EDIT_LOCK_REASON);
+    expect(editLockReason(done, queue)).toBeUndefined();
+  });
+
+  it("locks the CDK bootstrap stack, known by its BootstrapVersion output", () => {
+    const bootstrap = {
+      StackStatus: "CREATE_COMPLETE",
+      Outputs: [{ OutputKey: "BucketName" }, { OutputKey: "BootstrapVersion" }],
+    };
+
+    expect(editLockReason(bootstrap, [{ ResourceType: "AWS::S3::Bucket" }])).toBe(
+      CDK_EDIT_LOCK_REASON,
+    );
   });
 });

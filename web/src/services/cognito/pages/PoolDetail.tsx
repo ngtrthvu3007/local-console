@@ -6,6 +6,7 @@ import Header from "@cloudscape-design/components/header";
 import Tabs from "@cloudscape-design/components/tabs";
 import { ActionBar } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
+import { StackLink } from "@shared/StackLink.tsx";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -67,7 +68,12 @@ function PoolView({ pool, poolId }: { pool: UserPoolType; poolId: string }) {
         header={
           <Header
             variant='h1'
-            description={[poolId, SIGN_IN_LABELS[signIn]].join(DETAIL_SEPARATOR)}
+            description={
+              <>
+                {[poolId, SIGN_IN_LABELS[signIn]].join(DETAIL_SEPARATOR)}
+                <StackLink separated type='AWS::Cognito::UserPool' physicalId={poolId} />
+              </>
+            }
             actions={
               <ActionBar
                 compact={compact}

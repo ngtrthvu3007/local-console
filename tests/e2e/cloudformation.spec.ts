@@ -4,6 +4,12 @@ import {
   DeleteStackCommand,
 } from "@aws-sdk/client-cloudformation";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  CreateQueueCommand,
+  DeleteQueueCommand,
+  GetQueueUrlCommand,
+  SQSClient,
+} from "@aws-sdk/client-sqs";
 import { consoleConfig, viaConsole } from "../it/helpers.ts";
 import { expect, flash, test, uniqueName } from "./fixtures.ts";
 
@@ -118,15 +124,19 @@ test.describe("deleted stack", () => {
   });
 });
 
-// Bucket còn object thì DeleteStack lỗi: modal giữ nguyên, thông báo nêu lý do, stack ở lại với DELETE_FAILED
+// Bucket còn object / queue bị xóa tay thì DeleteStack lỗi: modal giữ nguyên, thông báo nêu lý do,
+// stack ở lại với DELETE_FAILED và trang chi tiết chỉ cách gỡ từng resource
 test.describe("delete a stack that cannot be deleted", () => {
   const stuck = uniqueName("cfnstuck");
   const stuckBucket = uniqueName("stuckbucket");
+  const stuckQueue = uniqueName("stuckqueue");
   let s3: S3Client;
+  let sqs: SQSClient;
 
   test.beforeAll(async () => {
     const { region } = await consoleConfig();
     s3 = new S3Client({ ...viaConsole(region), forcePathStyle: true });
+    sqs = new SQSClient(viaConsole(region));
     await cloudformation.send(
       new CreateStackCommand({
         StackName: stuck,
@@ -134,17 +144,22 @@ test.describe("delete a stack that cannot be deleted", () => {
           AWSTemplateFormatVersion: "2010-09-09",
           Resources: {
             Bucket: { Type: "AWS::S3::Bucket", Properties: { BucketName: stuckBucket } },
+            Queue: { Type: "AWS::SQS::Queue", Properties: { QueueName: stuckQueue } },
           },
         }),
       }),
     );
     await s3.send(new PutObjectCommand({ Bucket: stuckBucket, Key: "keep.txt", Body: "x" }));
+    const { QueueUrl } = await sqs.send(new GetQueueUrlCommand({ QueueName: stuckQueue }));
+    await sqs.send(new DeleteQueueCommand({ QueueUrl }));
   });
 
+  // Floci không bỏ qua resource đã mất: tạo lại queue cùng tên rồi mới xóa được stack
   test.afterAll(async () => {
     await s3
       .send(new DeleteObjectCommand({ Bucket: stuckBucket, Key: "keep.txt" }))
       .catch(() => undefined);
+    await sqs.send(new CreateQueueCommand({ QueueName: stuckQueue })).catch(() => undefined);
     await cloudformation.send(new DeleteStackCommand({ StackName: stuck })).catch(() => undefined);
   });
 
@@ -158,5 +173,17 @@ test.describe("delete a stack that cannot be deleted", () => {
     await expect(flash(page)).toContainText(`Couldn't delete ${stuck}`);
     await expect(page).toHaveURL(new RegExp(`/cloudformation/stacks/${stuck}`));
     await expect(page.getByText("DELETE_FAILED").first()).toBeVisible();
+
+    const alert = page.getByRole("group").filter({ hasText: "delete the stack again" });
+    await expect(alert).toContainText("same name");
+    await expect(alert.getByRole("listitem").filter({ hasText: "not empty" })).toContainText(
+      "Bucket",
+    );
+    await expect(alert.getByRole("listitem").filter({ hasText: "does not exist" })).toContainText(
+      stuckQueue,
+    );
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await alert.getByRole("link", { name: stuckBucket }).click();
+    await expect(page).toHaveURL(new RegExp(`/s3/buckets/${stuckBucket}`));
   });
 });

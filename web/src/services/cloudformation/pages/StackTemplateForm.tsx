@@ -133,7 +133,7 @@ function StackTemplateFormView({ stack, template, lockReason }: ViewProps) {
 function EditStackTemplate({ stack }: { stack: string }) {
   const template = useStackTemplate(stack);
   // Cùng điều kiện khóa với nút Edit template: người dùng có thể gõ thẳng URL
-  const status = useStack(stack).data?.StackStatus;
+  const stackDetails = useStack(stack).data;
   const resources = useStackResources(stack, false).data;
 
   const state = pageState(template, {
@@ -150,7 +150,7 @@ function EditStackTemplate({ stack }: { stack: string }) {
     <StackTemplateFormView
       stack={stack}
       template={template.data}
-      lockReason={editLockReason(status, resources)}
+      lockReason={editLockReason(stackDetails, resources)}
     />
   );
 }

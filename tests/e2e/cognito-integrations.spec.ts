@@ -6,6 +6,12 @@ import {
   ListUsersCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import {
+  CloudFormationClient,
+  CreateStackCommand,
+  DeleteStackCommand,
+  ListStackResourcesCommand,
+} from "@aws-sdk/client-cloudformation";
+import {
   CreateFunctionCommand,
   DeleteFunctionCommand,
   GetFunctionCommand,
@@ -21,6 +27,8 @@ import { choose, expect, test, uniqueName } from "./fixtures.ts";
 
 const fn = uniqueName("presignup");
 const pool = uniqueName("pool");
+const stack = uniqueName("pool-stack");
+const stackPool = uniqueName("stack-pool");
 const okEmail = `${uniqueName("user")}@example.com`;
 const BLOCKED_EMAIL = "blocked@example.com";
 const BLOCKED_MESSAGE = "Blocked by pre sign-up";
@@ -141,9 +149,58 @@ test.describe("errors the trigger causes", () => {
     await expect(page.getByText(okEmail).first()).toBeVisible();
   });
 
+  test("deleting the trigger function warns that sign-ups in the pool would fail", async ({
+    page,
+  }) => {
+    await page.goto(`/lambda/functions/${fn}`);
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    const warning = dialog.getByText(/Cognito user pools call/);
+
+    await expect(warning).toContainText(pool);
+    await expect(warning).toContainText("Pre sign-up");
+    await expect(warning).toContainText("Sign-ups and sign-ins");
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+  });
+
   test("a deleted trigger function shows as not found on the pool", async ({ page }) => {
     await lambda.send(new DeleteFunctionCommand({ FunctionName: fn }));
     await page.goto(`/cognito/user-pools/${poolId}?tab=triggers`);
     await expect(page.getByText(`${fn} (not found)`)).toBeVisible();
   });
+});
+
+// Spec Cognito 3.11: pool do stack tạo thì link được cả hai chiều với CloudFormation
+test("a user pool made by a stack links to its page, which links back to the stack", async ({
+  page,
+}) => {
+  const cloudformation = new CloudFormationClient(viaConsole((await consoleConfig()).region));
+
+  try {
+    // Floci chạy CreateStack đồng bộ
+    await cloudformation.send(
+      new CreateStackCommand({
+        StackName: stack,
+        TemplateBody: JSON.stringify({
+          Resources: {
+            Pool: { Type: "AWS::Cognito::UserPool", Properties: { UserPoolName: stackPool } },
+          },
+        }),
+      }),
+    );
+
+    const { StackResourceSummaries = [] } = await cloudformation.send(
+      new ListStackResourcesCommand({ StackName: stack }),
+    );
+
+    const stackPoolId = StackResourceSummaries[0]?.PhysicalResourceId ?? "";
+
+    await page.goto(`/cloudformation/stacks/${stack}?tab=resources`);
+    await page.getByRole("link", { name: stackPoolId }).click();
+    await expect(page.getByRole("heading", { level: 1, name: stackPool })).toBeVisible();
+    await page.getByRole("link", { name: stack }).click();
+    await expect(page).toHaveURL(new RegExp(`/cloudformation/stacks/${stack}`));
+  } finally {
+    await cloudformation.send(new DeleteStackCommand({ StackName: stack })).catch(() => undefined);
+  }
 });
