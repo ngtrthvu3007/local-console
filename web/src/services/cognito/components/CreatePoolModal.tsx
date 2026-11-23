@@ -13,7 +13,9 @@ const INITIAL_VALUES: CreatePoolForm = {
   signInWith: SIGN_IN_WITH.username,
   autoVerifyEmail: true,
 };
+
 const SIGN_IN_DESCRIPTION = "Can't be changed after the pool is created.";
+
 const SIGN_IN_ITEMS = [
   { value: SIGN_IN_WITH.username, label: "Username" },
   { value: SIGN_IN_WITH.email, label: "Email" },
@@ -52,11 +54,7 @@ export function CreatePoolModal({ onDismiss }: { onDismiss: () => void }) {
         description={SIGN_IN_DESCRIPTION}
         items={SIGN_IN_ITEMS}
       />
-      <FormCheckbox
-        control={form.control}
-        name='autoVerifyEmail'
-        text='Auto-verify email'
-      />
+      <FormCheckbox control={form.control} name='autoVerifyEmail' text='Auto-verify email' />
     </FormModal>
   );
 }

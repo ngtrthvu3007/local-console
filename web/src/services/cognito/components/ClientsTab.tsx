@@ -76,8 +76,14 @@ export function ClientsTab({ poolId }: { poolId: string }) {
     ) : (
       NOT_AVAILABLE
     );
+
   const clientId = (client: UserPoolClientType) =>
-    client.ClientId ? <span title={client.ClientId}>{truncateMiddle(client.ClientId)}</span> : NOT_AVAILABLE;
+    client.ClientId ? (
+      <span title={client.ClientId}>{truncateMiddle(client.ClientId)}</span>
+    ) : (
+      NOT_AVAILABLE
+    );
+
   const secret = (client: UserPoolClientType) => (client.ClientSecret ? "Yes" : NOT_AVAILABLE);
 
   const wideColumns: TableProps.ColumnDefinition<UserPoolClientType>[] = [
@@ -85,6 +91,7 @@ export function ClientsTab({ poolId }: { poolId: string }) {
     { id: "clientId", header: "Client ID", cell: clientId },
     { id: "secret", header: "Secret", cell: secret },
   ];
+
   // Khung hẹp: tên ở tầng 1, ID và secret ở tầng 2
   const compactColumns: TableProps.ColumnDefinition<UserPoolClientType>[] = [
     {
@@ -116,7 +123,10 @@ export function ClientsTab({ poolId }: { poolId: string }) {
       <Table
         {...collectionProps}
         selectionType='multi'
-        ariaLabels={selectionLabels<UserPoolClientType>("app client", (client) => client.ClientName ?? "")}
+        ariaLabels={selectionLabels<UserPoolClientType>(
+          "app client",
+          (client) => client.ClientName ?? "",
+        )}
         trackBy={ID_FIELD}
         items={items}
         loading={clients.isLoading}

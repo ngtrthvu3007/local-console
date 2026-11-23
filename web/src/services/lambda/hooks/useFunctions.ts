@@ -24,6 +24,7 @@ import { useLambda } from "./useLambda.ts";
 // Mọi query của Lambda nằm dưới key gốc này (service khác đổi trigger thì invalidate cả gốc)
 export const LAMBDA_QUERY_ROOT = "lambda";
 const functionsQueryKey = [LAMBDA_QUERY_ROOT, "functions"];
+
 // Mọi query về một function (chi tiết, code, log, trigger…) nằm dưới key này
 export const functionQueryKey = (name: string, part: string) => [
   LAMBDA_QUERY_ROOT,
@@ -31,6 +32,7 @@ export const functionQueryKey = (name: string, part: string) => [
   name,
   part,
 ];
+
 const DETAILS = "details";
 
 export function useFunctions() {

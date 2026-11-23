@@ -65,11 +65,19 @@ function GroupView({ group, poolId }: { group: GroupType; poolId: string }) {
   const selected = collectionProps.selectedItems ?? [];
   const selectedNames = selected.flatMap((user) => (user.Username ? [user.Username] : []));
   const memberNames = new Set((members.data ?? []).map((user) => user.Username));
+
   // Pool đăng nhập bằng email có Username là UUID: hiện email làm nhãn, giữ Username làm giá trị gửi API
   const options = (allUsers.data ?? []).flatMap((user) => {
     if (!user.Username || memberNames.has(user.Username)) return [];
     const email = attributeValue(user.Attributes, EMAIL_ATTRIBUTE);
-    return [{ value: user.Username, label: email ?? user.Username, description: email ? user.Username : undefined }];
+
+    return [
+      {
+        value: user.Username,
+        label: email ?? user.Username,
+        description: email ? user.Username : undefined,
+      },
+    ];
   });
 
   const columns: TableProps.ColumnDefinition<UserType>[] = [
@@ -111,81 +119,85 @@ function GroupView({ group, poolId }: { group: GroupType; poolId: string }) {
 
   return (
     <div ref={ref}>
-    <ContentLayout header={<Header variant='h1'>{name}</Header>}>
-      <SpaceBetween size='l'>
-        <Container header={<Header variant='h2'>General</Header>}>
-          <KeyValuePairs
-            columns={compact ? 1 : GROUP_GENERAL_COLUMNS}
-            items={[
-              { label: "Name", value: name },
-              { label: "Description", value: group.Description || NOT_AVAILABLE },
-              { label: "Precedence", value: group.Precedence?.toLocaleString() ?? NOT_AVAILABLE },
-            ]}
-          />
-        </Container>
-        <Table
-          {...collectionProps}
-          variant='container'
-          selectionType='multi'
-          ariaLabels={selectionLabels<UserType>("user", (user) => user.Username ?? "")}
-          trackBy={USERNAME_FIELD}
-          items={items}
-          loading={members.isLoading}
-          loadingText='Loading users'
-          columnDefinitions={columns}
-          wrapLines
-          header={
-            <Header
-              variant='h2'
-              description={GROUP_MEMBERS_DESCRIPTION}
-              counter={members.data ? `(${members.data.length})` : undefined}
-              actions={
-                <SpaceBetween size='xs' direction='horizontal'>
-                  <Button disabled={!selected.length} onClick={() => setRemoving(true)}>
-                    Remove
-                  </Button>
-                  <Button variant='primary' disabled={!allUsers.data || !members.data} onClick={() => setAdding(true)}>
-                    Add users
-                  </Button>
-                </SpaceBetween>
-              }
-            >
-              Users
-            </Header>
-          }
-          filter={
-            <TextFilter
-              {...filterProps}
-              filteringPlaceholder='Find by username or email'
-              countText={`${filteredItemsCount ?? 0} matches`}
+      <ContentLayout header={<Header variant='h1'>{name}</Header>}>
+        <SpaceBetween size='l'>
+          <Container header={<Header variant='h2'>General</Header>}>
+            <KeyValuePairs
+              columns={compact ? 1 : GROUP_GENERAL_COLUMNS}
+              items={[
+                { label: "Name", value: name },
+                { label: "Description", value: group.Description || NOT_AVAILABLE },
+                { label: "Precedence", value: group.Precedence?.toLocaleString() ?? NOT_AVAILABLE },
+              ]}
             />
-          }
-        />
-      </SpaceBetween>
-      {adding && (
-        <AddMembersModal
-          poolId={poolId}
-          header='Add users'
-          label='Users'
-          noun='user'
-          options={options}
-          toPairs={(usernames) => usernames.map((username) => ({ username, group: name }))}
-          onDismiss={() => setAdding(false)}
-        />
-      )}
-      {removing && (
-        <ConfirmModal
-          visible
-          header={`Remove ${pluralize(selectedNames.length, "user")}?`}
-          actionText='Remove'
-          loading={setMembership.isPending}
-          onDismiss={() => setRemoving(false)}
-          onConfirm={remove}
-        >
-          Remove {pluralize(selectedNames.length, "user")} from {name}?
-        </ConfirmModal>
-      )}
-    </ContentLayout>
+          </Container>
+          <Table
+            {...collectionProps}
+            variant='container'
+            selectionType='multi'
+            ariaLabels={selectionLabels<UserType>("user", (user) => user.Username ?? "")}
+            trackBy={USERNAME_FIELD}
+            items={items}
+            loading={members.isLoading}
+            loadingText='Loading users'
+            columnDefinitions={columns}
+            wrapLines
+            header={
+              <Header
+                variant='h2'
+                description={GROUP_MEMBERS_DESCRIPTION}
+                counter={members.data ? `(${members.data.length})` : undefined}
+                actions={
+                  <SpaceBetween size='xs' direction='horizontal'>
+                    <Button disabled={!selected.length} onClick={() => setRemoving(true)}>
+                      Remove
+                    </Button>
+                    <Button
+                      variant='primary'
+                      disabled={!allUsers.data || !members.data}
+                      onClick={() => setAdding(true)}
+                    >
+                      Add users
+                    </Button>
+                  </SpaceBetween>
+                }
+              >
+                Users
+              </Header>
+            }
+            filter={
+              <TextFilter
+                {...filterProps}
+                filteringPlaceholder='Find by username or email'
+                countText={`${filteredItemsCount ?? 0} matches`}
+              />
+            }
+          />
+        </SpaceBetween>
+        {adding && (
+          <AddMembersModal
+            poolId={poolId}
+            header='Add users'
+            label='Users'
+            noun='user'
+            options={options}
+            toPairs={(usernames) => usernames.map((username) => ({ username, group: name }))}
+            onDismiss={() => setAdding(false)}
+          />
+        )}
+        {removing && (
+          <ConfirmModal
+            visible
+            header={`Remove ${pluralize(selectedNames.length, "user")}?`}
+            actionText='Remove'
+            loading={setMembership.isPending}
+            onDismiss={() => setRemoving(false)}
+            onConfirm={remove}
+          >
+            Remove {pluralize(selectedNames.length, "user")} from {name}?
+          </ConfirmModal>
+        )}
+      </ContentLayout>
     </div>
   );
 }
@@ -207,6 +219,7 @@ export function GroupDetail() {
     backHref: cognitoRoutes.pool(poolId, POOL_TABS.groups),
     backText: "View groups",
   });
+
   if (state || !group.data) return state;
 
   return <GroupView group={group.data} poolId={poolId} />;

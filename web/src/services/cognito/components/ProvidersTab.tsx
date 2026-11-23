@@ -31,27 +31,33 @@ export function ProvidersTab({ pool, poolId }: { pool: UserPoolType; poolId: str
   const deleteProviders = useDeleteProviders(poolId);
   const [deleting, setDeleting] = useState(false);
 
-  const { items, collectionProps, actions } = useCollection<ProviderDescription>(providers.data ?? [], {
-    filtering: {
-      empty: emptyOrError(
-        providers,
-        <EmptyState
-          title='No identity providers'
-          description='Add an OIDC or Google provider to test federated sign-in.'
-          action={
-            <Button href={cognitoRoutes.createProvider(poolId)} onFollow={follow}>
-              Create identity provider
-            </Button>
-          }
-        />,
-      ),
+  const { items, collectionProps, actions } = useCollection<ProviderDescription>(
+    providers.data ?? [],
+    {
+      filtering: {
+        empty: emptyOrError(
+          providers,
+          <EmptyState
+            title='No identity providers'
+            description='Add an OIDC or Google provider to test federated sign-in.'
+            action={
+              <Button href={cognitoRoutes.createProvider(poolId)} onFollow={follow}>
+                Create identity provider
+              </Button>
+            }
+          />,
+        ),
+      },
+      sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
+      selection: { trackBy: NAME_FIELD },
     },
-    sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-    selection: { trackBy: NAME_FIELD },
-  });
+  );
 
   const selected = collectionProps.selectedItems ?? [];
-  const selectedNames = selected.flatMap((provider) => (provider.ProviderName ? [provider.ProviderName] : []));
+
+  const selectedNames = selected.flatMap((provider) =>
+    provider.ProviderName ? [provider.ProviderName] : [],
+  );
 
   const nameLink = (provider: ProviderDescription) =>
     provider.ProviderName ? (
@@ -67,6 +73,7 @@ export function ProvidersTab({ pool, poolId }: { pool: UserPoolType; poolId: str
     { id: "type", header: "Type", cell: (provider) => provider.ProviderType ?? NOT_AVAILABLE },
     { id: "created", header: "Created", cell: (provider) => formatDate(provider.CreationDate) },
   ];
+
   // Khung hẹp: tên ở tầng 1, loại và ngày tạo ở tầng 2
   const compactColumns: TableProps.ColumnDefinition<ProviderDescription>[] = [
     {
@@ -100,7 +107,10 @@ export function ProvidersTab({ pool, poolId }: { pool: UserPoolType; poolId: str
         <Table
           {...collectionProps}
           selectionType='multi'
-          ariaLabels={selectionLabels<ProviderDescription>("identity provider", (provider) => provider.ProviderName ?? "")}
+          ariaLabels={selectionLabels<ProviderDescription>(
+            "identity provider",
+            (provider) => provider.ProviderName ?? "",
+          )}
           trackBy={NAME_FIELD}
           items={items}
           loading={providers.isLoading}
@@ -141,7 +151,9 @@ export function ProvidersTab({ pool, poolId }: { pool: UserPoolType; poolId: str
           }
         >
           <DeletePreview lines={selectedNames} />
-          <Alert type='warning'>Floci keeps these names in app clients. Remove them on each client's Edit page.</Alert>
+          <Alert type='warning'>
+            Floci keeps these names in app clients. Remove them on each client's Edit page.
+          </Alert>
         </ConfirmModal>
       )}
     </div>

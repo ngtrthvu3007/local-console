@@ -60,6 +60,7 @@ export function PoolList() {
     });
 
   const selected = collectionProps.selectedItems ?? [];
+
   const finishDelete = () => {
     setDeleting(false);
     actions.setSelectedItems([]);
@@ -73,6 +74,7 @@ export function PoolList() {
     ) : (
       pool.Name
     );
+
   const nameColumn: TableProps.ColumnDefinition<UserPoolDescriptionType> = {
     id: "name",
     header: "Name",
@@ -80,9 +82,15 @@ export function PoolList() {
     isRowHeader: true,
     cell: nameLink,
   };
+
   const wideColumns: TableProps.ColumnDefinition<UserPoolDescriptionType>[] = [
     nameColumn,
-    { id: "id", header: "Pool ID", sortingField: POOL_ID_FIELD, cell: (pool) => pool.Id ?? NOT_AVAILABLE },
+    {
+      id: "id",
+      header: "Pool ID",
+      sortingField: POOL_ID_FIELD,
+      cell: (pool) => pool.Id ?? NOT_AVAILABLE,
+    },
     {
       id: "created",
       header: "Created",
@@ -90,6 +98,7 @@ export function PoolList() {
       cell: (pool) => formatDate(pool.CreationDate),
     },
   ];
+
   // Khung hẹp: tầng 2 là Pool ID, màu xám
   const compactColumns: TableProps.ColumnDefinition<UserPoolDescriptionType>[] = [
     {
@@ -135,7 +144,10 @@ export function PoolList() {
         {...collectionProps}
         variant='full-page'
         selectionType='multi'
-        ariaLabels={selectionLabels<UserPoolDescriptionType>("user pool", (item) => item.Name ?? "")}
+        ariaLabels={selectionLabels<UserPoolDescriptionType>(
+          "user pool",
+          (item) => item.Name ?? "",
+        )}
         trackBy={POOL_ID_FIELD}
         items={items}
         loading={pools.isLoading}
@@ -148,7 +160,11 @@ export function PoolList() {
       />
       {creating && <CreatePoolModal onDismiss={() => setCreating(false)} />}
       {deleting && (
-        <DeletePoolsModal pools={selected} onDismiss={() => setDeleting(false)} onDone={finishDelete} />
+        <DeletePoolsModal
+          pools={selected}
+          onDismiss={() => setDeleting(false)}
+          onDone={finishDelete}
+        />
       )}
     </div>
   );

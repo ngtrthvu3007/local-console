@@ -13,6 +13,7 @@ export const POOL_TABS = {
   triggers: "triggers",
   details: "details",
 } as const;
+
 export type PoolTab = (typeof POOL_TABS)[keyof typeof POOL_TABS];
 
 export const SEARCH_PARAMS = { tab: "tab" } as const;
@@ -37,6 +38,7 @@ export const cognitoRoutes = {
   // Tab mặc định (Users) không ghi lên URL
   pool: (poolId: string, tab?: PoolTab) => {
     const path = generatePath(fullPath(COGNITO_ROUTE_PATTERNS.pool), { poolId });
+
     return tab && tab !== POOL_TABS.users
       ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
       : path;

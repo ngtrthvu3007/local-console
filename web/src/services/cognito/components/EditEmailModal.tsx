@@ -37,6 +37,7 @@ export function EditEmailModal({ pool, poolId, onDismiss }: Props) {
   const names = (identities.data ?? []).flatMap(({ IdentityName, IdentityType: type }) =>
     type === IdentityType.EMAIL_ADDRESS && IdentityName ? [IdentityName] : [],
   );
+
   // Identity hiện tại luôn là option (kể cả đã bị xoá) để select không trống
   const options = [...new Set([...(initial.identity ? [initial.identity] : []), ...names])].map(
     (value) => ({ value, label: value }),

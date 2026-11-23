@@ -22,10 +22,12 @@ interface Props {
 // Chỉ mount khi mở
 export function AttributeModal({ poolId, username, editing, addableNames, onDismiss }: Props) {
   const update = useUpdateUserAttributes(poolId, username);
+
   const form = useZodForm(attributeSchema, {
     name: editing?.name ?? "",
     value: editing?.value ?? "",
   } satisfies AttributeForm);
+
   const name = editing?.name ?? form.watch("name");
 
   const submit = form.handleSubmit((values) =>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { z } from "zod";
 import type { AdminGetUserCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -51,7 +52,13 @@ import {
 import { cognitoRoutes, mailboxHref, poolCrumbs, smsHref } from "../routes.ts";
 import { attributeValue } from "../users.ts";
 
-const MODALS = { setPassword: "setPassword", add: "add", edit: "edit", deleteAttribute: "deleteAttribute" } as const;
+const MODALS = {
+  setPassword: "setPassword",
+  add: "add",
+  edit: "edit",
+  deleteAttribute: "deleteAttribute",
+} as const;
+
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 const IDENTITY_SEPARATOR = " · ";
 const GENERAL_COLUMNS = 3;
@@ -62,22 +69,21 @@ interface AttributeRow {
   lines?: string[]; // identities: mỗi phần tử một dòng
 }
 
-interface Identity {
-  providerName?: string;
-  userId?: string;
-}
+const identitiesSchema = z.array(
+  z.looseObject({ providerName: z.string().optional(), userId: z.string().optional() }),
+);
 
-// identities là chuỗi JSON; hỏng thì hiện nguyên chuỗi, không bỏ mất
+// identities là chuỗi JSON; hỏng hoặc sai dạng thì hiện nguyên chuỗi, không bỏ mất
 function identityLines(value: string): string[] {
   try {
-    const parsed: unknown = JSON.parse(value);
-    if (Array.isArray(parsed))
-      return parsed.map((item: Identity) =>
-        [item.providerName, item.userId].join(IDENTITY_SEPARATOR),
-      );
+    const identities = identitiesSchema.safeParse(JSON.parse(value)).data;
+
+    if (identities)
+      return identities.map((item) => [item.providerName, item.userId].join(IDENTITY_SEPARATOR));
   } catch {
-    // rơi xuống trả nguyên chuỗi
+    // JSON hỏng: rơi xuống trả nguyên chuỗi
   }
+
   return [value];
 }
 
@@ -110,15 +116,20 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
   const setMembership = useSetMembership(poolId);
   const [addingToGroup, setAddingToGroup] = useState(false);
   const memberOf = new Set((userGroups.data ?? []).map((group) => group.GroupName));
+
   const joinable = (allGroups.data ?? []).flatMap((group) =>
     group.GroupName && !memberOf.has(group.GroupName) ? [{ value: group.GroupName }] : [],
   );
+
   const removeFromGroup = (group: string) =>
     setMembership.mutate(
       { add: false, pairs: [{ username, group }] },
       notifyBulkOutcome({
         // runEach nuốt lỗi nên phải xét count: 0 nghĩa là chưa gỡ được
-        success: (result) => (result.count ? `Removed ${label} from ${group}` : `Couldn't remove ${label} from ${group}`),
+        success: (result) =>
+          result.count
+            ? `Removed ${label} from ${group}`
+            : `Couldn't remove ${label} from ${group}`,
         errorHeader: `Couldn't remove from ${group}`,
       }),
     );
@@ -127,6 +138,7 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
   const required = new Set(schema.filter((item) => item.Required).map((item) => item.Name));
   const isLocked = (name: string) => (LOCKED_ATTRIBUTES as readonly string[]).includes(name);
   const existing = new Set((attributes ?? []).map((attribute) => attribute.Name));
+
   const addableNames = schema.flatMap((item) =>
     item.Name && item.Name !== SUB_ATTRIBUTE && !existing.has(item.Name) ? [item.Name] : [],
   );
@@ -134,10 +146,12 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
   const rows: AttributeRow[] = (attributes ?? []).map((attribute) => ({
     name: attribute.Name ?? NOT_AVAILABLE,
     value: attribute.Value ?? "",
-    lines: attribute.Name === IDENTITIES_ATTRIBUTE ? identityLines(attribute.Value ?? "") : undefined,
+    lines:
+      attribute.Name === IDENTITIES_ATTRIBUTE ? identityLines(attribute.Value ?? "") : undefined,
   }));
 
   const emailVerified = attributeValue(attributes, EMAIL_VERIFIED_ATTRIBUTE) === "true";
+
   const toggleVerified = (checked: boolean) =>
     updateAttributes.mutate(
       [{ Name: EMAIL_VERIFIED_ATTRIBUTE, Value: String(checked) }],
@@ -148,6 +162,7 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
     );
 
   const statusLabel = (user.UserStatus && USER_STATUSES[user.UserStatus]?.label) ?? user.UserStatus;
+
   const description = [
     statusLabel ?? NOT_AVAILABLE,
     user.Enabled ? "Enabled" : "Disabled",
@@ -232,6 +247,7 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
       header: "Actions",
       cell: (row) => {
         const readOnly = isLocked(row.name);
+
         return (
           <SpaceBetween size='xs' direction='horizontal'>
             <Button
@@ -262,8 +278,14 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
 
   const barActions: BarAction[] = [
     { id: "delete", text: "Delete", onClick: () => setAction("delete") },
-    { id: "setPassword", text: "Set password", primary: true, onClick: () => setModal(MODALS.setPassword) },
+    {
+      id: "setPassword",
+      text: "Set password",
+      primary: true,
+      onClick: () => setModal(MODALS.setPassword),
+    },
   ];
+
   const menuItems = [
     ...(user.UserStatus === UNCONFIRMED_STATUS ? [{ id: "confirm", text: "Confirm sign-up" }] : []),
     { id: "resetPassword", text: "Reset password" },
@@ -332,7 +354,11 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
                   </Link>
                 ),
               },
-              { id: "description", header: "Description", cell: (group) => group.Description || NOT_AVAILABLE },
+              {
+                id: "description",
+                header: "Description",
+                cell: (group) => group.Description || NOT_AVAILABLE,
+              },
               {
                 id: "actions",
                 header: "Actions",
@@ -352,7 +378,14 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
               <Header
                 variant='h2'
                 counter={userGroups.data ? `(${userGroups.data.length})` : undefined}
-                actions={<Button disabled={!allGroups.data || !userGroups.data} onClick={() => setAddingToGroup(true)}>Add to group</Button>}
+                actions={
+                  <Button
+                    disabled={!allGroups.data || !userGroups.data}
+                    onClick={() => setAddingToGroup(true)}
+                  >
+                    Add to group
+                  </Button>
+                }
               >
                 Groups
               </Header>
@@ -373,10 +406,20 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
         />
       )}
       {modal === MODALS.setPassword && (
-        <SetPasswordModal poolId={poolId} username={username} label={label} onDismiss={closeModal} />
+        <SetPasswordModal
+          poolId={poolId}
+          username={username}
+          label={label}
+          onDismiss={closeModal}
+        />
       )}
       {modal === MODALS.add && (
-        <AttributeModal poolId={poolId} username={username} addableNames={addableNames} onDismiss={closeModal} />
+        <AttributeModal
+          poolId={poolId}
+          username={username}
+          addableNames={addableNames}
+          onDismiss={closeModal}
+        />
       )}
       {modal === MODALS.edit && target && (
         <AttributeModal
@@ -415,7 +458,9 @@ function UserView({ user, poolId }: { user: AdminGetUserCommandOutput; poolId: s
           usernames={[username]}
           labelOf={() => label}
           onDismiss={() => setAction(null)}
-          onDone={() => (action === "delete" ? navigate(cognitoRoutes.pool(poolId)) : setAction(null))}
+          onDone={() =>
+            action === "delete" ? navigate(cognitoRoutes.pool(poolId)) : setAction(null)
+          }
         />
       )}
     </div>
@@ -439,6 +484,7 @@ export function UserDetail() {
     backHref: cognitoRoutes.pool(poolId),
     backText: "View users",
   });
+
   if (state || !user.data) return state;
 
   return <UserView user={user.data} poolId={poolId} />;

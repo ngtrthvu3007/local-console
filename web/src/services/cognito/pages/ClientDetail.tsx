@@ -5,7 +5,9 @@ import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import KeyValuePairs, { type KeyValuePairsProps } from "@cloudscape-design/components/key-value-pairs";
+import KeyValuePairs, {
+  type KeyValuePairsProps,
+} from "@cloudscape-design/components/key-value-pairs";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar } from "@shared/components/ActionBar.tsx";
@@ -43,7 +45,15 @@ const listValue = (values?: string[]) =>
     NOT_AVAILABLE
   );
 
-function ClientView({ client, pool, poolId }: { client: UserPoolClientType; pool?: UserPoolType; poolId: string }) {
+function ClientView({
+  client,
+  pool,
+  poolId,
+}: {
+  client: UserPoolClientType;
+  pool?: UserPoolType;
+  poolId: string;
+}) {
   const follow = useFollow();
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact(ITEM_LIST_WIDTH_PX);
@@ -51,12 +61,14 @@ function ClientView({ client, pool, poolId }: { client: UserPoolClientType; pool
   const [deleting, setDeleting] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [openingHostedUi, setOpeningHostedUi] = useState(false);
+
   // Pool chưa tải xong thì coi như chưa có domain: nút khóa thay vì mở URL hỏng
   const hostedUiReason = hostedUiBlocker({
     hasDomain: Boolean(pool?.Domain),
     callbackUrls: client.CallbackURLs ?? [],
     oauthFlows: client.AllowedOAuthFlows ?? [],
   });
+
   const clientId = client.ClientId ?? "";
   const name = client.ClientName ?? clientId;
 
@@ -85,6 +97,7 @@ function ClientView({ client, pool, poolId }: { client: UserPoolClientType; pool
     { label: "Client secret", value: secretValue },
     { label: "Auth flows", value: listValue(client.ExplicitAuthFlows) },
   ];
+
   const oauthItems: KeyValuePairsProps.Item[] = [
     { label: "Callback URLs", value: listValue(client.CallbackURLs) },
     { label: "Sign-out URLs", value: listValue(client.LogoutURLs) },
@@ -120,7 +133,12 @@ function ClientView({ client, pool, poolId }: { client: UserPoolClientType; pool
                     disabledReason: hostedUiReason,
                     onClick: () => setOpeningHostedUi(true),
                   },
-                  { id: "edit", text: "Edit", primary: true, href: cognitoRoutes.editClient(poolId, clientId) },
+                  {
+                    id: "edit",
+                    text: "Edit",
+                    primary: true,
+                    href: cognitoRoutes.editClient(poolId, clientId),
+                  },
                 ]}
               />
             }
@@ -138,7 +156,9 @@ function ClientView({ client, pool, poolId }: { client: UserPoolClientType; pool
           </Container>
         </SpaceBetween>
       </ContentLayout>
-      {openingHostedUi && <OpenHostedUiModal client={client} onDismiss={() => setOpeningHostedUi(false)} />}
+      {openingHostedUi && (
+        <OpenHostedUiModal client={client} onDismiss={() => setOpeningHostedUi(false)} />
+      )}
       {deleting && (
         <ConfirmModal
           visible
@@ -182,6 +202,7 @@ export function ClientDetail() {
     backHref: cognitoRoutes.pool(poolId, POOL_TABS.clients),
     backText: "View app clients",
   });
+
   if (state || !client.data) return state;
 
   return <ClientView client={client.data} pool={pool.data} poolId={poolId} />;

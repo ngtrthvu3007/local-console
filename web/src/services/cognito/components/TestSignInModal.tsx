@@ -47,6 +47,7 @@ export function TestSignInModal({ poolId, onDismiss }: Props) {
   const lacksPasswordFlow =
     Boolean(client) && !client?.ExplicitAuthFlows?.includes(USER_PASSWORD_AUTH_FLOW);
   const error = signIn.error ?? respond.error;
+
   const clientOptions = (clients.data ?? []).flatMap((item) =>
     item.ClientId
       ? [
@@ -63,6 +64,7 @@ export function TestSignInModal({ poolId, onDismiss }: Props) {
     if (!client) return;
     respond.reset();
     setTokens(null);
+
     signIn.mutate(
       { client, username, password },
       {
@@ -78,6 +80,7 @@ export function TestSignInModal({ poolId, onDismiss }: Props) {
 
   const submitNewPassword = newPasswordForm.handleSubmit(({ newPassword }) => {
     if (!client || !challenge) return;
+
     respond.mutate(
       { client, username: challenge.username, session: challenge.session, newPassword },
       {

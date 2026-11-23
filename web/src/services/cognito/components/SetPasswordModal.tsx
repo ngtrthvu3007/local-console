@@ -39,7 +39,13 @@ export function SetPasswordModal({ poolId, username, label, onDismiss }: Props) 
       onSubmit={submit}
       onDismiss={onDismiss}
     >
-      <FormInput control={form.control} name='password' label='Password' type='password' autoFocus />
+      <FormInput
+        control={form.control}
+        name='password'
+        label='Password'
+        type='password'
+        autoFocus
+      />
       <Toggle
         checked={form.watch("permanent")}
         onChange={({ detail }) => form.setValue("permanent", detail.checked)}

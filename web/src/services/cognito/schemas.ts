@@ -78,9 +78,11 @@ export const createUserSchema = (signInWithEmail: boolean) =>
       inviteSms: z.boolean(),
     })
     .superRefine((form, context) => {
-      const fail = (path: string, message: string) => context.addIssue({ code: "custom", path: [path], message });
+      const fail = (path: string, message: string) =>
+        context.addIssue({ code: "custom", path: [path], message });
       if (!signInWithEmail && !form.username) fail("username", USER_FORM_ERRORS.username);
-      if ((signInWithEmail || form.inviteEmail) && !form.email) fail("email", USER_FORM_ERRORS.email);
+      if ((signInWithEmail || form.inviteEmail) && !form.email)
+        fail("email", USER_FORM_ERRORS.email);
       if (form.phone && !E164_PATTERN.test(form.phone)) fail("phone", USER_FORM_ERRORS.phone);
       else if (form.inviteSms && !form.phone) fail("phone", USER_FORM_ERRORS.phoneForSms);
       if (!form.inviteEmail && !form.inviteSms && !form.temporaryPassword)
@@ -98,11 +100,14 @@ export function toAdminCreateUserInput(
     ...(form.inviteEmail ? [DeliveryMediumType.EMAIL] : []),
     ...(form.inviteSms ? [DeliveryMediumType.SMS] : []),
   ];
+
   return {
     UserPoolId: poolId,
     Username: signInWithEmail ? form.email : form.username,
     ...(form.temporaryPassword && { TemporaryPassword: form.temporaryPassword }),
-    ...(mediums.length ? { DesiredDeliveryMediums: mediums } : { MessageAction: MessageActionType.SUPPRESS }),
+    ...(mediums.length
+      ? { DesiredDeliveryMediums: mediums }
+      : { MessageAction: MessageActionType.SUPPRESS }),
     UserAttributes: [
       ...(form.email
         ? [
@@ -115,7 +120,11 @@ export function toAdminCreateUserInput(
   };
 }
 
-export const setPasswordSchema = z.object({ password: z.string().min(1, "Enter a password."), permanent: z.boolean() });
+export const setPasswordSchema = z.object({
+  password: z.string().min(1, "Enter a password."),
+  permanent: z.boolean(),
+});
+
 export type SetPasswordForm = z.input<typeof setPasswordSchema>;
 
 export const signInSchema = z.object({
@@ -123,24 +132,45 @@ export const signInSchema = z.object({
   username: z.string().min(1, SIGN_IN_FORM_ERRORS.username),
   password: z.string().min(1, SIGN_IN_FORM_ERRORS.password),
 });
+
 export type SignInForm = z.input<typeof signInSchema>;
 
-export const newPasswordSchema = z.object({ newPassword: z.string().min(1, SIGN_IN_FORM_ERRORS.newPassword) });
+export const newPasswordSchema = z.object({
+  newPassword: z.string().min(1, SIGN_IN_FORM_ERRORS.newPassword),
+});
+
 export type NewPasswordForm = z.input<typeof newPasswordSchema>;
 
-export const attributeSchema = z.object({ name: z.string().min(1, "Choose an attribute."), value: z.string() });
+export const attributeSchema = z.object({
+  name: z.string().min(1, "Choose an attribute."),
+  value: z.string(),
+});
+
 export type AttributeForm = z.input<typeof attributeSchema>;
 
 const precedenceSchema = wholeNumberIn(GROUP_PRECEDENCE_LIMITS, "");
+
 export const createGroupSchema = z.object({
   name: z
     .string()
     .min(1, "Enter a group name.")
     .max(GROUP_NAME_MAX_LENGTH, `Must be at most ${GROUP_NAME_MAX_LENGTH} characters.`),
-  description: z.string().max(GROUP_DESCRIPTION_MAX_LENGTH, `Must be at most ${GROUP_DESCRIPTION_MAX_LENGTH} characters.`),
+  description: z
+    .string()
+    .max(
+      GROUP_DESCRIPTION_MAX_LENGTH,
+      `Must be at most ${GROUP_DESCRIPTION_MAX_LENGTH} characters.`,
+    ),
   // Precedence tùy chọn: rỗng thì bỏ qua, có giá trị thì phải là số nguyên hợp lệ
-  precedence: z.string().trim().refine((text) => text === "" || precedenceSchema.safeParse(text).success, `Enter a whole number from ${GROUP_PRECEDENCE_LIMITS.min} to ${GROUP_PRECEDENCE_LIMITS.max}.`),
+  precedence: z
+    .string()
+    .trim()
+    .refine(
+      (text) => text === "" || precedenceSchema.safeParse(text).success,
+      `Enter a whole number from ${GROUP_PRECEDENCE_LIMITS.min} to ${GROUP_PRECEDENCE_LIMITS.max}.`,
+    ),
 });
+
 export type CreateGroupForm = z.input<typeof createGroupSchema>;
 
 export function toCreateGroupInput(poolId: string, form: CreateGroupForm): CreateGroupCommandInput {
@@ -173,15 +203,36 @@ export const clientSchema = z
   .superRefine((form, context) => {
     // Floci từ chối URL khi tắt OAuth, AWS từ chối trộn client_credentials với code / implicit
     if (!form.oauthFlows.length && (form.callbackUrls.length || form.logoutUrls.length))
-      context.addIssue({ code: "custom", path: ["callbackUrls"], message: CLIENT_FORM_ERRORS.urlsNeedFlow });
+      context.addIssue({
+        code: "custom",
+        path: ["callbackUrls"],
+        message: CLIENT_FORM_ERRORS.urlsNeedFlow,
+      });
+
     const needsCallback = form.oauthFlows.some((flow) => FLOWS_NEEDING_CALLBACK.includes(flow));
+
     if (needsCallback && form.oauthFlows.includes(OAuthFlowType.client_credentials))
-      context.addIssue({ code: "custom", path: ["oauthFlows"], message: CLIENT_FORM_ERRORS.clientCredentialsMix });
+      context.addIssue({
+        code: "custom",
+        path: ["oauthFlows"],
+        message: CLIENT_FORM_ERRORS.clientCredentialsMix,
+      });
+
     if (!needsCallback) return;
+
     if (!form.callbackUrls.length)
-      context.addIssue({ code: "custom", path: ["callbackUrls"], message: CLIENT_FORM_ERRORS.callbackRequired });
+      context.addIssue({
+        code: "custom",
+        path: ["callbackUrls"],
+        message: CLIENT_FORM_ERRORS.callbackRequired,
+      });
+
     if (!form.scopes.length)
-      context.addIssue({ code: "custom", path: ["scopes"], message: CLIENT_FORM_ERRORS.scopeRequired });
+      context.addIssue({
+        code: "custom",
+        path: ["scopes"],
+        message: CLIENT_FORM_ERRORS.scopeRequired,
+      });
   });
 
 export type ClientForm = z.input<typeof clientSchema>;
@@ -200,6 +251,7 @@ type ClientFields = Pick<
 
 export function toClientFields(form: ClientForm): ClientFields {
   const hasFlows = form.oauthFlows.length > 0;
+
   return {
     ClientName: form.name.trim(),
     ExplicitAuthFlows: form.authFlows,
@@ -224,6 +276,7 @@ export function clientFormOf(client?: UserPoolClientType): ClientForm {
       scopes: DEFAULT_OAUTH_SCOPES,
       providers: [COGNITO_PROVIDER],
     };
+
   return {
     name: client.ClientName ?? "",
     generateSecret: Boolean(client.ClientSecret),
@@ -245,28 +298,40 @@ export const emailSchema = z.discriminatedUnion("source", [
     source: z.literal("ses"),
     identity: z.string().min(1, "Choose an SES identity."),
     from: z.string().trim(),
-    replyTo: z.string().trim().refine((text) => text === "" || z.email().safeParse(text).success, "Enter a valid email address."),
+    replyTo: z
+      .string()
+      .trim()
+      .refine(
+        (text) => text === "" || z.email().safeParse(text).success,
+        "Enter a valid email address.",
+      ),
   }),
 ]);
+
 export type EmailForm = z.input<typeof emailSchema>;
 
 // Luôn điền đủ ô SES kể cả khi đang Cognito default, để chuyển tile sang SES không gặp giá trị undefined
 export function emailFormOf(email?: EmailConfigurationType) {
   return {
-    source: email?.EmailSendingAccount === EmailSendingAccountType.DEVELOPER ? ("ses" as const) : ("cognito" as const),
+    source:
+      email?.EmailSendingAccount === EmailSendingAccountType.DEVELOPER
+        ? ("ses" as const)
+        : ("cognito" as const),
     identity: email?.SourceArn?.split(SES_IDENTITY_PREFIX)[1] ?? "",
     from: email?.From ?? "",
     replyTo: email?.ReplyToEmailAddress ?? "",
   };
 }
 
-export const domainSchema = z.object({ prefix: z.string().trim().regex(DOMAIN_PREFIX_PATTERN, DOMAIN_PREFIX_ERROR) });
+export const domainSchema = z.object({
+  prefix: z.string().trim().regex(DOMAIN_PREFIX_PATTERN, DOMAIN_PREFIX_ERROR),
+});
+
 export type DomainForm = z.input<typeof domainSchema>;
 
 const OIDC_URL_FIELDS = ["issuer", "authorizeUrl", "tokenUrl", "attributesUrl", "jwksUri"] as const;
 
-// Một object phẳng cho cả hai loại: Google bỏ qua trường OIDC (superRefine), đổi tile không mất giá trị đã gõ
-// Edit không kiểm tên: provider tạo bằng IaC có thể có tên ngoài pattern và tên không sửa được
+// Một object phẳng để đổi tile không mất giá trị đã gõ; Edit không kiểm tên vì provider tạo bằng IaC có thể ngoài pattern
 export const providerEditSchema = z
   .object({
     type: z.enum(PROVIDER_TYPES),
@@ -289,6 +354,7 @@ export const providerEditSchema = z
   })
   .superRefine((form, context) => {
     if (form.type !== PROVIDER_TYPES.OIDC) return;
+
     for (const field of OIDC_URL_FIELDS)
       if (!z.url().safeParse(form[field]).success)
         context.addIssue({ code: "custom", path: [field], message: PROVIDER_FORM_ERRORS.url });
@@ -304,6 +370,7 @@ export type ProviderForm = z.input<typeof providerSchema>;
 
 export function toProviderFields(form: ProviderForm) {
   const isOidc = form.type === PROVIDER_TYPES.OIDC;
+
   const details: Record<string, string> = {
     [PROVIDER_DETAIL_KEYS.clientId]: form.clientId.trim(),
     [PROVIDER_DETAIL_KEYS.clientSecret]: form.clientSecret.trim(),
@@ -317,11 +384,14 @@ export function toProviderFields(form: ProviderForm) {
       [PROVIDER_DETAIL_KEYS.attributesRequestMethod]: form.attributesRequestMethod,
     }),
   };
+
   return {
     ProviderName: isOidc ? form.name.trim() : GOOGLE_PROVIDER_NAME,
     ProviderType: form.type,
     ProviderDetails: details,
-    AttributeMapping: Object.fromEntries(form.mapping.map((row) => [row.poolAttribute, row.idpClaim.trim()])),
+    AttributeMapping: Object.fromEntries(
+      form.mapping.map((row) => [row.poolAttribute, row.idpClaim.trim()]),
+    ),
   };
 }
 
@@ -330,8 +400,12 @@ const DEFAULT_ATTRIBUTE_MAPPING = { poolAttribute: EMAIL_ATTRIBUTE, idpClaim: EM
 // Điền đủ mọi ô cho cả hai loại: ô undefined trông như rỗng nhưng zod báo "expected string"
 export function providerFormOf(provider?: IdentityProviderType): ProviderForm {
   const details = provider?.ProviderDetails ?? {};
+
   return {
-    type: provider?.ProviderType === PROVIDER_TYPES.Google ? PROVIDER_TYPES.Google : PROVIDER_TYPES.OIDC,
+    type:
+      provider?.ProviderType === PROVIDER_TYPES.Google
+        ? PROVIDER_TYPES.Google
+        : PROVIDER_TYPES.OIDC,
     name: provider?.ProviderName ?? "",
     clientId: details[PROVIDER_DETAIL_KEYS.clientId] ?? "",
     clientSecret: details[PROVIDER_DETAIL_KEYS.clientSecret] ?? "",
@@ -341,9 +415,13 @@ export function providerFormOf(provider?: IdentityProviderType): ProviderForm {
     tokenUrl: details[PROVIDER_DETAIL_KEYS.tokenUrl] ?? "",
     attributesUrl: details[PROVIDER_DETAIL_KEYS.attributesUrl] ?? "",
     jwksUri: details[PROVIDER_DETAIL_KEYS.jwksUri] ?? "",
-    attributesRequestMethod: details[PROVIDER_DETAIL_KEYS.attributesRequestMethod] ?? ATTRIBUTES_REQUEST_METHOD,
+    attributesRequestMethod:
+      details[PROVIDER_DETAIL_KEYS.attributesRequestMethod] ?? ATTRIBUTES_REQUEST_METHOD,
     mapping: provider
-      ? Object.entries(provider.AttributeMapping ?? {}).map(([poolAttribute, idpClaim]) => ({ poolAttribute, idpClaim }))
+      ? Object.entries(provider.AttributeMapping ?? {}).map(([poolAttribute, idpClaim]) => ({
+          poolAttribute,
+          idpClaim,
+        }))
       : [DEFAULT_ATTRIBUTE_MAPPING],
   };
 }
