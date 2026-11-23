@@ -5,6 +5,7 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { ObjectsTab } from "../components/ObjectsTab.tsx";
 import { PermissionsTab } from "../components/PermissionsTab.tsx";
 import { PropertiesTab } from "../components/PropertiesTab.tsx";
@@ -56,7 +57,16 @@ export function BucketDetail() {
   ];
 
   const header = (
-    <Header variant='h1' description={uri} actions={<CopyButton label='Copy S3 URI' text={uri} />}>
+    <Header
+      variant='h1'
+      description={
+        <>
+          {uri}
+          <StackLink separated type='AWS::S3::Bucket' physicalId={bucket} />
+        </>
+      }
+      actions={<CopyButton label='Copy S3 URI' text={uri} />}
+    >
       {bucket}
     </Header>
   );

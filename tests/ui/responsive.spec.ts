@@ -21,6 +21,7 @@ const PAGES = [
   { slug: "eventbridge-schedules", path: "/eventbridge/schedules" },
   { slug: "eventbridge-schedule-create", path: "/eventbridge/schedules/create" },
   { slug: "stepfunctions-state-machines", path: "/stepfunctions/statemachines" },
+  { slug: "cloudformation-stacks", path: "/cloudformation/stacks" },
   { slug: "ses-mailbox", path: "/ses/mailbox" },
   { slug: "ses-identities", path: "/ses/identities" },
   { slug: "ses-templates", path: "/ses/templates" },

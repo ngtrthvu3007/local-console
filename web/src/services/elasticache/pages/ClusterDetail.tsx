@@ -10,6 +10,7 @@ import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { nounFor } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { DeleteClustersModal } from "../components/DeleteClustersModal.tsx";
 import { DetailsTab } from "../components/DetailsTab.tsx";
 import { KeysTab } from "../components/KeysTab.tsx";
@@ -92,7 +93,18 @@ export function ClusterDetail() {
   );
 
   const header = (
-    <Header variant='h1' description={clusterSummary(cluster, keyCount)} actions={headerActions}>
+    <Header
+      variant='h1'
+      description={
+        <>
+          {clusterSummary(cluster, keyCount)}
+          {cluster.kind === "cache-cluster" && (
+            <StackLink separated type='AWS::ElastiCache::CacheCluster' physicalId={cluster.id} />
+          )}
+        </>
+      }
+      actions={headerActions}
+    >
       {cluster.id}
     </Header>
   );

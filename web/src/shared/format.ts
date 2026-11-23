@@ -26,6 +26,13 @@ export function formatBytes(bytes?: number): string {
 export const formatDate = (date?: Date | string | number) =>
   date ? new Date(date).toLocaleString(DATE_TIME_LOCALE) : NOT_AVAILABLE;
 
+// Có mili giây cho nơi nhiều dòng cùng giây, vd: events của CloudFormation
+const MILLISECOND_DIGITS = 3;
+export const formatDateMs = (date?: Date | string | number) =>
+  date
+    ? `${formatDate(date)}.${String(new Date(date).getMilliseconds()).padStart(MILLISECOND_DIGITS, "0")}`
+    : NOT_AVAILABLE;
+
 export function formatTime(timestamp: number): string {
   if (!timestamp) return NOT_AVAILABLE;
   return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });

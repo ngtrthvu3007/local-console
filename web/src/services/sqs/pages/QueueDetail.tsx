@@ -8,6 +8,7 @@ import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { DeleteQueuesModal } from "../components/DeleteQueuesModal.tsx";
 import { MessagesTab } from "../components/MessagesTab.tsx";
 import { PurgeModal, RedriveModal, SendMessageModal } from "../components/MessageModals.tsx";
@@ -84,7 +85,12 @@ function QueueView({
   const header = (
     <Header
       variant='h1'
-      description={queueSummary(queue)}
+      description={
+        <>
+          {queueSummary(queue)}
+          <StackLink separated type='AWS::SQS::Queue' physicalId={queue.url} />
+        </>
+      }
       actions={<ActionBar compact={compact} actions={barActions} />}
     >
       {queue.name}

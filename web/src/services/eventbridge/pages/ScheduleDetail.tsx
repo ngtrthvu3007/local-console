@@ -18,6 +18,7 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { reformatJson } from "@shared/json.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { scheduleSample } from "../codeSamples.ts";
 import { DeleteSchedulesModal } from "../components/DeleteSchedulesModal.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
@@ -29,8 +30,6 @@ import { toScheduleRow, type Schedule } from "../schedules.ts";
 import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
 
 const DETAILS_COLUMNS = 3;
-const NOT_FOUND_NOTE =
-  "One-time schedules with Delete after completion are removed after they run.";
 
 function flexibleWindow(schedule: Schedule): string {
   const window = schedule.FlexibleTimeWindow;
@@ -80,14 +79,19 @@ function ScheduleView({ schedule }: { schedule: Schedule }) {
   const header = (
     <Header
       variant='h1'
-      description={[
-        kind === "at" ? "One-time" : "Recurring",
-        schedule.ScheduleExpression,
-        schedule.ScheduleExpressionTimezone,
-        enabled ? "Enabled" : "Disabled",
-      ]
-        .filter(Boolean)
-        .join(DETAIL_SEPARATOR)}
+      description={
+        <>
+          {[
+            kind === "at" ? "One-time" : "Recurring",
+            schedule.ScheduleExpression,
+            schedule.ScheduleExpressionTimezone,
+            enabled ? "Enabled" : "Disabled",
+          ]
+            .filter(Boolean)
+            .join(DETAIL_SEPARATOR)}
+          <StackLink separated type='AWS::Scheduler::Schedule' physicalId={row.name} />
+        </>
+      }
       actions={
         <ActionBar
           compact={compact}

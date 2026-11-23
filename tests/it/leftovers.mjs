@@ -1,6 +1,7 @@
 // Resource lc-it-* / lc-e2e-* còn sót trong Floci sau khi chạy test.
 //   node it/leftovers.mjs            liệt kê
 //   node it/leftovers.mjs --delete   xoá (chỉ resource có tiền tố của test)
+import { execFileSync } from "node:child_process";
 import { S3Client, ListBucketsCommand, ListObjectVersionsCommand, DeleteObjectsCommand, DeleteBucketCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, ListTablesCommand, DeleteTableCommand } from "@aws-sdk/client-dynamodb";
 import { LambdaClient, ListFunctionsCommand, DeleteFunctionCommand } from "@aws-sdk/client-lambda";
@@ -9,6 +10,7 @@ import { SQSClient, ListQueuesCommand, DeleteQueueCommand } from "@aws-sdk/clien
 import { SNSClient, ListTopicsCommand, DeleteTopicCommand } from "@aws-sdk/client-sns";
 import { SchedulerClient, ListScheduleGroupsCommand, ListSchedulesCommand, DeleteScheduleCommand, DeleteScheduleGroupCommand } from "@aws-sdk/client-scheduler";
 import { SFNClient, ListStateMachinesCommand, DeleteStateMachineCommand } from "@aws-sdk/client-sfn";
+import { CloudFormationClient, DescribeStacksCommand, DeleteStackCommand } from "@aws-sdk/client-cloudformation";
 import { EventBridgeClient, ListEventBusesCommand, ListRulesCommand, ListTargetsByRuleCommand, RemoveTargetsCommand, DeleteRuleCommand, DeleteEventBusCommand } from "@aws-sdk/client-eventbridge";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
@@ -27,6 +29,7 @@ const ses = new SESv2Client(config);
 const eventbridge = new EventBridgeClient(config);
 const scheduler = new SchedulerClient(config);
 const sfn = new SFNClient(config);
+const cloudformation = new CloudFormationClient(config);
 
 const buckets = mine(((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name));
 const tables = mine((await dynamodb.send(new ListTablesCommand({}))).TableNames ?? []);
@@ -57,14 +60,23 @@ const scheduleGroups = mine(((await scheduler.send(new ListScheduleGroupsCommand
 
 const stateMachines = ((await sfn.send(new ListStateMachinesCommand({}))).stateMachines ?? []).filter((machine) => mine([machine.name]).length).map((machine) => machine.stateMachineArn);
 
+// Stack đã xóa xong (DELETE_COMPLETE) vẫn nằm trong list một lúc nên bỏ qua
+const stacks = mine(((await cloudformation.send(new DescribeStacksCommand({}))).Stacks ?? []).filter((stack) => stack.StackStatus !== "DELETE_COMPLETE").map((stack) => stack.StackName));
+
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
 const texts = smsInbox.filter((sms) => sms.PhoneNumber?.startsWith(SMS_TEST_PHONE_PREFIX)).map((sms) => sms.Id).filter(Boolean);
 
-console.log(JSON.stringify({ buckets, tables, functions, queues, topics, buses, defaultRules, defaultSchedules, scheduleGroups, stateMachines, identities, configurationSets, templates, emails, texts }, null, 2));
+console.log(JSON.stringify({ buckets, tables, functions, queues, topics, buses, defaultRules, defaultSchedules, scheduleGroups, stateMachines, stacks, identities, configurationSets, templates, emails, texts }, null, 2));
 
 if (process.argv.includes("--delete")) {
+  if (stacks.length) {
+    // Xóa stack trước rồi chạy lại: xóa lẻ resource của stack thì DeleteStack lỗi DELETE_FAILED
+    for (const name of stacks) await cloudformation.send(new DeleteStackCommand({ StackName: name }));
+    execFileSync(process.execPath, [process.argv[1], "--delete"], { stdio: "inherit" });
+    process.exit();
+  }
   for (const bucket of buckets) {
     // Bucket phải rỗng (cả version) mới xoá được
     const { Versions = [], DeleteMarkers = [] } = await s3.send(new ListObjectVersionsCommand({ Bucket: bucket }));

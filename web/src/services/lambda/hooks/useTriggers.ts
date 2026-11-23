@@ -37,7 +37,6 @@ import {
 import {
   DYNAMODB_ARN_PATTERN,
   KINESIS_ARN_PATTERN,
-  STARTING_POSITIONS,
   type StartingPosition,
   type TriggerRowSource,
 } from "../constants.ts";

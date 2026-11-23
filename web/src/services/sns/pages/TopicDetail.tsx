@@ -10,6 +10,7 @@ import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { DeleteTopicsModal } from "../components/DeleteTopicsModal.tsx";
 import { DetailsTab } from "../components/DetailsTab.tsx";
 import { PublishModal } from "../components/PublishModal.tsx";
@@ -58,9 +59,14 @@ function TopicView({ topic }: { topic: Topic }) {
   const header = (
     <Header
       variant='h1'
-      description={[topicTypeLabel(topic), pluralize(topic.subscriptions, "subscription")].join(
-        DETAIL_SEPARATOR,
-      )}
+      description={
+        <>
+          {[topicTypeLabel(topic), pluralize(topic.subscriptions, "subscription")].join(
+            DETAIL_SEPARATOR,
+          )}
+          <StackLink separated type='AWS::SNS::Topic' physicalId={topic.arn} />
+        </>
+      }
       actions={
         <ActionBar
           compact={compact}
