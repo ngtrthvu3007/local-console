@@ -1,6 +1,6 @@
 # Secrets Manager + SSM Parameter Store — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đưa lên từ "Để sau"
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-23; IT `it/secrets-ssm.test.ts`, E2E `secretsmanager.spec.ts`, `ssm.spec.ts`, `secrets-ssm-links.spec.ts`, UI `ui/responsive.spec.ts`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đưa lên từ "Để sau"
 
 ## 1. Mục tiêu
 
@@ -71,7 +71,7 @@ Secrets (3)                                         [↻] [Delete] [Store a new 
  ◯ stripe-key               —                    2026-11-19 08:01   —
 ```
 
-- `ListSecrets` (filter `name`, vòng `NextToken`). Secret đang chờ xóa không hiện (giống AWS mặc định).
+- `ListSecrets` (vòng `NextToken`), ô tìm lọc tên phía client như mọi bảng khác (chốt khi duyệt plan 2026-11-23). Secret đang chờ xóa không hiện (giống AWS mặc định).
 - Delete: chọn một → modal 3.4.
 
 ### 3.2 Tạo secret — `/secretsmanager/secrets/create`
@@ -118,7 +118,7 @@ Stack: AppStack ↗
 
 ### 3.4 Xóa secret (modal)
 
-Giống AWS: chọn recovery window 7–30 ngày (mặc định 7), gõ `delete` → `DeleteSecret` (`RecoveryWindowInDays`). Mô tả: "The secret is hidden and can't be read until the window ends. Creating a secret with the same name fails until then." (7 #2).
+Giống AWS: chọn recovery window 7–30 ngày (mặc định 7, `Select` nên không nhập sai được), gõ `delete` → `DeleteSecret` (`RecoveryWindowInDays`). Mô tả: "The secret is hidden and can't be read until the window ends. Creating a secret with the same name fails until then." (7 #2).
 
 ### 3.5 Danh sách parameter — `/ssm/parameters`
 
@@ -132,17 +132,17 @@ Parameters (4)                                       [↻] [Delete] [Create para
  ☐ /cdk-bootstrap/hnb659fds/version  String            1   2026-11-19 08:01
 ```
 
-- `DescribeParameters` (vòng `NextToken`); ô tìm → `ParameterFilters` `Name` `Contains`.
+- `DescribeParameters` (vòng `NextToken`); ô tìm lọc tên / path phía client (chốt khi duyệt plan 2026-11-23).
 - Delete (chọn nhiều): `ConfirmModal` gõ `delete` → `DeleteParameters` (từng lô 10, luật của API).
 
 ### 3.6 Tạo / sửa parameter — `/ssm/parameters/create`, `/ssm/parameters/edit?name=`
 
-| Trường      | Ghi chú                                                                                  |
-| ----------- | ---------------------------------------------------------------------------------------- |
-| Name        | Khóa khi sửa. Ký tự `a-zA-Z0-9_.-/`; bắt đầu bằng `/` nếu có nhiều cấp                   |
-| Description | Tùy chọn                                                                                 |
-| Type        | `Tiles`: String / StringList / SecureString. StringList: giá trị cách nhau bằng dấu phẩy |
-| Value       | `Textarea`. SecureString: ô dạng password                                                |
+| Trường      | Ghi chú                                                                                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name        | Khóa khi sửa. Ký tự `a-zA-Z0-9_.-/`; bắt đầu bằng `/` nếu có nhiều cấp                                                                                               |
+| Description | Tùy chọn                                                                                                                                                             |
+| Type        | `Tiles`: String / StringList / SecureString. StringList: giá trị cách nhau bằng dấu phẩy                                                                             |
+| Value       | `Textarea`. SecureString: cùng ô nhiều dòng nhưng che ký tự, ô tick **Show value** mới hiện (user chốt 2026-11-23: ô password nuốt xuống dòng, hỏng private key PEM) |
 
 `PutParameter` (`Overwrite: true` khi sửa). Tier Standard (mặc định của AWS).
 
@@ -264,7 +264,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1`. Resour
 | 11  | **RDS**                           | Secret `rds!…` do RDS (`ManageMasterUserPassword`) tạo hiện trong `ListSecrets`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 12  | **Rotation chạy nền**             | `RotateSecret` (cả lưu cấu hình với `RotateImmediately: false` lẫn rotate ngay) trả 200 ngay (0 s), cấu hình được lưu; Floci gọi Lambda ở nền. Lambda lỗi chỉ thấy trong log Lambda / log Floci. Khi lưu với `false`, Floci vẫn gọi `testSecret` ở nền (Lambda theo template AWS sẽ lỗi vì chưa có `AWSPENDING`, nhưng không ảnh hưởng cấu hình đã lưu). Lambda viết theo template AWS (createSecret → `PutSecretValue` `AWSPENDING`): lần kiểm 2026-11-19 bước testSecret báo không thấy `AWSPENDING`, giá trị không đổi — **kiểm lại khi làm** (lần khảo sát trước, Lambda khác, xoay thành công) |
 
-**Chưa kiểm, kiểm khi làm:** SDK v3 qua proxy `/aws` (JSON 1.1 như DynamoDB); physical ID của `AWS::SecretsManager::Secret` là ARN đầy đủ (`Ref` trả ARN).
+**Kiểm khi làm (2026-11-23):** SDK v3 qua proxy `/aws` chạy bình thường; physical ID của `AWS::SecretsManager::Secret` là ARN đầy đủ hậu tố, `AWS::SSM::Parameter` là tên; parameter không có → `ParameterNotFound` (400). Lambda theo template AWS (#12) xoay thành công: giá trị đổi, Last / Next rotated cập nhật.
 
 ---
 

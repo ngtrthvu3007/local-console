@@ -47,6 +47,16 @@ import {
   DeleteUserPoolCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import {
+  SecretsManagerClient,
+  paginateListSecrets,
+  DeleteSecretCommand,
+} from "@aws-sdk/client-secrets-manager";
+import {
+  SSMClient,
+  paginateDescribeParameters,
+  DeleteParametersCommand,
+} from "@aws-sdk/client-ssm";
+import {
   EventBridgeClient,
   ListEventBusesCommand,
   ListRulesCommand,
@@ -78,6 +88,8 @@ const scheduler = new SchedulerClient(config);
 const sfn = new SFNClient(config);
 const cloudformation = new CloudFormationClient(config);
 const cognito = new CognitoIdentityProviderClient(config);
+const secretsManager = new SecretsManagerClient(config);
+const ssm = new SSMClient(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -165,6 +177,23 @@ const stacks = mine(
     .map((stack) => stack.StackName),
 );
 
+// Secret đang chờ xóa vẫn giữ tên (tạo lại cùng tên lỗi) nên tính cả
+const secrets = [];
+for await (const page of paginateListSecrets(
+  { client: secretsManager },
+  { IncludePlannedDeletion: true },
+)) {
+  secrets.push(...mine((page.SecretList ?? []).map((secret) => secret.Name)));
+}
+// Tên parameter dạng path bắt đầu bằng "/": bỏ "/" đầu rồi so tiền tố
+const parameters = [];
+for await (const page of paginateDescribeParameters({ client: ssm }, {})) {
+  parameters.push(
+    ...(page.Parameters ?? [])
+      .map((parameter) => parameter.Name)
+      .filter((name) => mine([name?.replace(/^\//, "")]).length),
+  );
+}
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -188,6 +217,8 @@ console.log(
       scheduleGroups,
       stateMachines,
       stacks,
+      secrets,
+      parameters,
       identities,
       configurationSets,
       templates,
@@ -261,6 +292,14 @@ if (process.argv.includes("--delete")) {
     await scheduler.send(new DeleteScheduleGroupCommand({ Name: name }));
   for (const arn of stateMachines)
     await sfn.send(new DeleteStateMachineCommand({ stateMachineArn: arn }));
+  for (const name of secrets) {
+    await secretsManager.send(
+      new DeleteSecretCommand({ SecretId: name, ForceDeleteWithoutRecovery: true }),
+    );
+  }
+  // DeleteParameters nhận tối đa 10 tên một lần
+  for (let start = 0; start < parameters.length; start += 10)
+    await ssm.send(new DeleteParametersCommand({ Names: parameters.slice(start, start + 10) }));
   for (const name of identities)
     await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
   for (const name of configurationSets)

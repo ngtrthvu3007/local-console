@@ -146,3 +146,27 @@ export async function consoleApi(
   const text = await response.text();
   return { status: response.status, body: text ? JSON.parse(text) : undefined };
 }
+
+// Lambda rotation theo template AWS: createSecret ghi AWSPENDING, finishSecret chuyển AWSCURRENT
+export const ROTATION_LAMBDA_SOURCE = `
+import {
+  SecretsManagerClient, PutSecretValueCommand, DescribeSecretCommand, UpdateSecretVersionStageCommand,
+} from "@aws-sdk/client-secrets-manager";
+const client = new SecretsManagerClient({});
+export const handler = async ({ SecretId, ClientRequestToken, Step }) => {
+  if (Step === "createSecret") {
+    await client.send(new PutSecretValueCommand({
+      SecretId, ClientRequestToken, SecretString: "rotated-" + Date.now(), VersionStages: ["AWSPENDING"],
+    }));
+  }
+  if (Step === "finishSecret") {
+    const { VersionIdsToStages = {} } = await client.send(new DescribeSecretCommand({ SecretId }));
+    const current = Object.keys(VersionIdsToStages).find((id) => VersionIdsToStages[id].includes("AWSCURRENT"));
+    if (current !== ClientRequestToken) {
+      await client.send(new UpdateSecretVersionStageCommand({
+        SecretId, VersionStage: "AWSCURRENT", MoveToVersionId: ClientRequestToken, RemoveFromVersionId: current,
+      }));
+    }
+  }
+};
+`;

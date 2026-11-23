@@ -22,6 +22,7 @@ import SegmentedControl, {
 import Select, { type SelectProps } from "@cloudscape-design/components/select";
 import Textarea from "@cloudscape-design/components/textarea";
 import Tiles, { type TilesProps } from "@cloudscape-design/components/tiles";
+import Toggle from "@cloudscape-design/components/toggle";
 
 // Nối react-hook-form với component của Cloudscape: giá trị qua Controller, lỗi zod hiện ở errorText
 
@@ -95,15 +96,17 @@ interface AutosuggestFieldProps<TValues extends FieldValues> extends InputProps<
 interface TextareaFieldProps<TValues extends FieldValues> extends FieldProps<TValues> {
   placeholder?: string;
   rows?: number;
+  spellcheck?: boolean; // tắt cho giá trị máy đọc (key, host, secret): gạch đỏ vô ích
 }
 
 export function FormTextarea<TValues extends FieldValues>(props: TextareaFieldProps<TValues>) {
-  const { placeholder, rows, ...fieldProps } = props;
+  const { placeholder, rows, spellcheck, ...fieldProps } = props;
 
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
         <Textarea
+          spellcheck={spellcheck}
           ref={field.ref}
           value={field.value ?? ""}
           placeholder={placeholder}
@@ -319,6 +322,25 @@ export function FormCheckbox<TValues extends FieldValues>(props: CheckboxProps<T
         >
           {text}
         </Checkbox>
+      )}
+    </ControlledField>
+  );
+}
+
+// Như FormCheckbox nhưng là công tắc bật / tắt (vd: Automatic rotation)
+export function FormToggle<TValues extends FieldValues>(props: CheckboxProps<TValues>) {
+  const { text, description, ...fieldProps } = props;
+
+  return (
+    <ControlledField {...fieldProps}>
+      {(field) => (
+        <Toggle
+          description={description}
+          checked={Boolean(field.value)}
+          onChange={({ detail }) => field.onChange(detail.checked)}
+        >
+          {text}
+        </Toggle>
       )}
     </ControlledField>
   );

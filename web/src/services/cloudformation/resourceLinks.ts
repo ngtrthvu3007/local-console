@@ -4,9 +4,11 @@ import { dynamodbRoutes } from "../dynamodb/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
 import { s3Routes } from "../s3/routes.ts";
+import { secretsRoutes } from "../secretsmanager/routes.ts";
 import { sesRoutes } from "../ses/routes.ts";
 import { snsRoutes } from "../sns/routes.ts";
 import { sqsRoutes } from "../sqs/routes.ts";
+import { ssmRoutes } from "../ssm/routes.ts";
 import { queueNameOfUrl } from "../sqs/queues.ts";
 import { stateMachineNameOfArn } from "../stepfunctions/stateMachines.ts";
 import { stepfunctionsRoutes } from "../stepfunctions/routes.ts";
@@ -45,6 +47,8 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::SNS::Subscription": (id) => snsRoutes.topic(topicNameOfSubscriptionArn(id)),
   "AWS::SES::EmailIdentity": () => sesRoutes.identities,
   "AWS::Cognito::UserPool": (id) => cognitoRoutes.pool(id),
+  "AWS::SecretsManager::Secret": (id) => secretsRoutes.secretOfArn(id),
+  "AWS::SSM::Parameter": (id) => ssmRoutes.parameter(id),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
   "AWS::StepFunctions::StateMachine": (id) =>
     stepfunctionsRoutes.stateMachine(stateMachineNameOfArn(id)),
