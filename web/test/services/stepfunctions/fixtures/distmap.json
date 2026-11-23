@@ -1,0 +1,86 @@
+{
+ "status": "SUCCEEDED",
+ "events": [
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "ExecutionStarted",
+   "id": 1,
+   "previousEventId": 0,
+   "executionStartedEventDetails": {
+    "input": "{\"items\":[1,2]}",
+    "inputDetails": {
+     "truncated": false
+    },
+    "roleArn": "arn:aws:iam::000000000000:role/x"
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "MapStateEntered",
+   "id": 2,
+   "previousEventId": 0,
+   "stateEnteredEventDetails": {
+    "name": "M",
+    "input": "{\"items\":[1,2]}",
+    "inputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "MapStateStarted",
+   "id": 3,
+   "previousEventId": 2,
+   "mapStateStartedEventDetails": {
+    "length": 2
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "MapRunStarted",
+   "id": 4,
+   "previousEventId": 3,
+   "mapRunStartedEventDetails": {
+    "mapRunArn": "arn:aws:states:ap-southeast-1:000000000000:mapRun:lc-fx-distmap/fcca5efe-06d7-4f7b-8473-217162cedccb:692dd34f-199f-4161-8f06-8071cb74a12d"
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "MapRunSucceeded",
+   "id": 5,
+   "previousEventId": 4
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "MapStateSucceeded",
+   "id": 6,
+   "previousEventId": 5
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "MapStateExited",
+   "id": 7,
+   "previousEventId": 4,
+   "stateExitedEventDetails": {
+    "name": "M",
+    "output": "[1,2]",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  },
+  {
+   "timestamp": "2026-11-22T05:09:29.886Z",
+   "type": "ExecutionSucceeded",
+   "id": 8,
+   "previousEventId": 7,
+   "executionSucceededEventDetails": {
+    "output": "[1,2]",
+    "outputDetails": {
+     "truncated": false
+    }
+   }
+  }
+ ]
+}

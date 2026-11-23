@@ -11,13 +11,12 @@ export const TARGET_KINDS = {
   other: "Other",
 } as const;
 type TargetKind = keyof typeof TARGET_KINDS;
-// Loại target thêm được từ console (Step Functions làm sau, spec mục 8 bước 7). Event bus để nối
-// bus này sang bus khác
-export const ADDABLE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus"] as const;
+// Loại target thêm được từ console. Event bus để nối bus này sang bus khác
+export const ADDABLE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus", "stepfunctions"] as const;
 export type AddableTargetKind = (typeof ADDABLE_TARGET_KINDS)[number];
 
-// Đích của schedule (thêm event bus; Step Functions làm ở bước 7)
-export const SCHEDULE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus"] as const;
+// Đích của schedule
+export const SCHEDULE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus", "stepfunctions"] as const;
 export type ScheduleTargetKind = (typeof SCHEDULE_TARGET_KINDS)[number];
 
 // Phần dịch vụ của ARN → loại target

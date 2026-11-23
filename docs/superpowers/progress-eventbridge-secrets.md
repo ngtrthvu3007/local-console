@@ -25,7 +25,7 @@ Pull sạch, không conflict. Phần phải đổi:
 | 4. Chi tiết rule: tab Targets (Lambda, SQS, SNS), tab Details | Xong (thêm / gỡ target; Step Functions để bước 7) |
 | 5. Schedules: list + group, tạo / sửa (`at`, `rate`, `cron`), chi tiết, enable/disable, xóa | Xong, đã test UI 1440 + 390, IT, E2E, responsive |
 | 6. Liên kết Lambda / SQS / SNS | Xong, đã test UI 1440 + 390, unit, IT, E2E, responsive toàn app |
-| 7. Target Step Functions | **Hoãn** tới khi service Step Functions có trong console (user chốt 2026-11-21): lúc đó làm cùng dropdown state machine và link sang trang state machine |
+| 7. Target Step Functions | Xong (2026-11-22): dropdown state machine ở Add target và form Schedule, link sang trang state machine; rule không cần RoleArn, schedule dùng role mặc định |
 | 8. Test cuối | Một phần: `it/eventbridge*.test.ts`, `e2e/eventbridge*.spec.ts`, 3 trang trong `responsive.spec.ts` |
 
 ### File đã tạo / sửa (để tách stash)

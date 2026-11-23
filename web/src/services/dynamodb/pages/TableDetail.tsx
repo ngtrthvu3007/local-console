@@ -15,6 +15,7 @@ import { ItemsTab } from "../components/ItemsTab.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
 import { keyText } from "../components/KeyLabel.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { keySchemaOf, useTable } from "../hooks/useTables.ts";
 import {
   SEARCH_PARAMS,
@@ -76,7 +77,16 @@ export function TableDetail() {
   );
 
   const header = (
-    <Header variant='h1' description={tableSummary(table)} actions={headerActions}>
+    <Header
+      variant='h1'
+      description={
+        <>
+          {tableSummary(table)}
+          <StackLink separated type='AWS::DynamoDB::Table' physicalId={tableName} />
+        </>
+      }
+      actions={headerActions}
+    >
       {tableName}
     </Header>
   );

@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 import type { Icon } from "@tabler/icons-react";
 import type { ServiceCategory } from "@shared/constants.ts";
+import { cloudformationService } from "./services/cloudformation/index.tsx";
 import { cognitoService } from "./services/cognito/index.tsx";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
@@ -11,6 +12,7 @@ import { s3Service } from "./services/s3/index.tsx";
 import { sesService } from "./services/ses/index.tsx";
 import { snsService } from "./services/sns/index.tsx";
 import { sqsService } from "./services/sqs/index.tsx";
+import { stepfunctionsService } from "./services/stepfunctions/index.tsx";
 
 export interface ServiceLink {
   text: string;
@@ -36,6 +38,8 @@ export const services: ServiceDefinition[] = [
   sqsService,
   snsService,
   eventbridgeService,
+  stepfunctionsService,
+  cloudformationService,
   elasticacheService,
   mqService,
   sesService,

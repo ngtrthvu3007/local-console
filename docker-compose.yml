@@ -10,6 +10,8 @@ services:
       # Host trong URL Floci trả về (SQS QueueUrl, endpoint Redis…). localhost.floci.io trỏ về 127.0.0.1
       # qua DNS public nên máy dev dùng được; alias bên dưới cho app trong compose, Lambda dùng DNS của Floci
       FLOCI_HOSTNAME: localhost.floci.io
+      # Bật khi deploy CDK có custom resource Node; URL Floci trả về thành https:// (development.md › Traps)
+      FLOCI_TLS_ENABLED: ${FLOCI_TLS_ENABLED:-false}
     extra_hosts:
       - "host.docker.internal:host-gateway" # để SNS HTTP subscription tới được app chạy trên máy dev (Linux)
     volumes:

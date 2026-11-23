@@ -103,6 +103,11 @@ const SCHEDULE_TARGET_IDS = [...SCHEDULE_TARGET_KINDS, "other"] as const;
 const FLEXIBLE_MODE_IDS = Object.values(FLEXIBLE_MODES) as [string, ...string[]];
 
 const MAX_FLEXIBLE_MINUTES = 1440;
+const JSON_INPUT_TARGET_KINDS: ReadonlySet<string> = new Set([
+  "lambda",
+  "eventbus",
+  "stepfunctions",
+]);
 
 // fifoArns: queue FIFO cần message group ID (luật của SQS)
 export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
@@ -148,8 +153,8 @@ export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
         if (!values.source) addIssue("source", "Enter a source.");
         if (!values.detailType) addIssue("detailType", "Enter a detail type.");
       }
-      // Luật của Floci: Lambda và event bus nhận Input là JSON; SQS, SNS nhận text bất kỳ
-      if (values.targetKind === "lambda" || values.targetKind === "eventbus") {
+      // Luật của Floci: Lambda, event bus và state machine nhận Input là JSON; SQS, SNS nhận text bất kỳ
+      if (JSON_INPUT_TARGET_KINDS.has(values.targetKind)) {
         const error = jsonError(values.input);
         if (error) addIssue("input", error);
       }

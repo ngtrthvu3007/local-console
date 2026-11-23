@@ -265,6 +265,17 @@ html {
 body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"]:not(#\9) {
   flex-direction: row-reverse;
   justify-content: space-between;
+  /* Cloudscape chừa viền trái 1px cho header nhóm, đẩy icon + tên lệch 1px so với link thường */
+  border-inline-start-width: 0;
+}
+/* Mũi tên căn giữa theo chữ: Cloudscape để flex-start kèm padding 4px */
+body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] :is([class*="awsui_icon-container_"], [class*="awsui_icon-position_"]):not(#\9) {
+  align-items: center;
+  padding-block: 0;
+}
+/* Nhóm đang mở: ô icon nới lên 20px, icon 16px nằm sát trên */
+body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] [class*="awsui_icon-position_"]:not(#\9) {
+  block-size: 16px;
 }
 @media (max-width: 688px) {
   /* Bỏ nút "…" của breadcrumb: cao 44px làm chevron lệch và đè viền thanh breadcrumb.
@@ -394,6 +405,11 @@ body [class*="awsui_icon_"]:has(> .console-service-icon):not(#\9) {
   block-size: auto;
   padding-block: 0;
 }
+/* Mục sidebar: Cloudscape để link flex-start, nên ô icon 24px lệch xuống so với tâm chữ (cao 19px).
+   Căn giữa ở mọi cỡ màn hình; trên mobile link còn cao 44px (khối @media bên dưới) */
+body .local-console nav[aria-label="Side navigation"] a:not(#\9) {
+  align-items: center;
+}
 /* Icon + tên service (Recently visited trên Home) */
 .console-service {
   display: grid;
@@ -417,18 +433,12 @@ body [class*="awsui_icon_"]:has(> .console-service-icon):not(#\9) {
   /* Cloudscape đặt min-block-size 28px kèm :not(#\9); cần cùng mức ưu tiên mới đè được. */
   body .local-console nav[aria-label="Side navigation"] a:not(#\9) {
     min-block-size: 44px;
-    align-items: center;
   }
   /* Link service trong thẻ Recently visited của Home: chữ một dòng, cần vùng chạm 44px */
   body .local-console .console-service a:not(#\9) {
     display: inline-flex;
     align-items: center;
     min-block-size: var(--touch-target);
-  }
-  /* Link cao 44px trên mobile nên mũi tên phải căn giữa theo chữ */
-  body .local-console nav[aria-label="Side navigation"] [class*="awsui_header-navigation_"] [class*="awsui_expand-button_"]:not(#\9) {
-    align-items: center;
-    padding-block-start: 0;
   }
 }
 

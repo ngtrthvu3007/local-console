@@ -65,6 +65,7 @@ export const SERVICE_CATEGORIES = {
   integration: { label: "Application integration", color: "#E7157B" },
   security: { label: "Security, identity, & compliance", color: "#DD344C" },
   business: { label: "Business applications", color: "#DD344C" },
+  management: { label: "Management & governance", color: "#C925D1" },
 } as const;
 export type ServiceCategory = keyof typeof SERVICE_CATEGORIES;
 

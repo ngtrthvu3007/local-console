@@ -7,6 +7,7 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import { useTopics } from "../../sns/hooks/useTopics.ts";
+import { useStateMachines } from "../../stepfunctions/hooks/useStateMachines.ts";
 import { useBuses } from "../hooks/useBuses.ts";
 import { useAddTarget } from "../hooks/useTargets.ts";
 import { addTargetSchema, type AddTargetForm } from "../schemas.ts";
@@ -33,6 +34,7 @@ const EMPTY_TEXT: Record<AddableTargetKind, string> = {
   sqs: "No queues",
   sns: "No topics",
   eventbus: "No other event buses",
+  stepfunctions: "No state machines",
 };
 
 // Chỉ mount khi mở
@@ -41,6 +43,7 @@ export function AddTargetModal({ bus, rule, onDismiss }: Props) {
   const queues = useQueues();
   const topics = useTopics();
   const buses = useBuses();
+  const stateMachines = useStateMachines();
   const addTarget = useAddTarget(bus, rule);
 
   const optionsByKind: Record<AddableTargetKind, { value: string; label: string }[]> = {
@@ -54,6 +57,10 @@ export function AddTargetModal({ bus, rule, onDismiss }: Props) {
     eventbus: (buses.data ?? [])
       .filter((item) => item.name !== bus)
       .map((item) => ({ value: item.arn, label: item.name })),
+    stepfunctions: (stateMachines.data ?? []).map((machine) => ({
+      value: machine.arn,
+      label: machine.name,
+    })),
   };
   const fifoArns = new Set((queues.data ?? []).filter((queue) => queue.fifo).map((q) => q.arn));
 
