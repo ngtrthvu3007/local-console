@@ -6,7 +6,11 @@ import {
   rotationFormValues,
   rotationSchema,
 } from "../../../src/services/secretsmanager/schemas.ts";
-import { keyValueOf, textOfKeyValue } from "../../../src/services/secretsmanager/secretValue.ts";
+import {
+  keyValueOf,
+  readableText,
+  textOfKeyValue,
+} from "../../../src/services/secretsmanager/secretValue.ts";
 
 const ARN = "arn:aws:secretsmanager:ap-southeast-1:000000000000:secret:app/db-AbC123";
 
@@ -187,5 +191,26 @@ describe("rotationFormValues", () => {
       days: "30",
       expression: "",
     });
+  });
+});
+
+describe("readableText", () => {
+  it("indents one-line JSON such as the rds! secret of RDS", () => {
+    expect(readableText('{"host":"172.28.0.2","port":7002}')).toBe(
+      '{\n  "host": "172.28.0.2",\n  "port": 7002\n}',
+    );
+  });
+
+  // Copy chép đúng chữ đang hiện: format mà đổi giá trị thì app nhận sai
+  it("keeps the text as stored when formatting would change it", () => {
+    for (const text of [
+      '{"id":12345678901234567890}',
+      '{"a":"1","a":"2"}',
+      '{\n    "already": "formatted"\n}',
+      "not json",
+      "api-key-123",
+    ]) {
+      expect(readableText(text), text).toBe(text);
+    }
   });
 });

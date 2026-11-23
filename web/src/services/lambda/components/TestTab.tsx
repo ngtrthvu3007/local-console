@@ -86,10 +86,10 @@ function InvokeResultView({
         <KeyValuePairs columns={RESULT_COLUMNS} items={summary} />
         {/* Xếp dọc như AWS Console: dòng log và stack trace dài, đặt cạnh nhau thì bị cắt */}
         <FormField label='Response' stretch>
-          <CodeSnippet code={result.response} />
+          <CodeSnippet code={result.response} ariaLabel='Response' />
         </FormField>
         <FormField label='Log output' stretch>
-          <CodeSnippet code={result.logs || "No log output."} wrap />
+          <CodeSnippet code={result.logs || "No log output."} wrap ariaLabel='Log output' />
         </FormField>
       </SpaceBetween>
     </Alert>

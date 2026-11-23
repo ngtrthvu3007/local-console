@@ -9,7 +9,8 @@ import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
-import { CodeBlock } from "../components/CodeBlock.tsx";
+import jsonHighlight from "@cloudscape-design/code-view/highlight/json";
+import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
@@ -95,12 +96,12 @@ function ExecutionView({ execution }: { execution: DescribeExecutionCommandOutpu
             <ColumnLayout columns={2}>
               <SpaceBetween size='s'>
                 <Header variant='h3'>Input</Header>
-                <CodeBlock code={jsonOrDash(execution.input)} />
+                <CodeSnippet code={jsonOrDash(execution.input)} highlight={jsonHighlight} wrap />
                 {payloadNote(execution.inputDetails?.included)}
               </SpaceBetween>
               <SpaceBetween size='s'>
                 <Header variant='h3'>Output</Header>
-                <CodeBlock code={jsonOrDash(execution.output)} />
+                <CodeSnippet code={jsonOrDash(execution.output)} highlight={jsonHighlight} wrap />
                 {payloadNote(execution.outputDetails?.included)}
               </SpaceBetween>
             </ColumnLayout>

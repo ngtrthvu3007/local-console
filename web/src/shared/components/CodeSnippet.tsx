@@ -1,57 +1,30 @@
-import { ResponsiveActions } from "./ResponsiveActions.tsx";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import Box from "@cloudscape-design/components/box";
-import SpaceBetween from "@cloudscape-design/components/space-between";
+import CodeView, { type CodeViewProps } from "@cloudscape-design/code-view/code-view";
 import { LOADING_PLACEHOLDER } from "../constants.ts";
 import { CopyButton } from "./CopyButton.tsx";
-import "./CodeSnippet.css";
 
-const scrollable = { overflowX: "auto" } as const;
+const COPY_CODE_LABEL = "Copy code";
+const CODE_LABEL = "Code";
 
-// Khối code có nút Copy; dòng dài cuộn trong khung, trang không cuộn ngang
+// Mọi khối code của console: nút Copy dạng icon ở góc trên phải (như AWS Console), một kiểu duy nhất.
+// wrap: dòng dài xuống dòng; không wrap thì cuộn ngang trong khung, trang không cuộn
 export function CodeSnippet({
   code,
-  note,
   wrap = false,
+  highlight,
+  ariaLabel = CODE_LABEL,
 }: {
   code?: string;
-  note?: ReactNode;
   wrap?: boolean;
+  highlight?: CodeViewProps["highlight"];
+  ariaLabel?: string;
 }) {
-  const frame = useRef<HTMLDivElement>(null);
-  const [overflowing, setOverflowing] = useState(false);
-  useEffect(() => {
-    const element = frame.current;
-    if (!element) return;
-    const measure = () => setOverflowing(element.scrollWidth > element.clientWidth + 1);
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    measure();
-    return () => observer.disconnect();
-  }, [code, wrap]);
   return (
-    <SpaceBetween size='s'>
-      <div
-        ref={frame}
-        style={scrollable}
-        className={wrap ? "code-snippet code-snippet--wrap" : "code-snippet"}
-        role={overflowing ? "region" : undefined}
-        aria-label={overflowing ? "Code snippet, scroll horizontally to read" : undefined}
-        tabIndex={overflowing ? 0 : undefined}
-      >
-        <Box variant='pre' padding='s'>
-          {code ?? LOADING_PLACEHOLDER}
-        </Box>
-      </div>
-      {overflowing && (
-        <div className='code-snippet__scroll-hint'>
-          <Box color='text-body-secondary'>Scroll horizontally to read the full lines.</Box>
-        </div>
-      )}
-      <ResponsiveActions>
-        <CopyButton text={code} />
-        {note && <Box color='text-body-secondary'>{note}</Box>}
-      </ResponsiveActions>
-    </SpaceBetween>
+    <CodeView
+      content={code ?? LOADING_PLACEHOLDER}
+      highlight={highlight}
+      wrapLines={wrap}
+      ariaLabel={ariaLabel}
+      actions={<CopyButton variant='icon' text={code} label={COPY_CODE_LABEL} />}
+    />
   );
 }

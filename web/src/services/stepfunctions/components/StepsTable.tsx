@@ -5,7 +5,8 @@ import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
-import { CodeBlock } from "./CodeBlock.tsx";
+import jsonHighlight from "@cloudscape-design/code-view/highlight/json";
+import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError, type FailableQuery } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
@@ -29,17 +30,25 @@ function StepDetails({ step }: { step: StepRow }) {
       {step.error && (
         <SpaceBetween size='s'>
           <Header variant='h3'>Error</Header>
-          <CodeBlock code={[step.error, step.cause].filter(Boolean).join("\n")} json={false} />
+          <CodeSnippet code={[step.error, step.cause].filter(Boolean).join("\n")} wrap />
         </SpaceBetween>
       )}
       <SpaceBetween size='s'>
         <Header variant='h3'>Input</Header>
-        <CodeBlock code={step.input === undefined ? NOT_AVAILABLE : reformatJson(step.input)} />
+        <CodeSnippet
+          code={step.input === undefined ? NOT_AVAILABLE : reformatJson(step.input)}
+          highlight={jsonHighlight}
+          wrap
+        />
         {step.inputTruncated && <Box color='text-body-secondary'>{TRUNCATED_NOTE}</Box>}
       </SpaceBetween>
       <SpaceBetween size='s'>
         <Header variant='h3'>Output</Header>
-        <CodeBlock code={step.output === undefined ? NOT_AVAILABLE : reformatJson(step.output)} />
+        <CodeSnippet
+          code={step.output === undefined ? NOT_AVAILABLE : reformatJson(step.output)}
+          highlight={jsonHighlight}
+          wrap
+        />
         {step.outputTruncated && <Box color='text-body-secondary'>{TRUNCATED_NOTE}</Box>}
       </SpaceBetween>
     </SpaceBetween>
