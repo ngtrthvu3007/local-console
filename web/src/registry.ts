@@ -8,6 +8,7 @@ import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
+import { rdsService } from "./services/rds/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
 import { secretsManagerService } from "./services/secretsmanager/index.tsx";
 import { sesService } from "./services/ses/index.tsx";
@@ -37,6 +38,7 @@ export const services: ServiceDefinition[] = [
   s3Service,
   lambdaService,
   dynamodbService,
+  rdsService,
   sqsService,
   snsService,
   eventbridgeService,

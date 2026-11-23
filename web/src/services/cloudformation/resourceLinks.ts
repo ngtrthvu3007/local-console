@@ -3,6 +3,7 @@ import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
+import { rdsRoutes } from "../rds/routes.ts";
 import { s3Routes } from "../s3/routes.ts";
 import { secretsRoutes } from "../secretsmanager/routes.ts";
 import { sesRoutes } from "../ses/routes.ts";
@@ -42,6 +43,7 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::DynamoDB::Table": (id) => dynamodbRoutes.table(id),
   "AWS::SQS::Queue": (id) => sqsRoutes.queue(queueNameOfUrl(id)),
   "AWS::ElastiCache::CacheCluster": (id) => elasticacheRoutes.cluster(id),
+  "AWS::RDS::DBInstance": (id) => rdsRoutes.database(id),
   "AWS::CloudFormation::Stack": (id) => cloudformationRoutes.stack(stackNameOfArn(id)),
   "AWS::SNS::Topic": (id) => snsRoutes.topic(lastArnPart(id)),
   "AWS::SNS::Subscription": (id) => snsRoutes.topic(topicNameOfSubscriptionArn(id)),

@@ -52,6 +52,11 @@ import {
   DeleteSecretCommand,
 } from "@aws-sdk/client-secrets-manager";
 import {
+  RDSClient,
+  paginateDescribeDBInstances,
+  DeleteDBInstanceCommand,
+} from "@aws-sdk/client-rds";
+import {
   SSMClient,
   paginateDescribeParameters,
   DeleteParametersCommand,
@@ -90,6 +95,7 @@ const cloudformation = new CloudFormationClient(config);
 const cognito = new CognitoIdentityProviderClient(config);
 const secretsManager = new SecretsManagerClient(config);
 const ssm = new SSMClient(config);
+const rds = new RDSClient(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -194,6 +200,13 @@ for await (const page of paginateDescribeParameters({ client: ssm }, {})) {
       .filter((name) => mine([name?.replace(/^\//, "")]).length),
   );
 }
+// Volume Docker của DB đã xóa vẫn còn (Floci hybrid): xóa tay bằng docker volume rm nếu cần
+const databases = [];
+for await (const page of paginateDescribeDBInstances({ client: rds }, {})) {
+  databases.push(
+    ...mine((page.DBInstances ?? []).map((database) => database.DBInstanceIdentifier)),
+  );
+}
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -219,6 +232,7 @@ console.log(
       stacks,
       secrets,
       parameters,
+      databases,
       identities,
       configurationSets,
       templates,
@@ -300,6 +314,10 @@ if (process.argv.includes("--delete")) {
   // DeleteParameters nhận tối đa 10 tên một lần
   for (let start = 0; start < parameters.length; start += 10)
     await ssm.send(new DeleteParametersCommand({ Names: parameters.slice(start, start + 10) }));
+  for (const id of databases)
+    await rds.send(
+      new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
+    );
   for (const name of identities)
     await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
   for (const name of configurationSets)

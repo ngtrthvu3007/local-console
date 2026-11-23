@@ -51,16 +51,17 @@ export function ResetFlociModal({
     >
       <SpaceBetween size='m'>
         <Box>
-          Deletes everything in every region: buckets, functions, tables, queues, topics, caches,
-          brokers, the SES mailbox and text messages. This can't be undone.
+          Deletes everything in every region: buckets, functions, tables, databases, queues, topics,
+          caches, brokers, the SES mailbox and text messages. This can&apos;t be undone.
         </Box>
         {/* Floci 2.4.0 dừng container Lambda khi reset nhưng bỏ quên container
-            Valkey / RabbitMQ; restart Floci mới dọn (đã kiểm 2026-11-20) */}
+            Valkey / RabbitMQ / DB của RDS; restart Floci mới dọn (đã kiểm 2026-11-20, RDS 2026-11-23).
+            DB cũ còn giữ cổng 7001… nên tạo DB mới lỗi "Failed to start RDS proxy" tới khi restart */}
         <Alert type='info'>
           <SpaceBetween size='xs'>
             <Box>
-              Containers of deleted caches and brokers keep running until Floci restarts. To stop
-              them:
+              Containers of deleted databases, caches and brokers keep running until Floci restarts,
+              and creating a database fails until then. To stop them:
             </Box>
             <TerminalBlock code={FLOCI_RESTART_COMMAND} prompt />
           </SpaceBetween>
