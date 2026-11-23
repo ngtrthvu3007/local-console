@@ -42,13 +42,13 @@ Floci có Bedrock Runtime API (`Converse`, `ConverseStream`, `InvokeModel`) và 
 
 Agent Bridge là endpoint OpenAI-compatible mà Floci gọi tới. Bên trong bridge có connector riêng cho từng runner:
 
-| Runner | Cách gọi headless |
-| --- | --- |
-| Claude Code | `claude -p` |
-| Codex | `codex exec` |
-| Gemini CLI | `gemini -p` |
-| Grok Build | `grok -p` |
-| Custom | command hoặc local adapter do user cung cấp |
+| Runner      | Cách gọi headless                           |
+| ----------- | ------------------------------------------- |
+| Claude Code | `claude -p`                                 |
+| Codex       | `codex exec`                                |
+| Gemini CLI  | `gemini -p`                                 |
+| Grok Build  | `grok -p`                                   |
+| Custom      | command hoặc local adapter do user cung cấp |
 
 Các connector không nên bị coi là giống nhau. Chúng khác session model, output format, streaming, tool permission, workspace và cách trả lỗi. Bridge chuẩn hóa những khác biệt đó thành contract mà Bedrock Runtime hiểu được.
 

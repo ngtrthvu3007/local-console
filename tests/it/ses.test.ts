@@ -1,4 +1,13 @@
-import { CreateEmailIdentityCommand, CreateEmailTemplateCommand, DeleteEmailIdentityCommand, DeleteEmailTemplateCommand, GetEmailTemplateCommand, ListEmailTemplatesCommand, SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+import {
+  CreateEmailIdentityCommand,
+  CreateEmailTemplateCommand,
+  DeleteEmailIdentityCommand,
+  DeleteEmailTemplateCommand,
+  GetEmailTemplateCommand,
+  ListEmailTemplatesCommand,
+  SESv2Client,
+  SendEmailCommand,
+} from "@aws-sdk/client-sesv2";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AWS_PROXY_URL, consoleConfig, uniqueName, viaConsole } from "./helpers.ts";
 
@@ -23,7 +32,11 @@ const send = (subject: string) =>
   ses.send(
     new SendEmailCommand({
       FromEmailAddress: sender,
-      Destination: { ToAddresses: ["to@example.com"], CcAddresses: ["cc@example.com"], BccAddresses: ["bcc@example.com"] },
+      Destination: {
+        ToAddresses: ["to@example.com"],
+        CcAddresses: ["cc@example.com"],
+        BccAddresses: ["bcc@example.com"],
+      },
       Content: {
         Simple: {
           Subject: { Data: subject },
@@ -42,7 +55,9 @@ beforeAll(async () => {
 afterAll(async () => {
   // Chỉ xóa theo id, và chỉ mail của test này
   for (const mail of (await mailbox()).filter((item) => item.Source === sender && item.Id)) {
-    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${encodeURIComponent(mail.Id)}`, { method: "DELETE" });
+    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${encodeURIComponent(mail.Id)}`, {
+      method: "DELETE",
+    });
   }
   await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: sender })).catch(() => undefined);
   await ses.send(new DeleteEmailTemplateCommand({ TemplateName: template })).catch(() => undefined);
@@ -57,11 +72,17 @@ describe("SES through /aws", () => {
     await ses.send(new CreateEmailIdentityCommand({ EmailIdentity: sender }));
     const subject = uniqueName("mail");
     await send(subject);
-    const mail = (await mailbox()).find((item) => item.Source === sender && item.Subject === subject);
+    const mail = (await mailbox()).find(
+      (item) => item.Source === sender && item.Subject === subject,
+    );
     expect(mail).toMatchObject({
       Region: region,
       Subject: subject,
-      Destination: { ToAddresses: ["to@example.com"], CcAddresses: ["cc@example.com"], BccAddresses: ["bcc@example.com"] },
+      Destination: {
+        ToAddresses: ["to@example.com"],
+        CcAddresses: ["cc@example.com"],
+        BccAddresses: ["bcc@example.com"],
+      },
       Headers: [{ Name: "X-Lc-Test", Value: "1" }],
     });
   });
@@ -80,8 +101,16 @@ describe("SES through /aws", () => {
   });
 
   it("lists, reads and deletes a template", async () => {
-    await ses.send(new CreateEmailTemplateCommand({ TemplateName: template, TemplateContent: { Subject: "Hi", Text: "t" } }));
-    const names = async () => ((await ses.send(new ListEmailTemplatesCommand({}))).TemplatesMetadata ?? []).map((item) => item.TemplateName);
+    await ses.send(
+      new CreateEmailTemplateCommand({
+        TemplateName: template,
+        TemplateContent: { Subject: "Hi", Text: "t" },
+      }),
+    );
+    const names = async () =>
+      ((await ses.send(new ListEmailTemplatesCommand({}))).TemplatesMetadata ?? []).map(
+        (item) => item.TemplateName,
+      );
     expect(await names()).toContain(template);
     const got = await ses.send(new GetEmailTemplateCommand({ TemplateName: template }));
     expect(got.TemplateContent?.Subject).toBe("Hi");

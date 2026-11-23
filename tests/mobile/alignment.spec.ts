@@ -23,31 +23,19 @@ test.describe("mobile touch targets keep alignment", () => {
                 .at(-1)
                 ?.getBoundingClientRect();
               return Boolean(
-                text &&
-                Math.abs(
-                  text.top - button.top - (button.bottom - text.bottom),
-                ) < 1,
+                text && Math.abs(text.top - button.top - (button.bottom - text.bottom)) < 1,
               );
             }),
           { message: "link-button text must be vertically centered" },
         )
         .toBe(true);
-      expect(
-        await hasTouchTarget(create),
-        "link-button needs a 44px touch target",
-      ).toBe(true);
+      expect(await hasTouchTarget(create), "link-button needs a 44px touch target").toBe(true);
 
-      const toolbar = await page
-        .locator(".console-actions")
-        .first()
-        .boundingBox();
+      const toolbar = await page.locator(".console-actions").first().boundingBox();
       const search = await page.getByRole("searchbox").first().boundingBox();
       expect(
         Math.abs(
-          (toolbar?.x ?? 0) +
-            (toolbar?.width ?? 0) -
-            (search?.x ?? 0) -
-            (search?.width ?? 0),
+          (toolbar?.x ?? 0) + (toolbar?.width ?? 0) - (search?.x ?? 0) - (search?.width ?? 0),
         ),
         "toolbar and search must share the right edge",
       ).toBeLessThan(2);
@@ -63,9 +51,7 @@ test.describe("mobile touch targets keep alignment", () => {
           "title and toolbar share one row when there is room",
         ).toBeLessThan(12);
       await page.getByRole("button", { name: "More actions" }).click();
-      await expect(
-        page.getByRole("menuitem", { name: "Refresh" }),
-      ).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: "Refresh" })).toBeVisible();
       await page.keyboard.press("Escape");
 
       const radio = page.locator("tbody input[type=radio]").first();
@@ -88,63 +74,49 @@ test.describe("mobile touch targets keep alignment", () => {
             .map((box) => Math.round(box.top)),
         );
       expect(chevronTops.length).toBeGreaterThan(1);
-      expect(
-        new Set(chevronTops).size,
-        "breadcrumb chevrons must share one line",
-      ).toBe(1);
+      expect(new Set(chevronTops).size, "breadcrumb chevrons must share one line").toBe(1);
 
       await page.goto(`/s3/buckets/${resourceName}/upload`);
-      await expect(
-        page.getByText("Drag and drop files or folders here"),
-      ).toBeHidden();
+      await expect(page.getByText("Drag and drop files or folders here")).toBeHidden();
       // Mỗi hàng nút (cùng hàng hoặc đã xuống dòng) phải chừa trống trái và
       // phải bằng nhau
-      const imbalance = await page
-        .locator(".console-actions--center")
-        .evaluate((group) => {
-          const frame = group.getBoundingClientRect();
-          const rows = new Map<number, { left: number; right: number }>();
-          for (const button of group.children) {
-            const box = button.getBoundingClientRect();
-            const row = rows.get(Math.round(box.top)) ?? {
-              left: box.left,
-              right: box.right,
-            };
-            rows.set(Math.round(box.top), {
-              left: Math.min(row.left, box.left),
-              right: Math.max(row.right, box.right),
-            });
-          }
-          return Math.max(
-            ...[...rows.values()].map((row) =>
-              Math.abs(row.left - frame.left - (frame.right - row.right)),
-            ),
-          );
-        });
+      const imbalance = await page.locator(".console-actions--center").evaluate((group) => {
+        const frame = group.getBoundingClientRect();
+        const rows = new Map<number, { left: number; right: number }>();
+        for (const button of group.children) {
+          const box = button.getBoundingClientRect();
+          const row = rows.get(Math.round(box.top)) ?? {
+            left: box.left,
+            right: box.right,
+          };
+          rows.set(Math.round(box.top), {
+            left: Math.min(row.left, box.left),
+            right: Math.max(row.right, box.right),
+          });
+        }
+        return Math.max(
+          ...[...rows.values()].map((row) =>
+            Math.abs(row.left - frame.left - (frame.right - row.right)),
+          ),
+        );
+      });
       expect(imbalance, "upload buttons stay centered").toBeLessThan(2);
 
       await page.goto("/");
       // Test vừa mở S3 nên Home có link Amazon S3 trong thẻ Recently visited
       await page.waitForLoadState("networkidle");
       expect(
-        await hasTouchTarget(
-          page.getByRole("link", { name: "Amazon S3", exact: true }),
-        ),
+        await hasTouchTarget(page.getByRole("link", { name: "Amazon S3", exact: true })),
         "service links need a 44px touch target",
       ).toBe(true);
 
       await page.getByRole("button", { name: "Open side navigation" }).click();
-      const links = page
-        .getByRole("navigation", { name: "Side navigation" })
-        .getByRole("link");
+      const links = page.getByRole("navigation", { name: "Side navigation" }).getByRole("link");
       await expect(links.first()).toBeVisible();
       for (const height of await links.evaluateAll((items) =>
         items.map((item) => item.getBoundingClientRect().height),
       ))
-        expect(
-          height,
-          "side navigation links need a 44px touch target",
-        ).toBeGreaterThanOrEqual(44);
+        expect(height, "side navigation links need a 44px touch target").toBeGreaterThanOrEqual(44);
     });
   }
 });

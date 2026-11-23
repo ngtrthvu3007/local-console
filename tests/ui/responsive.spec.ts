@@ -32,7 +32,8 @@ const PAGES = [
 const PHONE_MAX_WIDTH_PX = 688;
 
 // Dòng của aria snapshot cho phần tử tương tác không có tên: "- button" hoặc "- button [disabled]"
-const UNNAMED_CONTROL = /^\s*- (button|link|checkbox|radio|textbox|combobox|searchbox|switch|tab)( \[[^\]"]*\])*:?$/;
+const UNNAMED_CONTROL =
+  /^\s*- (button|link|checkbox|radio|textbox|combobox|searchbox|switch|tab)( \[[^\]"]*\])*:?$/;
 
 for (const { slug, path } of PAGES) {
   test(`${slug}: layout, headings and names`, async ({ page }, testInfo) => {
@@ -55,7 +56,14 @@ for (const { slug, path } of PAGES) {
 
     // Ảnh để review UX bằng mắt: results/screens/<khung>/<trang>.png
     await page.screenshot({
-      path: join(testInfo.project.testDir, "..", "results", "screens", testInfo.project.name, `${slug}.png`),
+      path: join(
+        testInfo.project.testDir,
+        "..",
+        "results",
+        "screens",
+        testInfo.project.name,
+        `${slug}.png`,
+      ),
       fullPage: true,
     });
   });

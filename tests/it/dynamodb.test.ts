@@ -44,7 +44,10 @@ describe("DynamoDB through the console proxy", () => {
   it("keeps a number beyond JavaScript's safe range exactly", async () => {
     const big = "12345678901234567890";
     await dynamodb.send(
-      new PutItemCommand({ TableName: table, Item: { pk: { S: "user#1" }, sk: { N: "1" }, big: { N: big } } }),
+      new PutItemCommand({
+        TableName: table,
+        Item: { pk: { S: "user#1" }, sk: { N: "1" }, big: { N: big } },
+      }),
     );
     const { Item } = await dynamodb.send(
       new GetItemCommand({ TableName: table, Key: { pk: { S: "user#1" }, sk: { N: "1" } } }),

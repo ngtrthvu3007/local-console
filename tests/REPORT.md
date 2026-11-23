@@ -4,22 +4,21 @@
 
 Retest working tree trên nhánh `test/add-test-suites`, HEAD `9ee6433`; build lại Docker từ source local. Floci 2.4.0, region **`ap-southeast-1`**, Node 24.14.1, Chrome 154.0.8037.97, Playwright 1.65.0. Chạy khoảng 19:19–19:27, giờ Việt Nam.
 
-| Bộ kiểm tra | Kết quả mới nhất |
-| --- | --- |
-| Typecheck / build | ✅ Pass; build còn cảnh báo bundle lớn |
-| Unit tests | ✅ **120/120**: server 8, web 112 |
-| Integration với Floci thật | ✅ **29/29** |
-| E2E với Floci thật | ✅ **13/13**, sau khi sửa assertion S3 đã lỗi thời |
-| UI responsive với Floci thật | ✅ **40/40**, chạy lại sau sửa Refresh; xem mục 13 |
-| UX component với Floci thật | ✅ **3/3** scenario, 21 trạng thái × desktop/phone; xem mục 13 |
-| Mobile regression với API fixtures | ✅ **27/27**, chạy theo 3 nhóm; xem mục 13 |
-| Performance trên Docker production | ❌ **6 FAIL, 2 WARN**; chi tiết mục 10 |
-| Cleanup / port binding thực tế | ✅ Test resources đã dọn; cổng host bind `127.0.0.1` |
+| Bộ kiểm tra                        | Kết quả mới nhất                                               |
+| ---------------------------------- | -------------------------------------------------------------- |
+| Typecheck / build                  | ✅ Pass; build còn cảnh báo bundle lớn                         |
+| Unit tests                         | ✅ **120/120**: server 8, web 112                              |
+| Integration với Floci thật         | ✅ **29/29**                                                   |
+| E2E với Floci thật                 | ✅ **13/13**, sau khi sửa assertion S3 đã lỗi thời             |
+| UI responsive với Floci thật       | ✅ **40/40**, chạy lại sau sửa Refresh; xem mục 13             |
+| UX component với Floci thật        | ✅ **3/3** scenario, 21 trạng thái × desktop/phone; xem mục 13 |
+| Mobile regression với API fixtures | ✅ **27/27**, chạy theo 3 nhóm; xem mục 13                     |
+| Performance trên Docker production | ❌ **6 FAIL, 2 WARN**; chi tiết mục 10                         |
+| Cleanup / port binding thực tế     | ✅ Test resources đã dọn; cổng host bind `127.0.0.1`           |
 
 Đợt kiểm tra UI/UX cuối và cleanup trước push ở **mục 13**. Mục 10–12 giữ kết quả retest/sửa lỗi trước đó. Ảnh, trace và HTML report đã được xóa theo yêu cầu; chạy lại suite để sinh artifact khi cần xem.
 
 > Các mục 1–9 dưới đây là lịch sử ngày 2026-11-16. Kết quả mới nhất ở trên và mục 10 thay thế các giới hạn cũ về quyền Docker hoặc việc chưa chạy IT/E2E/UI với Floci thật. Gate của skill chưa được chạy lại trong đợt retest này.
-
 
 - Ngày: 2026-11-16 · Bản: `main` trên GitHub (build thẳng từ git URL, không clone)
 - Môi trường: Floci 2.4.0 + console (cấu hình giống `docker-compose.yml` của repo, chỉ mở cổng ở 127.0.0.1) · Chromium (Playwright 1.63)
@@ -27,13 +26,13 @@ Retest working tree trên nhánh `test/add-test-suites`, HEAD `9ee6433`; build l
 
 ## 1. Kết quả
 
-| Loại | Kết quả | Phạm vi |
-| --- | --- | --- |
-| UT (vitest) | ✅ 112/112 | 9 module logic thuần của web: `itemJson`, `expressions`, `searchSummary`, S3 `helpers` / `notificationRules` / `lifecycleRules`, `keyText`, `format`, `json` |
-| IT (vitest, gọi thật) | ✅ 29/29 | `/api/*`, proxy `/aws`, S3, DynamoDB, Redis (`/api/redis`), RabbitMQ (`/api/mq`), dây chuyền S3 / SQS / DynamoDB stream → Lambda |
-| E2E (Playwright) | ✅ 13/13 | S3 tạo → upload → preview → xoá · DynamoDB tạo bảng → tạo item → xoá · Lambda tạo → Test → xoá · điều hướng. 1 test đánh dấu bug B1 |
-| UI / responsive (4 khung) | ⚠️ 20/40 | 1440 / 1024 / 768 / 390px: không tràn ngang, đúng 1 h1, có `lang`, menu gập trên phone ✅ · 20 fail đều do bug B2 |
-| UX component | 21 trạng thái × 2 khung | Ảnh ở `results/ux/`, ảnh từng trang theo khung ở `results/screens/` |
+| Loại                      | Kết quả                 | Phạm vi                                                                                                                                                      |
+| ------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UT (vitest)               | ✅ 112/112              | 9 module logic thuần của web: `itemJson`, `expressions`, `searchSummary`, S3 `helpers` / `notificationRules` / `lifecycleRules`, `keyText`, `format`, `json` |
+| IT (vitest, gọi thật)     | ✅ 29/29                | `/api/*`, proxy `/aws`, S3, DynamoDB, Redis (`/api/redis`), RabbitMQ (`/api/mq`), dây chuyền S3 / SQS / DynamoDB stream → Lambda                             |
+| E2E (Playwright)          | ✅ 13/13                | S3 tạo → upload → preview → xoá · DynamoDB tạo bảng → tạo item → xoá · Lambda tạo → Test → xoá · điều hướng. 1 test đánh dấu bug B1                          |
+| UI / responsive (4 khung) | ⚠️ 20/40                | 1440 / 1024 / 768 / 390px: không tràn ngang, đúng 1 h1, có `lang`, menu gập trên phone ✅ · 20 fail đều do bug B2                                            |
+| UX component              | 21 trạng thái × 2 khung | Ảnh ở `results/ux/`, ảnh từng trang theo khung ở `results/screens/`                                                                                          |
 
 - Kiểm tra độ nhạy của UT: cố ý làm hỏng 3 chỗ trong source → test bắt được cả 3.
 - Sau mỗi lần chạy không sót resource (`node it/leftovers.mjs`).
@@ -96,7 +95,10 @@ import type { TableProps } from "@cloudscape-design/components/table";
 import { nounFor } from "./format.ts";
 
 // Tên cho ô chọn của Table: "Select all tables", "Select orders"
-export function selectionLabels<T>(noun: string, nameOf: (item: T) => string): TableProps.AriaLabels<T> {
+export function selectionLabels<T>(
+  noun: string,
+  nameOf: (item: T) => string,
+): TableProps.AriaLabels<T> {
   return {
     selectionGroupLabel: `${noun} selection`,
     allItemsSelectionLabel: () => `Select all ${nounFor(2, noun)}`,
@@ -124,19 +126,19 @@ export function selectionLabels<T>(noun: string, nameOf: (item: T) => string): T
 ports:
   - "127.0.0.1:4566:4566"
   - "127.0.0.1:6379-6399:6379-6399"
-# console
+  # console
   - "127.0.0.1:3701:3701"
 ```
 
 ## 3. UX — nên sửa (mức thấp)
 
-| # | Vấn đề | Ảnh | Đề xuất |
-| --- | --- | --- | --- |
-| U1 | Upload trên phone: cột Status nằm khuất bên phải (bảng cuộn ngang), lúc upload chỉ thấy tên file | `results/ux/phone-s3-upload-done.png` | Đổi thứ tự cột thành Name → Status → Size → Type trong `UploadPage.tsx`, hoặc dùng `columnDisplay` ẩn Type/Size khi compact như các bảng khác |
-| U2 | Dòng dài (log trong kết quả Test của Lambda, "Connect your app" trên phone) cuộn trong khung nhưng không thấy là cuộn được (thanh cuộn overlay của macOS) | `results/ux/desktop-lambda-test-result.png`, `results/screens/ui-phone/home.png` | Riêng log: cho xuống dòng (`white-space: pre-wrap`) — thêm prop `wrap` vào `CodeSnippet`; code env giữ cuộn |
-| U3 | Modal Add trigger: ô Bucket trống, không có placeholder | `results/ux/desktop-lambda-add-trigger-modal.png` | `FormSelect` chưa nhận `placeholder`: thêm prop và truyền xuống `<Select placeholder=… empty="No buckets">`, rồi dùng `placeholder='Choose a bucket'` |
-| U4 | Lỗi validation và dòng gợi ý nói cùng một quy tắc, trên phone chiếm chỗ | `results/ux/phone-s3-create-validation.png` | Trong `ControlledField` (`FormFields.tsx`): khi có `fieldState.error` thì không truyền `constraintText` |
-| U5 | Phone: "2.0 KB", "0 functions" xuống dòng | `results/ux/phone-s3-objects-table.png`, `results/screens/ui-phone/home.png` | Không cần sửa; nếu muốn thì `nowrap` cho cột số |
+| #   | Vấn đề                                                                                                                                                    | Ảnh                                                                              | Đề xuất                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | Upload trên phone: cột Status nằm khuất bên phải (bảng cuộn ngang), lúc upload chỉ thấy tên file                                                          | `results/ux/phone-s3-upload-done.png`                                            | Đổi thứ tự cột thành Name → Status → Size → Type trong `UploadPage.tsx`, hoặc dùng `columnDisplay` ẩn Type/Size khi compact như các bảng khác         |
+| U2  | Dòng dài (log trong kết quả Test của Lambda, "Connect your app" trên phone) cuộn trong khung nhưng không thấy là cuộn được (thanh cuộn overlay của macOS) | `results/ux/desktop-lambda-test-result.png`, `results/screens/ui-phone/home.png` | Riêng log: cho xuống dòng (`white-space: pre-wrap`) — thêm prop `wrap` vào `CodeSnippet`; code env giữ cuộn                                           |
+| U3  | Modal Add trigger: ô Bucket trống, không có placeholder                                                                                                   | `results/ux/desktop-lambda-add-trigger-modal.png`                                | `FormSelect` chưa nhận `placeholder`: thêm prop và truyền xuống `<Select placeholder=… empty="No buckets">`, rồi dùng `placeholder='Choose a bucket'` |
+| U4  | Lỗi validation và dòng gợi ý nói cùng một quy tắc, trên phone chiếm chỗ                                                                                   | `results/ux/phone-s3-create-validation.png`                                      | Trong `ControlledField` (`FormFields.tsx`): khi có `fieldState.error` thì không truyền `constraintText`                                               |
+| U5  | Phone: "2.0 KB", "0 functions" xuống dòng                                                                                                                 | `results/ux/phone-s3-objects-table.png`, `results/screens/ui-phone/home.png`     | Không cần sửa; nếu muốn thì `nowrap` cho cột số                                                                                                       |
 
 ## 4. Đã kiểm, không phải lỗi
 
@@ -170,7 +172,6 @@ npm run leftovers -w tests             # resource test còn sót (-- --delete đ
 - Báo cáo HTML của Playwright: `results/report/index.html`.
 - Chạy lại `test:ui` / `test:ux` sẽ ghi đè ảnh trong `results/screens/`, `results/ux/`.
 
-
 ## 7. Verify bản sửa B1 / B2 / B3 — 2026-11-16
 
 Phạm vi: working tree local trên nhánh `test`; kết quả mục 1 là lần chạy trước trên `main`, không phải lần verify này.
@@ -181,13 +182,13 @@ Phạm vi: working tree local trên nhánh `test`; kết quả mục 1 là lần
 
 Kết quả thực chạy:
 
-| Kiểm tra | Kết quả |
-| --- | --- |
-| `npm run typecheck` | Pass |
-| `npm test` | Pass: server 8/8, web 112/112 |
-| `npm run build` | Pass; còn cảnh báo kích thước bundle |
+| Kiểm tra                                 | Kết quả                                                                       |
+| ---------------------------------------- | ----------------------------------------------------------------------------- |
+| `npm run typecheck`                      | Pass                                                                          |
+| `npm test`                               | Pass: server 8/8, web 112/112                                                 |
+| `npm run build`                          | Pass; còn cảnh báo kích thước bundle                                          |
 | Chromium trên bản build, API/AWS giả lập | Pass 28/28: 2 URL lạ và 5 trang danh sách × 4 khung 1440 / 1024 / 768 / 390px |
-| `docker compose config --format json` | Pass; mọi cổng publish chỉ bind loopback |
+| `docker compose config --format json`    | Pass; mọi cổng publish chỉ bind loopback                                      |
 
 Kiểm tra Chromium xác nhận link quay về Home hoạt động, không có trang lỗi mặc định; các trang danh sách S3, DynamoDB, Lambda, ElastiCache và MQ có tên cho control, đúng một h1 và không tràn ngang. Đây là script verify tạm với API giả lập, không phải lần chạy lại đầy đủ bộ `test:ui` với Floci. Các bảng chi tiết còn lại được đối chiếu source và typecheck; nhánh `errorElement` cho lỗi render chưa được fault-injection bằng trình duyệt.
 
@@ -236,14 +237,14 @@ Breakpoint: viewport phone `<=688px`; bảng đo theo **chiều rộng nội dun
 
 ### Kiểm chứng
 
-| Kiểm tra | Kết quả |
-| --- | --- |
-| `npm run typecheck` | Pass |
-| `npm test -w web` | 112/112 pass |
-| `npm run build` | Pass; còn cảnh báo bundle lớn |
-| `test:mobile` trên production build | **21/21 pass** |
-| Chụp lại viewport modal/panel | 9/9 pass; thêm kiểm tra gõ thật vào MQ payload editor ở 3 khung: 3/3 pass |
-| `git diff --check` | Pass |
+| Kiểm tra                            | Kết quả                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| `npm run typecheck`                 | Pass                                                                      |
+| `npm test -w web`                   | 112/112 pass                                                              |
+| `npm run build`                     | Pass; còn cảnh báo bundle lớn                                             |
+| `test:mobile` trên production build | **21/21 pass**                                                            |
+| Chụp lại viewport modal/panel       | 9/9 pass; thêm kiểm tra gõ thật vào MQ payload editor ở 3 khung: 3/3 pass |
+| `git diff --check`                  | Pass                                                                      |
 
 21 bài regression bao gồm 66 tổ hợp trang/khung (Home, 5 list và 5 create form × 320 / 390 / 430 / 688 / 768 / 1440px), 18 tổ hợp detail/khung của cả 5 service, cùng các luồng chọn dòng, sort đổi thứ tự thực tế, modal xác nhận, menu, upload tên dài, validation, trigger selector, Redis panel, MQ publish/editor và Lambda log dài. Kiểm tra tên control, tràn ngang, độ rộng bảng và nút submit/select trên phone. Hai race trong selector/đo animation của bài test đã được sửa trước khi xác nhận kết quả cuối.
 
@@ -253,21 +254,20 @@ Breakpoint: viewport phone `<=688px`; bảng đo theo **chiều rộng nội dun
 
 Skill `perf.mjs` trên production Home, median 3 lần mỗi khung:
 
-| Chỉ số | 1440px | 390px |
-| --- | --- | --- |
-| FCP | 488ms | 512ms |
-| LCP | 680ms | 712ms |
-| Layout shift | 0.005 | 0.000 |
-| Blocking time | 241ms | 238ms |
-| Broken requests | 0 | 0 |
-| Total transfer | 900.1KiB | 900.1KiB |
+| Chỉ số          | 1440px   | 390px    |
+| --------------- | -------- | -------- |
+| FCP             | 488ms    | 512ms    |
+| LCP             | 680ms    | 712ms    |
+| Layout shift    | 0.005    | 0.000    |
+| Blocking time   | 241ms    | 238ms    |
+| Broken requests | 0        | 0        |
+| Total transfer  | 900.1KiB | 900.1KiB |
 
 **Open FAIL:** JS parsed 2211.4KiB vượt budget 900KiB của skill ở cả hai khung (2 FAIL). Đây là bundle lớn đã có trước đợt mobile; output build JS chính tăng từ khoảng 2261.53kB ở lần build trước lên 2264.50kB. **WARN giữ lại:** CSS 246.9KiB và 2 ảnh logo do TopNavigation render không có width/height attribute, mỗi cảnh báo xuất hiện ở cả hai khung (4 WARN). Không coi bộ performance là pass; tối ưu bundle chưa được thực hiện trong đợt responsive này.
 
 Gate/layout/copy checker của skill chưa cung cấp kết quả hoàn chỉnh cho cấu trúc app này. Regression dùng Chromium headless với viewport thay đổi, không phải xác nhận trên Safari/iOS/Android thật; bàn phím ảo, safe area và thao tác chạm thực tế chưa được kiểm tra. Chưa chạy lại toàn bộ IT/E2E với Floci thật trong đợt này.
 
 Design: **software**, giữ palette, Open Sans, icon AWS, radius và motion của Cloudscape theo yêu cầu. Voice: nhãn tiếng Anh ngắn, chỉ rõ thao tác/resource. Không deal hero/palette mới hoặc thêm effect/moment/scene cho console thao tác dữ liệu. Không có giả định thương mại, tên thương hiệu mới, ảnh stand-in, client slot, contact hay form endpoint mới. Copy-lint không có báo cáo mới vì gate không hoàn tất. Các bản sửa trước được giữ lại.
-
 
 <a id="retest-2026-11-17"></a>
 
@@ -328,16 +328,16 @@ Lần chạy gộp đầu có **53 pass, 1 fail, 2 skipped**: test S3 validation
 
 Đã chạy lại `perf.mjs` với Chrome headless tại **`http://127.0.0.1:3701/`**, median 3 lần mỗi khung:
 
-| Chỉ số | 1440px | 390px |
-| --- | --- | --- |
-| FCP | 440ms | 440ms |
-| LCP | 612ms | 624ms |
-| Layout shift | 0.005 | 0.000 |
-| Blocking time | 220ms | 224ms |
-| Broken requests | 0 | 0 |
-| Total transfer | 3528.2KiB | 3528.2KiB |
-| JS parsed | 2211.4KiB | 2211.4KiB |
-| CSS transfer | 1293.8KiB | 1293.8KiB |
+| Chỉ số          | 1440px    | 390px     |
+| --------------- | --------- | --------- |
+| FCP             | 440ms     | 440ms     |
+| LCP             | 612ms     | 624ms     |
+| Layout shift    | 0.005     | 0.000     |
+| Blocking time   | 220ms     | 224ms     |
+| Broken requests | 0         | 0         |
+| Total transfer  | 3528.2KiB | 3528.2KiB |
+| JS parsed       | 2211.4KiB | 2211.4KiB |
+| CSS transfer    | 1293.8KiB | 1293.8KiB |
 
 **6 FAIL còn mở:** total transfer, JS parsed và CSS đều vượt budget của skill ở cả 2 khung. **2 WARN:** logo `mark.svg` được TopNavigation render hai lần mà không có width/height attribute, cảnh báo xuất hiện ở mỗi khung.
 
@@ -350,7 +350,6 @@ Kết quả transfer/CSS khác mục 9 vì lần trước đo qua Vite preview �
 - UI responsive kiểm tra các trang của suite; mobile regression dùng fixtures. Không coi đó là browser E2E thật cho mọi thao tác Redis/MQ, dù API integration Redis/MQ đã pass.
 - Nhánh `errorElement` cho component throw vẫn chưa fault-injection bằng browser; bài unknown route chỉ xác nhận fallback route.
 
-
 ## 11. Sửa khoảng trống mép phải trên mobile — 2026-11-17
 
 Ảnh người dùng cho thấy header/nội dung bị thu hẹp, chừa dải trống bên phải trong mobile viewport. Nguyên nhân: `html { scrollbar-gutter: stable }` được áp dụng cho mọi kích thước, kể cả phone dùng scrollbar overlay.
@@ -362,7 +361,6 @@ Kết quả transfer/CSS khác mục 9 vì lần trước đo qua Vite preview �
 - Bản Docker sửa lỗi đã được phục vụ ở `http://localhost:3701`. Ảnh sau sửa nằm ở `tests/results/playwright/mobile/viewport-touch-viewport-*/home-touch.png`.
 
 Các số liệu UT/IT/E2E/UI/UX và performance ở mục 10 là kết quả trước bản sửa CSS nhỏ này, không phải các bộ vừa chạy lại ở mục 11. Đợt này chạy lại build và toàn bộ mobile regression; chưa kiểm tra trên thiết bị thật.
-
 
 ## 12. Sửa nút Refresh bị bóp trên mobile — 2026-11-17
 
@@ -377,19 +375,18 @@ Lỗi được người dùng làm rõ là nút Refresh bị thành oval đứng
 
 Đợt này kiểm tra build và mobile regression. Các kết quả UT/IT/E2E/UI/UX/performance ở mục 10 không được tính là đã chạy lại sau thay đổi CSS này.
 
-
 ## 13. UI/UX retest cuối và dọn artifact trước push — 2026-11-17
 
 Kiểm tra bản production Docker đang phục vụ tại `http://127.0.0.1:3701`, sau cả hai bản sửa gutter và nút Refresh. Floci 2.4.0, region `ap-southeast-1`, Chrome hệ thống headless. Không sửa mã ứng dụng trong đợt này vì không phát hiện lỗi UI/UX mới trong phạm vi kiểm tra.
 
-| Nhóm | Kết quả |
-| --- | --- |
-| Responsive desktop/laptop | 20/20 pass |
-| Responsive tablet/phone | 20/20 pass |
-| UX thật: S3, DynamoDB, Lambda | 3/3 scenario pass; 21 trạng thái × 2 khung |
-| Mobile Refresh + touch viewport | 6/6 pass |
-| Mobile main pages ở 6 khung | 6/6 pass, mỗi bài đi qua 11 trang |
-| Mobile tương tác/detail/modal/editor | 15/15 pass |
+| Nhóm                                 | Kết quả                                    |
+| ------------------------------------ | ------------------------------------------ |
+| Responsive desktop/laptop            | 20/20 pass                                 |
+| Responsive tablet/phone              | 20/20 pass                                 |
+| UX thật: S3, DynamoDB, Lambda        | 3/3 scenario pass; 21 trạng thái × 2 khung |
+| Mobile Refresh + touch viewport      | 6/6 pass                                   |
+| Mobile main pages ở 6 khung          | 6/6 pass, mỗi bài đi qua 11 trang          |
+| Mobile tương tác/detail/modal/editor | 15/15 pass                                 |
 
 Tổng **40/40 responsive UI, 3/3 UX, 27/27 mobile**. Chạy tuần tự theo các nhóm có output riêng; không có assertion fail, skip hay runner bị ngắt trong đợt này. Mobile dùng API fixtures; UI/UX dùng Floci thật. Đã xem lại ảnh đại diện Home ở desktop/phone, form laptop, upload tên dài, validation trong item editor, modal Add trigger, MQ publish/editor ở 320px và Redis panel. Refresh tròn và căn giữa, không còn dải gutter dự phòng trên phone.
 
