@@ -1,6 +1,6 @@
 # CloudWatch Logs — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
+> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 4 (chuyển từ đợt 3 ngày 2026-11-23)
 
 ## 1. Mục tiêu
 

@@ -21,6 +21,7 @@ Floci emulates AWS on your machine, but on its own you only have the AWS CLI to 
 | 🪣  | [Amazon S3](https://docs.aws.amazon.com/s3/)                      | Buckets, folders and objects: upload, preview, download, versions, metadata, pre-signed URLs. Bucket tags, lifecycle, CORS, policy, event notifications                                                                                                                                                                                                    |
 | λ   | [AWS Lambda](https://docs.aws.amazon.com/lambda/)                 | Create functions, edit code in the browser, test with saved events (sync or async), read logs, triggers from S3 / SQS / DynamoDB / SNS (filter patterns, partial batch, retry and on-failure destinations), asynchronous invocation settings with success / failure destinations                                                                           |
 | 🗄️  | [Amazon DynamoDB](https://docs.aws.amazon.com/dynamodb/)          | Tables and indexes, scan and query with filters, create and edit items as JSON, import / export, TTL, streams                                                                                                                                                                                                                                              |
+| 🐘  | [Amazon RDS](https://docs.aws.amazon.com/rds/)                    | PostgreSQL and MySQL databases (real ones, in containers): create one in a few clicks or with CDK, connect from your machine (`localhost:<port>`) or from Lambda, stop / start / reboot, link to the master user secret                                                                                                                                    |
 | 📬  | [Amazon SQS](https://docs.aws.amazon.com/sqs/)                    | Standard and FIFO queues, peek without consuming, send and poll messages, dead-letter queues and redrive                                                                                                                                                                                                                                                   |
 | 📣  | [Amazon SNS](https://docs.aws.amazon.com/sns/)                    | Topics, subscriptions (SQS, Lambda, HTTP) with filter policies, publish, inbox of text messages (SMS)                                                                                                                                                                                                                                                      |
 | 📅  | [Amazon EventBridge](https://docs.aws.amazon.com/eventbridge/)    | Event buses and send events, rules with a pattern tester and targets (Lambda, SQS, SNS), EventBridge Scheduler (one-time, rate, cron) with schedule groups                                                                                                                                                                                                 |
@@ -49,14 +50,14 @@ Requires [Docker](https://docs.docker.com/get-started/get-docker/). Save this as
 services:
   floci:
     image: floci/floci:2.4.0
-    ports: ["127.0.0.1:4566:4566", "127.0.0.1:6379-6399:6379-6399"]
+    ports: ["127.0.0.1:4566:4566", "127.0.0.1:6379-6399:6379-6399", "127.0.0.1:7001-7099:7001-7099"]
     environment:
       FLOCI_SERVICES_UI_ENABLED: "false"
       FLOCI_STORAGE_MODE: hybrid # keep data across restarts
       FLOCI_HOSTNAME: localhost.floci.io
     extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Lambda, Redis, RabbitMQ containers
+      - /var/run/docker.sock:/var/run/docker.sock # Lambda, Redis, RabbitMQ, database containers
       - floci-data:/app/data
     networks:
       default:
@@ -97,13 +98,15 @@ AWS_DEFAULT_REGION=ap-southeast-1   # Python (boto3) reads this one
 
 S3 clients also need `forcePathStyle: true`. The console's **Connect your app** card shows these with a copy button.
 
+RDS databases: from your machine, connect to `localhost:<port>` (DBeaver, `psql`, your app); from Lambda or apps in the same compose, use the endpoint Floci returns. The database page shows both.
+
 <details>
 <summary>Other region, SNS to your app, offline</summary>
 
 - **Region:** the console and your app must match. `AWS_REGION=ap-northeast-1 docker compose up -d` (PowerShell: `$env:AWS_REGION="ap-northeast-1"; docker compose up -d`).
 - **SNS → HTTP on your machine:** subscribe `http://host.docker.internal:<port>/...` (inside Floci, `localhost` is Floci), then confirm via the `SubscribeURL` of the first message.
 - **Offline:** Floci's URLs use `localhost.floci.io` (public DNS → `127.0.0.1`). Without DNS, add `127.0.0.1 localhost.floci.io` to your [hosts file](<https://en.wikipedia.org/wiki/Hosts_(file)>).
-- **First use** downloads extra images: Lambda runtime, Valkey, RabbitMQ.
+- **First use** downloads extra images: Lambda runtime, Valkey, RabbitMQ, PostgreSQL / MySQL.
 
 </details>
 

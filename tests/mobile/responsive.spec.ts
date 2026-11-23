@@ -234,10 +234,13 @@ for (const width of [320, 390, 430]) {
     await page.goto(`/lambda/functions/${resourceName}?tab=test`);
     await page.getByRole("button", { name: "Test", exact: true }).click();
     await expect(page.getByText("Execution result: succeeded", { exact: true })).toBeVisible();
-    const log = page.locator(".code-snippet--wrap pre");
-    await expect(log).toHaveCSS("white-space", "pre-wrap");
+    // Log xuống dòng trong khung: vùng cuộn của CodeView (con đầu của region) không cuộn ngang
+    const log = page.getByRole("region", { name: "Log output" });
     expect(
-      await log.evaluate((element) => element.scrollWidth - element.clientWidth),
+      await log.evaluate((element) => {
+        const scroller = element.firstElementChild;
+        return scroller ? scroller.scrollWidth - scroller.clientWidth : Infinity;
+      }),
     ).toBeLessThanOrEqual(1);
     await fits(page);
     await page.screenshot({

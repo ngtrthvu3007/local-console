@@ -1,6 +1,6 @@
 # RDS — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-23, branch `feat/rds`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
 
 ## 1. Mục tiêu
 
@@ -32,13 +32,13 @@ Không làm Aurora (user chốt 2026-11-19). Mọi thao tác gọi thẳng Floci
 
 ### Không làm
 
-| Tính năng                                                             | Lý do                                                                                     |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Aurora (cluster)                                                      | User chốt 2026-11-19                                                                      |
-| Query editor                                                          | AWS chỉ có cho Aurora; dev dùng client riêng qua `localhost:<port>`. User chốt 2026-11-19 |
-| Standard create (form đầy đủ: VPC, storage, backup, encryption…)      | Không có ý nghĩa ở local                                                                  |
-| Snapshot, đổi password, SSL, proxy, parameter / subnet / option group | User chốt 2026-11-19                                                                      |
-| Events, Performance Insights                                          | Floci không phát event (7 #6); không có dữ liệu                                           |
+| Tính năng                                                             | Lý do                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aurora (cluster)                                                      | User chốt 2026-11-19                                                                                                                                                                                                                                                                                                       |
+| Query editor (Để sau)                                                 | AWS chỉ có cho Aurora; dev dùng client riêng qua `localhost:<port>`. User chốt 2026-11-19. 2026-11-23: không làm trình xem DB kiểu DBeaver (danh sách bảng, xem dòng); nếu làm thì chỉ một SQL editor chạy query, dùng chung với Athena ([roadmap](../roadmap.md)). Khi làm kiểm RDS Data API của Floci (`rds-data`) trước |
+| Standard create (form đầy đủ: VPC, storage, backup, encryption…)      | Không có ý nghĩa ở local                                                                                                                                                                                                                                                                                                   |
+| Snapshot, đổi password, SSL, proxy, parameter / subnet / option group | User chốt 2026-11-19                                                                                                                                                                                                                                                                                                       |
+| Events, Performance Insights                                          | Floci không phát event (7 #6); không có dữ liệu                                                                                                                                                                                                                                                                            |
 
 ---
 
@@ -202,7 +202,15 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (khảo
 | 7   | **Secrets Manager**                | `ManageMasterUserPassword` tạo secret `rds!db-<id>` có host / port / user / password; secret tự xóa khi xóa DB                                                                                                                                                                                      |
 | 8   | **CloudFormation**                 | `AWS::RDS::DBInstance` tạo DB thật; `Fn::GetAtt Endpoint.Address` / `Port` đúng                                                                                                                                                                                                                     |
 
-**Chưa kiểm, kiểm khi làm:** SDK v3 qua proxy `/aws` (query protocol như SNS); cổng 7001–7099 trên máy dev có bị chương trình khác chiếm không (khi đó `docker compose up` báo lỗi bind); physical ID của `AWS::RDS::DBInstance` trong CloudFormation có đúng là DB identifier không (dùng cho `StackLink`, 3.3).
+**Kiểm khi làm (2026-11-23, Floci 2.4.0 qua proxy `/aws` của console):**
+
+| #   | Điểm                               | Kết quả                                                                                                                                                                                                                                     |
+| --- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9   | Query protocol qua `/aws`          | **Ổn.** `Marker` rỗng (`<Marker></Marker>`) khi hết trang                                                                                                                                                                                   |
+| 10  | Physical ID `AWS::RDS::DBInstance` | **= DB identifier** → `StackLink` dùng được                                                                                                                                                                                                 |
+| 11  | Cổng 7001–7099 trên macOS          | Trống. Cổng 7000 bị AirPlay Receiver chiếm (ngoài dải)                                                                                                                                                                                      |
+| 12  | DB không có                        | `DBInstanceNotFound`, HTTP **404** (`isNotFoundError` bắt được)                                                                                                                                                                             |
+| 13  | DB tạo bằng CloudFormation         | **Không có `EngineVersion`**, và `ManageMasterUserPassword: true` **bị bỏ qua** (không tạo secret, không có `MasterUserSecret`). Tạo bằng `CreateDBInstance` thì có cả hai. CDK `fromGeneratedSecret` dùng secret riêng nên không ảnh hưởng |
 
 ---
 
@@ -220,13 +228,14 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (khảo
 
 ## 9. Quyết định
 
-| Quyết định                                                      | Lý do                                                                            |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Chỉ RDS instance PostgreSQL / MySQL, không Aurora               | User chốt 2026-11-19                                                             |
-| Không query editor                                              | AWS chỉ có query editor cho Aurora. User chốt 2026-11-19                         |
-| Create database chỉ kiểu Easy create                            | Tạo nhanh DB để test; form đầy đủ không có ý nghĩa ở local. User chốt 2026-11-19 |
-| Không snapshot, đổi password, SSL, proxy, các loại group        | User chốt 2026-11-19                                                             |
-| Compose mở `127.0.0.1:7001-7099`, không đặt `RDS_ENDPOINT_HOST` | Máy dev kết nối được mà Lambda vẫn chạy (7 #2). User chốt 2026-11-19             |
-| Xóa DB gõ `delete me`                                           | Giống AWS                                                                        |
-| Hiện thêm "From your machine: localhost:<port>"                 | Endpoint Floci trả chỉ dùng được trong compose / Lambda. User duyệt 2026-11-19   |
-| Không sửa server                                                | RDS là AWS API thuần, đi qua proxy `/aws`                                        |
+| Quyết định                                                      | Lý do                                                                                                                                                                                              |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chỉ RDS instance PostgreSQL / MySQL, không Aurora               | User chốt 2026-11-19                                                                                                                                                                               |
+| Không query editor                                              | AWS chỉ có query editor cho Aurora. User chốt 2026-11-19                                                                                                                                           |
+| Create database chỉ kiểu Easy create                            | Tạo nhanh DB để test; form đầy đủ không có ý nghĩa ở local. User chốt 2026-11-19                                                                                                                   |
+| Không snapshot, đổi password, SSL, proxy, các loại group        | User chốt 2026-11-19                                                                                                                                                                               |
+| Compose mở `127.0.0.1:7001-7099`, không đặt `RDS_ENDPOINT_HOST` | Máy dev kết nối được mà Lambda vẫn chạy (7 #2). User chốt 2026-11-19                                                                                                                               |
+| Không map về cổng gốc 5432 / 3306                               | Floci cấp cổng theo thứ tự tạo, không theo engine; dễ đụng Postgres / MySQL cài sẵn trên máy dev (compose lỗi bind, cả Floci không chạy); app đọc cổng từ env / SSM / secret. User chốt 2026-11-23 |
+| Xóa DB gõ `delete me`                                           | Giống AWS                                                                                                                                                                                          |
+| Hiện thêm "From your machine: localhost:<port>"                 | Endpoint Floci trả chỉ dùng được trong compose / Lambda. User duyệt 2026-11-19                                                                                                                     |
+| Không sửa server                                                | RDS là AWS API thuần, đi qua proxy `/aws`                                                                                                                                                          |

@@ -11,7 +11,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
 import { SECRET_TYPES, type SecretType } from "../constants.ts";
 import { useSecretValue } from "../hooks/useSecrets.ts";
-import { keyValueOf, type KeyValue } from "../secretValue.ts";
+import { keyValueOf, readableText, type KeyValue } from "../secretValue.ts";
 import { EditKeyValueModal, EditPlaintextModal } from "./EditSecretValueModal.tsx";
 
 // Như bảng biến môi trường của Lambda: khung hẹp thành dòng hai tầng, giá trị dài xuống dòng
@@ -44,7 +44,7 @@ export function SecretValue({ name }: { name: string }) {
     <Button onClick={() => setRetrieved(true)}>Retrieve secret value</Button>
   );
 
-  const plaintext = <CodeSnippet code={text} wrap />;
+  const plaintext = text !== undefined && <CodeSnippet code={readableText(text)} wrap />;
 
   const body = () => {
     if (!retrieved) return <Box color='text-body-secondary'>Retrieve the value to see it.</Box>;

@@ -432,17 +432,19 @@ Ba điểm dưới đây chưa chắc chắn, nên sẽ được kiểm tra **đ
 
 ## 13. Phiên bản 2 — sau đợt 1 (2026-11-17)
 
-> Tóm tắt [Roadmap](../roadmap.md). Mục 1–12 ở trên giữ nguyên thiết kế đợt 1; chỗ nào khác với mục này thì **mục này đúng**.
+> Tóm tắt [Roadmap](../roadmap.md), cập nhật 2026-11-23 (thêm đợt 4). Mục 1–12 ở trên giữ nguyên thiết kế đợt 1; chỗ nào khác với mục này thì **mục này đúng**.
 
 ### Thay đổi so với mục 1–12
 
-| Chỗ              | Trước                   | Nay                                                                   |
-| ---------------- | ----------------------- | --------------------------------------------------------------------- |
-| SES              | Không làm (mục 4)       | Đợt 2: hộp thư local xem mail app đã gửi (Floci lưu mọi mail)         |
-| CloudShell       | Đợt sau (mục 4)         | Không làm (user chốt 2026-11-17)                                      |
-| EC2              | Đợt sau (mục 4)         | Đợt 3. Floci chạy instance là container Docker; phạm vi chốt ở spec   |
-| Bảo mật backend  | Không nhắc              | `/api`, `/aws` chỉ nhận request từ chính console (`localOnly`, mục 5) |
-| Thêm vào backend | Redis, RabbitMQ (mục 5) | Có thể thêm MCP server (`/mcp`), chốt ở spec                          |
+| Chỗ                 | Trước                   | Nay                                                                                                             |
+| ------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
+| SES                 | Không làm (mục 4)       | Đợt 2: hộp thư local xem mail app đã gửi (Floci lưu mọi mail)                                                   |
+| CloudShell          | Đợt sau (mục 4)         | Không làm (user chốt 2026-11-17)                                                                                |
+| EC2                 | Đợt sau (mục 4)         | Đợt 3. Floci chạy instance là container Docker; phạm vi chốt ở spec                                             |
+| Bảo mật backend     | Không nhắc              | `/api`, `/aws` chỉ nhận request từ chính console (`localOnly`, mục 5)                                           |
+| Thêm vào backend    | Redis, RabbitMQ (mục 5) | Có thể thêm MCP server (`/mcp`), chốt ở spec                                                                    |
+| Container ngoài AWS | Chỉ Floci và console    | Có thể thêm IdP OIDC giả (đợt 3) để thử đăng nhập federated của Cognito                                         |
+| SQL editor          | Không nhắc              | Một SQL editor dùng chung cho RDS và Athena; không làm trình xem DB (danh sách bảng, xem dòng), chốt 2026-11-23 |
 
 ### Cách chọn service
 
@@ -454,12 +456,13 @@ Chỉ làm service hoặc tính năng (1) dev thường dùng khi code, chạy l
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1         | S3, Lambda, DynamoDB, ElastiCache, Amazon MQ — **đã làm**                                                                                                                |
 | 2         | SQS ([spec](2026-11-17-sqs-design.md)), SES ([spec](2026-11-17-ses-design.md)), SNS ([spec](2026-11-18-sns-design.md)), EventBridge + Scheduler, Cognito, CloudFormation |
-| 3         | API Gateway, RDS, Step Functions, CloudWatch Logs, EC2, MCP server                                                                                                       |
-| Để sau    | DocumentDB, Kinesis, ECS, Secrets Manager + SSM, Athena                                                                                                                  |
-| Không làm | IAM, KMS, Auto Scaling, EKS, ECR, ELB, OpenSearch, MSK, Redshift, CodeBuild, CodePipeline, CodeDeploy, X-Ray, CloudShell, bảo mật/chi phí, AI/ML                         |
+| 3         | API Gateway, RDS, Step Functions, EC2, IdP OIDC giả, Secrets Manager + SSM (đã làm)                                                                                      |
+| 4         | Athena, AppSync, KMS, CloudFront (chọn 2026-11-23, chưa có spec); CloudWatch Logs, MCP server (chuyển xuống từ đợt 3); DocumentDB, Kinesis, ECS (chuyển lên từ Để sau)   |
+| Để sau    | —                                                                                                                                                                        |
+| Không làm | IAM, Auto Scaling, EKS, ECR, ELB, OpenSearch, MSK, Redshift, CodeBuild, CodePipeline, CodeDeploy, X-Ray, CloudShell, bảo mật/chi phí, AI/ML                              |
 
 Thứ tự trong đợt 2: SQS → SNS → EventBridge; SES, Cognito, CloudFormation làm song song. MCP server làm sau SQS và SES.
 
 ### Quy trình một service
 
-Spec (theo mẫu spec SQS) → kiểm rủi ro trên Floci thật → duyệt → code (một folder trong `web/src/services/` + một dòng trong `registry.ts`) → test (unit, integration, E2E) → kiểm giao diện 1440/1024/390px → cập nhật spec và README. Chi tiết: [Roadmap, mục 7](../roadmap.md).
+Spec (theo mẫu spec SQS) → kiểm rủi ro trên Floci thật → duyệt → code (một folder trong `web/src/services/` + một dòng trong `registry.ts`) → test (unit, integration, E2E) → kiểm giao diện 1440/1024/390px → cập nhật spec và README. Chi tiết: [Roadmap, mục 8](../roadmap.md).
