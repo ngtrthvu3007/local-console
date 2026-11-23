@@ -1,6 +1,6 @@
 # CloudFormation — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; IT `it/cloudformation.test.ts`, E2E `cloudformation*.spec.ts`, UI `ui/cloudformation.spec.ts`; `StackLink` ở `shared`, đã gắn vào S3, Lambda, DynamoDB, SQS, ElastiCache, SNS, EventBridge rule / schedule, Step Functions; chưa làm cho Cognito, API Gateway, RDS, EC2… vì các service đó chưa có) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; IT `it/cloudformation.test.ts`, E2E `cloudformation*.spec.ts`, UI `ui/cloudformation.spec.ts`; `StackLink` ở `shared`, đã gắn vào S3, Lambda, DynamoDB, SQS, ElastiCache, SNS, EventBridge rule / schedule, Step Functions; chưa làm cho Cognito, API Gateway, RDS, EC2… vì các service đó chưa có) · Tạo / sửa stack từ template YAML (3.6): đã làm 2026-11-23 (E2E `cloudformation-templates.spec.ts`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
 
 ## 1. Mục tiêu
 
@@ -11,6 +11,7 @@ Làm màn hình CloudFormation giống AWS CloudFormation Console cho stack mà 
 - Từ stack đi sang trang service của từng resource, và ngược lại: từ trang bucket, function, bảng, queue… biết nó thuộc stack nào (`StackLink`).
 - Lấy output (URL, ARN, tên) để cấu hình app; xem parameter và template đã deploy.
 - Dọn stack ở local.
+- Người không quen CLI hay CDK: viết template YAML, deploy, sửa rồi deploy lại ngay trên console (3.6).
 
 Mọi thao tác gọi thẳng Floci bằng AWS SDK qua proxy `/aws`. **Server không phải sửa gì.**
 
@@ -34,13 +35,15 @@ Mọi thao tác gọi thẳng Floci bằng AWS SDK qua proxy `/aws`. **Server kh
 | Tab Outputs     | Key, value (copy), export name                                                                       | (1)      | Toàn phần (không có `Description`)                       |
 | Xóa stack       | Xác nhận; hiện lý do `DELETE_FAILED`                                                                 | (1)      | Toàn phần                                                |
 | **StackLink**   | Trang chi tiết S3, Lambda, DynamoDB, SQS, ElastiCache hiện "Stack: X" (link)                         | (2)      | Toàn phần (qua index, 3.8)                               |
+| Tạo / sửa stack | Editor YAML có template mẫu; Deploy = tạo hoặc update stack; stack do CDK tạo thì khóa sửa (3.6)     | (1)      | Toàn phần (7 #1, #11)                                    |
 
 ### Để sau
 
 | Tính năng                                                        | Ghi chú                                                                                    |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Change set (xem, tạo, thực thi)                                  | Đoán dev ít dùng: xem diff bằng `cdk diff`. Floci không có diff theo property              |
-| Tạo / update stack từ UI (upload template)                       | Đoán dev ít dùng: team deploy bằng `cdk deploy`                                            |
+| Ô nhập Parameters khi deploy                                     | Template có tham số không có `Default` thì Floci báo lỗi dưới editor; thêm `Default` là đủ |
+| Upload file template; kiểm tra template trước khi deploy         | Dán vào editor là đủ; lỗi do Floci trả về khi deploy (3.6). User chốt 2026-11-23           |
 | Trang Exports                                                    | Đoán dev ít dùng; export đã hiện ở tab Outputs                                             |
 | Termination protection, stack policy, tag                        | Đoán dev ít dùng                                                                           |
 | Tab Parameters, Template; cột References (quan hệ giữa resource) | User chốt cắt 2026-11-19: dev xem trong code CDK / `cdk.out/`; không ảnh hưởng flow deploy |
@@ -137,6 +140,45 @@ Resources (9)                                                     [🔍 Find res
 
 `DescribeStacks` `Outputs`: Key, Value (copy được), Export name.
 
+### 3.6 Tạo / sửa stack (template YAML)
+
+**Vì sao:** người không quen CLI hay CDK vẫn tạo được stack và sửa đi sửa lại ngay trên console (user chốt 2026-11-23). Vòng làm việc: viết template → Deploy → xem Events → sửa → Deploy lại.
+
+```text
+Create stack                                        [Cancel] [Deploy]
+Stack name  [ my-stack            ]
+Template (YAML)
+┌──────────────────────────────────────────────────────────┐
+│ Resources:                                               │
+│   Queue:                                                 │
+│     Type: AWS::SQS::Queue                                │
+│ Outputs:                                                 │
+│   QueueUrl: { Value: !Ref Queue }                        │
+└──────────────────────────────────────────────────────────┘
+```
+
+- **Một trang dùng chung cho tạo và sửa**, nạp lười (`lazyPage`): `/cloudformation/stacks/create/template` (giống AWS console; hai đoạn sau `stacks/` để không trùng trang chi tiết của stack tên `create`) và `/cloudformation/stacks/:stack/edit`.
+- **Tạo:** nút **Create stack** (nút chính) ở danh sách stack. Ô tên stack (luật của AWS: bắt đầu bằng chữ cái, chỉ chữ, số và `-`, tối đa 128 ký tự) và editor điền sẵn **template mẫu** (1 queue + 1 output). Deploy = `CreateStack` (`TemplateBody`).
+- **Sửa:** nút **Edit template** trên header trang stack. Editor nạp template đang deploy bằng `GetTemplate` (`TemplateStage: Original`, Floci trả nguyên văn kể cả comment, 7 #11). Tên stack chỉ đọc. Deploy = `UpdateStack`. Dưới editor có một dòng nhắc: _"Deploying this stack again from a file replaces changes made here."_
+- **Khóa Edit template**, kèm lý do ở mô tả nút; mở thẳng URL `/edit` thì trang cũng khóa nút Deploy và hiện lý do (cùng hàm `editLockReason`). Đang tải resources thì cũng khóa:
+  - Stack do CDK tạo (resource có `AWS::CDK::Metadata`, CDK luôn thêm): _"Deployed by CDK: edit it in your CDK app. `cdk deploy` would overwrite changes made here."_
+  - Stack đang `*_IN_PROGRESS` (kể cả `REVIEW_IN_PROGRESS`).
+- **Editor chỉ YAML:** `CodeEditor` có sẵn, thêm mode `yaml` của Ace. JSON là YAML hợp lệ nên template JSON vẫn mở và deploy được, chỉ không tô màu riêng; không chuyển JSON ↔ YAML.
+- **Sau khi bấm Deploy:** `CreateStack` của Floci chạy đồng bộ (7 #1), nút Deploy ở trạng thái loading tới khi xong, rồi sang trang stack, **tab Events**: thành công hay resource lỗi đều đọc ở đó.
+  - Lỗi API trả về ngay (YAML sai, tên stack đã có, tham số thiếu `Default`): hiện lỗi gốc dưới editor, giữ nguyên nội dung đang soạn.
+  - Update không đổi gì: Floci trả "No updates are to be performed." (7 #1) → thông báo info, ở lại trang.
+- **Không làm:** ô nhập Parameters, upload file, change set / diff, kiểm tra template trước khi deploy, tô màu hay chuyển đổi JSON.
+
+**Cách làm đã cân nhắc** (user chọn B, 2026-11-23):
+
+| Cách                        | Đánh đổi                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| A. Chỉ tạo stack mới        | Ít việc nhất, nhưng muốn sửa phải xóa stack rồi tạo lại: mất resource và dữ liệu |
+| **B. Tạo và sửa (đã chọn)** | Thêm một màn hình; đúng vòng làm việc của người dùng UI                          |
+| C. Editor hỗ trợ cả JSON    | Không cần: JSON là YAML hợp lệ. Chuyển đổi định dạng thì phải thêm thư viện YAML |
+
+**Test:** E2E tạo stack từ template mẫu → Events có `CREATE_COMPLETE`, queue có thật; sửa (thêm một resource) → `UPDATE_COMPLETE`; YAML sai → lỗi dưới editor, giữ nội dung; Deploy lại không đổi gì → thông báo info; stack có `AWS::CDK::Metadata` → Edit template bị khóa. Unit: luật tên stack, nhận stack của CDK.
+
 ### 3.7 Xóa stack (modal)
 
 - `ConfirmModal` có sẵn: gõ `delete` để xác nhận, như các service khác.
@@ -213,6 +255,8 @@ Bảng map là một module thuần (`resourceLinks.ts`): **chỉ link khi physi
 | Resources           | `ListStackResources` + `DescribeStackEvents` (reason, stub)      |
 | Outputs             | `DescribeStacks`                                                 |
 | Xóa                 | `DeleteStack` → poll `DescribeStacks`                            |
+| Tạo stack           | `CreateStack` (`TemplateBody`), đồng bộ trên Floci               |
+| Sửa stack           | `GetTemplate` (`Original`) → `UpdateStack` (`TemplateBody`)      |
 | Index cho StackLink | `DescribeStacks` + `ListStackResources` từng stack               |
 
 Mọi list API đều viết vòng `NextToken` cho đúng chuẩn AWS dù Floci 2.4.0 trả hết một lần.
@@ -325,6 +369,8 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 - Stack đang `*_IN_PROGRESS` lúc Floci restart.
 - SDK v3 (query protocol) qua proxy `/aws`.
 - Bundle sau khi nạp lười SDK CloudFormation.
+- ~~(3.6) `CreateStack` đồng bộ với template lâu: request qua proxy `/aws` có bị cắt giữa chừng không.~~ **Đã kiểm (2026-11-23):** server không đặt timeout cho proxy; timeout của HTTP server Node chỉ tính lúc nhận request, không tính lúc chờ Floci trả lời. Chưa thử stack thật sự lâu.
+- ~~(3.6) Giới hạn kích thước `TemplateBody` của Floci (AWS: 51.200 byte).~~ **Đã kiểm (2026-11-23):** Floci nhận cả template 120 KB qua proxy. Template lớn hơn 51.200 byte chạy được trên Floci nhưng AWS sẽ từ chối.
 
 ---
 
@@ -361,3 +407,6 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 | Ẩn stack `DELETE_COMPLETE`                                                                                                                                                                                                                                                              | Lịch sử xóa ít dùng ở local. User duyệt 2026-11-19                                                                                                                      |
 | TLS bật / tắt bằng biến môi trường, **mặc định tắt**: compose thêm `FLOCI_TLS_ENABLED: ${FLOCI_TLS_ENABLED:-false}` cho service `floci`; ai deploy app CDK có custom resource Node thì chạy `FLOCI_TLS_ENABLED=true docker compose up`                                                  | Không bật thì app CDK có custom resource Node không deploy được (7 #20); bật mặc định thì mọi URL Floci trả về thành `https://`. User duyệt 2026-11-19, xem lại khi làm |
 | Không sửa server                                                                                                                                                                                                                                                                        | CloudFormation là AWS API thuần, đi qua proxy `/aws`                                                                                                                    |
+| Tạo và sửa stack từ template YAML trên console (3.6), đổi từ "Để sau"                                                                                                                                                                                                                   | Người không quen CLI / CDK dùng UI. User chốt 2026-11-23                                                                                                                |
+| Editor chỉ tô màu YAML; không ô Parameters, upload file, change set, kiểm tra template trước                                                                                                                                                                                            | Làm đơn giản, lỗi do Floci trả hiện dưới editor hoặc ở tab Events. User chốt 2026-11-23                                                                                 |
+| Khóa Edit template cho stack do CDK tạo; stack tạo bằng file chỉ nhắc                                                                                                                                                                                                                   | `cdk deploy` ghi đè thay đổi làm trên console; stack tạo bằng file không phân biệt được với stack tạo trên console. User chốt 2026-11-23                                |

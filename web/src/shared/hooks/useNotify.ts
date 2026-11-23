@@ -79,6 +79,8 @@ export function setLiveMessage(id: string, message: Omit<Message, "id"> | null) 
   );
 }
 
+export const notifyInfo = (content: string) => notify({ type: "info", content });
+
 export const notifyError = (error: unknown, header?: string) =>
   notify({ type: "error", header, content: errorMessage(error) });
 

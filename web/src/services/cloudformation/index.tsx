@@ -23,8 +23,16 @@ export const cloudformationService: ServiceDefinition = {
       ...lazyPage(() => import("./pages/StackList.tsx"), "StackList"),
     },
     {
+      path: CLOUDFORMATION_ROUTE_PATTERNS.createStack,
+      ...lazyPage(() => import("./pages/StackTemplateForm.tsx"), "StackTemplateForm"),
+    },
+    {
       path: CLOUDFORMATION_ROUTE_PATTERNS.stack,
       ...lazyPage(() => import("./pages/StackDetail.tsx"), "StackDetail"),
+    },
+    {
+      path: CLOUDFORMATION_ROUTE_PATTERNS.editStack,
+      ...lazyPage(() => import("./pages/StackTemplateForm.tsx"), "StackTemplateForm"),
     },
   ],
 };

@@ -38,7 +38,12 @@ export function StackList() {
           stacks,
           <EmptyState
             title='No stacks'
-            description={`You don't have any stacks in ${region}. Deploy one with CDK or the AWS CLI.`}
+            description={`You don't have any stacks in ${region}. Deploy one with CDK or the AWS CLI, or create one here.`}
+            action={
+              <Button href={cloudformationRoutes.createStack} onFollow={follow}>
+                Create stack
+              </Button>
+            }
           />,
         ),
         noMatch: (
@@ -89,6 +94,7 @@ export function StackList() {
   const barActions: BarAction[] = [
     refreshAction(stacks),
     { id: "delete", text: "Delete", disabled: !selected, onClick: () => setDeleting(true) },
+    { id: "create", text: "Create stack", primary: true, href: cloudformationRoutes.createStack },
   ];
 
   const header = (
