@@ -33,7 +33,7 @@ import {
   stackCrumbs,
   type StackTab,
 } from "../routes.ts";
-import { isRunning } from "../status.ts";
+import { editLockReason, isRunning } from "../status.ts";
 import { latestReasons, stubbedResources } from "../stub.ts";
 
 const isStackTab = (value: string | null): value is StackTab =>
@@ -42,11 +42,14 @@ const isStackTab = (value: string | null): value is StackTab =>
 function StubAlert({ stack, running }: { stack: string; running: boolean }) {
   const events = useStackEvents(stack, running);
   const resources = useStackResources(stack, running);
+
   const stubbed = useMemo(
     () => stubbedResources(resources.data ?? [], latestReasons(events.data ?? [])),
     [events.data, resources.data],
   );
+
   if (!stubbed.length) return null;
+
   return (
     <Alert type='warning'>
       {pluralize(stubbed.length, "resource")} stubbed by Floci, nothing was created for them:{" "}
@@ -65,6 +68,9 @@ function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof us
   const name = stack.StackName ?? "";
   const running = isRunning(stack.StackStatus);
   const description = useStackDescription(name);
+  // Dùng chung query với tab Resources nên không gọi thêm API
+  const resources = useStackResources(name, running);
+  const lockReason = editLockReason(stack.StackStatus, resources.data);
 
   const tabs: TabsProps.Tab[] = [
     {
@@ -106,6 +112,13 @@ function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof us
           compact={compact}
           actions={[
             refreshAction(query),
+            {
+              id: "edit",
+              text: "Edit template",
+              href: cloudformationRoutes.editStack(name),
+              disabled: Boolean(lockReason),
+              disabledReason: lockReason,
+            },
             { id: "delete", text: "Delete", onClick: () => setDeleting(true) },
           ]}
         />
@@ -162,6 +175,7 @@ export function StackDetail() {
     backHref: cloudformationRoutes.stacks,
     backText: "View stacks",
   });
+
   if (state || !details.data) return state;
 
   return <StackView stack={details.data} query={details} />;

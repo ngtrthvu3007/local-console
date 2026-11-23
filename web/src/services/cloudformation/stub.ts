@@ -10,11 +10,13 @@ export const isStubReason = (reason = "") => reason.includes(STUB_REASON_MARKER)
 // Events mới nhất trước: lấy lý do gần nhất
 export function latestReasons(events: readonly EventWithReason[]): Map<string, string> {
   const reasons = new Map<string, string>();
+
   for (const { LogicalResourceId, ResourceStatusReason } of events) {
     if (LogicalResourceId && ResourceStatusReason && !reasons.has(LogicalResourceId)) {
       reasons.set(LogicalResourceId, ResourceStatusReason);
     }
   }
+
   return reasons;
 }
 

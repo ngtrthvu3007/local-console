@@ -5,6 +5,7 @@ import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-python";
+import "ace-builds/src-noconflict/mode-yaml";
 import "ace-builds/src-noconflict/theme-dawn";
 import "ace-builds/src-noconflict/theme-cloud_editor_dark";
 // Autocomplete tự tải snippet theo đường dẫn tương đối (404 trên Vite): nạp sẵn
@@ -30,8 +31,12 @@ ace.config.setModuleUrl("ace/mode/javascript_worker", javascriptWorkerUrl);
 const JAVASCRIPT_PAIRED_QUOTES = { '"': '"', "'": "'" };
 ace.require("ace/mode/javascript").Mode.prototype.$quotes = JAVASCRIPT_PAIRED_QUOTES;
 
+// Worker YAML không hiểu tag của CloudFormation (!Ref, !Sub…) nên báo warning sai trên
+// template đúng. Tắt nó: lỗi YAML thật do Floci báo khi deploy
+ace.require("ace/mode/yaml").Mode.prototype.createWorker = () => null;
+
 // "text": chế độ chữ thường có sẵn trong ace, không cần nạp thêm
-export type EditorLanguage = "json" | "javascript" | "python" | "text";
+export type EditorLanguage = "json" | "javascript" | "python" | "yaml" | "text";
 
 interface Props {
   value: string;

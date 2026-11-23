@@ -11,16 +11,24 @@ export const SEARCH_PARAMS = { tab: "tab" } as const;
 // Pattern tương đối cho router; link dựng từ đây
 export const CLOUDFORMATION_ROUTE_PATTERNS = {
   stacks: "stacks",
+  // Hai đoạn sau stacks/ để không trùng trang chi tiết của stack tên "create"; vẫn dưới stacks/
+  // nên sidebar còn chọn CloudFormation (giống AWS console)
+  createStack: "stacks/create/template",
   stack: "stacks/:stack",
+  editStack: "stacks/:stack/edit",
 } as const;
 
 const fullPath = (pattern: string) => `${CLOUDFORMATION_ROOT}/${pattern}`;
 
 export const cloudformationRoutes = {
   stacks: fullPath(CLOUDFORMATION_ROUTE_PATTERNS.stacks),
+  createStack: fullPath(CLOUDFORMATION_ROUTE_PATTERNS.createStack),
+  editStack: (stack: string) =>
+    generatePath(fullPath(CLOUDFORMATION_ROUTE_PATTERNS.editStack), { stack }),
   // Tab mặc định (Events) không ghi lên URL
   stack: (stack: string, tab?: StackTab) => {
     const path = generatePath(fullPath(CLOUDFORMATION_ROUTE_PATTERNS.stack), { stack });
+
     return tab && tab !== STACK_TABS.events
       ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
       : path;
