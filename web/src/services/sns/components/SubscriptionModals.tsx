@@ -27,7 +27,7 @@ import {
   FILTER_SCOPES,
   HOST_FROM_CONTAINER,
   HTTP_PROTOCOLS,
-  LOCAL_HOSTS,
+  isLocalUrl,
   PROTOCOLS,
   RAW_DELIVERY_PROTOCOLS,
   type Protocol,
@@ -50,14 +50,6 @@ const SQS_PROTOCOL: Protocol = "sqs";
 const FIFO_TOPIC_SQS_ONLY = "FIFO topics deliver only to SQS queues";
 const FIFO_QUEUE_NEEDS_FIFO_TOPIC = "Only FIFO topics can deliver to FIFO queues";
 const SCOPE_OPTIONS = Object.entries(FILTER_SCOPES).map(([id, text]) => ({ id, text }));
-
-const isLocalUrl = (text: string) => {
-  try {
-    return LOCAL_HOSTS.some((host) => host === new URL(text).hostname);
-  } catch {
-    return false;
-  }
-};
 
 const FILTER_POLICY_LABEL = 'Filter policy, e.g. {"type": ["order"]}';
 

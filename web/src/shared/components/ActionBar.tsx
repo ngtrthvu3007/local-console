@@ -12,6 +12,7 @@ export interface BarAction {
   onClick?: () => void;
   href?: string;
   disabled?: boolean;
+  disabledReason?: string; // lý do khóa, hiện khi rê / focus vào nút
   loading?: boolean;
   iconName?: IconProps.Name;
   iconOnly?: boolean; // chỉ hiện icon, text làm aria-label
@@ -51,6 +52,7 @@ const toMenuItem = (action: BarAction): ButtonDropdownProps.Item => ({
   id: action.id,
   text: action.text,
   disabled: action.disabled || action.loading,
+  disabledReason: action.disabledReason,
   href: action.href,
   iconName: action.iconName,
 });
@@ -82,6 +84,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
       iconName={action.iconName}
       ariaLabel={action.iconOnly ? action.text : undefined}
       disabled={action.disabled}
+      disabledReason={action.disabledReason}
       loading={action.loading}
       href={action.href}
       onFollow={follow}
@@ -106,6 +109,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
         iconName: primary.iconName,
         href: primary.href,
         disabled: primary.disabled,
+        disabledReason: primary.disabledReason,
         onFollow: follow,
         onClick: primary.onClick,
       }}

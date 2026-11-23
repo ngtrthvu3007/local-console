@@ -89,18 +89,23 @@ export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
 
 // Nguồn chỉ hiện trong bảng Triggers, không thêm được từ trang Lambda (SNS tạo từ trang topic,
-// rule và schedule tạo từ trang EventBridge)
+// rule và schedule tạo từ trang EventBridge, trigger Cognito từ tab Triggers của user pool)
 const DISPLAY_ONLY_SOURCES = {
   kinesis: "Kinesis",
   sns: "SNS",
   eventbridge: "EventBridge",
   scheduler: "Scheduler",
+  cognito: "Cognito",
 } as const;
 
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
-// Rule / schedule của EventBridge: chỉ xem ở đây, bật / tắt / xóa ở trang EventBridge
-export const EVENTBRIDGE_SOURCES: readonly TriggerRowSource[] = ["eventbridge", "scheduler"];
+// Rule / schedule của EventBridge, trigger của user pool: chỉ xem ở đây, sửa / xóa ở trang của nguồn
+export const VIEW_ONLY_SOURCES: readonly TriggerRowSource[] = [
+  "eventbridge",
+  "scheduler",
+  "cognito",
+];
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;
 export const S3_TRIGGER_EVENTS = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"] as const;
 export const SQS_BATCH_SIZE = { min: 1, max: 10, default: 10 } as const;

@@ -16,7 +16,11 @@ import {
 import { UnsubscribeCommand, type SNSClient } from "@aws-sdk/client-sns";
 import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import type { SchedulerClient } from "@aws-sdk/client-scheduler";
+import type { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { useCognito } from "../../cognito/hooks/useCognito.ts";
+import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
+import { cognitoRoutes, POOL_TABS } from "../../cognito/routes.ts";
 import { listEventSources, targetsArn } from "../../eventbridge/eventSources.ts";
 import { useEventBridge } from "../../eventbridge/hooks/useEventBridge.ts";
 import { useScheduler } from "../../eventbridge/hooks/useScheduler.ts";
@@ -55,7 +59,7 @@ const ARN_SEPARATOR = ":";
 export interface TriggerRow {
   id: string;
   source: TriggerRowSource;
-  resource: string; // tên bucket, queue, bảng DynamoDB, stream Kinesis, topic SNS, rule hoặc schedule
+  resource: string; // tên bucket, queue, bảng, stream, topic SNS, rule, schedule hoặc user pool
   details: string;
   state?: string; // chỉ event source mapping (SQS, DynamoDB) có trạng thái bật/tắt
   rule?: NotificationRule; // S3: rule notification trỏ tới function
@@ -63,7 +67,7 @@ export interface TriggerRow {
   sourceArn?: string; // SQS, DynamoDB: ARN của queue / stream mà mapping đọc
   subscriptionArn?: string; // SNS: subscription của topic tới function
   mapping?: EventSourceMappingConfiguration; // SQS, DynamoDB: cấu hình đầy đủ, để sửa
-  href?: string; // EventBridge, Scheduler: link sang trang rule / schedule
+  href?: string; // EventBridge, Scheduler, Cognito: link sang rule / schedule / tab Triggers của pool
 }
 
 // Rule trỏ tới function, kể cả ARN có version/alias (my-function:prod)
@@ -201,6 +205,19 @@ async function listEventBridgeTriggers(
   ];
 }
 
+// Trigger của user pool trỏ tới function: sửa ở tab Triggers của pool
+async function listCognitoTriggers(cognito: CognitoIdentityProviderClient, functionArn: string) {
+  const triggers = await listPoolTriggers(cognito, functionArn);
+
+  return triggers.map(({ poolId, poolName, label }): TriggerRow => ({
+    id: `cognito:${poolId}:${label}`,
+    source: "cognito",
+    resource: poolName,
+    details: label,
+    href: cognitoRoutes.pool(poolId, POOL_TABS.triggers),
+  }));
+}
+
 async function listMappingTriggers(lambda: LambdaClient, functionName: string) {
   const rows: TriggerRow[] = [];
 
@@ -224,18 +241,20 @@ export function useTriggers(functionName: string, functionArn: string) {
   const sns = useSNS();
   const events = useEventBridge();
   const scheduler = useScheduler();
+  const cognito = useCognito();
 
   return useQuery({
     queryKey: triggersQueryKey(functionName),
     queryFn: async () => {
-      const [s3Rows, mappingRows, snsRows, eventBridgeRows] = await Promise.all([
+      const [s3Rows, mappingRows, snsRows, eventBridgeRows, cognitoRows] = await Promise.all([
         listS3Triggers(s3, functionArn),
         listMappingTriggers(lambda, functionName),
         listSnsTriggers(sns, functionArn),
         listEventBridgeTriggers(events, scheduler, functionArn),
+        listCognitoTriggers(cognito, functionArn),
       ]);
 
-      return [...s3Rows, ...mappingRows, ...snsRows, ...eventBridgeRows];
+      return [...s3Rows, ...mappingRows, ...snsRows, ...eventBridgeRows, ...cognitoRows];
     },
   });
 }

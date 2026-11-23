@@ -40,6 +40,13 @@ import {
   DeleteStackCommand,
 } from "@aws-sdk/client-cloudformation";
 import {
+  CognitoIdentityProviderClient,
+  ListUserPoolsCommand,
+  DescribeUserPoolCommand,
+  DeleteUserPoolDomainCommand,
+  DeleteUserPoolCommand,
+} from "@aws-sdk/client-cognito-identity-provider";
+import {
   EventBridgeClient,
   ListEventBusesCommand,
   ListRulesCommand,
@@ -70,6 +77,7 @@ const eventbridge = new EventBridgeClient(config);
 const scheduler = new SchedulerClient(config);
 const sfn = new SFNClient(config);
 const cloudformation = new CloudFormationClient(config);
+const cognito = new CognitoIdentityProviderClient(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -97,10 +105,16 @@ const templates = mine(
     (item) => item.TemplateName,
   ),
 );
-// Hộp thư không có tên: lọc theo Source, xóa theo id
+// Hộp thư không có tên: lọc theo Source hoặc người nhận (thư Cognito gửi từ From mặc định), xóa theo id
 const mailbox = (await (await fetch(`${consoleUrl}/aws/_aws/ses`)).json()).messages ?? [];
 const emails = mailbox
-  .filter((mail) => PREFIXES.some((prefix) => mail.Source?.startsWith(prefix)))
+  .filter((mail) =>
+    PREFIXES.some(
+      (prefix) =>
+        mail.Source?.startsWith(prefix) ||
+        mail.Destination?.ToAddresses?.some((to) => to.startsWith(prefix)),
+    ),
+  )
   .map((mail) => mail.Id)
   .filter(Boolean);
 
@@ -108,6 +122,15 @@ const emails = mailbox
 const topics = ((await sns.send(new ListTopicsCommand({}))).Topics ?? [])
   .map((topic) => topic.TopicArn)
   .filter((arn) => mine([arn?.split(":").pop()]).length);
+
+// Floci không trả NextToken cho ListUserPools: một trang tối đa là đủ
+const LIST_POOLS_PAGE_SIZE = 60;
+const pools = (
+  (await cognito.send(new ListUserPoolsCommand({ MaxResults: LIST_POOLS_PAGE_SIZE }))).UserPools ??
+  []
+)
+  .filter((pool) => mine([pool.Name]).length)
+  .map((pool) => pool.Id);
 
 // Rule của test trên bus default (bus của test thì xóa luôn cả bus)
 const defaultRules = mine(
@@ -158,6 +181,7 @@ console.log(
       functions,
       queues,
       topics,
+      pools,
       buses,
       defaultRules,
       defaultSchedules,
@@ -201,6 +225,15 @@ if (process.argv.includes("--delete")) {
     await lambda.send(new DeleteFunctionCommand({ FunctionName: name }));
   for (const url of queues) await sqs.send(new DeleteQueueCommand({ QueueUrl: url }));
   for (const arn of topics) await sns.send(new DeleteTopicCommand({ TopicArn: arn }));
+  // Pool còn domain thì Floci không cho xóa: xóa domain trước
+  for (const id of pools) {
+    const { UserPool } = await cognito.send(new DescribeUserPoolCommand({ UserPoolId: id }));
+    if (UserPool?.Domain)
+      await cognito.send(
+        new DeleteUserPoolDomainCommand({ UserPoolId: id, Domain: UserPool.Domain }),
+      );
+    await cognito.send(new DeleteUserPoolCommand({ UserPoolId: id }));
+  }
   // Rule phải gỡ hết target mới xóa được
   const deleteRule = async (bus, name) => {
     const { Targets = [] } = await eventbridge.send(
