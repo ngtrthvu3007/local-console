@@ -1,9 +1,4 @@
-import {
-  lines,
-  literal,
-  SAMPLE_TEXT,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
+import { lines, literal, SAMPLE_TEXT, type CodeSample } from "@shared/codeSamples.ts";
 
 const SAMPLE_QUEUE = "hello";
 // Floci không trả user của broker (đã kiểm 2026-11-20), mật khẩu thì không API
@@ -11,6 +6,7 @@ const SAMPLE_QUEUE = "hello";
 const USER_PLACEHOLDER = "USER";
 const PASSWORD_PLACEHOLDER = "PASSWORD";
 const URL_VARIABLE = "AMQP_URL";
+
 const URL_NOTE =
   `Replace ${USER_PLACEHOLDER}:${PASSWORD_PLACEHOLDER} with the broker user ` +
   `you created, or set ${URL_VARIABLE}`;

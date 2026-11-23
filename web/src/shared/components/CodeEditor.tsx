@@ -18,9 +18,7 @@ import CloudscapeCodeEditor, {
   type CodeEditorProps,
 } from "@cloudscape-design/components/code-editor";
 
-// Theme sáng / tối của Ace: không đặt trong preferences để Cloudscape tự chọn
-// theo giao diện đang dùng. Tối dùng cloud_editor_dark (theme AWS làm cho
-// Cloudscape) để nền editor cùng tông với trang
+// Để Cloudscape tự chọn theme theo chế độ sáng / tối; cloud_editor_dark cùng tông nền với trang
 const EDITOR_THEMES = { light: ["dawn"], dark: ["cloud_editor_dark"] };
 const DEFAULT_HEIGHT_PX = 320;
 
@@ -30,8 +28,7 @@ ace.config.setModuleUrl("ace/mode/javascript_worker", javascriptWorkerUrl);
 // Ace nhầm dấu ` đóng ngay sau `${...}` là dấu mở nên chèn thừa ``. Bỏ tự đóng
 // cặp cho `, các dấu nháy và ngoặc khác vẫn tự đóng
 const JAVASCRIPT_PAIRED_QUOTES = { '"': '"', "'": "'" };
-ace.require("ace/mode/javascript").Mode.prototype.$quotes =
-  JAVASCRIPT_PAIRED_QUOTES;
+ace.require("ace/mode/javascript").Mode.prototype.$quotes = JAVASCRIPT_PAIRED_QUOTES;
 
 // "text": chế độ chữ thường có sẵn trong ace, không cần nạp thêm
 export type EditorLanguage = "json" | "javascript" | "python" | "text";
@@ -52,11 +49,11 @@ export default function CodeEditor({
 }: Props) {
   // Người dùng kéo được khung editor cao lên
   const [contentHeight, setContentHeight] = useState(height);
-  const [preferences, setPreferences] = useState<
-    Partial<CodeEditorProps.Preferences>
-  >({
+
+  const [preferences, setPreferences] = useState<Partial<CodeEditorProps.Preferences>>({
     wrapLines: true,
   });
+
   return (
     <CloudscapeCodeEditor
       ace={ace}

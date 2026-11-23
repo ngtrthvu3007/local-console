@@ -7,10 +7,7 @@ import { servicePath } from "../../registry.ts";
 import { ServiceIcon } from "@shared/components/ServiceIcon.tsx";
 import { SEARCH_SHORTCUT_KEY } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import {
-  RECENT_SERVICES_TITLE as TITLE,
-  useRecentServices,
-} from "@shared/recentServices.ts";
+import { RECENT_SERVICES_TITLE as TITLE, useRecentServices } from "@shared/recentServices.ts";
 
 const RECENT_COLUMNS = 2;
 
@@ -19,14 +16,14 @@ const RECENT_COLUMNS = 2;
 export function RecentServices() {
   const recent = useRecentServices();
   const follow = useFollow();
+
   return (
     <Container header={<Header variant='h2'>{TITLE}</Header>}>
       {recent.length === 0 ? (
         <Box textAlign='center' color='text-status-inactive'>
           <b>No recently visited services</b>
           <Box variant='p' color='inherit'>
-            Open a service from the menu, or press {SEARCH_SHORTCUT_KEY} to
-            search.
+            Open a service from the menu, or press {SEARCH_SHORTCUT_KEY} to search.
           </Box>
         </Box>
       ) : (

@@ -1,4 +1,5 @@
 import type { HistoryEvent } from "@aws-sdk/client-sfn";
+import { z } from "zod";
 import { functionNameOfArn } from "../lambda/helpers.ts";
 import { queueNameOfUrl } from "../sqs/queues.ts";
 import { topicNameOfArn } from "../sns/topics.ts";
@@ -27,10 +28,11 @@ const TARGET_OF_RESOURCE_TYPE: Record<
   states: { kind: "statemachine", key: "StateMachineArn", read: stateMachineNameOfArn },
 };
 
-function parseParameters(text?: string): Record<string, unknown> {
+const parametersSchema = z.record(z.string(), z.unknown()).catch({});
+
+function parseParameters(text?: string) {
   try {
-    const parsed: unknown = JSON.parse(text ?? "");
-    return typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>) : {};
+    return parametersSchema.parse(JSON.parse(text ?? ""));
   } catch {
     return {};
   }
@@ -45,8 +47,10 @@ export function taskResourceOf(event: HistoryEvent): TaskResource | undefined {
   if (!task) return undefined;
   const target = TARGET_OF_RESOURCE_TYPE[task.resourceType ?? ""];
   const value = target ? parseParameters(task.parameters)[target.key] : undefined;
+
   if (target && typeof value === "string" && value) {
     return { kind: target.kind, name: target.read(value) };
   }
+
   return { kind: "other", text: `${task.resourceType}:${task.resource}` };
 }

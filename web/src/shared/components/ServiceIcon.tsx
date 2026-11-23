@@ -2,8 +2,13 @@ import type { ServiceDefinition } from "../../registry.ts";
 import { SERVICE_CATEGORIES, SERVICE_GLYPH_SIZE_PX } from "../constants.ts";
 
 // Ô màu theo danh mục (Compute cam, Database xanh…) với glyph trắng; chỉ để trang trí, tên đứng cạnh
-export function ServiceIcon({ service }: { service: Pick<ServiceDefinition, "icon" | "category"> }) {
+export function ServiceIcon({
+  service,
+}: {
+  service: Pick<ServiceDefinition, "icon" | "category">;
+}) {
   const { icon: Glyph, category } = service;
+
   return (
     <span
       className='console-service-icon'

@@ -1,7 +1,7 @@
 import type { EditorLanguage } from "@shared/components/CodeEditor.tsx";
 
 // Ngôn ngữ sửa được ngay trên trang (runtime biên dịch như Java, .NET thì không)
-export type InlineLanguage = Extract<EditorLanguage, "javascript" | "python">;
+type InlineLanguage = Extract<EditorLanguage, "javascript" | "python">;
 
 const NODEJS_RUNTIME_PREFIX = "nodejs";
 const PYTHON_RUNTIME_PREFIX = "python";
@@ -57,6 +57,7 @@ const EXTENSION_LANGUAGES: Record<string, EditorLanguage> = {
   py: "python",
   json: "json",
 };
+
 const PLAIN_TEXT_LANGUAGE = "text";
 const EXTENSION_SEPARATOR = ".";
 

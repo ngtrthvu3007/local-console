@@ -82,6 +82,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
   // Key đang mở đã bị xóa hoặc hết hạn: danh sách cũng tải lại cho khớp
   const openKeyGone = isKeyNotFound(keyValue.error);
   const refetchKeys = pages.refetch;
+
   useEffect(() => {
     if (openKeyGone) refetchKeys();
   }, [openKeyGone, refetchKeys]);
@@ -93,9 +94,11 @@ export function KeysTab({ cluster, keyCount }: Props) {
     next.set(SEARCH_PARAMS.key, name);
     return `?${next}`;
   };
+
   // Mở từ trạng thái đóng thì thêm vào lịch sử; đổi key khi đang mở thì thay.
   // Nhờ vậy nút Back luôn đóng panel và giữ vị trí cuộn của danh sách.
   const selectKey = (name: string) => navigate(keyHref(name), { replace: Boolean(openKey) });
+
   const closeKey = () =>
     setSearchParams(
       (current) => {
@@ -106,8 +109,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
       { replace: true },
     );
 
-  // Nút nằm dưới mô tả, không cùng hàng với tiêu đề: panel bên phải có thể chỉ rộng
-  // khoảng 240px (khi sidebar mở), để chung hàng thì tên bị bóp vỡ từng chữ
+  // Nút đặt dưới mô tả: panel có thể chỉ rộng ~240px, chung hàng thì tên bị bóp vỡ
   const panelActions = (
     <ResponsiveActions>
       <Button disabled={!value} onClick={() => setModal("ttl")}>
@@ -143,6 +145,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
     setRunId((current) => current + 1);
     setSelected([]);
   };
+
   const reset = () => run(DEFAULT_FILTER);
   const filtered = filter.pattern !== ALL_KEYS_PATTERN || filter.type !== undefined;
 
@@ -211,6 +214,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
       cell: (key) => <Figure>{ttlCell(key.ttl)}</Figure>,
     },
   ];
+
   // Khung hẹp: tầng 1 là key, tầng 2 là kiểu · TTL, xám
   const compactColumns: TableProps.ColumnDefinition<KeySummary>[] = [
     {
@@ -240,6 +244,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
       onClick: () => setModal("create"),
     },
   ];
+
   // Flush chỉ nằm trong dropdown: thao tác phá hủy không bao giờ là nút chính
   const menuItems: ButtonDropdownProps.Item[] = [
     { id: "delete", text: "Delete", disabled: !selected.length },
@@ -271,7 +276,9 @@ export function KeysTab({ cluster, keyCount }: Props) {
       Load more
     </Button>
   );
+
   const unsupported = errorCode(pages.error) === REDIS_ERROR_CODES.unsupportedCluster;
+
   const emptyContent = !ready ? (
     <Box textAlign='center' padding={{ vertical: "s" }}>
       <StatusIndicator type='in-progress'>Cluster is {cluster.status}</StatusIndicator>
@@ -292,6 +299,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
       action={<Button onClick={() => setModal("create")}>Create key</Button>}
     />
   );
+
   const footer = pages.hasNextPage && keys.length > 0 && (
     <Box textAlign='center'>{loadMoreButton}</Box>
   );
@@ -300,6 +308,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
 
   const deleteNames =
     modal === "deleteOpenKey" && openKey ? [openKey] : selected.map((key) => key.name);
+
   const confirmDelete = () =>
     deleteKeys.mutate(
       deleteNames,
@@ -313,6 +322,7 @@ export function KeysTab({ cluster, keyCount }: Props) {
         },
       }),
     );
+
   const confirmFlush = () =>
     flush.mutate(
       undefined,

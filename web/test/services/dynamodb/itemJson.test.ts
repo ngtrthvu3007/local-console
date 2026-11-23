@@ -17,6 +17,7 @@ import {
 import type { IndexKeys } from "../../../src/services/dynamodb/hooks/useTables.ts";
 
 const hashOnly: IndexKeys = { partitionKey: { name: "pk", type: "S" } };
+
 const hashAndRange: IndexKeys = {
   partitionKey: { name: "pk", type: "S" },
   sortKey: { name: "sk", type: "N" },
@@ -107,6 +108,7 @@ describe("parseEditorText (DynamoDB JSON)", () => {
       ns: { NS: ["1", "2"] },
       bs: { BS: ["aGVsbG8="] },
     });
+
     expect(parseEditorText(text, "dynamodb")).toEqual({
       s: { S: "x" },
       n: { N: "-1.5e3" },
@@ -125,7 +127,7 @@ describe("parseEditorText (DynamoDB JSON)", () => {
     ['{"n": {"N": 42}}', '"n": expected a number as text'],
     ['{"n": {"N": "abc"}}', '"n": expected a number as text'],
     ['{"b": {"B": "not base64!"}}', '"b": expected base64 text'],
-    ['{"ss": {"SS": []}}', "\"ss\": a set can't be empty."],
+    ['{"ss": {"SS": []}}', '"ss": a set can\'t be empty.'],
     ['{"x": {"NULL": false}}', '"x": NULL must be true.'],
     ['{"x": {"S": "a", "N": "1"}}', '"x": expected exactly one of'],
     ['{"x": "plain"}', '"x": expected an object like'],
@@ -137,9 +139,10 @@ describe("parseEditorText (DynamoDB JSON)", () => {
     expect(() => parseEditorText('{"m": {"M": {"inner": {"N": "x"}}}}', "dynamodb")).toThrow(
       '"m.inner": expected a number as text',
     );
-    expect(() => parseEditorText('{"l": {"L": [{"S": "ok"}, {"BOOL": "yes"}]}}', "dynamodb")).toThrow(
-      '"l[1]": BOOL must be true or false.',
-    );
+
+    expect(() =>
+      parseEditorText('{"l": {"L": [{"S": "ok"}, {"BOOL": "yes"}]}}', "dynamodb"),
+    ).toThrow('"l[1]": BOOL must be true or false.');
   });
 
   it("round-trips through toEditorText", () => {
@@ -158,14 +161,13 @@ describe("keyError", () => {
   });
 
   it("reports a key of the wrong type", () => {
-    expect(keyError({ pk: { N: "1" } }, hashOnly)).toBe(
-      'The partition key "pk" must be a String.',
-    );
+    expect(keyError({ pk: { N: "1" } }, hashOnly)).toBe('The partition key "pk" must be a String.');
   });
 
   it("refuses an empty string or empty binary key, which DynamoDB rejects", () => {
     expect(keyError({ pk: { S: "" } }, hashOnly)).toBe('The partition key "pk" can\'t be empty.');
     const binaryKey: IndexKeys = { partitionKey: { name: "pk", type: "B" } };
+
     expect(keyError({ pk: { B: new Uint8Array() } }, binaryKey)).toBe(
       'The partition key "pk" can\'t be empty.',
     );
@@ -216,9 +218,9 @@ describe("parseImportText", () => {
   });
 
   it("refuses two items with the same key", () => {
-    expect(() => parseImportText('[{"pk": "a"}, {"pk": "b"}, {"pk": "a"}]', "json", hashOnly)).toThrow(
-      "Item 3: Same key as item 1.",
-    );
+    expect(() =>
+      parseImportText('[{"pk": "a"}, {"pk": "b"}, {"pk": "a"}]', "json", hashOnly),
+    ).toThrow("Item 3: Same key as item 1.");
   });
 
   it("reads what exportText writes", () => {
@@ -226,6 +228,7 @@ describe("parseImportText", () => {
       { pk: { S: "a" }, tags: { SS: ["x"] } },
       { pk: { S: "b" }, blob: { B: bytes("hi") } },
     ];
+
     expect(parseImportText(exportText(items), "dynamodb", hashOnly)).toEqual(items);
   });
 });
@@ -252,6 +255,7 @@ describe("cellText", () => {
     expect(cellText({ M: { a: { N: "1.50" }, b: { L: [{ S: "x" }, { NULL: true }] } } })).toBe(
       '{"a":1.50,"b":["x",null]}',
     );
+
     expect(cellText({ NS: ["1", "2"] })).toBe("[1,2]");
   });
 });

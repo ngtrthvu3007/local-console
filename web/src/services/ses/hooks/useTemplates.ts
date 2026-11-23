@@ -8,17 +8,20 @@ import {
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { useSES } from "./useSES.ts";
 
-export const templatesQueryKey = ["ses", "templates"];
+const templatesQueryKey = ["ses", "templates"];
 
 export function useTemplates() {
   const client = useSES();
+
   return useQuery({
     queryKey: templatesQueryKey,
     queryFn: async () => {
       const templates: EmailTemplateMetadata[] = [];
+
       for await (const page of paginateListEmailTemplates({ client }, {})) {
         templates.push(...(page.TemplatesMetadata ?? []));
       }
+
       return templates;
     },
   });
@@ -26,6 +29,7 @@ export function useTemplates() {
 
 export function useTemplate(name?: string) {
   const client = useSES();
+
   return useQuery({
     queryKey: [...templatesQueryKey, name],
     queryFn: async () => {
@@ -40,9 +44,11 @@ export function useTemplate(name?: string) {
 export function useDeleteTemplates() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (names: string[]) => {
       const failures: string[] = [];
+
       for (const name of names) {
         try {
           await client.send(new DeleteEmailTemplateCommand({ TemplateName: name }));
@@ -50,6 +56,7 @@ export function useDeleteTemplates() {
           failures.push(`${name}: ${errorMessage(error)}`);
         }
       }
+
       return { count: names.length - failures.length, failures };
     },
     // exact: chỉ đọc lại danh sách, không đọc lại chi tiết template vừa xóa (404)

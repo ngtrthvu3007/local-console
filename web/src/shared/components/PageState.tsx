@@ -29,8 +29,7 @@ interface PageStateOptions {
   description?: string;
 }
 
-// Trang detail dùng chung một thứ tự: đang tải → không tồn tại → lỗi → (undefined) vẽ trang.
-// Dùng: const state = pageState(query, {...}); if (state) return state;
+// Thứ tự chung của trang detail: đang tải → không tồn tại → lỗi → undefined (vẽ trang)
 export function pageState(
   query: FailableQuery & { isLoading: boolean },
   {
@@ -42,6 +41,7 @@ export function pageState(
 ): ReactNode | undefined {
   if (query.isLoading) return <PageSpinner />;
   if (notFound) return <NotFound description={description} {...back} />;
+
   if (!ready) {
     return (
       <Container>
@@ -49,5 +49,6 @@ export function pageState(
       </Container>
     );
   }
+
   return undefined;
 }

@@ -2,11 +2,7 @@ import { Navigate } from "react-router";
 import { IconBolt } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import {
-  ELASTICACHE_ROUTE_PATTERNS,
-  ELASTICACHE_SERVICE_ID,
-  elasticacheRoutes,
-} from "./routes.ts";
+import { ELASTICACHE_ROUTE_PATTERNS, ELASTICACHE_SERVICE_ID, elasticacheRoutes } from "./routes.ts";
 
 export const elasticacheService: ServiceDefinition = {
   id: ELASTICACHE_SERVICE_ID,

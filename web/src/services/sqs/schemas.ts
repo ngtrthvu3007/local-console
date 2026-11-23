@@ -1,12 +1,8 @@
 import { z } from "zod";
 import { formatBytes } from "@shared/format.ts";
+import { enumOfKeys, wholeNumberIn } from "@shared/schemas.ts";
 import { SQS_BATCH_SIZE } from "../lambda/constants.ts";
-import {
-  issueAdder,
-  mappingOptionsIssues,
-  mappingOptionsShape,
-  wholeNumberIn,
-} from "../lambda/schemas.ts";
+import { issueAdder, mappingOptionsIssues, mappingOptionsShape } from "../lambda/schemas.ts";
 import {
   FIFO_SUFFIX,
   MAX_RECEIVE_COUNT,
@@ -14,14 +10,11 @@ import {
   QUEUE_NAME_PATTERN,
   QUEUE_TYPES,
   SETTING_LIMITS,
-  type QueueType,
 } from "./constants.ts";
-
-const QUEUE_TYPE_IDS = Object.keys(QUEUE_TYPES) as [QueueType, ...QueueType[]];
 
 export const createQueueSchema = z
   .object({
-    type: z.enum(QUEUE_TYPE_IDS),
+    type: enumOfKeys(QUEUE_TYPES),
     name: z.string().trim(),
     contentBasedDedup: z.boolean(),
   })
@@ -61,13 +54,16 @@ export const deadLetterSchema = z
   })
   .superRefine((values, context) => {
     if (!values.enabled) return;
+
     if (!values.deadLetterTargetArn)
       context.addIssue({
         code: "custom",
         path: ["deadLetterTargetArn"],
         message: "Choose a queue.",
       });
+
     const count = wholeNumberIn(MAX_RECEIVE_COUNT, "receives").safeParse(values.maxReceiveCount);
+
     if (!count.success)
       context.addIssue({
         code: "custom",
@@ -94,9 +90,11 @@ export const sendMessageSchema = ({ fifo, contentBasedDedup, maxMessageSize }: S
     .superRefine((values, context) => {
       const addIssue = (field: string, message: string) =>
         context.addIssue({ code: "custom", path: [field], message });
+
       if (!values.body) addIssue("body", "Enter a message body.");
       else if (textEncoder.encode(values.body).length > maxMessageSize)
         addIssue("body", `The body must be at most ${formatBytes(maxMessageSize)}.`);
+
       if (!fifo) return;
       // Chặn trước khi gửi, SQS trả MissingParameter
       if (!values.groupId) addIssue("groupId", "Enter a message group ID.");

@@ -12,6 +12,7 @@
 .console-actions--center {
   justify-content: center;
 }
+/* 688px = PHONE_MAX_WIDTH_PX (shared/constants.ts): CSS không đọc được hằng TS, đổi thì đổi cả hai */
 @media (max-width: 688px) {
   /* Nút xuống dòng trên phone: hàng cách hàng 12px để vùng chạm 44px của hai hàng không chồng nhau. */
   .console-actions {

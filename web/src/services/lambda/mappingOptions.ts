@@ -63,12 +63,15 @@ export function toMappingParams(source: MappingSource, options: MappingOptions):
     .map(({ pattern }) => pattern.trim())
     .filter(Boolean)
     .map((Pattern) => ({ Pattern }));
+
   const common = { FilterCriteria: { Filters: filters } };
+
   if (source === "sqs")
     return {
       ...common,
       FunctionResponseTypes: options.reportBatchFailures ? [REPORT_BATCH_FAILURES] : [],
     };
+
   return {
     ...common,
     MaximumRetryAttempts: Number(options.retryAttempts),
@@ -79,12 +82,13 @@ export function toMappingParams(source: MappingSource, options: MappingOptions):
 }
 
 // SNS hay SQS theo ARN đích; ARN lạ coi là SQS (Floci chỉ nhận hai loại này)
-export const onFailureKindOf = (arn: string): OnFailureKind =>
+const onFailureKindOf = (arn: string): OnFailureKind =>
   !arn ? "none" : arn.includes(":sns:") ? "sns" : "sqs";
 
 // Trigger có sẵn (kể cả tạo bằng IaC) → các ô của form; hiện đủ pattern, không bỏ pattern nào
 export function fromMapping(mapping: EventSourceMappingConfiguration): MappingOptions {
   const destination = mapping.DestinationConfig?.OnFailure?.Destination ?? "";
+
   return {
     filterPatterns: (mapping.FilterCriteria?.Filters ?? []).map((filter) => ({
       pattern: reformatJson(filter.Pattern ?? ""),
@@ -103,6 +107,7 @@ export function mappingDetails(source: TriggerRowSource, mapping: EventSourceMap
   const startingPosition = mapping.StartingPosition as StartingPosition | undefined;
   const destination = mapping.DestinationConfig?.OnFailure?.Destination;
   const retry = mapping.MaximumRetryAttempts;
+
   return [
     `Batch size ${mapping.BatchSize}`,
     startingPosition && STARTING_POSITIONS[startingPosition],

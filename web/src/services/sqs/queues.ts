@@ -1,11 +1,12 @@
 import type { QueueAttributeName } from "@aws-sdk/client-sqs";
+import { z } from "zod";
 import { DETAIL_SEPARATOR, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
 import { ATTRIBUTE_TRUE, KIBIBYTE, QUEUE_TYPES } from "./constants.ts";
 
 const URL_PATH_SEPARATOR = "/";
 const ARN_SEPARATOR = ":";
 
-export type QueueAttributes = Partial<Record<QueueAttributeName, string>>;
+type QueueAttributes = Partial<Record<QueueAttributeName, string>>;
 
 export interface QueueSettings {
   visibilityTimeout: number; // giây
@@ -14,11 +15,6 @@ export interface QueueSettings {
   maxMessageSize: number; // byte
   receiveWait: number; // giây
   contentBasedDedup: boolean;
-}
-
-export interface RedrivePolicy {
-  deadLetterTargetArn: string;
-  maxReceiveCount: number;
 }
 
 export interface Queue {
@@ -50,15 +46,18 @@ const dateOf = (seconds?: string) =>
   seconds ? new Date(Number(seconds) * MILLISECONDS_PER_SECOND) : undefined;
 
 // maxReceiveCount có thể là số hoặc chuỗi tùy nơi tạo policy (SDK, CLI, IaC)
+const redrivePolicySchema = z.object({
+  deadLetterTargetArn: z.string().min(1),
+  maxReceiveCount: z.coerce.number(),
+});
+
+export type RedrivePolicy = z.infer<typeof redrivePolicySchema>;
+
 export function parseRedrivePolicy(text?: string): RedrivePolicy | undefined {
   if (!text) return undefined;
+
   try {
-    const policy = JSON.parse(text) as { deadLetterTargetArn?: string; maxReceiveCount?: unknown };
-    if (!policy.deadLetterTargetArn) return undefined;
-    return {
-      deadLetterTargetArn: policy.deadLetterTargetArn,
-      maxReceiveCount: Number(policy.maxReceiveCount),
-    };
+    return redrivePolicySchema.safeParse(JSON.parse(text)).data;
   } catch {
     return undefined;
   }

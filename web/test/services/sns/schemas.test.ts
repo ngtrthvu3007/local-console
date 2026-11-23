@@ -39,6 +39,7 @@ describe("createSubscriptionSchema", () => {
     filterPolicy: "",
     filterScope: "MessageAttributes" as const,
   };
+
   const check = (changes: Partial<typeof base>) =>
     createSubscriptionSchema.safeParse({ ...base, ...changes });
 
@@ -52,14 +53,15 @@ describe("createSubscriptionSchema", () => {
     expect(check({ protocol: "http", url: "http://host.docker.internal:3000/x" }).success).toBe(
       true,
     );
+
     expect(check({ protocol: "https", url: "http://host:3000" }).success).toBe(false);
     expect(check({ protocol: "http", url: "not a url" }).success).toBe(false);
   });
 
   it("reports a broken filter policy", () => {
-    expect(
-      firstMessage(check({ queueArn: "arn:aws:sqs:r:0:q", filterPolicy: "{oops" })),
-    ).toMatch(/Invalid JSON/);
+    expect(firstMessage(check({ queueArn: "arn:aws:sqs:r:0:q", filterPolicy: "{oops" }))).toMatch(
+      /Invalid JSON/,
+    );
   });
 });
 
@@ -73,6 +75,7 @@ describe("publishSchema", () => {
     expect(firstMessage(publishSchema(standard).safeParse({ ...message, body: " " }))).toBe(
       "Enter a message body.",
     );
+
     expect(publishSchema(standard).safeParse(message).success).toBe(true);
   });
 
@@ -91,13 +94,17 @@ describe("publishSchema", () => {
       ...attribute,
       name: `a${index}`,
     }));
+
     expect(publishSchema(standard).safeParse({ ...message, attributes }).success).toBe(false);
   });
 
   it("needs a group ID on FIFO, and a dedup ID unless content-based", () => {
-    expect(publishSchema(fifo).safeParse(message).error?.issues.map((issue) => issue.path[0])).toEqual(
-      ["groupId", "dedupId"],
-    );
+    expect(
+      publishSchema(fifo)
+        .safeParse(message)
+        .error?.issues.map((issue) => issue.path[0]),
+    ).toEqual(["groupId", "dedupId"]);
+
     const contentBased = publishSchema({ fifo: true, contentBasedDedup: true });
     expect(contentBased.safeParse({ ...message, groupId: "g" }).success).toBe(true);
   });

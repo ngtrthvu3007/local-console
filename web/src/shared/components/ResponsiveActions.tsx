@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import "./ResponsiveActions.css";
 
-// Use for form footers and header tools; retain Cloudscape buttons and focus rings.
+// Cho footer của form và nút trên header; vẫn dùng nút và focus ring của Cloudscape
 // toolbar: trên phone, cụm nút dồn về mép phải của header.
 export function ResponsiveActions({
   children,
@@ -19,5 +19,6 @@ export function ResponsiveActions({
   ]
     .filter(Boolean)
     .join(" ");
+
   return <div className={className}>{children}</div>;
 }

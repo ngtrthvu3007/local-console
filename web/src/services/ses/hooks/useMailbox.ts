@@ -18,11 +18,12 @@ import {
   type Email,
 } from "../mailbox.ts";
 
-export const mailboxQueryKey = ["ses", "mailbox"];
+const mailboxQueryKey = ["ses", "mailbox"];
 const MISSING_ID_FAILURE = "Email has no id, not deleted";
 
 export function useMailbox(autoRefresh = false) {
   const { region } = useLoadedConfig();
+
   return useQuery({
     queryKey: mailboxQueryKey,
     queryFn: async () => {
@@ -33,8 +34,7 @@ export function useMailbox(autoRefresh = false) {
   });
 }
 
-// Không nằm dưới mailboxQueryKey: Auto refresh không đọc lại MIME. Mail không đổi nên không đọc lại,
-// đóng mail là bỏ kết quả (spec 9: không cache kết quả đọc MIME)
+// Ngoài mailboxQueryKey để Auto refresh không đọc lại MIME (mail không đổi)
 export function useEmailContent(email?: Email) {
   return useQuery({
     queryKey: ["ses", "email", email?.Id],
@@ -57,7 +57,9 @@ export function useMimeFields(emails: Email[] | undefined): Email[] | undefined 
       staleTime: Infinity,
     })),
   });
+
   const pending = (emails ?? []).filter(needsMimeFields);
+
   return emails?.map((email) => {
     const data = results[pending.indexOf(email)]?.data;
     return data ? withMimeFields(email, data) : email;
@@ -66,15 +68,18 @@ export function useMimeFields(emails: Email[] | undefined): Email[] | undefined 
 
 export function useDeleteEmails() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (ids: string[]) => {
       const failures: string[] = [];
+
       for (const id of ids) {
         // Id rỗng làm DELETE không id, xóa mail của mọi region: không bao giờ gửi
         if (!id.trim()) {
           failures.push(MISSING_ID_FAILURE);
           continue;
         }
+
         try {
           // Phải xóa theo id: DELETE không id xóa mail của mọi region
           await fetchJson(`${MAILBOX_PATH}?${new URLSearchParams({ [MAILBOX_ID_PARAM]: id })}`, {
@@ -84,6 +89,7 @@ export function useDeleteEmails() {
           failures.push(`${id}: ${errorMessage(error)}`);
         }
       }
+
       return { count: ids.length - failures.length, failures };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: mailboxQueryKey }),

@@ -57,8 +57,10 @@ describe("buildSearchInput: scan", () => {
       ]),
       keys,
     );
+
     expect(input.FilterExpression).toBe("#filter0 >= :filter0 AND #filter1 = :filter1");
     expect(input.ExpressionAttributeNames).toEqual({ "#filter0": "total", "#filter1": "paid" });
+
     expect(input.ExpressionAttributeValues).toEqual({
       ":filter0": { N: "10" },
       ":filter1": { BOOL: true },
@@ -68,9 +70,13 @@ describe("buildSearchInput: scan", () => {
   it("writes begins_with and contains as functions", () => {
     const input = buildSearchInput(
       "orders",
-      scan([filter({ operator: "begins_with", value: "DO" }), filter({ operator: "contains", value: "N" })]),
+      scan([
+        filter({ operator: "begins_with", value: "DO" }),
+        filter({ operator: "contains", value: "N" }),
+      ]),
       keys,
     );
+
     expect(input.FilterExpression).toBe(
       "begins_with(#filter0, :filter0) AND contains(#filter1, :filter1)",
     );
@@ -79,10 +85,20 @@ describe("buildSearchInput: scan", () => {
   it("writes between with two values", () => {
     const input = buildSearchInput(
       "orders",
-      scan([filter({ attribute: "total", operator: "between", type: "N", value: "1", secondValue: "9" })]),
+      scan([
+        filter({
+          attribute: "total",
+          operator: "between",
+          type: "N",
+          value: "1",
+          secondValue: "9",
+        }),
+      ]),
       keys,
     );
+
     expect(input.FilterExpression).toBe("#filter0 BETWEEN :filter0 AND :filter0end");
+
     expect(input.ExpressionAttributeValues).toEqual({
       ":filter0": { N: "1" },
       ":filter0end": { N: "9" },
@@ -92,12 +108,17 @@ describe("buildSearchInput: scan", () => {
   it("sends no value for exists and not exists", () => {
     const input = buildSearchInput(
       "orders",
-      scan([filter({ operator: "exists" }), filter({ attribute: "deleted", operator: "not_exists" })]),
+      scan([
+        filter({ operator: "exists" }),
+        filter({ attribute: "deleted", operator: "not_exists" }),
+      ]),
       keys,
     );
+
     expect(input.FilterExpression).toBe(
       "attribute_exists(#filter0) AND attribute_not_exists(#filter1)",
     );
+
     expect(input.ExpressionAttributeValues).toBeUndefined();
   });
 });
@@ -122,7 +143,9 @@ describe("buildSearchInput: query", () => {
   });
 
   it("sorts descending when asked", () => {
-    expect(buildSearchInput("orders", query({ descending: true }), keys).ScanIndexForward).toBe(false);
+    expect(buildSearchInput("orders", query({ descending: true }), keys).ScanIndexForward).toBe(
+      false,
+    );
   });
 
   it("adds the sort key condition, including between", () => {
@@ -131,9 +154,9 @@ describe("buildSearchInput: query", () => {
       query({ sortKey: { operator: "between", value: "100", secondValue: "200" } }),
       keys,
     );
-    expect(input.KeyConditionExpression).toBe(
-      "#key0 = :key0 AND #key1 BETWEEN :key1 AND :key1end",
-    );
+
+    expect(input.KeyConditionExpression).toBe("#key0 = :key0 AND #key1 BETWEEN :key1 AND :key1end");
+
     expect(input.ExpressionAttributeValues).toEqual({
       ":key0": { S: "user#1" },
       ":key1": { N: "100" },
@@ -143,11 +166,13 @@ describe("buildSearchInput: query", () => {
 
   it("writes begins_with on the sort key as a function", () => {
     const stringSortKey: IndexKeys = { ...keys, sortKey: { name: "sk", type: "S" } };
+
     const input = buildSearchInput(
       "orders",
       query({ sortKey: { operator: "begins_with", value: "order#", secondValue: "" } }),
       stringSortKey,
     );
+
     expect(input.KeyConditionExpression).toBe("#key0 = :key0 AND begins_with(#key1, :key1)");
   });
 
@@ -157,6 +182,7 @@ describe("buildSearchInput: query", () => {
       query({ sortKey: { operator: "=", value: "  ", secondValue: "" } }),
       keys,
     );
+
     expect(input.KeyConditionExpression).toBe("#key0 = :key0");
   });
 
@@ -166,6 +192,7 @@ describe("buildSearchInput: query", () => {
       query({ sortKey: { operator: "=", value: "1", secondValue: "" } }),
       { partitionKey: keys.partitionKey },
     );
+
     expect(input.KeyConditionExpression).toBe("#key0 = :key0");
   });
 
@@ -173,6 +200,7 @@ describe("buildSearchInput: query", () => {
     const input = buildSearchInput("files", query({ partitionKeyValue: " aGk= " }), {
       partitionKey: { name: "id", type: "B" },
     });
+
     expect(input.ExpressionAttributeValues).toEqual({
       ":key0": { B: new TextEncoder().encode("hi") },
     });

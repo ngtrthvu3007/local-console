@@ -4,23 +4,25 @@ import { FLOCI_PATHS } from "../constants.ts";
 
 const flociInfoQueryKey = ["floci-info"];
 
-export interface FlociInfo {
-  version: string;
-  edition: string;
-  services: Record<string, string>;
+// Không dùng zod: hook này nằm trong bundle chính (Layout), zod làm bundle nặng thêm ~90 KB
+interface FlociManifest {
+  version?: string; // thiếu thì thẻ Floci hiện "—"
+  edition?: string;
 }
 
-type FlociManifest = Pick<FlociInfo, "version" | "edition">;
-type FlociServiceStates = Pick<FlociInfo, "services">;
+interface FlociHealth {
+  services: Record<string, string>;
+}
 
 export const useFlociInfo = () =>
   useQuery({
     queryKey: flociInfoQueryKey,
-    queryFn: async (): Promise<FlociInfo> => {
+    queryFn: async () => {
       const [manifest, health] = await Promise.all([
         fetchJson<FlociManifest>(FLOCI_PATHS.info),
-        fetchJson<FlociServiceStates>(FLOCI_PATHS.health),
+        fetchJson<FlociHealth>(FLOCI_PATHS.health),
       ]);
+
       return { ...manifest, services: health.services };
     },
   });

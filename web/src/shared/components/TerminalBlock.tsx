@@ -2,9 +2,7 @@ import { CopyButton } from "./CopyButton.tsx";
 
 const COPY_COMMAND_LABEL = "Copy command";
 
-// Ô kiểu terminal (nền tối, chữ mono, nút copy dạng icon): lệnh trên trang
-// Floci / server tắt, biến môi trường trên Home. Dấu $ chỉ để nhìn, nút copy
-// chỉ chép nội dung
+// Dấu $ chỉ để nhìn, nút copy không chép nó
 export function TerminalBlock({
   code,
   copyLabel = COPY_COMMAND_LABEL,

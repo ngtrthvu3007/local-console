@@ -22,7 +22,7 @@ export interface Sender {
   href: string;
 }
 
-export interface SenderClients {
+interface SenderClients {
   s3: S3Client;
   lambda: LambdaClient;
   ses: SESv2Client;
@@ -35,6 +35,7 @@ const refersTo = (candidate: string | undefined, arn: string) =>
 // S3 notification trỏ tới resource. Function đã có dòng S3 trong bảng Triggers nên không quét
 async function fromS3(s3: S3Client, arn: string): Promise<Sender[]> {
   const buckets = (await s3.send(new ListBucketsCommand({}))).Buckets ?? [];
+
   const perBucket = await Promise.all(
     buckets.map(async ({ Name: bucket = "" }) =>
       toNotificationRules(
@@ -50,6 +51,7 @@ async function fromS3(s3: S3Client, arn: string): Promise<Sender[]> {
         })),
     ),
   );
+
   return perBucket.flat();
 }
 
@@ -60,6 +62,7 @@ async function fromLambda(lambda: LambdaClient, arn: string): Promise<Sender[]> 
     // Không nêu FunctionName: trả trigger của mọi function trong một lượt
     lambda.send(new ListEventSourceMappingsCommand({})),
   ]);
+
   const async = functions.flatMap(({ name, onSuccess, onFailure }) =>
     (
       [
@@ -76,10 +79,12 @@ async function fromLambda(lambda: LambdaClient, arn: string): Promise<Sender[]> 
         href: lambdaRoutes.function(name),
       })),
   );
+
   const onFailure = (mappings.EventSourceMappings ?? [])
     .filter((mapping) => refersTo(mapping.DestinationConfig?.OnFailure?.Destination, arn))
     .map((mapping) => {
       const name = functionNameOfMapping(mapping);
+
       return {
         id: `lambda-trigger:${mapping.UUID}`,
         type: "Lambda trigger",
@@ -88,6 +93,7 @@ async function fromLambda(lambda: LambdaClient, arn: string): Promise<Sender[]> 
         href: lambdaRoutes.function(name, FUNCTION_TABS.triggers),
       };
     });
+
   return [...async, ...onFailure];
 }
 
@@ -120,5 +126,6 @@ export async function listSenders(
     kinds.includes("lambda") ? fromLambda(clients.lambda, arn) : [],
     kinds.includes("ses") ? fromSes(clients.ses, arn) : [],
   ]);
+
   return found.flat();
 }

@@ -50,12 +50,14 @@ function firstUnsafeReason(values: AttributeValue[]): string | undefined {
     const reason = unsafeReason(value);
     if (reason) return reason;
   }
+
   return undefined;
 }
 
 // Trả câu giải thích khi item chỉ sửa được bằng DynamoDB JSON, ngược lại undefined
 export function needsDynamoJson(item: Item): string | undefined {
   const reason = firstUnsafeReason(Object.values(item));
+
   return (
     reason &&
     `Shown as DynamoDB JSON: this item has ${reason}, which plain JSON can't keep exactly.`
@@ -94,15 +96,16 @@ function significantDigits(source: string): number {
   return mantissa.replace(/^0+/, "").replace(/0+$/, "").length || 1;
 }
 
-// JSON.parse giữ được chữ gốc của số (context.source) trên trình duyệt mới.
-// Số mà kiểu number làm tròn thì giữ nguyên chữ gốc (NumberValue), marshall ghi đúng thành {N: "<chữ gốc>"}
+// Số vượt độ chính xác của number thì giữ chữ gốc (context.source) để ghi đúng {N: "..."}
 function exactNumberReviver(_key: string, value: unknown, context?: { source?: string }) {
   if (typeof value !== "number" || !context?.source) return value;
   const source = context.source;
   const isInteger = !/[.eE]/.test(source);
+
   const lost = isInteger
     ? !Number.isSafeInteger(value)
     : significantDigits(source) > MAX_EXACT_SIGNIFICANT_DIGITS;
+
   return lost ? new NumberValueImpl(source) : value;
 }
 
@@ -147,11 +150,14 @@ const setList = (path: string, value: unknown) => {
 function decodeValue(path: string, raw: unknown): AttributeValue {
   if (!isPlainObject(raw)) return fail(path, 'expected an object like {"S": "text"}.');
   const types = Object.keys(raw);
+
   if (types.length !== 1 || !ATTRIBUTE_VALUE_TYPES.includes(types[0])) {
     return fail(path, `expected exactly one of ${ATTRIBUTE_VALUE_TYPES.join(", ")}.`);
   }
+
   const [type] = types;
   const data = raw[type];
+
   switch (type) {
     case "S":
       return typeof data === "string" ? { S: data } : fail(path, "S must be text.");
@@ -212,13 +218,16 @@ export function keyError(item: Item, keys: IndexKeys): string | undefined {
   for (const { role, attribute } of keyRoles(keys)) {
     const value = item[attribute.name];
     if (!value) return `Missing ${role} "${attribute.name}".`;
+
     if (!KEY_TYPE_CHECKS[attribute.type](value)) {
       return `The ${role} "${attribute.name}" must be a ${KEY_TYPES[attribute.type]}.`;
     }
+
     // DynamoDB không nhận key là chuỗi rỗng hoặc binary rỗng
     if (value.S === "" || value.B?.length === 0)
       return `The ${role} "${attribute.name}" can't be empty.`;
   }
+
   return undefined;
 }
 
@@ -240,8 +249,10 @@ export function parseImportText(text: string, format: ItemFormat, keys: IndexKey
   const raw = parseJson(text, format);
   if (!Array.isArray(raw)) throw new Error("The file must contain a JSON array of items.");
   const positionById = new Map<string, number>();
+
   return raw.map((entry, index) => {
     const position = index + 1;
+
     try {
       const item = toItem(entry, format);
       const error = keyError(item, keys);
@@ -277,12 +288,15 @@ function compactText(value: AttributeValue): string {
   if (value.BS)
     return `[${value.BS.map((bytes) => `"Binary (${formatBytes(bytes.length)})"`).join(",")}]`;
   if (value.L) return `[${value.L.map(compactText).join(",")}]`;
+
   if (value.M) {
     const entries = Object.entries(value.M).map(
       ([name, entry]) => `${JSON.stringify(name)}:${compactText(entry)}`,
     );
+
     return `{${entries.join(",")}}`;
   }
+
   return NOT_AVAILABLE;
 }
 

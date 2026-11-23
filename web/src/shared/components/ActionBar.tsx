@@ -55,9 +55,7 @@ const toMenuItem = (action: BarAction): ButtonDropdownProps.Item => ({
   iconName: action.iconName,
 });
 
-// Khung rộng: mỗi action là một nút + dropdown "Actions".
-// Khung hẹp: một split button [nút chính | ▾] chứa mọi action còn lại, kể cả Refresh,
-// để header nằm gọn một hàng cạnh tiêu đề. Không có nút chính thì nút ghim vẫn đứng riêng.
+// Khung hẹp gom mọi action (kể cả Refresh) vào một split button để header nằm gọn một hàng
 export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }: Props) {
   const follow = useFollow();
   const primary = actions.find((action) => action.primary);
@@ -68,10 +66,12 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
 
   const runItem = (id: string) => {
     const action = folded.find((candidate) => candidate.id === id);
+
     if (action) {
       if (!action.disabled && !action.loading) action.onClick?.();
       return;
     }
+
     onMenuItemClick?.(id);
   };
 
@@ -119,9 +119,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
   );
 
   if (compact && splitButton) {
-    return (
-      <ResponsiveActions toolbar>{splitButton}</ResponsiveActions>
-    );
+    return <ResponsiveActions toolbar>{splitButton}</ResponsiveActions>;
   }
 
   return (

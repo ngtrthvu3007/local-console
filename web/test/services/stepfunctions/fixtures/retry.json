@@ -1,184 +1,184 @@
 {
- "status": "SUCCEEDED",
- "events": [
-  {
-   "timestamp": "2026-11-22T05:09:25.580Z",
-   "type": "ExecutionStarted",
-   "id": 1,
-   "previousEventId": 0,
-   "executionStartedEventDetails": {
-    "input": "{}",
-    "inputDetails": {
-     "truncated": false
+  "status": "SUCCEEDED",
+  "events": [
+    {
+      "timestamp": "2026-11-22T05:09:25.580Z",
+      "type": "ExecutionStarted",
+      "id": 1,
+      "previousEventId": 0,
+      "executionStartedEventDetails": {
+        "input": "{}",
+        "inputDetails": {
+          "truncated": false
+        },
+        "roleArn": "arn:aws:iam::000000000000:role/x"
+      }
     },
-    "roleArn": "arn:aws:iam::000000000000:role/x"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:25.581Z",
-   "type": "TaskStateEntered",
-   "id": 2,
-   "previousEventId": 0,
-   "stateEnteredEventDetails": {
-    "name": "Send",
-    "input": "{}",
-    "inputDetails": {
-     "truncated": false
+    {
+      "timestamp": "2026-11-22T05:09:25.581Z",
+      "type": "TaskStateEntered",
+      "id": 2,
+      "previousEventId": 0,
+      "stateEnteredEventDetails": {
+        "name": "Send",
+        "input": "{}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:25.581Z",
+      "type": "TaskScheduled",
+      "id": 3,
+      "previousEventId": 2,
+      "taskScheduledEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage",
+        "region": "ap-southeast-1",
+        "parameters": "{\"QueueUrl\":\"http://localhost.floci.io:4566/000000000000/lc-fx-missing\",\"MessageBody\":\"x\"}"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:25.581Z",
+      "type": "TaskStarted",
+      "id": 4,
+      "previousEventId": 3,
+      "taskStartedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:25.586Z",
+      "type": "TaskFailed",
+      "id": 5,
+      "previousEventId": 4,
+      "taskFailedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage",
+        "error": "SQS.AWS.SimpleQueueService.NonExistentQueue",
+        "cause": "The specified queue does not exist."
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:26.587Z",
+      "type": "TaskScheduled",
+      "id": 6,
+      "previousEventId": 5,
+      "taskScheduledEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage",
+        "region": "ap-southeast-1",
+        "parameters": "{\"QueueUrl\":\"http://localhost.floci.io:4566/000000000000/lc-fx-missing\",\"MessageBody\":\"x\"}"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:26.587Z",
+      "type": "TaskStarted",
+      "id": 7,
+      "previousEventId": 6,
+      "taskStartedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:26.587Z",
+      "type": "TaskFailed",
+      "id": 8,
+      "previousEventId": 7,
+      "taskFailedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage",
+        "error": "SQS.AWS.SimpleQueueService.NonExistentQueue",
+        "cause": "The specified queue does not exist."
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "TaskScheduled",
+      "id": 9,
+      "previousEventId": 8,
+      "taskScheduledEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage",
+        "region": "ap-southeast-1",
+        "parameters": "{\"QueueUrl\":\"http://localhost.floci.io:4566/000000000000/lc-fx-missing\",\"MessageBody\":\"x\"}"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "TaskStarted",
+      "id": 10,
+      "previousEventId": 9,
+      "taskStartedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "TaskFailed",
+      "id": 11,
+      "previousEventId": 10,
+      "taskFailedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage",
+        "error": "SQS.AWS.SimpleQueueService.NonExistentQueue",
+        "cause": "The specified queue does not exist."
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "TaskStateExited",
+      "id": 12,
+      "previousEventId": 11,
+      "stateExitedEventDetails": {
+        "name": "Send",
+        "output": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "PassStateEntered",
+      "id": 13,
+      "previousEventId": 12,
+      "stateEnteredEventDetails": {
+        "name": "Fallback",
+        "input": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "PassStateExited",
+      "id": 14,
+      "previousEventId": 13,
+      "stateExitedEventDetails": {
+        "name": "Fallback",
+        "output": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:28.587Z",
+      "type": "ExecutionSucceeded",
+      "id": 15,
+      "previousEventId": 14,
+      "executionSucceededEventDetails": {
+        "output": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
     }
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:25.581Z",
-   "type": "TaskScheduled",
-   "id": 3,
-   "previousEventId": 2,
-   "taskScheduledEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage",
-    "region": "ap-southeast-1",
-    "parameters": "{\"QueueUrl\":\"http://localhost.floci.io:4566/000000000000/lc-fx-missing\",\"MessageBody\":\"x\"}"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:25.581Z",
-   "type": "TaskStarted",
-   "id": 4,
-   "previousEventId": 3,
-   "taskStartedEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:25.586Z",
-   "type": "TaskFailed",
-   "id": 5,
-   "previousEventId": 4,
-   "taskFailedEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage",
-    "error": "SQS.AWS.SimpleQueueService.NonExistentQueue",
-    "cause": "The specified queue does not exist."
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:26.587Z",
-   "type": "TaskScheduled",
-   "id": 6,
-   "previousEventId": 5,
-   "taskScheduledEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage",
-    "region": "ap-southeast-1",
-    "parameters": "{\"QueueUrl\":\"http://localhost.floci.io:4566/000000000000/lc-fx-missing\",\"MessageBody\":\"x\"}"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:26.587Z",
-   "type": "TaskStarted",
-   "id": 7,
-   "previousEventId": 6,
-   "taskStartedEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:26.587Z",
-   "type": "TaskFailed",
-   "id": 8,
-   "previousEventId": 7,
-   "taskFailedEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage",
-    "error": "SQS.AWS.SimpleQueueService.NonExistentQueue",
-    "cause": "The specified queue does not exist."
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "TaskScheduled",
-   "id": 9,
-   "previousEventId": 8,
-   "taskScheduledEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage",
-    "region": "ap-southeast-1",
-    "parameters": "{\"QueueUrl\":\"http://localhost.floci.io:4566/000000000000/lc-fx-missing\",\"MessageBody\":\"x\"}"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "TaskStarted",
-   "id": 10,
-   "previousEventId": 9,
-   "taskStartedEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage"
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "TaskFailed",
-   "id": 11,
-   "previousEventId": 10,
-   "taskFailedEventDetails": {
-    "resourceType": "sqs",
-    "resource": "sendMessage",
-    "error": "SQS.AWS.SimpleQueueService.NonExistentQueue",
-    "cause": "The specified queue does not exist."
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "TaskStateExited",
-   "id": 12,
-   "previousEventId": 11,
-   "stateExitedEventDetails": {
-    "name": "Send",
-    "output": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
-    "outputDetails": {
-     "truncated": false
-    }
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "PassStateEntered",
-   "id": 13,
-   "previousEventId": 12,
-   "stateEnteredEventDetails": {
-    "name": "Fallback",
-    "input": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
-    "inputDetails": {
-     "truncated": false
-    }
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "PassStateExited",
-   "id": 14,
-   "previousEventId": 13,
-   "stateExitedEventDetails": {
-    "name": "Fallback",
-    "output": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
-    "outputDetails": {
-     "truncated": false
-    }
-   }
-  },
-  {
-   "timestamp": "2026-11-22T05:09:28.587Z",
-   "type": "ExecutionSucceeded",
-   "id": 15,
-   "previousEventId": 14,
-   "executionSucceededEventDetails": {
-    "output": "{\"Error\":\"SQS.AWS.SimpleQueueService.NonExistentQueue\",\"Cause\":\"The specified queue does not exist.\"}",
-    "outputDetails": {
-     "truncated": false
-    }
-   }
-  }
- ]
+  ]
 }

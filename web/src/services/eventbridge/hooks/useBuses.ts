@@ -22,8 +22,7 @@ const busesQueryKey = [EVENTBRIDGE_QUERY_ROOT, "buses"];
 const startsWith = (key: QueryKey, prefix: QueryKey) =>
   prefix.every((part, index) => key[index] === part);
 
-// Làm mới mọi query của EventBridge, trừ chi tiết của resource vừa xóa: trang chi tiết còn mở
-// sẽ gọi lại resource vừa mất (404); rời trang rồi thì lần mở sau tự hỏi lại
+// Trừ chi tiết của resource vừa xóa: trang còn mở sẽ gọi lại và nhận 404
 export const invalidateExcept = (queryClient: QueryClient, deleted: QueryKey[]) =>
   queryClient.invalidateQueries({
     queryKey: [EVENTBRIDGE_QUERY_ROOT],
@@ -45,6 +44,7 @@ export function useInvalidateEventBridge() {
 export function useCreateBus() {
   const client = useEventBridge();
   const invalidate = useInvalidateEventBridge();
+
   return useMutation({
     mutationFn: (name: string) => client.send(new CreateEventBusCommand({ Name: name })),
     onSuccess: invalidate,
@@ -54,6 +54,7 @@ export function useCreateBus() {
 export function useDeleteBuses() {
   const client = useEventBridge();
   const invalidate = useInvalidateEventBridge();
+
   return useMutation({
     mutationFn: (buses: readonly Bus[]) =>
       runEach(
@@ -79,6 +80,7 @@ interface PutEventInput {
 
 export function usePutEvent() {
   const client = useEventBridge();
+
   return useMutation({
     mutationFn: async ({ bus, source, detailType, detail }: PutEventInput) => {
       const result = await client.send(
@@ -86,6 +88,7 @@ export function usePutEvent() {
           Entries: [{ EventBusName: bus, Source: source, DetailType: detailType, Detail: detail }],
         }),
       );
+
       const entry = result.Entries?.[0];
       // PutEvents báo lỗi từng entry ở đây chứ không ném
       if (result.FailedEntryCount)

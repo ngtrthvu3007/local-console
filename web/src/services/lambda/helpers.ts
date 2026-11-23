@@ -6,9 +6,7 @@ import { proxyEndpoint } from "@shared/aws.ts";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { LOG_GROUP_PREFIX } from "./constants.ts";
 
-// Code.Location trỏ vào host nội bộ của Floci (http://floci:4566) mà trình duyệt không mở được,
-// và chữ ký gắn với host đó; đi qua proxy của console thì Floci nhận đúng host.
-// Cần tải gói về để mở editor
+// Code.Location trỏ host nội bộ của Floci, trình duyệt không mở được; đi qua proxy để Floci nhận đúng host đã ký
 export function codeDownloadUrl(location: string) {
   const url = new URL(location);
   return `${proxyEndpoint()}${url.pathname}${url.search}`;

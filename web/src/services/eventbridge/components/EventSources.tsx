@@ -23,6 +23,7 @@ interface Row {
 
 function NameCell({ row }: { row: Row }) {
   const follow = useFollow();
+
   return (
     <Link href={row.href} onFollow={follow}>
       {row.name}
@@ -36,17 +37,18 @@ const COLUMNS: TableProps.ColumnDefinition<Row>[] = [
   { id: "where", header: "Bus / group", cell: (row) => row.where },
 ];
 
-// Rule và schedule của EventBridge đang đẩy vào resource này. Rỗng hoặc lỗi thì ẩn, để trang
-// queue / topic không có thêm khối thừa (giống TopicSubscriptions)
+// Rỗng hoặc lỗi thì ẩn để trang queue / topic không có khối thừa
 export function EventSources({ targetArn }: { targetArn: string }) {
   const events = useEventBridge();
   const scheduler = useScheduler();
+
   // Dưới key gốc của EventBridge: tạo / sửa / xóa rule hay schedule làm mới luôn khối này
   const sources = useQuery({
     queryKey: [EVENTBRIDGE_QUERY_ROOT, "sources", targetArn],
     queryFn: () =>
       listEventSources(events, scheduler, (candidate) => targetsArn(candidate, targetArn)),
   });
+
   const rows: Row[] = [
     ...(sources.data?.rules ?? []).map(({ bus, rule }) => ({
       id: `rule:${bus}/${rule}`,
@@ -63,6 +65,7 @@ export function EventSources({ targetArn }: { targetArn: string }) {
       href: eventbridgeRoutes.schedule(group, name),
     })),
   ];
+
   const { items, paginationProps } = useCollection(rows, { pagination: { pageSize: PAGE_SIZE } });
   if (!rows.length) return null;
 

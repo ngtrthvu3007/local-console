@@ -32,14 +32,15 @@ export function ConfirmModal({
   onDismiss,
 }: Props) {
   const [typedText, setTypedText] = useState("");
+
   // Modal đóng bằng bất kỳ cách nào (Cancel, ✕, hoặc trang tự đóng sau khi xác
   // nhận xong) thì xóa chữ đã gõ: mở lại không được bật sẵn nút xóa / reset
   useEffect(() => {
     if (!visible) setTypedText("");
   }, [visible]);
+
   const confirmed = !confirmText || typedText === confirmText;
-  // SpaceBetween tách mỗi con thành một dòng và lấy key từ con: chữ trần không có key (React cảnh báo)
-  // và câu "Version {id} of {key}" bị cắt thành nhiều dòng, nên gom chữ vào một Box
+  // Gom chữ vào một Box: SpaceBetween tách chữ trần thành nhiều dòng và cảnh báo thiếu key
   const body = Children.toArray(children).every(isValidElement) ? children : <Box>{children}</Box>;
 
   return (

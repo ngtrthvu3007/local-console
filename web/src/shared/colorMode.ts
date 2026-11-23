@@ -5,7 +5,8 @@ import { readStorage, writeStorage } from "./storage.ts";
 // Giao diện sáng / tối: mặc định theo hệ điều hành, người dùng chọn khác thì
 // nhớ trong trình duyệt
 export const COLOR_PREFERENCE_IDS = ["system", "light", "dark"] as const;
-export type ColorPreference = (typeof COLOR_PREFERENCE_IDS)[number];
+type ColorPreference = (typeof COLOR_PREFERENCE_IDS)[number];
+
 export const COLOR_PREFERENCES: Record<ColorPreference, string> = {
   system: "System",
   light: "Light",
@@ -15,9 +16,8 @@ export const COLOR_PREFERENCES: Record<ColorPreference, string> = {
 const STORAGE_KEY = "localconsole:color-mode";
 const DARK_SCHEME_QUERY = "(prefers-color-scheme: dark)";
 
-export const isColorPreference = (
-  value: string | null,
-): value is ColorPreference => COLOR_PREFERENCE_IDS.some((id) => id === value);
+export const isColorPreference = (value: string | null): value is ColorPreference =>
+  COLOR_PREFERENCE_IDS.some((id) => id === value);
 
 // Chưa chọn (hoặc storage bị chặn) thì theo hệ điều hành
 export function readColorPreference(): ColorPreference {
@@ -29,13 +29,13 @@ const systemPrefersDark = () => window.matchMedia(DARK_SCHEME_QUERY).matches;
 
 // Gọi một lần trước khi render (main.tsx) để trang không nháy sáng rồi mới tối
 export function applyColorPreference(preference: ColorPreference) {
-  const dark =
-    preference === "dark" || (preference === "system" && systemPrefersDark());
+  const dark = preference === "dark" || (preference === "system" && systemPrefersDark());
   applyMode(dark ? Mode.Dark : Mode.Light);
 }
 
 export function useColorPreference() {
   const [preference, setPreference] = useState(readColorPreference);
+
   useEffect(() => {
     applyColorPreference(preference);
     if (preference !== "system") return;
@@ -50,5 +50,6 @@ export function useColorPreference() {
     writeStorage(STORAGE_KEY, next);
     setPreference(next);
   };
+
   return [preference, change] as const;
 }

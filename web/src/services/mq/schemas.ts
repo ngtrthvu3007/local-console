@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { PEEK_COUNT } from "@server/routes/rabbitmq/contract.ts";
+import { wholeNumberIn } from "@shared/schemas.ts";
 import {
   BROKER_NAME_MAX_LENGTH,
   BROKER_NAME_PATTERN,
   PASSWORD_FORBIDDEN_CHARACTERS,
   PASSWORD_LENGTH,
   PASSWORD_MIN_UNIQUE_CHARACTERS,
-  PEEK_COUNT,
   RESERVED_USERNAME,
   USERNAME_LENGTH,
   USERNAME_PATTERN,
@@ -43,6 +44,7 @@ export const createBrokerSchema = z.object({
   username: usernameSchema,
   password: passwordSchema,
 });
+
 export type CreateBrokerForm = z.input<typeof createBrokerSchema>;
 
 // Đăng nhập không kiểm tra luật đặt password: sai thì RabbitMQ trả 401
@@ -50,12 +52,12 @@ export const signInSchema = z.object({
   username: z.string().trim().min(1, "Enter the username."),
   password: z.string().min(1, "Enter the password."),
 });
-export type SignInForm = z.input<typeof signInSchema>;
 
 export const createQueueSchema = z.object({
   name: z.string().trim().min(1, "Enter a queue name."),
   durable: z.boolean(),
 });
+
 export type CreateQueueForm = z.input<typeof createQueueSchema>;
 
 export const publishSchema = z.object({
@@ -63,17 +65,7 @@ export const publishSchema = z.object({
   routingKey: z.string(),
   payload: z.string(),
 });
+
 export type PublishForm = z.input<typeof publishSchema>;
 
-// Input của Cloudscape luôn trả chuỗi
-export const peekSchema = z.object({
-  count: z
-    .string()
-    .trim()
-    .refine((text) => {
-      const count = Number(text);
-      return Number.isInteger(count) && count >= PEEK_COUNT.min && count <= PEEK_COUNT.max;
-    }, `Enter a whole number from ${PEEK_COUNT.min} to ${PEEK_COUNT.max}.`)
-    .transform(Number),
-});
-export type PeekForm = z.input<typeof peekSchema>;
+export const peekSchema = z.object({ count: wholeNumberIn(PEEK_COUNT) });

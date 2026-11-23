@@ -1,10 +1,9 @@
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import type { CORSRule } from "@aws-sdk/client-s3";
 import { JsonSettingEditor } from "@shared/components/JsonSettingEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { prettyJson, reformatJson } from "@shared/json.ts";
 import { EXAMPLE_CORS_RULES, examplePublicReadPolicy } from "../constants.ts";
-import { bucketPolicySchema } from "../schemas.ts";
+import { bucketPolicySchema, corsRulesSchema } from "../schemas.ts";
 import {
   useBucketCors,
   useBucketPolicy,
@@ -55,7 +54,7 @@ function CorsEditor({ bucket }: { bucket: string }) {
 
   const save = (text: string) =>
     saveCors.mutate(
-      JSON.parse(text) as CORSRule[],
+      corsRulesSchema.parse(JSON.parse(text)),
       notifyOutcome({ success: "Saved CORS rules", errorHeader: "Couldn't save CORS" }),
     );
 
@@ -71,6 +70,7 @@ function CorsEditor({ bucket }: { bucket: string }) {
       description='A JSON array of rules. Needed when a web page uploads to or reads from this bucket directly.'
       savedText={savedText}
       query={cors}
+      validate={(value) => corsRulesSchema.safeParse(value).error?.issues[0]?.message}
       saving={saveCors.isPending}
       exampleText={prettyJson(EXAMPLE_CORS_RULES)}
       onSave={save}

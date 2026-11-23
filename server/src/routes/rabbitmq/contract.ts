@@ -1,5 +1,5 @@
-// Hợp đồng API RabbitMQ giữa server và web (web import lại file này qua alias @server).
-// Chỉ chứa type và hằng số thuần, không import gì của Node.
+// Hợp đồng API RabbitMQ server ↔ web (web import qua @server): chỉ type, schema zod, hằng số; không import Node
+import { z } from "zod";
 
 export const RABBIT_ERROR_CODES = {
   brokerNotFound: "BrokerNotFound",
@@ -27,21 +27,20 @@ export interface Exchange {
   durable: boolean;
 }
 
-export interface CreateQueueInput {
-  durable: boolean;
-}
+export const PEEK_COUNT = { default: 10, min: 1, max: 50 };
 
-export interface PublishInput {
-  routingKey: string;
-  payload: string;
-}
+export const createQueueInputSchema = z.object({ durable: z.boolean() });
+export type CreateQueueInput = z.infer<typeof createQueueInputSchema>;
+
+export const publishInputSchema = z.object({ routingKey: z.string(), payload: z.string() });
+export type PublishInput = z.infer<typeof publishInputSchema>;
+
+export const peekInputSchema = z.object({
+  count: z.number().int().min(PEEK_COUNT.min).max(PEEK_COUNT.max),
+});
 
 export interface PublishResult {
   routed: boolean; // false = không vào queue nào
-}
-
-export interface PeekInput {
-  count: number;
 }
 
 export interface PeekedMessage {

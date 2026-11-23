@@ -30,16 +30,10 @@ export function Home() {
     running: `Floci ${floci.version ?? ""} at ${config.flociPublicUrl} · checked ${floci.checkedAt}`,
   };
 
-  const refreshButton = (
-    <Button iconName='refresh' ariaLabel='Refresh' onClick={floci.refresh} />
-  );
+  const refreshButton = <Button iconName='refresh' ariaLabel='Refresh' onClick={floci.refresh} />;
 
   const header = (
-    <Header
-      variant='h1'
-      description={sublines[floci.state]}
-      actions={refreshButton}
-    >
+    <Header variant='h1' description={sublines[floci.state]} actions={refreshButton}>
       Console Home
     </Header>
   );

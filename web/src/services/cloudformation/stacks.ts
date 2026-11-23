@@ -10,8 +10,7 @@ import {
   type StackEvent,
   type StackResourceSummary,
 } from "@aws-sdk/client-cloudformation";
-import { proxyEndpoint } from "@shared/aws.ts";
-import { AWS_TEST_CREDENTIALS } from "@shared/constants.ts";
+import { awsClient } from "@shared/aws.ts";
 import {
   DELETE_COMPLETE_STATUS,
   DELETE_FAILED_STATUS,
@@ -22,12 +21,7 @@ import type { StackWithResources } from "./resourceIndex.ts";
 
 const MISSING_STACK_MESSAGE = "does not exist";
 
-export const cloudFormationClient = (region: string) =>
-  new CloudFormationClient({
-    region,
-    credentials: AWS_TEST_CREDENTIALS,
-    endpoint: proxyEndpoint(),
-  });
+export const cloudFormationClient = (region: string) => awsClient(CloudFormationClient, region);
 
 // Stack không có: Floci trả ValidationError "Stack with id X does not exist"
 export const isStackMissing = (error: unknown) => {
@@ -38,9 +32,11 @@ export const isStackMissing = (error: unknown) => {
 // Ẩn stack đã xóa
 export async function listStacks(client: CloudFormationClient): Promise<Stack[]> {
   const stacks: Stack[] = [];
+
   for await (const page of paginateDescribeStacks({ client }, {})) {
     stacks.push(...(page.Stacks ?? []));
   }
+
   return stacks.filter((stack) => stack.StackStatus !== DELETE_COMPLETE_STATUS);
 }
 
@@ -63,9 +59,11 @@ export async function listEvents(
   name: string,
 ): Promise<StackEvent[]> {
   const events: StackEvent[] = [];
+
   for await (const page of paginateDescribeStackEvents({ client }, { StackName: name })) {
     events.push(...(page.StackEvents ?? []));
   }
+
   return events;
 }
 
@@ -74,9 +72,11 @@ export async function listResources(
   name: string,
 ): Promise<StackResourceSummary[]> {
   const resources: StackResourceSummary[] = [];
+
   for await (const page of paginateListStackResources({ client }, { StackName: name })) {
     resources.push(...(page.StackResourceSummaries ?? []));
   }
+
   return resources;
 }
 
@@ -85,10 +85,12 @@ export async function listStacksWithResources(
   client: CloudFormationClient,
 ): Promise<StackWithResources[]> {
   const stacks = await listStacks(client);
+
   return Promise.all(
     stacks.map(async (stack) => {
       const name = stack.StackName ?? "";
       const resources = await listResources(client, name);
+
       return {
         name,
         resources: resources.flatMap((resource) =>
@@ -104,13 +106,17 @@ export async function listStacksWithResources(
 // Hỏi bằng danh sách: DescribeStacks(tên) trả 400 khi stack đã mất (console.error)
 export async function deleteStack(client: CloudFormationClient, name: string) {
   await client.send(new DeleteStackCommand({ StackName: name }));
+
   for (let poll = 0; poll < DELETE_WAIT_MAX_POLLS; poll++) {
     const stack = (await listStacks(client)).find((candidate) => candidate.StackName === name);
     if (!stack) return;
+
     if (stack.StackStatus === DELETE_FAILED_STATUS) {
       throw new Error(stack.StackStatusReason ?? `Stack ${name} ${DELETE_FAILED_STATUS}`);
     }
+
     await new Promise((resolve) => setTimeout(resolve, STACK_POLL_INTERVAL_MS));
   }
+
   throw new Error(`Stack ${name} is still deleting`);
 }

@@ -3,6 +3,7 @@ import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
+import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
@@ -70,16 +71,19 @@ const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>
 
 function ResourceCell({ row }: { row: TriggerRow }) {
   const follow = useFollow();
+
   if (row.href)
     return (
       <Link href={row.href} onFollow={follow}>
         {row.resource}
       </Link>
     );
+
   if (row.source === "sqs") return <QueueLink name={row.resource} />;
   if (row.source === "sns") return <TopicLink name={row.resource} />;
   const href = RESOURCE_HREFS[row.source]?.(row.resource);
   if (!href) return <>{row.resource}</>;
+
   return (
     <Link href={href} onFollow={follow}>
       {row.resource}
@@ -93,11 +97,13 @@ const resourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
   isRowHeader: true,
   cell: (row) => <ResourceCell row={row} />,
 };
+
 const detailsColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "details",
   header: "Details",
   cell: (row) => row.details,
 };
+
 const stateColumn: TableProps.ColumnDefinition<TriggerRow> = {
   id: "state",
   header: "State",
@@ -115,6 +121,7 @@ const COMPACT_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColum
 // Nút "Upload a file" trong thông báo, để thử luồng S3 → Lambda ngay
 function UploadButton({ bucket }: { bucket: string }) {
   const follow = useFollow();
+
   return (
     <Button href={s3Routes.upload(bucket)} onFollow={follow}>
       Upload a file
@@ -141,6 +148,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   // Bật/tắt được mọi trigger dạng event source mapping (SQS, DynamoDB)
   const mappingSelected = single?.uuid ? single : undefined;
   const closeModal = () => setOpenModal(null);
+
   const finish = () => {
     closeModal();
     setSelected([]);
@@ -189,6 +197,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     );
 
   const isEnabled = mappingSelected?.state === EVENT_SOURCE_STATES.enabled;
+
   const actions: BarAction[] = [
     refreshAction(triggers),
     {
@@ -253,24 +262,29 @@ export function TriggersTab({ functionName, functionArn }: Props) {
 
   return (
     <div ref={ref}>
-      <Table
-        variant='container'
-        selectionType='single'
-        ariaLabels={selectionLabels<TriggerRow>("trigger", (item) => `${item.resource} ${item.id}`)}
-        trackBy='id'
-        items={rows}
-        selectedItems={selected}
-        onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
-        loading={triggers.isLoading}
-        loadingText='Loading triggers'
-        // Rule / schedule chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
-        isItemDisabled={(row) => EVENTBRIDGE_SOURCES.includes(row.source)}
-        columnDefinitions={compact ? COMPACT_COLUMNS : WIDE_COLUMNS}
-        wrapLines
-        empty={empty}
-        header={header}
-      />
-      <OtherSenders arn={functionArn} kinds={FUNCTION_SENDER_KINDS} />
+      <SpaceBetween size='l'>
+        <Table
+          variant='container'
+          selectionType='single'
+          ariaLabels={selectionLabels<TriggerRow>(
+            "trigger",
+            (item) => `${item.resource} ${item.id}`,
+          )}
+          trackBy='id'
+          items={rows}
+          selectedItems={selected}
+          onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
+          loading={triggers.isLoading}
+          loadingText='Loading triggers'
+          // Rule / schedule chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
+          isItemDisabled={(row) => EVENTBRIDGE_SOURCES.includes(row.source)}
+          columnDefinitions={compact ? COMPACT_COLUMNS : WIDE_COLUMNS}
+          wrapLines
+          empty={empty}
+          header={header}
+        />
+        <OtherSenders arn={functionArn} kinds={FUNCTION_SENDER_KINDS} />
+      </SpaceBetween>
       {openModal === MODALS.add && (
         <AddTriggerModal
           linkedSourceArns={(triggers.data ?? []).flatMap((row) => row.sourceArn ?? [])}

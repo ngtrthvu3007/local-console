@@ -61,25 +61,29 @@ const FLEXIBLE_DESCRIPTION = "Floci always fires on time.";
 const LOCKED_TARGET_NOTE = "This target type can't be edited here.";
 const FALLBACK_TIMEZONE = "UTC";
 
-// Trình duyệt chỉ liệt kê tên chuẩn (Asia/Saigon), nhưng schedule có thể lưu tên khác (Asia/Ho_Chi_Minh):
-// luôn đưa giá trị đang có vào danh sách, nếu không ô chọn hiện trống
+// Trình duyệt chỉ liệt kê tên chuẩn (Asia/Saigon): thêm giá trị đang có để ô chọn không trống
 const timezones = (current?: string) => {
   const names = new Set([FALLBACK_TIMEZONE, ...Intl.supportedValuesOf("timeZone")]);
   if (current) names.add(current);
   return [...names].sort();
 };
+
 const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const KIND_ITEMS = Object.entries(SCHEDULE_KINDS).map(([value, label]) => ({ value, label }));
+
 const FLEXIBLE_ITEMS = [
   { value: FLEXIBLE_MODES.off, label: "Off" },
   { value: FLEXIBLE_MODES.flexible, label: "Flexible", description: FLEXIBLE_DESCRIPTION },
 ];
+
 const RATE_UNIT_OPTIONS = RATE_UNITS.map((unit) => ({ value: unit, label: unit }));
+
 const TARGET_KIND_OPTIONS = SCHEDULE_TARGET_KINDS.map((kind) => ({
   value: kind,
   label: TARGET_KINDS[kind],
 }));
+
 const EMPTY_TEXT: Record<ScheduleTargetKind, string> = {
   lambda: "No functions",
   sqs: "No queues",
@@ -91,6 +95,7 @@ const EMPTY_TEXT: Record<ScheduleTargetKind, string> = {
 function initialValues(group: string, existing?: Schedule): ScheduleFormValues {
   const timing = parseExpression(existing?.ScheduleExpression ?? "");
   const target = existing?.Target;
+
   return {
     name: existing?.Name ?? "",
     group,
@@ -134,6 +139,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
 
   const fifoArns = new Set((queues.data ?? []).filter((queue) => queue.fifo).map((q) => q.arn));
   const form = useZodForm(scheduleSchema(fifoArns), initialValues(group, existing));
+
   const [kind, flexMode, targetKind, targetArn] = useWatch({
     control: form.control,
     name: ["kind", "flexMode", "targetKind", "targetArn"],
@@ -144,6 +150,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
     const subscription = form.watch((_values, { name }) => {
       if (name === "targetKind") form.setValue("targetArn", "");
     });
+
     return () => subscription.unsubscribe();
   }, [form]);
 
@@ -185,10 +192,12 @@ function ScheduleFormView({ group, existing }: FormProps) {
             : AFTER_COMPLETION.keep
           : undefined,
     };
+
     // Sửa: gộp với kết quả GetSchedule để giữ StartDate, EndDate, KmsKeyArn…
     const input = existing
       ? toUpdateInput(existing, changes)
       : { Name: values.name, GroupName: values.group, ...changes };
+
     save.mutate(
       input,
       notifyOutcome({
@@ -212,10 +221,12 @@ function ScheduleFormView({ group, existing }: FormProps) {
       label: machine.name,
     })),
   };
+
   const groupOptions = (groups.data ?? [DEFAULT_SCHEDULE_GROUP]).map((name) => ({
     value: name,
     label: name,
   }));
+
   const timezoneOptions = timezones(existing?.ScheduleExpressionTimezone).map((name) => ({
     value: name,
     label: name,
@@ -415,6 +426,7 @@ export function ScheduleForm() {
   ]);
 
   if (!editing) return <ScheduleFormView group={group} />;
+
   const state = pageState(existing, {
     ready: Boolean(existing.data),
     notFound: existing.isError && isScheduleMissing(existing.error),
@@ -422,6 +434,7 @@ export function ScheduleForm() {
     backHref: eventbridgeRoutes.schedules(group),
     backText: "View schedules",
   });
+
   if (state || !existing.data) return state;
 
   return <ScheduleFormView group={group} existing={existing.data} />;

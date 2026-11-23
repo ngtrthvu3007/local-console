@@ -31,13 +31,16 @@ const refreshWhileTransitional = (states: (string | undefined)[]) =>
 
 export function useBrokers() {
   const client = useMQ();
+
   return useQuery({
     queryKey: brokersQueryKey,
     queryFn: async () => {
       const brokers: BrokerSummary[] = [];
+
       for await (const page of paginateListBrokers({ client }, {})) {
         brokers.push(...(page.BrokerSummaries ?? []));
       }
+
       return brokers;
     },
     refetchInterval: (query) =>
@@ -47,6 +50,7 @@ export function useBrokers() {
 
 export function useBroker(broker: string) {
   const client = useMQ();
+
   return useQuery({
     queryKey: brokerQueryKey(broker),
     queryFn: (): Promise<DescribeBrokerResponse> =>
@@ -56,7 +60,7 @@ export function useBroker(broker: string) {
   });
 }
 
-export interface CreateBrokerInput {
+interface CreateBrokerInput {
   name: string;
   username: string;
   password: string;
@@ -65,6 +69,7 @@ export interface CreateBrokerInput {
 export function useCreateBroker() {
   const client = useMQ();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({ name, username, password }: CreateBrokerInput) =>
       client.send(
@@ -91,9 +96,11 @@ export interface BrokerRef {
 export function useDeleteBrokers() {
   const client = useMQ();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (brokers: BrokerRef[]) => {
       const failures: string[] = [];
+
       for (const broker of brokers) {
         try {
           await client.send(new DeleteBrokerCommand({ BrokerId: broker.id }));
@@ -101,6 +108,7 @@ export function useDeleteBrokers() {
           failures.push(`${broker.name}: ${errorMessage(error)}`);
         }
       }
+
       return { count: brokers.length - failures.length, failures };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: brokersQueryKey }),
@@ -110,6 +118,7 @@ export function useDeleteBrokers() {
 export function useRebootBroker(broker: string) {
   const client = useMQ();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: () => client.send(new RebootBrokerCommand({ BrokerId: broker })),
     onSuccess: () =>
