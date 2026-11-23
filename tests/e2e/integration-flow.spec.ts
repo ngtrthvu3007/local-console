@@ -45,7 +45,7 @@ import {
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, AWS_PROXY_URL, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
+import { ACCOUNT_ID, consoleConfig, deleteMails, viaConsole, waitFor } from "../it/helpers.ts";
 import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Luồng nối service, cấu hình bằng UI rồi kích bằng SDK và đọc kết quả ở service nhận:
@@ -198,11 +198,7 @@ test.afterAll(async () => {
   await quiet(
     ses.send(new DeleteConfigurationSetCommand({ ConfigurationSetName: configurationSet })),
   );
-  const { messages = [] } = await (await fetch(`${AWS_PROXY_URL}/_aws/ses`)).json();
-  for (const mail of messages.filter((item: { Source: string }) => item.Source === sender))
-    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${encodeURIComponent(mail.Id)}`, {
-      method: "DELETE",
-    });
+  await deleteMails((mail) => mail.Source === sender);
   for (const TopicArn of topicArns) await quiet(sns.send(new DeleteTopicCommand({ TopicArn })));
   for (const QueueUrl of Object.values(queueUrls))
     await quiet(sqs.send(new DeleteQueueCommand({ QueueUrl })));

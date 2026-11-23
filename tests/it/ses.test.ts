@@ -9,24 +9,19 @@ import {
   SendEmailCommand,
 } from "@aws-sdk/client-sesv2";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { AWS_PROXY_URL, consoleConfig, uniqueName, viaConsole } from "./helpers.ts";
-
-interface Mail {
-  Id: string;
-  Source: string;
-  Region: string;
-  Subject?: string;
-  Destination?: unknown;
-  Headers?: unknown;
-}
+import {
+  consoleConfig,
+  deleteMail,
+  deleteMails,
+  mailbox,
+  uniqueName,
+  viaConsole,
+} from "./helpers.ts";
 
 const sender = `${uniqueName("sender")}@example.com`;
 const template = uniqueName("template");
 let region: string;
 let ses: SESv2Client;
-
-const mailbox = async (): Promise<Mail[]> =>
-  (await (await fetch(`${AWS_PROXY_URL}/_aws/ses`)).json()).messages;
 
 const send = (subject: string) =>
   ses.send(
@@ -53,12 +48,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Chỉ xóa theo id, và chỉ mail của test này
-  for (const mail of (await mailbox()).filter((item) => item.Source === sender && item.Id)) {
-    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${encodeURIComponent(mail.Id)}`, {
-      method: "DELETE",
-    });
-  }
+  await deleteMails((mail) => mail.Source === sender);
   await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: sender })).catch(() => undefined);
   await ses.send(new DeleteEmailTemplateCommand({ TemplateName: template })).catch(() => undefined);
 });
@@ -94,7 +84,7 @@ describe("SES through /aws", () => {
     const first = mails.find((item) => item.Subject === "first");
     const second = mails.find((item) => item.Subject === "second");
     expect(first && second).toBeTruthy();
-    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${first?.Id}`, { method: "DELETE" });
+    if (first) await deleteMail(first.Id);
     const left = (await mailbox()).map((item) => item.Id);
     expect(left).not.toContain(first?.Id);
     expect(left).toContain(second?.Id);
