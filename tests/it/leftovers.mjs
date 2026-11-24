@@ -57,6 +57,11 @@ import {
   DeleteDBInstanceCommand,
 } from "@aws-sdk/client-rds";
 import {
+  EC2Client,
+  paginateDescribeInstances,
+  TerminateInstancesCommand,
+} from "@aws-sdk/client-ec2";
+import {
   SSMClient,
   paginateDescribeParameters,
   DeleteParametersCommand,
@@ -96,6 +101,7 @@ const cognito = new CognitoIdentityProviderClient(config);
 const secretsManager = new SecretsManagerClient(config);
 const ssm = new SSMClient(config);
 const rds = new RDSClient(config);
+const ec2 = new EC2Client(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -207,6 +213,17 @@ for await (const page of paginateDescribeDBInstances({ client: rds }, {})) {
     ...mine((page.DBInstances ?? []).map((database) => database.DBInstanceIdentifier)),
   );
 }
+// Instance Terminated Floci giữ ~1 giờ rồi tự bỏ: chỉ gom instance còn sống
+const instances = [];
+for await (const page of paginateDescribeInstances({ client: ec2 }, {})) {
+  for (const { Instances = [] } of page.Reservations ?? []) {
+    for (const instance of Instances) {
+      const name = instance.Tags?.find((tag) => tag.Key === "Name")?.Value;
+      if (mine([name]).length && instance.State?.Name !== "terminated")
+        instances.push(instance.InstanceId);
+    }
+  }
+}
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -233,6 +250,7 @@ console.log(
       secrets,
       parameters,
       databases,
+      instances,
       identities,
       configurationSets,
       templates,
@@ -318,6 +336,7 @@ if (process.argv.includes("--delete")) {
     await rds.send(
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
     );
+  if (instances.length) await ec2.send(new TerminateInstancesCommand({ InstanceIds: instances }));
   for (const name of identities)
     await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
   for (const name of configurationSets)
