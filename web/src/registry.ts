@@ -4,6 +4,7 @@ import type { ServiceCategory } from "@shared/constants.ts";
 import { cloudformationService } from "./services/cloudformation/index.tsx";
 import { cognitoService } from "./services/cognito/index.tsx";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
+import { ec2Service } from "./services/ec2/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
@@ -37,6 +38,7 @@ export interface ServiceDefinition {
 export const services: ServiceDefinition[] = [
   s3Service,
   lambdaService,
+  ec2Service,
   dynamodbService,
   rdsService,
   sqsService,

@@ -1,6 +1,7 @@
 import { cognitoRoutes } from "../cognito/routes.ts";
 import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
+import { ec2Routes } from "../ec2/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
 import { rdsRoutes } from "../rds/routes.ts";
@@ -42,6 +43,7 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
       : undefined,
   "AWS::DynamoDB::Table": (id) => dynamodbRoutes.table(id),
   "AWS::SQS::Queue": (id) => sqsRoutes.queue(queueNameOfUrl(id)),
+  "AWS::EC2::Instance": (id) => ec2Routes.instance(id),
   "AWS::ElastiCache::CacheCluster": (id) => elasticacheRoutes.cluster(id),
   "AWS::RDS::DBInstance": (id) => rdsRoutes.database(id),
   "AWS::CloudFormation::Stack": (id) => cloudformationRoutes.stack(stackNameOfArn(id)),
