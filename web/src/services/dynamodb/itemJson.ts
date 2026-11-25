@@ -44,12 +44,7 @@ function unsafeReason(value: AttributeValue): string | undefined {
 }
 
 function firstUnsafeReason(values: AttributeValue[]): string | undefined {
-  for (const value of values) {
-    const reason = unsafeReason(value);
-    if (reason) return reason;
-  }
-
-  return undefined;
+  return values.map(unsafeReason).find(Boolean);
 }
 
 // Trả câu giải thích khi item chỉ sửa được bằng DynamoDB JSON, ngược lại undefined

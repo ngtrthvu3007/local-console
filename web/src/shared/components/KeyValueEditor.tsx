@@ -12,10 +12,11 @@ interface Props {
   items: readonly KeyValue[];
   onChange: (items: KeyValue[]) => void;
   keyError: (index: number) => string | undefined;
+  itemLabel?: string; // tên một dòng trên nút thêm và khi trống, vd: "environment variable"
 }
 
 // Không gắn với form cụ thể: nơi dùng bọc bằng Controller của field mảng (Secrets Manager, KMS)
-export function KeyValueEditor({ items, onChange, keyError }: Props) {
+export function KeyValueEditor({ items, onChange, keyError, itemLabel = "row" }: Props) {
   const update = (index: number, part: keyof KeyValue, value: string) =>
     onChange(items.map((item, at) => (at === index ? { ...item, [part]: value } : item)));
 
@@ -30,9 +31,9 @@ export function KeyValueEditor({ items, onChange, keyError }: Props) {
         { label: "Key", control: cell("key"), errorText: (_item, index) => keyError(index) },
         { label: "Value", control: cell("value") },
       ]}
-      addButtonText='Add row'
+      addButtonText={`Add ${itemLabel}`}
       removeButtonText='Remove'
-      empty='No rows.'
+      empty={`No ${itemLabel}s.`}
       onAddButtonClick={() => onChange([...items, EMPTY_ROW])}
       onRemoveButtonClick={({ detail }) =>
         onChange(items.filter((_item, at) => at !== detail.itemIndex))

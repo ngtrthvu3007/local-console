@@ -1,6 +1,6 @@
 import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
@@ -19,7 +19,6 @@ interface Props {
 export function DeleteEmailsModal({ emails, all, onDismiss, onDeleted }: Props) {
   const { region } = useLoadedConfig();
   const deleteEmails = useDeleteEmails();
-  const hiddenCount = emails.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteEmails.mutate(
@@ -41,12 +40,7 @@ export function DeleteEmailsModal({ emails, all, onDismiss, onDeleted }: Props) 
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      <Box>
-        {emails.slice(0, DELETE_PREVIEW_COUNT).map((email) => (
-          <div key={email.Id}>{email.Subject || NO_SUBJECT}</div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
+      <DeletePreview lines={emails.map((email) => email.Subject || NO_SUBJECT)} />
       {all && <Box>Only emails in {region} are deleted.</Box>}
     </ConfirmModal>
   );

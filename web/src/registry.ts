@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 import type { Icon } from "@tabler/icons-react";
 import type { ServiceCategory } from "@shared/constants.ts";
+import { appsyncService } from "./services/appsync/index.tsx";
 import { cloudformationService } from "./services/cloudformation/index.tsx";
 import { cloudfrontService } from "./services/cloudfront/index.tsx";
 import { cognitoService } from "./services/cognito/index.tsx";
@@ -49,6 +50,7 @@ export const services: ServiceDefinition[] = [
   snsService,
   kinesisService,
   eventbridgeService,
+  appsyncService,
   stepfunctionsService,
   cloudformationService,
   elasticacheService,

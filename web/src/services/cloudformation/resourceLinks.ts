@@ -1,4 +1,5 @@
 import { ARN_SEPARATOR, lastArnPart } from "@shared/arn.ts";
+import { API_TABS, appsyncRoutes } from "../appsync/routes.ts";
 import { cloudfrontRoutes } from "../cloudfront/routes.ts";
 import { cognitoRoutes } from "../cognito/routes.ts";
 import { eventbridgeRoutes } from "../eventbridge/routes.ts";
@@ -17,7 +18,6 @@ import { snsRoutes } from "../sns/routes.ts";
 import { sqsRoutes } from "../sqs/routes.ts";
 import { ssmRoutes } from "../ssm/routes.ts";
 import { queueNameOfUrl } from "../sqs/queues.ts";
-import { stateMachineNameOfArn } from "../stepfunctions/stateMachines.ts";
 import { stepfunctionsRoutes } from "../stepfunctions/routes.ts";
 import { cloudformationRoutes } from "./routes.ts";
 
@@ -25,6 +25,28 @@ const LAMBDA_LOG_GROUP_PREFIX = "/aws/lambda/";
 // ARN stack: "…:stack/<tên>/<uuid>"
 const STACK_ARN_SEPARATOR = "/";
 const STACK_ARN_NAME_INDEX = 1;
+// ARN AppSync: "…:apis/<apiId>/types/<type>/resolvers/<field>", "…/datasources/<tên>", "…/functions/<id>"
+const APPSYNC_ARN_SEPARATOR = "/";
+const appsyncArnParts = (arn: string) => lastArnPart(arn).split(APPSYNC_ARN_SEPARATOR);
+// Physical ID của AWS::AppSync::GraphQLSchema là "<apiId>GraphQLSchema"
+const GRAPHQL_SCHEMA_SUFFIX = "GraphQLSchema";
+
+function appsyncDataSourceHref(arn: string) {
+  const [, apiId] = appsyncArnParts(arn);
+  return apiId ? appsyncRoutes.api(apiId, API_TABS.dataSources) : undefined;
+}
+
+function appsyncResolverHref(arn: string) {
+  const [, apiId, , typeName, , fieldName] = appsyncArnParts(arn);
+  return apiId && typeName && fieldName
+    ? appsyncRoutes.resolver(apiId, typeName, fieldName)
+    : undefined;
+}
+
+function appsyncFunctionHref(arn: string) {
+  const [, apiId, , functionId] = appsyncArnParts(arn);
+  return apiId && functionId ? appsyncRoutes.function(apiId, functionId) : undefined;
+}
 
 // ARN của subscription là ARN topic + ":<uuid>"
 const topicNameOfSubscriptionArn = (arn: string) =>
@@ -36,6 +58,14 @@ export const stackNameOfArn = (arn: string) =>
 const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> = {
   "AWS::S3::Bucket": (id) => s3Routes.bucket(id),
   "AWS::CloudFront::Distribution": (id) => cloudfrontRoutes.distribution(id),
+  "AWS::AppSync::GraphQLApi": (id) => appsyncRoutes.api(id),
+  "AWS::AppSync::GraphQLSchema": (id) =>
+    id.endsWith(GRAPHQL_SCHEMA_SUFFIX)
+      ? appsyncRoutes.api(id.slice(0, -GRAPHQL_SCHEMA_SUFFIX.length))
+      : undefined,
+  "AWS::AppSync::DataSource": appsyncDataSourceHref,
+  "AWS::AppSync::Resolver": appsyncResolverHref,
+  "AWS::AppSync::FunctionConfiguration": appsyncFunctionHref,
   "AWS::Lambda::Function": (id) => lambdaRoutes.function(id),
   "AWS::Lambda::Url": (id) => lambdaRoutes.function(functionNameOfArn(id)),
   "AWS::Logs::LogGroup": (id) =>
@@ -58,8 +88,7 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::Kinesis::Stream": (name) => kinesisRoutes.stream(name),
   "AWS::KMS::Alias": (name) => kmsRoutes.key(name),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
-  "AWS::StepFunctions::StateMachine": (id) =>
-    stepfunctionsRoutes.stateMachine(stateMachineNameOfArn(id)),
+  "AWS::StepFunctions::StateMachine": (id) => stepfunctionsRoutes.stateMachine(lastArnPart(id)),
 };
 
 export const resourceHref = (type: string, physicalId: string): string | undefined =>

@@ -14,10 +14,10 @@ import Toggle from "@cloudscape-design/components/toggle";
 import type { Queue } from "@server/routes/rabbitmq/contract.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import {
-  DELETE_PREVIEW_COUNT,
   DETAIL_SEPARATOR,
   ITEM_LIST_WIDTH_PX,
   NOT_AVAILABLE,
@@ -246,11 +246,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
         onConfirm={confirmDelete}
         onDismiss={closeModal}
       >
-        <Box>
-          {selectedNames.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-            <div key={name}>{name}</div>
-          ))}
-        </Box>
+        <DeletePreview lines={selectedNames} />
       </ConfirmModal>
     </div>
   );

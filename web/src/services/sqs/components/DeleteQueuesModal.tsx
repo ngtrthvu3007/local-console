@@ -1,8 +1,8 @@
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { DELETE_PREVIEW_COUNT, LIST_SEPARATOR } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
+import { LIST_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
@@ -21,7 +21,6 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
   const deleteQueues = useDeleteQueues();
   const links = useQueueLinks(queues);
   const names = queues.map((queue) => queue.name);
-  const hiddenCount = names.length - DELETE_PREVIEW_COUNT;
   const withTriggers = links.data?.withTriggers ?? [];
   const deadLetterQueues = links.data?.deadLetterQueues ?? [];
   const referenced = useReferencedNames(queues).data ?? [];
@@ -36,15 +35,6 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
       }),
     );
 
-  const preview = (
-    <Box>
-      {names.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-        <div key={name}>{name}</div>
-      ))}
-      {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-    </Box>
-  );
-
   return (
     <ConfirmModal
       visible
@@ -55,7 +45,7 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      {preview}
+      <DeletePreview lines={names} />
       {withTriggers.length > 0 && (
         <Alert type='warning'>
           Lambda triggers on {withTriggers.join(LIST_SEPARATOR)} stop running.

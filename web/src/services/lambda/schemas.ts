@@ -173,30 +173,29 @@ export const triggerSchema = z
     ...mappingOptionsShape,
   })
   .superRefine((values, context) => {
-    const addIssue = (field: string, message: string) =>
-      context.addIssue({ code: "custom", path: [field], message });
+    const addIssue = issueAdder(context);
 
     if (values.source === "s3") {
-      if (!values.bucket) addIssue("bucket", "Choose a bucket.");
-      if (!values.events.length) addIssue("events", "Choose at least one event type.");
+      if (!values.bucket) addIssue(["bucket"], "Choose a bucket.");
+      if (!values.events.length) addIssue(["events"], "Choose at least one event type.");
       return;
     }
 
     if (values.source === "dynamodb" || values.source === "kinesis") {
       if (values.source === "dynamodb" && !values.table)
-        addIssue("table", "Choose a table with a stream.");
+        addIssue(["table"], "Choose a table with a stream.");
       if (values.source === "kinesis" && !values.stream)
-        addIssue("stream", "Choose a data stream.");
+        addIssue(["stream"], "Choose a data stream.");
       const batchSize = streamBatchSizeSchema.safeParse(values.batchSize);
-      if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
-      mappingOptionsIssues("dynamodb", values, issueAdder(context));
+      if (!batchSize.success) addIssue(["batchSize"], batchSize.error.issues[0].message);
+      mappingOptionsIssues("dynamodb", values, addIssue);
       return;
     }
 
-    if (!values.queueArn) addIssue("queueArn", "Choose a queue.");
+    if (!values.queueArn) addIssue(["queueArn"], "Choose a queue.");
     const batchSize = wholeNumberIn(SQS_BATCH_SIZE, "records").safeParse(values.batchSize);
-    if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
-    mappingOptionsIssues("sqs", values, issueAdder(context));
+    if (!batchSize.success) addIssue(["batchSize"], batchSize.error.issues[0].message);
+    mappingOptionsIssues("sqs", values, addIssue);
   });
 
 // Add trigger từ trang của stream (DynamoDB Stream, Kinesis): chọn function

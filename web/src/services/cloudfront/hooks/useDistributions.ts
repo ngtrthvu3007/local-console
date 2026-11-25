@@ -10,7 +10,7 @@ import {
   type DistributionConfig,
   type DistributionSummary,
 } from "@aws-sdk/client-cloudfront";
-import { isNotFoundError } from "@shared/aws.ts";
+import { orEmptyWhenNotFound } from "@shared/aws.ts";
 import { useCloudFront } from "./useCloudFront.ts";
 
 // Mọi query của CloudFront nằm dưới key gốc này
@@ -43,14 +43,12 @@ export function useDistribution(id: string) {
 
   return useQuery({
     queryKey: distributionQueryKey(id),
-    queryFn: async () => {
-      try {
-        return (await client.send(new GetDistributionCommand({ Id: id }))).Distribution ?? null;
-      } catch (error) {
-        if (isNotFoundError(error)) return null;
-        throw error;
-      }
-    },
+    queryFn: () =>
+      orEmptyWhenNotFound(
+        async () =>
+          (await client.send(new GetDistributionCommand({ Id: id }))).Distribution ?? null,
+        null,
+      ),
   });
 }
 

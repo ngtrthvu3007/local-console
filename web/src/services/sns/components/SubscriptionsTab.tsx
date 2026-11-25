@@ -9,9 +9,9 @@ import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { truncate } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
-import { queueNameOfArn } from "../../sqs/queues.ts";
 import { ENDPOINT_PREVIEW_LENGTH, RAW_DELIVERY_PROTOCOLS } from "../constants.ts";
 import { summarizeFilterPolicy } from "../filterPolicy.ts";
 import { useSubscriptions } from "../hooks/useSubscriptions.ts";
@@ -37,7 +37,7 @@ const PENDING_HELP =
 
 function EndpointCell({ subscription }: { subscription: Subscription }) {
   if (subscription.protocol === "sqs")
-    return <QueueLink name={queueNameOfArn(subscription.endpoint)} />;
+    return <QueueLink name={lastArnPart(subscription.endpoint)} />;
   if (subscription.protocol === "lambda") return <FunctionLink arn={subscription.endpoint} />;
   return (
     <span title={subscription.endpoint}>

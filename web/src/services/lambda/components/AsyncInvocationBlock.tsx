@@ -17,10 +17,11 @@ import { formatDuration } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { BusLink } from "../../eventbridge/components/BusLink.tsx";
 import { DEFAULT_BUS_NAME } from "../../eventbridge/constants.ts";
 import { eventbridgeRoutes } from "../../eventbridge/routes.ts";
-import { busNameOfArn, resourceNameOfArn } from "../../eventbridge/targets.ts";
+import { busNameOfArn } from "../../eventbridge/targets.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import {
@@ -54,8 +55,8 @@ function DestinationValue({ arn }: { arn?: string }) {
   const kind = destinationKindOf(arn);
   if (!arn || kind === "none") return <>{DESTINATION_KINDS.none}</>;
   const link = {
-    sqs: <QueueLink name={resourceNameOfArn(arn)} />,
-    sns: <TopicLink name={resourceNameOfArn(arn)} />,
+    sqs: <QueueLink name={lastArnPart(arn)} />,
+    sns: <TopicLink name={lastArnPart(arn)} />,
     lambda: <FunctionLink arn={arn} />,
     eventbus: <BusLink name={busNameOfArn(arn)} />,
   }[kind];

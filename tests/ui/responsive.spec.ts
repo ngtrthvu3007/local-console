@@ -40,6 +40,8 @@ const PAGES = [
   { slug: "kms-create", path: "/kms/keys/create" },
   { slug: "cloudfront-distributions", path: "/cloudfront/distributions" },
   { slug: "cloudfront-create", path: "/cloudfront/distributions/create" },
+  { slug: "appsync-apis", path: "/appsync/apis" },
+  { slug: "appsync-create", path: "/appsync/apis/create" },
   { slug: "ssm-parameters", path: "/ssm/parameters" },
   { slug: "ssm-create", path: "/ssm/parameters/create" },
 ];

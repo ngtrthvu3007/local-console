@@ -7,7 +7,7 @@ import {
   PutEmailIdentityConfigurationSetAttributesCommand,
   type IdentityInfo,
 } from "@aws-sdk/client-sesv2";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import { useSES } from "./useSES.ts";
 
 const identitiesQueryKey = ["ses", "identities"];
@@ -46,19 +46,12 @@ export function useDeleteIdentities() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (names: string[]) => {
-      const failures: string[] = [];
-
-      for (const name of names) {
-        try {
-          await client.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
-        } catch (error) {
-          failures.push(`${name}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: names.length - failures.length, failures };
-    },
+    mutationFn: (names: string[]) =>
+      runEach(
+        names,
+        (name) => name,
+        (name) => client.send(new DeleteEmailIdentityCommand({ EmailIdentity: name })),
+      ),
     // exact: chỉ đọc lại danh sách, không đọc lại GetEmailIdentity của identity vừa xóa (404)
     onSuccess: () => queryClient.invalidateQueries({ queryKey: identitiesQueryKey, exact: true }),
   });

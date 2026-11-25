@@ -5,7 +5,7 @@ import Pagination from "@cloudscape-design/components/pagination";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useQuery } from "@tanstack/react-query";
-import { listEventSources, targetsArn } from "../eventSources.ts";
+import { listEventSources } from "../eventSources.ts";
 import { EVENTBRIDGE_QUERY_ROOT } from "../hooks/useBuses.ts";
 import { useEventBridge } from "../hooks/useEventBridge.ts";
 import { useScheduler } from "../hooks/useScheduler.ts";
@@ -45,8 +45,7 @@ export function EventSources({ targetArn }: { targetArn: string }) {
   // Dưới key gốc của EventBridge: tạo / sửa / xóa rule hay schedule làm mới luôn khối này
   const sources = useQuery({
     queryKey: [EVENTBRIDGE_QUERY_ROOT, "sources", targetArn],
-    queryFn: () =>
-      listEventSources(events, scheduler, (candidate) => targetsArn(candidate, targetArn)),
+    queryFn: () => listEventSources(events, scheduler, (candidate) => candidate === targetArn),
   });
 
   const rows: Row[] = [

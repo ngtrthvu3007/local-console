@@ -6,16 +6,16 @@ import {
   NotFoundException,
   paginateListTopics,
   PublishCommand,
-  type MessageAttributeValue,
   type SNSClient,
 } from "@aws-sdk/client-sns";
 import { existsUnlessMissing, isNotFoundError } from "@shared/aws.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { ATTRIBUTE_TRUE } from "../../sqs/constants.ts";
 import { awsManagedAlias } from "../../kms/keys.ts";
 import { SNS_KEY_SERVICE, type AttributeDataType, type TopicType } from "../constants.ts";
-import { toTopic, topicArn, topicNameOfArn, type Topic } from "../topics.ts";
+import { toTopic, topicArn, type Topic } from "../topics.ts";
 import { useSNS } from "./useSNS.ts";
 
 // Mọi query của SNS nằm dưới key gốc này
@@ -32,7 +32,7 @@ export const isTopicMissing = (error: unknown) =>
 
 // Nơi khác tham chiếu tới topic (S3 rule, trigger…) còn trỏ được không
 export const topicExistsQuery = (client: SNSClient, arn: string) => ({
-  queryKey: topicQueryKey(topicNameOfArn(arn), "exists"),
+  queryKey: topicQueryKey(lastArnPart(arn), "exists"),
   queryFn: () =>
     existsUnlessMissing(
       () => client.send(new GetTopicAttributesCommand({ TopicArn: arn })),
@@ -124,19 +124,12 @@ export function useDeleteTopics() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (topics: readonly Topic[]) => {
-      const failures: string[] = [];
-
-      for (const topic of topics) {
-        try {
-          await client.send(new DeleteTopicCommand({ TopicArn: topic.arn }));
-        } catch (error) {
-          failures.push(`${topic.name}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: topics.length - failures.length, failures };
-    },
+    mutationFn: (topics: readonly Topic[]) =>
+      runEach(
+        topics,
+        (topic) => topic.name,
+        (topic) => client.send(new DeleteTopicCommand({ TopicArn: topic.arn })),
+      ),
     // Xóa topic kéo theo subscription của nó, kể cả khối SNS ở trang queue / function
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [SNS_QUERY_ROOT] }),
   });
@@ -154,25 +147,23 @@ export function usePublish(topic: Topic) {
   const client = useSNS();
 
   return useMutation({
-    mutationFn: ({ subject, body, attributes, groupId, dedupId }: PublishInput) => {
-      const messageAttributes: Record<string, MessageAttributeValue> = {};
-
-      for (const attribute of attributes)
-        messageAttributes[attribute.name] = {
-          DataType: attribute.type,
-          StringValue: attribute.value,
-        };
-
-      return client.send(
+    mutationFn: ({ subject, body, attributes, groupId, dedupId }: PublishInput) =>
+      client.send(
         new PublishCommand({
           TopicArn: topic.arn,
           Subject: subject || undefined,
           Message: body,
-          MessageAttributes: attributes.length ? messageAttributes : undefined,
+          MessageAttributes: attributes.length
+            ? Object.fromEntries(
+                attributes.map(({ name, type, value }) => [
+                  name,
+                  { DataType: type, StringValue: value },
+                ]),
+              )
+            : undefined,
           MessageGroupId: topic.fifo ? groupId : undefined,
           MessageDeduplicationId: topic.fifo && dedupId ? dedupId : undefined,
         }),
-      );
-    },
+      ),
   });
 }

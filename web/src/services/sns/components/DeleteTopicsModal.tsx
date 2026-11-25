@@ -1,8 +1,7 @@
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
@@ -18,7 +17,6 @@ interface Props {
 // Chỉ mount khi mở
 export function DeleteTopicsModal({ topics, onDismiss, onDone }: Props) {
   const deleteTopics = useDeleteTopics();
-  const hiddenCount = topics.length - DELETE_PREVIEW_COUNT;
   const lostSubscriptions = topics.reduce((total, topic) => total + topic.subscriptions, 0);
   const referenced = useReferencedNames(topics).data ?? [];
 
@@ -42,14 +40,11 @@ export function DeleteTopicsModal({ topics, onDismiss, onDone }: Props) {
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      <Box>
-        {topics.slice(0, DELETE_PREVIEW_COUNT).map((topic) => (
-          <div key={topic.name}>
-            {topic.name} ({pluralize(topic.subscriptions, "subscription")})
-          </div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
+      <DeletePreview
+        lines={topics.map(
+          (topic) => `${topic.name} (${pluralize(topic.subscriptions, "subscription")})`,
+        )}
+      />
       {lostSubscriptions > 0 && (
         <Alert type='warning'>
           {pluralize(lostSubscriptions, "subscription")} stop delivering.

@@ -6,6 +6,7 @@ import {
   identifierParts,
   nounFor,
   pluralize,
+  usedByText,
 } from "../../src/shared/format.ts";
 
 describe("formatBytes", () => {
@@ -83,5 +84,14 @@ describe("identifierParts", () => {
   it("keeps the text whole when nothing separates it", () => {
     expect(identifierParts("orders")).toEqual(["orders"]);
     expect(identifierParts("http://localhost:4566/").join("")).toBe("http://localhost:4566/");
+  });
+});
+
+describe("usedByText", () => {
+  it("lists who uses a resource the way a sentence reads", () => {
+    expect(usedByText(["Query.getTodo"])).toBe("Used by Query.getTodo.");
+    expect(usedByText(["A", "B"])).toBe("Used by A and B.");
+    expect(usedByText(["A", "B", "C"])).toBe("Used by A, B, and C.");
+    expect(usedByText([])).toBeUndefined();
   });
 });

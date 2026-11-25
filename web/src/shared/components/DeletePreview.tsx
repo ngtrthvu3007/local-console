@@ -3,7 +3,7 @@ import Box from "@cloudscape-design/components/box";
 import { DELETE_PREVIEW_COUNT } from "../constants.ts";
 
 // Modal xóa hàng loạt chỉ liệt kê vài mục đầu, phần còn lại gom thành "…and N more"
-export function DeletePreview({ lines }: { lines: ReactNode[] }) {
+export function DeletePreview({ lines }: { lines: readonly ReactNode[] }) {
   const hiddenCount = lines.length - DELETE_PREVIEW_COUNT;
   return (
     <Box>

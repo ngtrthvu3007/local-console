@@ -11,7 +11,7 @@ import {
   type SQSClient,
 } from "@aws-sdk/client-sqs";
 import { existsUnlessMissing } from "@shared/aws.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import {
   QUEUE_ENCRYPTION,
   SQS_KEY_SERVICE,
@@ -165,19 +165,12 @@ export function useDeleteQueues() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (queues: readonly Queue[]) => {
-      const failures: string[] = [];
-
-      for (const queue of queues) {
-        try {
-          await client.send(new DeleteQueueCommand({ QueueUrl: queue.url }));
-        } catch (error) {
-          failures.push(`${queue.name}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: queues.length - failures.length, failures };
-    },
+    mutationFn: (queues: readonly Queue[]) =>
+      runEach(
+        queues,
+        (queue) => queue.name,
+        (queue) => client.send(new DeleteQueueCommand({ QueueUrl: queue.url })),
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queuesQueryKey }),
   });
 }

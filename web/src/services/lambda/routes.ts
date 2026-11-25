@@ -44,6 +44,3 @@ export const functionCrumbs = (name: string) => [
   ...lambdaBaseCrumbs,
   { text: name, href: lambdaRoutes.function(name) },
 ];
-
-// Rời trang có code chưa deploy thì hỏi lại, trừ điều hướng mang cờ này (vd: sau khi xóa function)
-export const SKIP_LEAVE_GUARD = "skipLeaveGuard";

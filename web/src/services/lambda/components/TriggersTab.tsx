@@ -43,9 +43,10 @@ const MODALS = { add: "add", edit: "edit", delete: "delete" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
 function StateCell({ row }: { row: TriggerRow }) {
-  if (!row.state) return <>{NOT_AVAILABLE}</>;
-  const enabled = row.state === EVENT_SOURCE_STATES.enabled;
-  return <StatusIndicator type={enabled ? "success" : "stopped"}>{row.state}</StatusIndicator>;
+  const state = row.mapping?.State;
+  if (!state) return <>{NOT_AVAILABLE}</>;
+  const enabled = state === EVENT_SOURCE_STATES.enabled;
+  return <StatusIndicator type={enabled ? "success" : "stopped"}>{state}</StatusIndicator>;
 }
 
 const sourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
@@ -75,17 +76,10 @@ const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>
 function ResourceCell({ row }: { row: TriggerRow }) {
   const follow = useFollow();
 
-  if (row.href)
-    return (
-      <Link href={row.href} onFollow={follow}>
-        {row.resource}
-      </Link>
-    );
-
   if (row.source === "sqs") return <QueueLink name={row.resource} />;
   if (row.source === "sns") return <TopicLink name={row.resource} />;
   if (row.source === "kinesis") return <StreamLink name={row.resource} />;
-  const href = RESOURCE_HREFS[row.source]?.(row.resource);
+  const href = row.href ?? RESOURCE_HREFS[row.source]?.(row.resource);
   if (!href) return <>{row.resource}</>;
 
   return (
@@ -118,9 +112,8 @@ const stateColumn: TableProps.ColumnDefinition<TriggerRow> = {
 const FUNCTION_SENDER_KINDS = ["lambda"] as const;
 const EDITABLE_SOURCES: TriggerRowSource[] = ["sqs", "dynamodb", "kinesis"];
 
-const WIDE_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
 // Details cũng hiện ở khung hẹp (bảng xếp dọc): filter, partial batch, đích lỗi không được ẩn
-const COMPACT_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
+const COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
 
 // Nút "Upload a file" trong thông báo, để thử luồng S3 → Lambda ngay
 function UploadButton({ bucket }: { bucket: string }) {
@@ -150,7 +143,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const rows = triggers.data ?? [];
   const single = selected[0];
   // Bật/tắt được mọi trigger dạng event source mapping (SQS, DynamoDB)
-  const mappingSelected = single?.uuid ? single : undefined;
+  const mapping = single?.mapping;
   const closeModal = () => setOpenModal(null);
 
   const finish = () => {
@@ -190,31 +183,31 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     );
 
   const toggle = (enabled: boolean) =>
-    mappingSelected &&
+    mapping &&
     setEnabled.mutate(
-      { uuid: mappingSelected.uuid!, enabled },
+      { uuid: mapping.UUID!, enabled },
       notifyOutcome({
-        success: `${enabled ? "Enabled" : "Disabled"} trigger ${mappingSelected.resource}`,
+        success: `${enabled ? "Enabled" : "Disabled"} trigger ${single.resource}`,
         errorHeader: "Couldn't change the trigger",
         then: () => setSelected([]),
       }),
     );
 
-  const isEnabled = mappingSelected?.state === EVENT_SOURCE_STATES.enabled;
+  const isEnabled = mapping?.State === EVENT_SOURCE_STATES.enabled;
 
   const actions: BarAction[] = [
     refreshAction(triggers),
     {
       id: "enable",
       text: "Enable",
-      disabled: !mappingSelected || isEnabled,
+      disabled: !mapping || isEnabled,
       loading: setEnabled.isPending && !isEnabled,
       onClick: () => toggle(true),
     },
     {
       id: "disable",
       text: "Disable",
-      disabled: !mappingSelected || !isEnabled,
+      disabled: !mapping || !isEnabled,
       loading: setEnabled.isPending && isEnabled,
       onClick: () => toggle(false),
     },
@@ -282,7 +275,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
           loadingText='Loading triggers'
           // Nguồn chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
           isItemDisabled={(row) => VIEW_ONLY_SOURCES.includes(row.source)}
-          columnDefinitions={compact ? COMPACT_COLUMNS : WIDE_COLUMNS}
+          columnDefinitions={COLUMNS}
           wrapLines
           empty={empty}
           header={header}
@@ -291,7 +284,9 @@ export function TriggersTab({ functionName, functionArn }: Props) {
       </SpaceBetween>
       {openModal === MODALS.add && (
         <AddTriggerModal
-          linkedSourceArns={(triggers.data ?? []).flatMap((row) => row.sourceArn ?? [])}
+          linkedSourceArns={(triggers.data ?? []).flatMap(
+            (row) => row.mapping?.EventSourceArn ?? [],
+          )}
           saving={addTrigger.isPending}
           onSave={add}
           onDismiss={closeModal}

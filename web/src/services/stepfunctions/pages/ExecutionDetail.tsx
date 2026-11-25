@@ -20,6 +20,7 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { reformatJson } from "@shared/json.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { ExecutionStatus } from "../components/ExecutionStatus.tsx";
 import { StateMachineLink } from "../components/StateMachineLink.tsx";
 import { StepsTable } from "../components/StepsTable.tsx";
@@ -31,7 +32,7 @@ import {
   useStopExecution,
 } from "../hooks/useExecutions.ts";
 import { SEARCH_PARAMS, stateMachineCrumbs, stepfunctionsRoutes } from "../routes.ts";
-import { stateMachineNameOfArn, stateMachineOfExecutionArn } from "../stateMachines.ts";
+import { stateMachineOfExecutionArn } from "../stateMachines.ts";
 import { buildSteps } from "../steps.ts";
 
 // DescribeExecution báo payload không có trong kết quả (quá lớn) bằng inputDetails.included = false
@@ -47,7 +48,7 @@ function ExecutionView({ execution }: { execution: DescribeExecutionCommandOutpu
   const history = useExecutionHistory(arn, running);
   const stop = useStopExecution(arn);
   const [stopping, setStopping] = useState(false);
-  const machine = stateMachineNameOfArn(execution.stateMachineArn ?? "");
+  const machine = lastArnPart(execution.stateMachineArn ?? "");
   const steps = useMemo(
     () => buildSteps(history.data ?? [], execution.status ?? ""),
     [history.data, execution.status],

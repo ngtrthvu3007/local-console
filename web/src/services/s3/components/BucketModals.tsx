@@ -9,10 +9,14 @@ interface Props {
   bucket: string;
   visible: boolean;
   onDismiss: () => void;
-  onDone?: () => void; // gọi khi thành công, thay cho onDismiss; mặc định chỉ đóng modal
 }
 
-export function DeleteBucketModal({ bucket, visible, onDismiss, onDone }: Props) {
+export function DeleteBucketModal({
+  bucket,
+  visible,
+  onDismiss,
+  onDone,
+}: Props & { onDone: () => void }) {
   const hasObjects = useBucketHasObjects(bucket, visible);
   const deleteBucket = useDeleteBucket();
   const emptyFirst = hasObjects.data === true;
@@ -23,7 +27,7 @@ export function DeleteBucketModal({ bucket, visible, onDismiss, onDone }: Props)
       notifyOutcome({
         success: `Deleted bucket ${bucket}`,
         errorHeader: `Couldn't delete ${bucket}`,
-        then: onDone ?? onDismiss,
+        then: onDone,
       }),
     );
 
@@ -50,7 +54,7 @@ export function DeleteBucketModal({ bucket, visible, onDismiss, onDone }: Props)
   );
 }
 
-export function EmptyBucketModal({ bucket, visible, onDismiss, onDone }: Props) {
+export function EmptyBucketModal({ bucket, visible, onDismiss }: Props) {
   const emptyBucket = useEmptyBucket();
 
   const submit = () =>
@@ -59,7 +63,7 @@ export function EmptyBucketModal({ bucket, visible, onDismiss, onDone }: Props) 
       notifyOutcome({
         success: (deleted: number) => `Emptied ${bucket}: deleted ${deleted} objects and versions`,
         errorHeader: `Couldn't empty ${bucket}`,
-        then: onDone ?? onDismiss,
+        then: onDismiss,
       }),
     );
 

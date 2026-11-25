@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { byteLength } from "@shared/format.ts";
 import { INSTANCE_TYPES, NAME_MAX_LENGTH, USER_DATA_MAX_BYTES } from "./constants.ts";
 
 export const launchInstanceSchema = z.object({
@@ -8,7 +9,7 @@ export const launchInstanceSchema = z.object({
   userData: z
     .string()
     .refine(
-      (text) => new TextEncoder().encode(text).length <= USER_DATA_MAX_BYTES,
+      (text) => byteLength(text) <= USER_DATA_MAX_BYTES,
       `Must be at most ${USER_DATA_MAX_BYTES} bytes.`,
     ),
 });

@@ -16,7 +16,7 @@ import {
   type UpdateFunctionConfigurationCommandInput,
 } from "@aws-sdk/client-lambda";
 import { existsUnlessMissing } from "@shared/aws.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
 import { listRotatedSecrets } from "../../secretsmanager/hooks/useSecrets.ts";
@@ -196,11 +196,11 @@ export function useDeleteFunctions() {
       functions: FunctionToDelete[];
       deleteLogGroups: boolean;
       deleteTriggers: boolean;
-    }) => {
-      const failures: string[] = [];
-
-      for (const { name, logGroup } of input.functions) {
-        try {
+    }) =>
+      runEach(
+        input.functions,
+        (item) => item.name,
+        async ({ name, logGroup }) => {
           // Lấy danh sách trước khi xóa function; xóa trigger sau để function xóa lỗi thì trigger còn nguyên
           const mappings = input.deleteTriggers
             ? ((await lambda.send(new ListEventSourceMappingsCommand({ FunctionName: name })))
@@ -218,13 +218,8 @@ export function useDeleteFunctions() {
           if (input.deleteLogGroups && (await logGroupExists(logs, logGroup))) {
             await logs.send(new DeleteLogGroupCommand({ logGroupName: logGroup }));
           }
-        } catch (error) {
-          failures.push(`${name}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: input.functions.length - failures.length, failures };
-    },
+        },
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: functionsQueryKey }),
   });
 }

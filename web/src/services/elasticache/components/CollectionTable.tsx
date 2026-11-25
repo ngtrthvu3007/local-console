@@ -9,9 +9,9 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { KeyUpdate, KeyValue } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -299,11 +299,7 @@ export function CollectionTable(props: Props) {
         onConfirm={deleteSelected}
         onDismiss={closeModal}
       >
-        <Box>
-          {selected.slice(0, DELETE_PREVIEW_COUNT).map((row) => (
-            <div key={row.id}>{preview(row.primary)}</div>
-          ))}
-        </Box>
+        <DeletePreview lines={selected.map((row) => preview(row.primary))} />
       </ConfirmModal>
     </div>
   );

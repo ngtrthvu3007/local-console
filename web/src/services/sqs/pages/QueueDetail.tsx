@@ -9,13 +9,14 @@ import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
+import { lastArnPart } from "@shared/arn.ts";
 import { DeleteQueuesModal } from "../components/DeleteQueuesModal.tsx";
 import { MessagesTab } from "../components/MessagesTab.tsx";
 import { PurgeModal, RedriveModal, SendMessageModal } from "../components/MessageModals.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
 import { TriggersTab } from "../components/TriggersTab.tsx";
 import { isQueueMissing, useDeadLetterSources, useQueue } from "../hooks/useQueues.ts";
-import { messageCountsText, queueNameOfArn, queueTypeLabel, type Queue } from "../queues.ts";
+import { messageCountsText, queueTypeLabel, type Queue } from "../queues.ts";
 import { QUEUE_TABS, SEARCH_PARAMS, queueCrumbs, sqsRoutes, type QueueTab } from "../routes.ts";
 
 const MODALS = { send: "send", purge: "purge", delete: "delete", redrive: "redrive" } as const;
@@ -29,7 +30,7 @@ const queueSummary = (queue: Queue) =>
   [
     queueTypeLabel(queue),
     messageCountsText(queue),
-    queue.redrivePolicy && `DLQ: ${queueNameOfArn(queue.redrivePolicy.deadLetterTargetArn)}`,
+    queue.redrivePolicy && `DLQ: ${lastArnPart(queue.redrivePolicy.deadLetterTargetArn)}`,
   ]
     .filter(Boolean)
     .join(DETAIL_SEPARATOR);

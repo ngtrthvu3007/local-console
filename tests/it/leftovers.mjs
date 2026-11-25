@@ -4,6 +4,11 @@
 import { execFileSync } from "node:child_process";
 import { amazonMq, elastiCache } from "./helpers.ts";
 import {
+  AppSyncClient,
+  paginateListGraphqlApis,
+  DeleteGraphqlApiCommand,
+} from "@aws-sdk/client-appsync";
+import {
   CloudFrontClient,
   paginateListDistributions,
   GetDistributionConfigCommand,
@@ -122,6 +127,7 @@ const rds = new RDSClient(config);
 const ec2 = new EC2Client(config);
 const kms = new KMSClient(config);
 const cloudfront = new CloudFrontClient(config);
+const appsync = new AppSyncClient(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -292,6 +298,12 @@ const streams = [];
 for await (const page of paginateListStreams({ client: kinesis }, {})) {
   streams.push(...mine(page.StreamNames ?? []));
 }
+const graphqlApis = [];
+for await (const page of paginateListGraphqlApis({ client: appsync }, {})) {
+  for (const api of page.graphqlApis ?? []) {
+    if (mine([api.name]).length) graphqlApis.push(api.apiId);
+  }
+}
 // Distribution không có tên: nhận ra qua origin S3 là bucket của test (<bucket>.s3[.<region>].amazonaws.com)
 const distributions = [];
 for await (const page of paginateListDistributions({ client: cloudfront }, {})) {
@@ -312,6 +324,7 @@ const texts = smsInbox
 console.log(
   JSON.stringify(
     {
+      graphqlApis,
       distributions,
       buckets,
       tables,
@@ -354,6 +367,7 @@ if (process.argv.includes("--delete")) {
     execFileSync(process.execPath, [process.argv[1], "--delete"], { stdio: "inherit" });
     process.exit();
   }
+  for (const apiId of graphqlApis) await appsync.send(new DeleteGraphqlApiCommand({ apiId }));
   // CloudFront chỉ xóa distribution đã tắt; ETag đổi sau mỗi lần sửa
   for (const id of distributions) {
     const current = await cloudfront.send(new GetDistributionConfigCommand({ Id: id }));

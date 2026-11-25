@@ -1,6 +1,5 @@
 import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import type { SchedulerClient } from "@aws-sdk/client-scheduler";
-import { isArnOrQualified } from "@shared/arn.ts";
 import { listBuses } from "./buses.ts";
 import { listRules, listTargets } from "./rules.ts";
 import { listSchedules } from "./schedules.ts";
@@ -20,10 +19,6 @@ export interface EventSources {
   rules: RuleSource[];
   schedules: ScheduleSource[];
 }
-
-// ARN function có thể kèm version / alias (my-function:prod); queue, topic thì khớp đúng ARN
-export const targetsArn = (target: string, arn: string, qualified = false) =>
-  qualified ? isArnOrQualified(target, arn) : target === arn;
 
 // Floci 2.4.0 không có ListRuleNamesByTarget nên quét bus → rule → target (local ít, quét song song)
 export async function listRuleTargets(client: EventBridgeClient) {

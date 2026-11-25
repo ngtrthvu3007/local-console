@@ -6,6 +6,7 @@ import {
   type ObjectIdentifier,
   type S3Client,
 } from "@aws-sdk/client-s3";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import { MAX_KEYS_PER_DELETE } from "./constants.ts";
 import { copySource } from "./helpers.ts";
 
@@ -122,21 +123,19 @@ export async function copyObjects(
   destinationBucket: string,
   pairs: CopyPair[],
 ) {
-  const failures: string[] = [];
-
-  for (const { from, to } of pairs) {
-    try {
-      await s3.send(
+  // Lỗi dạng "from: …": useTransfer dựa vào tiền tố này để chỉ xóa bản gốc đã copy xong
+  const { failures } = await runEach(
+    pairs,
+    (pair) => pair.from,
+    ({ from, to }) =>
+      s3.send(
         new CopyObjectCommand({
           Bucket: destinationBucket,
           Key: to,
           CopySource: copySource(sourceBucket, from),
         }),
-      );
-    } catch (error) {
-      failures.push(`${from}: ${(error as Error).message}`);
-    }
-  }
+      ),
+  );
 
   return failures;
 }
