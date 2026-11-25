@@ -4,6 +4,13 @@
 import { execFileSync } from "node:child_process";
 import { amazonMq, elastiCache } from "./helpers.ts";
 import {
+  CloudFrontClient,
+  paginateListDistributions,
+  GetDistributionConfigCommand,
+  UpdateDistributionCommand,
+  DeleteDistributionCommand,
+} from "@aws-sdk/client-cloudfront";
+import {
   KMSClient,
   paginateListAliases,
   paginateListKeys,
@@ -112,6 +119,7 @@ const ssm = new SSMClient(config);
 const rds = new RDSClient(config);
 const ec2 = new EC2Client(config);
 const kms = new KMSClient(config);
+const cloudfront = new CloudFrontClient(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -276,6 +284,15 @@ for await (const page of paginateListKeys({ client: kms }, {})) {
   }
 }
 const aliases = kmsAliases.map((alias) => alias.AliasName);
+// Distribution không có tên: nhận ra qua origin S3 là bucket của test (<bucket>.s3[.<region>].amazonaws.com)
+const distributions = [];
+for await (const page of paginateListDistributions({ client: cloudfront }, {})) {
+  for (const summary of page.DistributionList?.Items ?? []) {
+    const domains = (summary.Origins?.Items ?? []).map((origin) => origin.DomainName ?? "");
+    if (mine(domains.map((domain) => domain.split(".s3.")[0])).length)
+      distributions.push(summary.Id);
+  }
+}
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -287,6 +304,7 @@ const texts = smsInbox
 console.log(
   JSON.stringify(
     {
+      distributions,
       buckets,
       tables,
       functions,
@@ -326,6 +344,20 @@ if (process.argv.includes("--delete")) {
       await cloudformation.send(new DeleteStackCommand({ StackName: name }));
     execFileSync(process.execPath, [process.argv[1], "--delete"], { stdio: "inherit" });
     process.exit();
+  }
+  // CloudFront chỉ xóa distribution đã tắt; ETag đổi sau mỗi lần sửa
+  for (const id of distributions) {
+    const current = await cloudfront.send(new GetDistributionConfigCommand({ Id: id }));
+    const { ETag } = current.DistributionConfig?.Enabled
+      ? await cloudfront.send(
+          new UpdateDistributionCommand({
+            Id: id,
+            IfMatch: current.ETag,
+            DistributionConfig: { ...current.DistributionConfig, Enabled: false },
+          }),
+        )
+      : current;
+    await cloudfront.send(new DeleteDistributionCommand({ Id: id, IfMatch: ETag }));
   }
   for (const bucket of buckets) {
     // Bucket phải rỗng (cả version) mới xoá được
