@@ -1,7 +1,7 @@
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DELETE_PREVIEW_COUNT, LIST_SEPARATOR } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
+import { LIST_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useDeleteStreams, useStreamsWithTriggers, type StreamRow } from "../hooks/useStreams.ts";
@@ -17,7 +17,6 @@ export function DeleteStreamsModal({ streams, onDismiss, onDone }: Props) {
   const deleteStreams = useDeleteStreams();
   const withTriggers = useStreamsWithTriggers(streams).data ?? [];
   const names = streams.map((stream) => stream.name);
-  const hiddenCount = names.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteStreams.mutate(
@@ -39,12 +38,7 @@ export function DeleteStreamsModal({ streams, onDismiss, onDone }: Props) {
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      <Box>
-        {names.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-          <div key={name}>{name}</div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
+      <DeletePreview lines={names} />
       {withTriggers.length > 0 && (
         <Alert type='warning'>
           {withTriggers.join(LIST_SEPARATOR)} {withTriggers.length === 1 ? "has" : "have"} Lambda
