@@ -6,6 +6,7 @@ import {
   DeleteBucketPolicyCommand,
   DeleteBucketTaggingCommand,
   GetBucketCorsCommand,
+  GetBucketEncryptionCommand,
   GetBucketLifecycleConfigurationCommand,
   GetBucketLocationCommand,
   GetBucketNotificationConfigurationCommand,
@@ -37,6 +38,7 @@ import { bucketTotals } from "../operations.ts";
 
 const SETTINGS = {
   region: "region",
+  encryption: "encryption",
   versioning: "versioning",
   tags: "tags",
   policy: "policy",
@@ -81,6 +83,18 @@ export function useBucketRegion(bucket: string) {
   return useBucketSetting(bucket, SETTINGS.region, async () => {
     const response = await s3.send(new GetBucketLocationCommand({ Bucket: bucket }));
     return response.LocationConstraint || REGION_WITHOUT_LOCATION_CONSTRAINT;
+  });
+}
+
+// Mã hóa mặc định: Floci trả AES256 khi bucket chưa đặt (không 404, spec KMS 7 #10)
+export function useBucketEncryption(bucket: string) {
+  const { s3 } = useS3();
+  return useBucketSetting(bucket, SETTINGS.encryption, async () => {
+    const { ServerSideEncryptionConfiguration } = await s3.send(
+      new GetBucketEncryptionCommand({ Bucket: bucket }),
+    );
+    const rule = ServerSideEncryptionConfiguration?.Rules?.[0]?.ApplyServerSideEncryptionByDefault;
+    return { algorithm: rule?.SSEAlgorithm ?? "", keyId: rule?.KMSMasterKeyID ?? "" };
   });
 }
 

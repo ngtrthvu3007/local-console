@@ -23,7 +23,9 @@ import { EditDescriptionModal } from "../components/EditDescriptionModal.tsx";
 import { RotationSection } from "../components/RotationSection.tsx";
 import { SecretValue } from "../components/SecretValue.tsx";
 import { useSecret } from "../hooks/useSecrets.ts";
-import { SCHEDULED_FOR_DELETION } from "../constants.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import { SCHEDULED_FOR_DELETION, SECRETS_KEY_SERVICE } from "../constants.ts";
 import { SEARCH_PARAMS, secretCrumbs, secretsRoutes } from "../routes.ts";
 
 const MODALS = { description: "description", delete: "delete" } as const;
@@ -80,6 +82,14 @@ function SecretView({ name, secret, query }: ViewProps) {
                 { label: "ARN", value: <CopyButton variant='inline' text={arn} label={arn} /> },
                 { label: "Description", value: secret.Description || NOT_AVAILABLE },
                 { label: "Last changed", value: formatDate(secret.LastChangedDate) },
+                {
+                  label: "Encryption",
+                  value: secret.KmsKeyId ? (
+                    <KeyLink value={secret.KmsKeyId} />
+                  ) : (
+                    defaultKeyLabel(SECRETS_KEY_SERVICE)
+                  ),
+                },
               ]}
             />
           </Container>

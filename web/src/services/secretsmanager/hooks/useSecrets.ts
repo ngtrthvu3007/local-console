@@ -63,6 +63,7 @@ interface NewSecret {
   name: string;
   value: string;
   description: string;
+  kmsKeyId: string;
 }
 
 export function useCreateSecret() {
@@ -70,12 +71,13 @@ export function useCreateSecret() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, value, description }: NewSecret) =>
+    mutationFn: ({ name, value, description, kmsKeyId }: NewSecret) =>
       client.send(
         new CreateSecretCommand({
           Name: name,
           SecretString: value,
           Description: description || undefined,
+          KmsKeyId: kmsKeyId || undefined,
         }),
       ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: secretsQueryKey }),

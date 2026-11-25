@@ -10,12 +10,13 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
-import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { EventSources } from "../../eventbridge/components/EventSources.tsx";
 import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
 import { TopicSubscriptions } from "../../sns/components/TopicSubscriptions.tsx";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { queueSample } from "../codeSamples.ts";
 import { useDeadLetterSources } from "../hooks/useQueues.ts";
 import { queueNameOfArn, queueTypeLabel, queueUrlAt, type Queue } from "../queues.ts";
@@ -48,6 +49,19 @@ export function SettingsTab({ queue }: { queue: Queue }) {
     { label: "Last modified", value: formatDate(queue.modified) },
     { label: "URL", value: copyable(queue.url) },
     { label: "ARN", value: copyable(queue.arn) },
+    {
+      label: "Encryption",
+      value: queue.encryption.kmsKeyId ? (
+        <>
+          SSE-KMS{DETAIL_SEPARATOR}
+          <KeyLink value={queue.encryption.kmsKeyId} />
+        </>
+      ) : queue.encryption.sqsManaged ? (
+        "SSE-SQS"
+      ) : (
+        "Off"
+      ),
+    },
   ];
 
   // App chạy trên máy dev gọi localhost:4566, app trong cùng compose gọi floci:4566

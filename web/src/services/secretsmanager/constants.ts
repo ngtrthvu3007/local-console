@@ -25,3 +25,6 @@ export const ROTATION_STARTED_MESSAGE =
 
 // Mô tả trang not found khi secret đang chờ xóa
 export const SCHEDULED_FOR_DELETION = "It's scheduled for deletion.";
+
+// Tên service trong alias key AWS managed: alias/aws/secretsmanager
+export const SECRETS_KEY_SERVICE = "secretsmanager";

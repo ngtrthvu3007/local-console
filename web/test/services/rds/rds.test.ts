@@ -20,6 +20,9 @@ const VALID: CreateDatabaseForm = {
   password: "secret123",
   confirmPassword: "secret123",
   databaseName: "",
+  storageEncrypted: false,
+  kmsKeyId: "",
+  secretKmsKeyId: "",
 };
 
 const messages = (form: Partial<CreateDatabaseForm>) =>
@@ -28,6 +31,13 @@ const messages = (form: Partial<CreateDatabaseForm>) =>
     .error?.issues.map((issue) => issue.message) ?? [];
 
 describe("createDatabaseSchema", () => {
+  it("leaves storage unencrypted by default and takes KMS key ARNs", () => {
+    const arn = "arn:aws:kms:ap-southeast-1:000000000000:key/k1";
+    expect(createDatabaseSchema.parse(VALID).storageEncrypted).toBe(false);
+    expect(messages({ storageEncrypted: true, kmsKeyId: arn, secretKmsKeyId: arn })).toEqual([]);
+    expect(messages({ kmsKeyId: "k1" })).not.toEqual([]);
+  });
+
   it("accepts a valid form", () => {
     expect(messages({})).toEqual([]);
     expect(messages({ databaseName: "app_db1" })).toEqual([]);

@@ -13,6 +13,9 @@ import {
 import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import {
+  QUEUE_ENCRYPTION,
+  SQS_KEY_SERVICE,
+  type QueueEncryption,
   ALL_ATTRIBUTES,
   ATTRIBUTE_TRUE,
   AUTO_REFRESH_INTERVAL_MS,
@@ -27,6 +30,7 @@ import {
   type QueueSettings,
   type RedrivePolicy,
 } from "../queues.ts";
+import { awsManagedAlias } from "../../kms/keys.ts";
 import { useSQS } from "./useSQS.ts";
 
 // Mọi query của SQS nằm dưới key gốc này
@@ -128,6 +132,8 @@ export interface CreateQueueInput {
   name: string;
   type: QueueType;
   contentBasedDedup: boolean;
+  encryption: QueueEncryption;
+  kmsKeyId: string;
 }
 
 // Thông số còn lại để mặc định của SQS, sửa sau ở tab Settings
@@ -136,14 +142,18 @@ export function useCreateQueue() {
   const invalidate = useInvalidateQueue();
 
   return useMutation({
-    mutationFn: ({ name, type, contentBasedDedup }: CreateQueueInput) =>
+    mutationFn: ({ name, type, contentBasedDedup, encryption, kmsKeyId }: CreateQueueInput) =>
       client.send(
         new CreateQueueCommand({
           QueueName: name,
-          Attributes:
-            type === "fifo"
+          Attributes: {
+            ...(type === "fifo"
               ? { FifoQueue: ATTRIBUTE_TRUE, ContentBasedDeduplication: String(contentBasedDedup) }
-              : undefined,
+              : {}),
+            ...(encryption === QUEUE_ENCRYPTION.sseKms
+              ? { KmsMasterKeyId: kmsKeyId || awsManagedAlias(SQS_KEY_SERVICE) }
+              : { SqsManagedSseEnabled: ATTRIBUTE_TRUE }),
+          },
         }),
       ),
     onSuccess: (_result, input) => invalidate(input.name),

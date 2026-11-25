@@ -28,6 +28,8 @@ export interface Queue {
   created?: Date;
   modified?: Date;
   settings: QueueSettings;
+  // Không nằm trong settings: tab Settings ghi lại settings, còn mã hóa chỉ đặt lúc tạo
+  encryption: { kmsKeyId?: string; sqsManaged: boolean };
   redrivePolicy?: RedrivePolicy;
 }
 
@@ -83,6 +85,10 @@ export function toQueue(url: string, attributes: QueueAttributes): Queue {
       contentBasedDedup: attributes.ContentBasedDeduplication === ATTRIBUTE_TRUE,
     },
     redrivePolicy: parseRedrivePolicy(attributes.RedrivePolicy),
+    encryption: {
+      kmsKeyId: attributes.KmsMasterKeyId,
+      sqsManaged: attributes.SqsManagedSseEnabled === ATTRIBUTE_TRUE,
+    },
   };
 }
 

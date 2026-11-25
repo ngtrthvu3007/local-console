@@ -12,8 +12,10 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { KeyValueEditor } from "../components/KeyValueEditor.tsx";
-import { SECRET_NAME_MAX_LENGTH, SECRET_TYPES } from "../constants.ts";
+import { KeyValueEditor } from "@shared/components/KeyValueEditor.tsx";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import { SECRETS_KEY_SERVICE, SECRET_NAME_MAX_LENGTH, SECRET_TYPES } from "../constants.ts";
 import { useCreateSecret } from "../hooks/useSecrets.ts";
 import { secretsBaseCrumbs, secretsRoutes } from "../routes.ts";
 import { createSecretSchema, type CreateSecretForm } from "../schemas.ts";
@@ -40,6 +42,7 @@ const INITIAL_VALUES: CreateSecretForm = {
   plaintext: "",
   name: "",
   description: "",
+  kmsKeyId: "",
 };
 
 export function CreateSecret() {
@@ -53,19 +56,21 @@ export function CreateSecret() {
   const form = useZodForm(createSecretSchema, INITIAL_VALUES);
   const type = useWatch({ control: form.control, name: "type" });
 
-  const submit = form.handleSubmit(({ type: secretType, entries, plaintext, name, description }) =>
-    createSecret.mutate(
-      {
-        name,
-        description,
-        value: secretType === "keyValue" ? textOfKeyValue(entries) : plaintext,
-      },
-      notifyOutcome({
-        success: `Stored secret ${name}`,
-        errorHeader: `Couldn't store ${name}`,
-        then: () => navigate(secretsRoutes.secret(name)),
-      }),
-    ),
+  const submit = form.handleSubmit(
+    ({ type: secretType, entries, plaintext, name, description, kmsKeyId }) =>
+      createSecret.mutate(
+        {
+          name,
+          description,
+          kmsKeyId,
+          value: secretType === "keyValue" ? textOfKeyValue(entries) : plaintext,
+        },
+        notifyOutcome({
+          success: `Stored secret ${name}`,
+          errorHeader: `Couldn't store ${name}`,
+          then: () => navigate(secretsRoutes.secret(name)),
+        }),
+      ),
   );
 
   const actions = (
@@ -134,6 +139,14 @@ export function CreateSecret() {
                 constraintText='Optional.'
               />
             </SpaceBetween>
+          </Container>
+          <Container header={<Header variant='h2'>Encryption</Header>}>
+            <FormKeySelect
+              control={form.control}
+              name='kmsKeyId'
+              label='Encryption key'
+              defaultLabel={defaultKeyLabel(SECRETS_KEY_SERVICE)}
+            />
           </Container>
         </SpaceBetween>
       </Form>

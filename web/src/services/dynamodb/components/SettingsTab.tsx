@@ -32,6 +32,7 @@ import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { FUNCTION_TABS } from "../../lambda/routes.ts";
 import {
   PROJECTION_LABELS,
+  SSE_TYPE_KMS,
   STREAM_VIEW_TYPES,
   TTL_STATUS_ENABLED,
   type StreamViewTypeId,
@@ -40,6 +41,7 @@ import { useStreamTriggers, useTimeToLive } from "../hooks/useTableSettings.ts";
 import { keyAttributesOf, keySchemaOf } from "../hooks/useTables.ts";
 import { tableSample } from "../codeSamples.ts";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { KeyLabel, keyText } from "./KeyLabel.tsx";
 import { StreamModal, StreamTriggerModal, TimeToLiveModal } from "./SettingsModals.tsx";
 
@@ -55,6 +57,13 @@ interface IndexRow {
 
 const startingPositionText = (mapping: EventSourceMappingConfiguration) =>
   STARTING_POSITIONS[mapping.StartingPosition as StartingPosition] ?? NOT_AVAILABLE;
+
+// Không có SSEDescription = key AWS sở hữu (mặc định); KMS không kèm key = AWS managed
+function TableEncryptionValue({ table }: { table: TableDescription }) {
+  const sse = table.SSEDescription;
+  if (sse?.KMSMasterKeyArn) return <KeyLink value={sse.KMSMasterKeyArn} />;
+  return <>{sse?.SSEType === SSE_TYPE_KMS ? "AWS managed key" : "Owned by Amazon DynamoDB"}</>;
+}
 
 export function SettingsTab({ table }: { table: TableDescription }) {
   const tableName = table.TableName!;
@@ -79,6 +88,7 @@ export function SettingsTab({ table }: { table: TableDescription }) {
       label: "ARN",
       value: <CopyButton variant='inline' text={table.TableArn} label={table.TableArn} />,
     },
+    { label: "Encryption", value: <TableEncryptionValue table={table} /> },
   ];
 
   // ---------- Indexes ----------

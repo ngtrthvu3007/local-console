@@ -6,12 +6,25 @@ import Container from "@cloudscape-design/components/container";
 import Form from "@cloudscape-design/components/form";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { FormCheckbox, FormInput, FormTiles } from "@shared/components/form/FormFields.tsx";
+import {
+  FormCheckbox,
+  FormInput,
+  FormRadioGroup,
+  FormTiles,
+} from "@shared/components/form/FormFields.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { FIFO_SUFFIX, QUEUE_NAME_MAX_LENGTH, QUEUE_TYPES } from "../constants.ts";
+import {
+  QUEUE_ENCRYPTION,
+  SQS_KEY_SERVICE,
+  FIFO_SUFFIX,
+  QUEUE_NAME_MAX_LENGTH,
+  QUEUE_TYPES,
+} from "../constants.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { useCreateQueue } from "../hooks/useQueues.ts";
 import { sqsBaseCrumbs, sqsRoutes } from "../routes.ts";
 import { createQueueSchema, type CreateQueueForm } from "../schemas.ts";
@@ -31,7 +44,18 @@ const TYPE_ITEMS = [
   },
 ];
 
-const INITIAL_VALUES: CreateQueueForm = { type: "standard", name: "", contentBasedDedup: false };
+const INITIAL_VALUES: CreateQueueForm = {
+  type: "standard",
+  name: "",
+  contentBasedDedup: false,
+  encryption: QUEUE_ENCRYPTION.sseSqs,
+  kmsKeyId: "",
+};
+
+const ENCRYPTION_ITEMS = [
+  { value: QUEUE_ENCRYPTION.sseSqs, label: "SSE-SQS", description: "Keys managed by SQS." },
+  { value: QUEUE_ENCRYPTION.sseKms, label: "SSE-KMS", description: "A KMS key you choose." },
+];
 
 export function CreateQueue() {
   useBreadcrumbs([...sqsBaseCrumbs, { text: "Create queue", href: sqsRoutes.createQueue }]);
@@ -40,6 +64,7 @@ export function CreateQueue() {
   const createQueue = useCreateQueue();
   const form = useZodForm(createQueueSchema, INITIAL_VALUES);
   const type = useWatch({ control: form.control, name: "type" });
+  const encryption = useWatch({ control: form.control, name: "encryption" });
 
   const submit = form.handleSubmit((values) =>
     createQueue.mutate(
@@ -94,6 +119,19 @@ export function CreateQueue() {
                 name='contentBasedDedup'
                 text='Content-based deduplication'
                 description='Use a hash of the body as the deduplication ID, so senders can leave it out.'
+              />
+            )}
+          </SpaceBetween>
+        </Container>
+        <Container header={<Header variant='h2'>Encryption</Header>}>
+          <SpaceBetween size='l'>
+            <FormRadioGroup control={form.control} name='encryption' items={ENCRYPTION_ITEMS} />
+            {encryption === QUEUE_ENCRYPTION.sseKms && (
+              <FormKeySelect
+                control={form.control}
+                name='kmsKeyId'
+                label='Encryption key'
+                defaultLabel={defaultKeyLabel(SQS_KEY_SERVICE)}
               />
             )}
           </SpaceBetween>

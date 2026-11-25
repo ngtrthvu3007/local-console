@@ -16,7 +16,7 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { TagsTable } from "@shared/components/TagsTable.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes, formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -29,9 +29,10 @@ import {
 import { ObjectPreview } from "../components/ObjectPreview.tsx";
 import { ObjectVersions } from "../components/ObjectVersions.tsx";
 import { PresignModal } from "../components/PresignModal.tsx";
-import { PATH_DELIMITER } from "../constants.ts";
+import { PATH_DELIMITER, SSE_LABELS } from "../constants.ts";
 import { fileNameOf, objectUrl, s3Uri } from "../helpers.ts";
 import { useIsVersioned } from "../hooks/useBucketSettings.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { useHeadObject, useObjectTags } from "../hooks/useObject.ts";
 import { useS3 } from "../hooks/useS3.ts";
 import { downloadObject } from "../presign.ts";
@@ -109,6 +110,22 @@ export function ObjectDetail() {
     { label: "Last modified", value: formatDate(object?.LastModified) },
     { label: "ETag", value: object?.ETag ?? NOT_AVAILABLE },
     { label: "Version ID", value: object?.VersionId ?? NOT_AVAILABLE },
+    {
+      label: "Encryption",
+      value: object?.ServerSideEncryption ? (
+        <>
+          {SSE_LABELS[object.ServerSideEncryption] ?? object.ServerSideEncryption}
+          {object.SSEKMSKeyId && (
+            <>
+              {DETAIL_SEPARATOR}
+              <KeyLink value={object.SSEKMSKeyId} />
+            </>
+          )}
+        </>
+      ) : (
+        NOT_AVAILABLE
+      ),
+    },
     { label: "S3 URI", value: <CopyButton variant='inline' text={uri} label={uri} /> },
     { label: "Object URL", value: <CopyButton variant='inline' text={url} label={url} /> },
   ];

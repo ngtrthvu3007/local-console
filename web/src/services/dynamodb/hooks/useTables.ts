@@ -10,6 +10,9 @@ import {
 import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import {
+  SSE_TYPE_KMS,
+  TABLE_ENCRYPTION,
+  type TableEncryption,
   BILLING_MODE_ON_DEMAND,
   KEY_TYPE_HASH,
   KEY_TYPE_RANGE,
@@ -125,6 +128,8 @@ interface CreateTableInput {
   name: string;
   keys: IndexKeys;
   indexes: { name: string; keys: IndexKeys }[];
+  encryption: TableEncryption;
+  kmsKeyId: string;
 }
 
 const keySchemaElements = ({ partitionKey, sortKey }: IndexKeys): KeySchemaElement[] => [
@@ -137,7 +142,7 @@ export function useCreateTable() {
   const invalidate = useInvalidateTable();
 
   return useMutation({
-    mutationFn: ({ name, keys, indexes }: CreateTableInput) => {
+    mutationFn: ({ name, keys, indexes, encryption, kmsKeyId }: CreateTableInput) => {
       // Mỗi attribute dùng làm key chỉ khai báo một lần, dù xuất hiện ở bảng và nhiều index
       const attributes = new Map<string, KeyType>();
 
@@ -150,6 +155,11 @@ export function useCreateTable() {
         new CreateTableCommand({
           TableName: name,
           BillingMode: BILLING_MODE_ON_DEMAND,
+          // Key AWS sở hữu là mặc định: không gửi SSESpecification
+          SSESpecification:
+            encryption === TABLE_ENCRYPTION.awsOwned
+              ? undefined
+              : { Enabled: true, SSEType: SSE_TYPE_KMS, KMSMasterKeyId: kmsKeyId || undefined },
           AttributeDefinitions: [...attributes].map(([attributeName, type]) => ({
             AttributeName: attributeName,
             AttributeType: type,

@@ -1,6 +1,9 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { enumOfKeys, optionalWholeNumber } from "@shared/schemas.ts";
 import {
+  ENCRYPTION_TYPES,
+  UPLOAD_ENCRYPTION,
   ADJACENT_DOTS,
   BUCKET_NAME_MAX_LENGTH,
   BUCKET_NAME_MIN_LENGTH,
@@ -50,6 +53,8 @@ export const createBucketSchema = z.object({
   tags: z.array(tagSchema),
   // TagEditor tự validate tag; form chỉ giữ cờ hợp lệ của nó
   tagsValid: z.boolean().refine(Boolean, "Fix the tag errors above."),
+  encryption: z.enum([ENCRYPTION_TYPES.sseS3, ENCRYPTION_TYPES.sseKms]),
+  kmsKeyId: kmsKeyIdSchema,
 });
 
 export const createFolderSchema = z.object({ name: itemName });
@@ -199,4 +204,9 @@ export const presignSchema = z.object({
 
 export const versioningSchema = z.object({
   status: z.enum([VERSIONING_STATUS.enabled, VERSIONING_STATUS.suspended]),
+});
+
+export const uploadEncryptionSchema = z.object({
+  encryption: z.enum([UPLOAD_ENCRYPTION.bucketDefault, UPLOAD_ENCRYPTION.sseKms]),
+  kmsKeyId: kmsKeyIdSchema,
 });

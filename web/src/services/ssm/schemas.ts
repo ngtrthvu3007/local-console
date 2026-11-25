@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import { PARAMETER_NAME_PATTERN, PARAMETER_PATH_SEPARATOR, PARAMETER_TYPES } from "./constants.ts";
 
@@ -19,6 +20,7 @@ export const parameterSchema = (editing: boolean) =>
     description: z.string().trim(),
     type: enumOfKeys(PARAMETER_TYPES),
     value: z.string().min(1, "Enter a value."),
+    keyId: kmsKeyIdSchema,
   });
 
 export type ParameterForm = z.input<ReturnType<typeof parameterSchema>>;

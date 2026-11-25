@@ -22,6 +22,7 @@ import { formatBytes } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
+  LAMBDA_KEY_SERVICE,
   DESCRIPTION_MAX_LENGTH,
   ENVIRONMENT_MAX_BYTES,
   MEGABYTE_UNIT,
@@ -30,6 +31,9 @@ import {
   TIMEOUT_LIMITS_SECONDS,
 } from "../constants.ts";
 import { useUpdateConfiguration } from "../hooks/useFunctions.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { functionSample } from "../codeSamples.ts";
 import { AsyncInvocationBlock } from "./AsyncInvocationBlock.tsx";
 import { environmentSchema, generalConfigurationSchema } from "../schemas.ts";
@@ -139,17 +143,22 @@ function GeneralConfigurationModal({ configuration, onDismiss }: ModalProps) {
 function EnvironmentModal({ configuration, onDismiss }: ModalProps) {
   const name = configuration.FunctionName ?? "";
   const update = useUpdateConfiguration(name);
-  const form = useZodForm(environmentSchema, { entries: variablesOf(configuration) });
+  const form = useZodForm(environmentSchema, {
+    entries: variablesOf(configuration),
+    kmsKeyArn: configuration.KMSKeyArn ?? "",
+  });
   const entries = useFieldArray({ control: form.control, name: "entries" });
   const listError =
     form.formState.errors.entries?.root?.message ?? form.formState.errors.entries?.message;
 
-  const submit = form.handleSubmit(({ entries: values }) =>
+  const submit = form.handleSubmit(({ entries: values, kmsKeyArn }) =>
     update.mutate(
       {
         Environment: {
           Variables: Object.fromEntries(values.map((entry) => [entry.key, entry.value])),
         },
+        // Chỉ gửi khi đổi key; chuỗi rỗng = gỡ key, về key mặc định aws/lambda (Floci nhận, IT kms)
+        ...(kmsKeyArn === (configuration.KMSKeyArn ?? "") ? {} : { KMSKeyArn: kmsKeyArn }),
       },
       notifyOutcome({
         success: `Updated environment variables of ${name}`,
@@ -202,6 +211,12 @@ function EnvironmentModal({ configuration, onDismiss }: ModalProps) {
           onRemoveButtonClick={({ detail }) => entries.remove(detail.itemIndex)}
         />
       </FormField>
+      <FormKeySelect
+        control={form.control}
+        name='kmsKeyArn'
+        label='Encryption key'
+        defaultLabel={defaultKeyLabel(LAMBDA_KEY_SERVICE)}
+      />
     </FormModal>
   );
 }
@@ -230,6 +245,14 @@ export function ConfigurationTab({ configuration }: { configuration: FunctionCon
     {
       label: "Architecture",
       value: configuration.Architectures?.join(LIST_SEPARATOR) || NOT_AVAILABLE,
+    },
+    {
+      label: "Environment encryption",
+      value: configuration.KMSKeyArn ? (
+        <KeyLink value={configuration.KMSKeyArn} />
+      ) : (
+        defaultKeyLabel(LAMBDA_KEY_SERVICE)
+      ),
     },
   ];
 

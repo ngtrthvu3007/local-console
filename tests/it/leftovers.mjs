@@ -4,6 +4,14 @@
 import { execFileSync } from "node:child_process";
 import { amazonMq, elastiCache } from "./helpers.ts";
 import {
+  KMSClient,
+  paginateListAliases,
+  paginateListKeys,
+  DescribeKeyCommand,
+  DeleteAliasCommand,
+  ScheduleKeyDeletionCommand,
+} from "@aws-sdk/client-kms";
+import {
   S3Client,
   ListBucketsCommand,
   ListObjectVersionsCommand,
@@ -103,6 +111,7 @@ const secretsManager = new SecretsManagerClient(config);
 const ssm = new SSMClient(config);
 const rds = new RDSClient(config);
 const ec2 = new EC2Client(config);
+const kms = new KMSClient(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -248,6 +257,25 @@ const cacheClusters = mine(
 const brokers = ((await amazonMq(region, "GET", "/v1/brokers")).body?.brokerSummaries ?? [])
   .filter((broker) => mine([broker.brokerName]).length)
   .map((broker) => broker.brokerId);
+// KMS: alias của test, và key mô tả / alias có tiền tố test chưa lên lịch xóa (Floci không xóa key ngay)
+const kmsAliases = [];
+for await (const page of paginateListAliases({ client: kms }, {})) {
+  kmsAliases.push(
+    ...(page.Aliases ?? []).filter(
+      (alias) => mine([alias.AliasName?.replace(/^alias\//, "")]).length,
+    ),
+  );
+}
+const aliasTargets = new Set(kmsAliases.map((alias) => alias.TargetKeyId));
+const kmsKeys = [];
+for await (const page of paginateListKeys({ client: kms }, {})) {
+  for (const { KeyId } of page.Keys ?? []) {
+    const { KeyMetadata } = await kms.send(new DescribeKeyCommand({ KeyId }));
+    const ours = aliasTargets.has(KeyId) || mine([KeyMetadata?.Description]).length;
+    if (ours && KeyMetadata?.KeyState !== "PendingDeletion") kmsKeys.push(KeyId);
+  }
+}
+const aliases = kmsAliases.map((alias) => alias.AliasName);
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -275,6 +303,8 @@ console.log(
       parameters,
       databases,
       instances,
+      aliases,
+      kmsKeys,
       replicationGroups,
       cacheClusters,
       brokers,
@@ -364,6 +394,9 @@ if (process.argv.includes("--delete")) {
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
     );
   if (instances.length) await ec2.send(new TerminateInstancesCommand({ InstanceIds: instances }));
+  for (const name of aliases) await kms.send(new DeleteAliasCommand({ AliasName: name }));
+  for (const id of kmsKeys)
+    await kms.send(new ScheduleKeyDeletionCommand({ KeyId: id, PendingWindowInDays: 7 }));
   for (const id of replicationGroups)
     await elastiCache(region, "DeleteReplicationGroup", { ReplicationGroupId: id });
   for (const id of cacheClusters)

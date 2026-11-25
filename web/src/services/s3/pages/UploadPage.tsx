@@ -1,6 +1,7 @@
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useRef, useState, type DragEvent, type RefObject } from "react";
+import { useWatch } from "react-hook-form";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -17,10 +18,16 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes } from "@shared/format.ts";
+import { FormRadioGroup } from "@shared/components/form/FormFields.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import { S3_KEY_SERVICE, UPLOAD_ENCRYPTION } from "../constants.ts";
 import { s3Uri } from "../helpers.ts";
 import { useUploader } from "../hooks/useUploader.ts";
 import { SEARCH_PARAMS, bucketCrumbs, s3Routes } from "../routes.ts";
+import { uploadEncryptionSchema } from "../schemas.ts";
 import { filesFromDrop, filesFromInput, filesFromList } from "../uploadFiles.ts";
 import { byteTotals, percentOf, type UploadItem, type UploadStatus } from "../uploadQueue.tsx";
 
@@ -31,6 +38,19 @@ const STATUS_DISPLAY: Record<UploadStatus, { type: StatusIndicatorProps.Type; te
   error: { type: "error", text: "Failed" },
   canceled: { type: "stopped", text: "Canceled" },
 };
+
+const UPLOAD_ENCRYPTION_ITEMS = [
+  {
+    value: UPLOAD_ENCRYPTION.bucketDefault,
+    label: "Bucket default",
+    description: "Use the bucket's default encryption.",
+  },
+  {
+    value: UPLOAD_ENCRYPTION.sseKms,
+    label: "SSE-KMS",
+    description: "Encrypt with a KMS key you choose.",
+  },
+];
 
 function ProgressCell({ item }: { item: UploadItem }) {
   if (item.status === "uploading") {
@@ -77,6 +97,15 @@ export function UploadPage() {
   const prefix = searchParams.get(SEARCH_PARAMS.prefix) ?? "";
   const navigate = useNavigate();
   const uploader = useUploader(bucket, prefix);
+  const encryptionForm = useZodForm(uploadEncryptionSchema, {
+    encryption: UPLOAD_ENCRYPTION.bucketDefault,
+    kmsKeyId: "",
+  });
+  const encryption = useWatch({ control: encryptionForm.control, name: "encryption" });
+  // ARN tay sai thì chặn trước khi upload
+  const startUpload = encryptionForm.handleSubmit(({ encryption: type, kmsKeyId }) =>
+    uploader.start(type === UPLOAD_ENCRYPTION.sseKms ? kmsKeyId : undefined),
+  );
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
@@ -173,7 +202,7 @@ export function UploadPage() {
       variant='primary'
       disabled={!items.length || running}
       loading={running}
-      onClick={uploader.start}
+      onClick={() => void startUpload()}
     >
       Upload
     </Button>
@@ -199,6 +228,24 @@ export function UploadPage() {
             folder
             onPick={(files) => uploader.add(filesFromInput(files))}
           />
+        </Container>
+
+        <Container header={<Header variant='h2'>Encryption</Header>}>
+          <SpaceBetween size='l'>
+            <FormRadioGroup
+              control={encryptionForm.control}
+              name='encryption'
+              items={UPLOAD_ENCRYPTION_ITEMS}
+            />
+            {encryption === UPLOAD_ENCRYPTION.sseKms && (
+              <FormKeySelect
+                control={encryptionForm.control}
+                name='kmsKeyId'
+                label='Encryption key'
+                defaultLabel={defaultKeyLabel(S3_KEY_SERVICE)}
+              />
+            )}
+          </SpaceBetween>
         </Container>
 
         <Table

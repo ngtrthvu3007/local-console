@@ -50,3 +50,6 @@ export const CONFIRM_DELETE_DATABASE = "delete me";
 
 // Floci tự ghi stdout của DB vào group này (spec 7 #5)
 export const errorLogGroup = (id: string) => `/aws/rds/instance/${id}/error`;
+
+// Tên service trong alias key AWS managed: alias/aws/rds
+export const RDS_KEY_SERVICE = "rds";

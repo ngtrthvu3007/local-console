@@ -50,3 +50,9 @@ export const MESSAGE_ATTRIBUTES = {
   sent: "SentTimestamp",
   receiveCount: "ApproximateReceiveCount",
 } as const;
+
+// Mã hóa phía server: SSE-SQS (key của SQS) hoặc SSE-KMS với key chọn được
+export const QUEUE_ENCRYPTION = { sseSqs: "sse-sqs", sseKms: "sse-kms" } as const;
+export type QueueEncryption = (typeof QUEUE_ENCRYPTION)[keyof typeof QUEUE_ENCRYPTION];
+// Tên service trong alias key AWS managed: alias/aws/sqs
+export const SQS_KEY_SERVICE = "sqs";

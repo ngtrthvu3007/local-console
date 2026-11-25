@@ -69,11 +69,19 @@ describe("createSecretSchema", () => {
       plaintext: "x",
       name,
       description: "",
+      kmsKeyId: "",
     });
 
   it("accepts the characters Secrets Manager allows", () => {
     expect(check("app/db+x=y.z@w_1-2").success).toBe(true);
     expect(check("a".repeat(512)).success).toBe(true);
+  });
+
+  it("takes the default key or a KMS key ARN", () => {
+    const base = { type: "plaintext", entries: [], plaintext: "x", name: "a", description: "" };
+    const arn = "arn:aws:kms:ap-southeast-1:000000000000:key/k1";
+    expect(createSecretSchema.parse({ ...base, kmsKeyId: arn }).kmsKeyId).toBe(arn);
+    expect(createSecretSchema.safeParse({ ...base, kmsKeyId: "k1" }).success).toBe(false);
   });
 
   it("rejects empty, long and other names", () => {
@@ -90,6 +98,7 @@ describe("createSecretSchema", () => {
         plaintext: "",
         name: "n",
         description: "",
+        kmsKeyId: "",
       });
 
     expect(keyValue([{ key: "u", value: "a" }]).success).toBe(true);

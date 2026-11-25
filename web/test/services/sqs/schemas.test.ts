@@ -10,7 +10,13 @@ const firstMessage = (result: { success: boolean; error?: { issues: { message: s
 
 describe("createQueueSchema", () => {
   const check = (type: "standard" | "fifo", name: string) =>
-    createQueueSchema.safeParse({ type, name, contentBasedDedup: false });
+    createQueueSchema.safeParse({
+      type,
+      name,
+      contentBasedDedup: false,
+      encryption: "sse-sqs",
+      kmsKeyId: "",
+    });
 
   it("accepts valid names", () => {
     expect(check("standard", "orders_v2-dlq").success).toBe(true);
@@ -72,5 +78,17 @@ describe("deadLetterSchema", () => {
       "deadLetterTargetArn",
       "maxReceiveCount",
     ]);
+  });
+});
+
+describe("createQueueSchema encryption", () => {
+  it("takes SSE-SQS or SSE-KMS with a key ARN", () => {
+    const base = { type: "standard", name: "orders", contentBasedDedup: false };
+    expect(
+      createQueueSchema.safeParse({ ...base, encryption: "sse-sqs", kmsKeyId: "" }).success,
+    ).toBe(true);
+    expect(
+      createQueueSchema.safeParse({ ...base, encryption: "sse-kms", kmsKeyId: "k1" }).success,
+    ).toBe(false);
   });
 });

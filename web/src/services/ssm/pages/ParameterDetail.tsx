@@ -16,6 +16,9 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
 import { parameterSample } from "../codeSamples.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import { SECURE_STRING, SSM_KEY_SERVICE } from "../constants.ts";
 import { DeleteParametersModal } from "../components/DeleteParametersModal.tsx";
 import { ParameterValue } from "../components/ParameterValue.tsx";
 import { isParameterMissing, useParameter } from "../hooks/useParameters.ts";
@@ -25,10 +28,11 @@ interface ViewProps {
   name: string;
   parameter: Parameter;
   description: string;
+  keyId: string;
   query: ReturnType<typeof useParameter>;
 }
 
-function ParameterView({ name, parameter, description, query }: ViewProps) {
+function ParameterView({ name, parameter, description, keyId, query }: ViewProps) {
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
   const [deleting, setDeleting] = useState(false);
@@ -71,6 +75,14 @@ function ParameterView({ name, parameter, description, query }: ViewProps) {
                 },
                 { label: "Description", value: description || NOT_AVAILABLE },
                 { label: "ARN", value: <CopyButton variant='inline' text={arn} label={arn} /> },
+                ...(parameter.Type === SECURE_STRING
+                  ? [
+                      {
+                        label: "Encryption",
+                        value: keyId ? <KeyLink value={keyId} /> : defaultKeyLabel(SSM_KEY_SERVICE),
+                      },
+                    ]
+                  : []),
               ]}
             />
           </Container>

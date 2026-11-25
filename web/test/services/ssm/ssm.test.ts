@@ -17,7 +17,21 @@ describe("parameter routes", () => {
 
 describe("parameterSchema", () => {
   const check = (name: string, editing = false) =>
-    parameterSchema(editing).safeParse({ name, description: "", type: "String", value: "v" });
+    parameterSchema(editing).safeParse({
+      name,
+      description: "",
+      type: "String",
+      value: "v",
+      keyId: "",
+    });
+
+  it("keeps the KMS key of a SecureString, alias included", () => {
+    const base = { name: "pw", description: "", type: "SecureString", value: "v" };
+    expect(parameterSchema(true).parse({ ...base, keyId: "alias/aws/ssm" }).keyId).toBe(
+      "alias/aws/ssm",
+    );
+    expect(parameterSchema(false).safeParse({ ...base, keyId: "k1" }).success).toBe(false);
+  });
 
   it("accepts plain and path names", () => {
     expect(check("db-host").success).toBe(true);

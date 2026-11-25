@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { clientSample } from "../../src/services/cognito/codeSamples.ts";
 import { tableSample } from "../../src/services/dynamodb/codeSamples.ts";
+import { keySample } from "../../src/services/kms/codeSamples.ts";
 import { secretSample } from "../../src/services/secretsmanager/codeSamples.ts";
 import { parameterSample } from "../../src/services/ssm/codeSamples.ts";
 import { brokerUrl } from "../../src/services/mq/codeSamples.ts";
@@ -91,6 +92,40 @@ describe("code samples", () => {
     expect(clientSample({ ClientId: "abc", ExplicitAuthFlows: [] }).python).toContain(
       "# Turn on ALLOW_USER_PASSWORD_AUTH",
     );
+  });
+
+  it("fills the key and picks the calls by key usage", () => {
+    const signing = keySample(
+      { KeyUsage: "SIGN_VERIFY", KeySpec: "ECC_NIST_P256", SigningAlgorithms: ["ECDSA_SHA_256"] },
+      "alias/jwt",
+    );
+    expect(signing.node).toContain("SignCommand");
+    expect(signing.node).toContain('"ECDSA_SHA_256"');
+    expect(signing.node).toContain('const KeyId = "alias/jwt";');
+
+    const symmetric = keySample(
+      { KeyUsage: "ENCRYPT_DECRYPT", KeySpec: "SYMMETRIC_DEFAULT" },
+      "alias/orders",
+    );
+    expect(symmetric.node).toContain("EncryptCommand");
+    expect(symmetric.node).toContain("DecryptCommand");
+    expect(symmetric.node).not.toContain("EncryptionAlgorithm");
+
+    const rsa = keySample(
+      {
+        KeyUsage: "ENCRYPT_DECRYPT",
+        KeySpec: "RSA_2048",
+        EncryptionAlgorithms: ["RSAES_OAEP_SHA_256"],
+      },
+      "1234",
+    );
+    expect(rsa.python).toContain('EncryptionAlgorithm="RSAES_OAEP_SHA_256"');
+
+    const mac = keySample(
+      { KeyUsage: "GENERATE_VERIFY_MAC", KeySpec: "HMAC_256", MacAlgorithms: ["HMAC_SHA_256"] },
+      "1234",
+    );
+    expect(mac.python).toContain("generate_mac");
   });
 
   it("leaves user and password to fill in the AMQP URL", () => {

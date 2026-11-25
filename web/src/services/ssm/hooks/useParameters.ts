@@ -7,7 +7,7 @@ import {
   paginateDescribeParameters,
   type ParameterMetadata,
 } from "@aws-sdk/client-ssm";
-import { DELETE_PARAMETERS_BATCH, type ParameterType } from "../constants.ts";
+import { DELETE_PARAMETERS_BATCH, SECURE_STRING, type ParameterType } from "../constants.ts";
 import { chunks } from "../parameters.ts";
 import { useSSM } from "./useSSM.ts";
 
@@ -54,7 +54,11 @@ export function useParameter(name: string) {
         ),
       ]);
 
-      return { parameter: Parameter ?? {}, description: Parameters?.[0]?.Description ?? "" };
+      return {
+        parameter: Parameter ?? {},
+        description: Parameters?.[0]?.Description ?? "",
+        keyId: Parameters?.[0]?.KeyId ?? "",
+      };
     },
     retry: false,
   });
@@ -65,6 +69,7 @@ interface ParameterInput {
   description: string;
   type: ParameterType;
   value: string;
+  keyId: string;
 }
 
 export function usePutParameter(editing: boolean) {
@@ -72,13 +77,15 @@ export function usePutParameter(editing: boolean) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, description, type, value }: ParameterInput) =>
+    mutationFn: ({ name, description, type, value, keyId }: ParameterInput) =>
       client.send(
         new PutParameterCommand({
           Name: name,
           Description: description,
           Type: type,
           Value: value,
+          // Chỉ SecureString mới có key; trống = key mặc định alias/aws/ssm
+          KeyId: type === SECURE_STRING && keyId ? keyId : undefined,
           Overwrite: editing,
         }),
       ),
