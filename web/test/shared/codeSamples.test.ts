@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { apiSample } from "../../src/services/appsync/codeSamples.ts";
 import { distributionSample } from "../../src/services/cloudfront/codeSamples.ts";
 import { clientSample } from "../../src/services/cognito/codeSamples.ts";
 import { tableSample } from "../../src/services/dynamodb/codeSamples.ts";
@@ -93,6 +94,21 @@ describe("code samples", () => {
     expect(clientSample({ ClientId: "abc", ExplicitAuthFlows: [] }).python).toContain(
       "# Turn on ALLOW_USER_PASSWORD_AUTH",
     );
+  });
+
+  it("calls a GraphQL API with the header its authorization needs", () => {
+    const endpoint = "http://localhost:4566/v1/apis/a1/graphql";
+    const withKey = apiSample({ endpoint, authType: "API_KEY", apiKey: "da2-x" });
+    expect(withKey.node).toContain('"x-api-key"');
+    expect(withKey.node).toContain('"da2-x"');
+    expect(withKey.python).toContain("requests.post");
+    // Code chép ra chạy được: token là chuỗi giữ chỗ, không phải biến chưa khai báo
+    const cognito = apiSample({ endpoint, authType: "AMAZON_COGNITO_USER_POOLS" });
+    expect(cognito.node).toContain("Bearer YOUR_ID_TOKEN");
+    expect(cognito.python).toContain("Bearer YOUR_ID_TOKEN");
+    const iam = apiSample({ endpoint, authType: "AWS_IAM" });
+    expect(iam.node).toContain("SigV4");
+    expect(iam.node).not.toContain("x-api-key");
   });
 
   it("invalidates the whole distribution like a deploy script", () => {

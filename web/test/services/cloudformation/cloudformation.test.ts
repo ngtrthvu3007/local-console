@@ -90,6 +90,22 @@ describe("resourceHref", () => {
     ).toBe("/cloudformation/stacks/Child");
   });
 
+  it("links AppSync resources by API ID and ARN", () => {
+    const arn = "arn:aws:appsync:ap-southeast-1:000000000000:apis/a1";
+    expect(resourceHref("AWS::AppSync::GraphQLApi", "a1")).toBe("/appsync/apis/a1");
+    expect(resourceHref("AWS::AppSync::GraphQLSchema", "a1GraphQLSchema")).toBe("/appsync/apis/a1");
+    expect(resourceHref("AWS::AppSync::DataSource", `${arn}/datasources/todos`)).toBe(
+      "/appsync/apis/a1?tab=data-sources",
+    );
+    expect(resourceHref("AWS::AppSync::Resolver", `${arn}/types/Query/resolvers/getTodo`)).toBe(
+      "/appsync/apis/a1/resolvers/Query/getTodo",
+    );
+    expect(resourceHref("AWS::AppSync::FunctionConfiguration", `${arn}/functions/f1`)).toBe(
+      "/appsync/apis/a1/functions/f1",
+    );
+    expect(resourceHref("AWS::AppSync::ApiKey", "da2-x")).toBeUndefined();
+  });
+
   it("links the other services", () => {
     expect(resourceHref("AWS::DynamoDB::Table", "orders")).toBe("/dynamodb/tables/orders");
 
