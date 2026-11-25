@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { kmsKeyArnSchema } from "../kms/schemas.ts";
-import { formatBytes } from "@shared/format.ts";
+import { byteLength, formatBytes } from "@shared/format.ts";
 import { jsonObjectError } from "@shared/json.ts";
 import { enumOfKeys, isWholeNumberIn, wholeNumberIn } from "@shared/schemas.ts";
 import {
@@ -55,9 +55,6 @@ export const generalConfigurationSchema = z.object({
   runtime: z.string().min(1, "Choose a runtime."),
   handler: handlerSchema,
 });
-
-const textEncoder = new TextEncoder();
-const byteLength = (text: string) => textEncoder.encode(text).length;
 
 export const environmentSchema = z
   .object({

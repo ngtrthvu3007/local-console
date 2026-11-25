@@ -3,9 +3,9 @@ import {
   type SFNClient,
   type StateMachineType,
 } from "@aws-sdk/client-sfn";
+import { ARN_SEPARATOR, lastArnPart } from "@shared/arn.ts";
 import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 
-const ARN_SEPARATOR = ":";
 // …:execution:<state machine>:<name>, Express …:express:<state machine>:<id>:<id> → tên ở vị trí 6
 const EXECUTION_ARN_MACHINE_INDEX = 6;
 
@@ -20,7 +20,7 @@ export const stateMachineArn = (region: string, name: string) =>
   `arn:aws:states:${region}:${FLOCI_ACCOUNT_ID}:stateMachine:${name}`;
 
 // "arn:aws:states:…:stateMachine:orders" → "orders"
-export const stateMachineNameOfArn = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
+export const stateMachineNameOfArn = lastArnPart;
 
 export const stateMachineOfExecutionArn = (executionArn: string) =>
   executionArn.split(ARN_SEPARATOR)[EXECUTION_ARN_MACHINE_INDEX] ?? "";

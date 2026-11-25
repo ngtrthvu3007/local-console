@@ -18,6 +18,7 @@ import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import type { SchedulerClient } from "@aws-sdk/client-scheduler";
 import type { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import type { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { isArnOrQualified, lastArnPart } from "@shared/arn.ts";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
@@ -58,7 +59,6 @@ import type { TriggerFormOutput } from "../schemas.ts";
 import { functionQueryKey } from "./useFunctions.ts";
 import { useLambda } from "./useLambda.ts";
 
-const ARN_SEPARATOR = ":";
 const ROTATION_DETAILS = "Rotation";
 
 export interface TriggerRow {
@@ -77,8 +77,7 @@ export interface TriggerRow {
 
 // Rule trỏ tới function, kể cả ARN có version/alias (my-function:prod)
 const targetsFunction = (rule: NotificationRule, functionArn: string) =>
-  rule.destination === "lambda" &&
-  (rule.arn === functionArn || rule.arn.startsWith(`${functionArn}${ARN_SEPARATOR}`));
+  rule.destination === "lambda" && isArnOrQualified(rule.arn, functionArn);
 
 // S3 không có API sửa từng rule: đọc cả cấu hình của bucket, sửa danh sách rồi ghi lại
 async function updateBucketRules(
@@ -129,7 +128,7 @@ const streamNameOf = (streamArn: string) =>
 export function mappingSourceOf(arn: string): Pick<TriggerRow, "source" | "resource"> {
   if (DYNAMODB_ARN_PATTERN.test(arn)) return { source: "dynamodb", resource: tableNameOf(arn) };
   if (KINESIS_ARN_PATTERN.test(arn)) return { source: "kinesis", resource: streamNameOf(arn) };
-  return { source: "sqs", resource: arn.split(ARN_SEPARATOR).pop() ?? NOT_AVAILABLE };
+  return { source: "sqs", resource: lastArnPart(arn) };
 }
 
 function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
@@ -168,9 +167,8 @@ async function listS3Triggers(s3: S3Client, functionArn: string) {
 
 // Subscription trỏ tới function, kể cả ARN có version/alias
 async function listSnsTriggers(sns: SNSClient, functionArn: string) {
-  const subscriptions = await listSubscriptionsOfEndpoint(
-    sns,
-    (endpoint) => endpoint === functionArn || endpoint.startsWith(`${functionArn}${ARN_SEPARATOR}`),
+  const subscriptions = await listSubscriptionsOfEndpoint(sns, (endpoint) =>
+    isArnOrQualified(endpoint, functionArn),
   );
 
   return subscriptions.map((subscription): TriggerRow => ({

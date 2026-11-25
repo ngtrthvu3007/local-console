@@ -6,7 +6,7 @@ import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { BreakableText } from "@shared/components/BreakableText.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable, CopyButton } from "@shared/components/CopyButton.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -23,9 +23,6 @@ import {
   machineAddress,
   type Address,
 } from "../databases.ts";
-
-const copyable = (text?: string) =>
-  text ? <CopyButton variant='inline' text={text} label={text} /> : NOT_AVAILABLE;
 
 export function ConnectivityTab({ database }: { database: DBInstance }) {
   const follow = useFollow();
