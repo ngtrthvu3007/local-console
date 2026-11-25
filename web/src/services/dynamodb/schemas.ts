@@ -3,13 +3,6 @@ import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import { formatBytes } from "@shared/format.ts";
 import {
-  issueAdder,
-  mappingOptionsIssues,
-  mappingOptionsShape,
-  startingPositionSchema,
-  streamBatchSizeSchema,
-} from "../lambda/schemas.ts";
-import {
   TABLE_ENCRYPTION,
   BOOLEAN_TEXTS,
   IMPORT_FILE_EXTENSION,
@@ -227,13 +220,3 @@ export const streamSchema = z.object({
   enabled: z.boolean(),
   viewType: enumOfKeys(STREAM_VIEW_TYPES),
 });
-
-export const streamTriggerSchema = z
-  .object({
-    functionName: z.string().min(1, "Choose a function."),
-    startingPosition: startingPositionSchema,
-    batchSize: streamBatchSizeSchema,
-    enabled: z.boolean(),
-    ...mappingOptionsShape,
-  })
-  .superRefine((values, context) => mappingOptionsIssues("dynamodb", values, issueAdder(context)));

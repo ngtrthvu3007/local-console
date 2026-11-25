@@ -11,7 +11,7 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -21,7 +21,6 @@ import { stepfunctionsRoutes } from "../routes.ts";
 import { formatElapsed } from "../steps.ts";
 import { ExecutionStatus as StatusLabel } from "./ExecutionStatus.tsx";
 
-const PAGE_SIZE = 50;
 const STATUS_OPTIONS = [{ value: STATUS_FILTER_ALL, label: "All" }, ...EXECUTION_STATUS_FILTERS];
 
 const elapsedOf = (execution: ExecutionListItem) =>
@@ -41,7 +40,7 @@ export function ExecutionsTab({ machineArn }: { machineArn: string }) {
   const { items, collectionProps, paginationProps } = useCollection<ExecutionListItem>(
     executions.data ?? [],
     {
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
     },
   );
 

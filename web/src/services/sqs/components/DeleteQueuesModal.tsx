@@ -2,7 +2,7 @@ import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DELETE_PREVIEW_COUNT, LIST_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
@@ -10,7 +10,6 @@ import { useQueueLinks } from "../hooks/useQueueTriggers.ts";
 import { useDeleteQueues } from "../hooks/useQueues.ts";
 import type { Queue } from "../queues.ts";
 
-const LIST_SEPARATOR = ", ";
 
 interface Props {
   queues: readonly Queue[];

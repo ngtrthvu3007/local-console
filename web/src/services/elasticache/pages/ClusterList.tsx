@@ -13,7 +13,7 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -25,7 +25,6 @@ import { addressText, engineLabel, useClusters, type Cluster } from "../hooks/us
 import { elasticacheBaseCrumbs, elasticacheRoutes } from "../routes.ts";
 
 const ID_FIELD = "id";
-const PAGE_SIZE = 50;
 
 function ClusterName({
   cluster,
@@ -91,7 +90,7 @@ export function ClusterList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: ID_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: ID_FIELD },
     });
 

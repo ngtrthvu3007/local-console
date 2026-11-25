@@ -56,7 +56,7 @@ import {
   type MappingOptions,
 } from "../mappingOptions.ts";
 import type { TriggerFormOutput } from "../schemas.ts";
-import { functionQueryKey } from "./useFunctions.ts";
+import { functionQueryKey, LAMBDA_QUERY_ROOT } from "./useFunctions.ts";
 import { useLambda } from "./useLambda.ts";
 
 const ROTATION_DETAILS = "Rotation";
@@ -294,7 +294,7 @@ function useTriggerMutation<TInput>(
   });
 }
 
-export interface StreamTriggerInput extends MappingOptions {
+interface StreamTriggerInput extends MappingOptions {
   functionName: string;
   streamArn: string;
   startingPosition: StartingPosition;
@@ -302,8 +302,8 @@ export interface StreamTriggerInput extends MappingOptions {
   enabled: boolean;
 }
 
-// Dùng chung cho tab Triggers của Lambda và nút Add trigger ở trang bảng DynamoDB
-export const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerInput) =>
+// Dùng chung cho tab Triggers của Lambda và nút Add trigger ở trang của stream (DynamoDB, Kinesis)
+const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerInput) =>
   lambda.send(
     new CreateEventSourceMappingCommand({
       FunctionName: input.functionName,
@@ -314,6 +314,42 @@ export const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerIn
       ...toMappingParams("dynamodb", input),
     }),
   );
+
+// Trigger của một stream (DynamoDB Stream, Kinesis), xem từ trang của nguồn
+const streamTriggersQueryKey = (streamArn?: string) => [
+  LAMBDA_QUERY_ROOT,
+  "stream-triggers",
+  streamArn,
+];
+
+export function useStreamTriggers(streamArn?: string) {
+  const { lambda } = useLambda();
+
+  return useQuery({
+    queryKey: streamTriggersQueryKey(streamArn),
+    enabled: Boolean(streamArn),
+    queryFn: async () => {
+      const mappings: EventSourceMappingConfiguration[] = [];
+      const paginator = paginateListEventSourceMappings(
+        { client: lambda },
+        { EventSourceArn: streamArn },
+      );
+      for await (const page of paginator) mappings.push(...(page.EventSourceMappings ?? []));
+      return mappings;
+    },
+  });
+}
+
+export function useAddStreamTrigger(streamArn: string) {
+  const { lambda } = useLambda();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: Omit<StreamTriggerInput, "streamArn">) =>
+      createStreamTrigger(lambda, { ...input, streamArn }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: streamTriggersQueryKey(streamArn) }),
+  });
+}
 
 export interface QueueTriggerInput extends MappingOptions {
   functionName: string;
@@ -334,7 +370,7 @@ export const createQueueTrigger = (lambda: LambdaClient, input: QueueTriggerInpu
     }),
   );
 
-// streamArn: Stream ARN của bảng đã chọn (chỉ với nguồn DynamoDB)
+// streamArn: ARN stream của bảng (DynamoDB) hoặc của Kinesis stream đã chọn
 export type AddTriggerInput = TriggerFormOutput & { streamArn?: string };
 
 // Floci không cần AddPermission như AWS: S3, SQS, DynamoDB gọi được function mà không cần policy
@@ -360,7 +396,7 @@ export function useAddTrigger(functionName: string, functionArn: string) {
       });
     }
 
-    if (values.source === "dynamodb") {
+    if (values.source === "dynamodb" || values.source === "kinesis") {
       return createStreamTrigger(lambda, {
         functionName,
         streamArn: values.streamArn ?? "",

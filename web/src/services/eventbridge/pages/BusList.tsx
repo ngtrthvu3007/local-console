@@ -22,9 +22,9 @@ import { DeleteBusesModal } from "../components/DeleteBusesModal.tsx";
 import { SendEventsModal } from "../components/SendEventsModal.tsx";
 import { useBuses } from "../hooks/useBuses.ts";
 import { busesCrumbs, eventbridgeRoutes } from "../routes.ts";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 
 const NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 type Modal = "create" | "delete" | "send" | null;
 
@@ -48,7 +48,7 @@ export function BusList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     });
 

@@ -13,7 +13,7 @@ import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.ts
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -25,7 +25,6 @@ import { truncateMiddle } from "../users.ts";
 
 const NAME_FIELD = "ClientName";
 const ID_FIELD = "ClientId";
-const PAGE_SIZE = 50;
 
 export function ClientsTab({ poolId }: { poolId: string }) {
   const follow = useFollow();
@@ -61,7 +60,7 @@ export function ClientsTab({ poolId }: { poolId: string }) {
           ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: ID_FIELD },
     });
 

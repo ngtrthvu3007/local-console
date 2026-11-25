@@ -21,6 +21,7 @@ import {
   DETAIL_SEPARATOR,
   ITEM_LIST_WIDTH_PX,
   NOT_AVAILABLE,
+  TABLE_PAGE_SIZE,
 } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -29,7 +30,6 @@ import { isUnauthorized, useDeleteQueues, usePurgeQueue, useQueues } from "../ho
 import { CreateQueueModal, PeekModal, PublishModal } from "./QueueModals.tsx";
 
 const NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 type Modal =
   | { id: "create" }
@@ -80,7 +80,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     });
 

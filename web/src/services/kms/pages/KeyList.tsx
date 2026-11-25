@@ -8,7 +8,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -21,7 +21,6 @@ import { useKeys, type KeyRow } from "../hooks/useKeys.ts";
 import { keyTypeLabel, keyUsageLabel } from "../keys.ts";
 import { kmsBaseCrumbs, kmsRoutes } from "../routes.ts";
 
-const PAGE_SIZE = 50;
 
 const keyIdOfRow = (row: KeyRow) => row.meta.KeyId ?? "";
 
@@ -80,7 +79,7 @@ function KeyList({ manager }: { manager: KeyManager }) {
         ),
         filteringFunction: matchesText,
       },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: (row) => keyIdOfRow(row) },
     });
 

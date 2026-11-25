@@ -13,7 +13,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
@@ -25,7 +25,6 @@ import { CreateUserModal } from "./CreateUserModal.tsx";
 import { UserActionModal } from "./UserActionModal.tsx";
 
 const USERNAME_FIELD = "Username";
-const PAGE_SIZE = 50;
 
 const STATUS_OPTIONS = [
   { value: ANY_STATUS, label: "Any status" },
@@ -98,7 +97,7 @@ export function UsersTab({ pool, poolId }: { pool: UserPoolType; poolId: string 
         },
       },
       sorting: { defaultState: { sortingColumn: { sortingField: USERNAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: USERNAME_FIELD },
     });
 

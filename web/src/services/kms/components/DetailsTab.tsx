@@ -9,7 +9,7 @@ import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
@@ -21,7 +21,6 @@ import { descriptionSchema } from "../schemas.ts";
 import { KeyStatus } from "./KeyStatus.tsx";
 
 const DETAILS_COLUMNS = 3;
-const LIST_SEPARATOR = ", ";
 
 // Chỉ mount khi mở
 function EditDescriptionModal({ meta, onDismiss }: { meta: KeyMetadata; onDismiss: () => void }) {

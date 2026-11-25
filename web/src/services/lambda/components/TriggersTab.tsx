@@ -18,6 +18,7 @@ import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { s3Routes } from "../../s3/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
+import { StreamLink } from "../../kinesis/components/StreamLink.tsx";
 import {
   EVENT_SOURCE_STATES,
   SOURCE_LABELS,
@@ -65,7 +66,7 @@ const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
   secretsmanager: "secret",
 };
 
-// Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
+// Nguồn có trang trên console thì tên là link
 const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>> = {
   s3: (bucket) => s3Routes.bucket(bucket),
   dynamodb: (table) => dynamodbRoutes.table(table),
@@ -83,6 +84,7 @@ function ResourceCell({ row }: { row: TriggerRow }) {
 
   if (row.source === "sqs") return <QueueLink name={row.resource} />;
   if (row.source === "sns") return <TopicLink name={row.resource} />;
+  if (row.source === "kinesis") return <StreamLink name={row.resource} />;
   const href = RESOURCE_HREFS[row.source]?.(row.resource);
   if (!href) return <>{row.resource}</>;
 
@@ -114,7 +116,7 @@ const stateColumn: TableProps.ColumnDefinition<TriggerRow> = {
 
 // Function nhận đích async của function khác; S3, SNS, EventBridge đã có dòng trong bảng trên
 const FUNCTION_SENDER_KINDS = ["lambda"] as const;
-const EDITABLE_SOURCES: TriggerRowSource[] = ["sqs", "dynamodb"];
+const EDITABLE_SOURCES: TriggerRowSource[] = ["sqs", "dynamodb", "kinesis"];
 
 const WIDE_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
 // Details cũng hiện ở khung hẹp (bảng xếp dọc): filter, partial batch, đích lỗi không được ẩn
@@ -219,7 +221,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     {
       id: "edit",
       text: "Edit",
-      // Chỉ SQS và DynamoDB có tùy chọn để sửa; Kinesis chưa có form
+      // Chỉ trigger dạng event source mapping (SQS, DynamoDB, Kinesis) có tùy chọn để sửa
       disabled: !single?.mapping || !EDITABLE_SOURCES.includes(single.source),
       onClick: () => setOpenModal(MODALS.edit),
     },
@@ -230,7 +232,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, a topic publishes in SNS, or an EventBridge rule or schedule fires.'
+      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, records arrive in Kinesis, a topic publishes in SNS, or an EventBridge rule or schedule fires.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers

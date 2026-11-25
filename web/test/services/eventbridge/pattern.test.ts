@@ -106,7 +106,8 @@ describe("targets", () => {
     expect(targetKindOfArn("arn:aws:sqs:r:0:orders")).toBe("sqs");
     expect(targetKindOfArn("arn:aws:sns:r:0:topic")).toBe("sns");
     expect(targetKindOfArn("arn:aws:states:r:0:stateMachine:flow")).toBe("stepfunctions");
-    expect(targetKindOfArn("arn:aws:kinesis:r:0:stream/s")).toBe("other");
+    expect(targetKindOfArn("arn:aws:kinesis:r:0:stream/s")).toBe("kinesis");
+    expect(targetKindOfArn("arn:aws:ecs:r:0:cluster/c")).toBe("other");
   });
 
   it("takes the resource name and builds an id of at most 64 characters", () => {

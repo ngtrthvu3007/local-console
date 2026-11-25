@@ -8,7 +8,7 @@ import Pagination from "@cloudscape-design/components/pagination";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -29,7 +29,6 @@ interface SetRow {
   name: string;
 }
 
-const PAGE_SIZE = 50;
 const crumbs = [
   ...sesBaseCrumbs,
   { text: "Configuration sets", href: sesRoutes.configurationSets },
@@ -71,7 +70,7 @@ export function ConfigurationSets() {
   const { items, collectionProps, paginationProps, actions } = useCollection<SetRow>(rows, {
     filtering: { empty: emptyState },
     sorting: { defaultState: { sortingColumn: { sortingField: "name" } } },
-    pagination: { pageSize: PAGE_SIZE },
+    pagination: { pageSize: TABLE_PAGE_SIZE },
     selection: { trackBy: "name" },
   });
   const selected = collectionProps.selectedItems ?? [];

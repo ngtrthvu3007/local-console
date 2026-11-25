@@ -10,7 +10,7 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -23,7 +23,6 @@ import { snsBaseCrumbs, snsRoutes } from "../routes.ts";
 import { topicTypeLabel, type Topic } from "../topics.ts";
 
 const TOPIC_NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 export function TopicList() {
   useBreadcrumbs(snsBaseCrumbs);
@@ -60,7 +59,7 @@ export function TopicList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: TOPIC_NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: TOPIC_NAME_FIELD },
     });
 

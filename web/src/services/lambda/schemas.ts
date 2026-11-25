@@ -95,10 +95,10 @@ export const environmentSchema = z
     }
   });
 
-// Dùng chung cho tab Triggers của Lambda và trang bảng DynamoDB
-export const startingPositionSchema = enumOfKeys(STARTING_POSITIONS);
+// Dùng chung cho Add trigger của Lambda và của trang stream (DynamoDB, Kinesis)
+const startingPositionSchema = enumOfKeys(STARTING_POSITIONS);
 
-export const streamBatchSizeSchema = wholeNumberIn(STREAM_BATCH_SIZE, "records");
+const streamBatchSizeSchema = wholeNumberIn(STREAM_BATCH_SIZE, "records");
 
 // Các ô tùy chọn nâng cao của trigger, dùng chung cho Lambda, SQS và DynamoDB
 export const mappingOptionsShape = {
@@ -166,6 +166,7 @@ export const triggerSchema = z
     suffix: z.string().trim(),
     queueArn: z.string().trim(),
     table: z.string(),
+    stream: z.string(), // ARN của Kinesis stream
     startingPosition: startingPositionSchema,
     batchSize: z.string().trim(),
     enabled: z.boolean(),
@@ -181,8 +182,11 @@ export const triggerSchema = z
       return;
     }
 
-    if (values.source === "dynamodb") {
-      if (!values.table) addIssue("table", "Choose a table with a stream.");
+    if (values.source === "dynamodb" || values.source === "kinesis") {
+      if (values.source === "dynamodb" && !values.table)
+        addIssue("table", "Choose a table with a stream.");
+      if (values.source === "kinesis" && !values.stream)
+        addIssue("stream", "Choose a data stream.");
       const batchSize = streamBatchSizeSchema.safeParse(values.batchSize);
       if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
       mappingOptionsIssues("dynamodb", values, issueAdder(context));
@@ -194,6 +198,17 @@ export const triggerSchema = z
     if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
     mappingOptionsIssues("sqs", values, issueAdder(context));
   });
+
+// Add trigger từ trang của stream (DynamoDB Stream, Kinesis): chọn function
+export const streamTriggerSchema = z
+  .object({
+    functionName: z.string().min(1, "Choose a function."),
+    startingPosition: startingPositionSchema,
+    batchSize: streamBatchSizeSchema,
+    enabled: z.boolean(),
+    ...mappingOptionsShape,
+  })
+  .superRefine((values, context) => mappingOptionsIssues("dynamodb", values, issueAdder(context)));
 
 // Modal Edit trigger (Lambda › Triggers): batch size cùng các tùy chọn, theo nguồn của trigger
 export const editTriggerSchema = (source: MappingSource) =>
