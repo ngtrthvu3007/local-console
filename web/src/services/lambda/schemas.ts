@@ -172,27 +172,26 @@ export const triggerSchema = z
     ...mappingOptionsShape,
   })
   .superRefine((values, context) => {
-    const addIssue = (field: string, message: string) =>
-      context.addIssue({ code: "custom", path: [field], message });
+    const addIssue = issueAdder(context);
 
     if (values.source === "s3") {
-      if (!values.bucket) addIssue("bucket", "Choose a bucket.");
-      if (!values.events.length) addIssue("events", "Choose at least one event type.");
+      if (!values.bucket) addIssue(["bucket"], "Choose a bucket.");
+      if (!values.events.length) addIssue(["events"], "Choose at least one event type.");
       return;
     }
 
     if (values.source === "dynamodb") {
-      if (!values.table) addIssue("table", "Choose a table with a stream.");
+      if (!values.table) addIssue(["table"], "Choose a table with a stream.");
       const batchSize = streamBatchSizeSchema.safeParse(values.batchSize);
-      if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
-      mappingOptionsIssues("dynamodb", values, issueAdder(context));
+      if (!batchSize.success) addIssue(["batchSize"], batchSize.error.issues[0].message);
+      mappingOptionsIssues("dynamodb", values, addIssue);
       return;
     }
 
-    if (!values.queueArn) addIssue("queueArn", "Choose a queue.");
+    if (!values.queueArn) addIssue(["queueArn"], "Choose a queue.");
     const batchSize = wholeNumberIn(SQS_BATCH_SIZE, "records").safeParse(values.batchSize);
-    if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
-    mappingOptionsIssues("sqs", values, issueAdder(context));
+    if (!batchSize.success) addIssue(["batchSize"], batchSize.error.issues[0].message);
+    mappingOptionsIssues("sqs", values, addIssue);
   });
 
 // Modal Edit trigger (Lambda › Triggers): batch size cùng các tùy chọn, theo nguồn của trigger

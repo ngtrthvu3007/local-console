@@ -8,7 +8,7 @@ import {
   type BrokerSummary,
   type DescribeBrokerResponse,
 } from "@aws-sdk/client-mq";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import {
   BROKER_REFRESH_INTERVAL_MS,
   BROKER_RUNNING,
@@ -98,19 +98,12 @@ export function useDeleteBrokers() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (brokers: BrokerRef[]) => {
-      const failures: string[] = [];
-
-      for (const broker of brokers) {
-        try {
-          await client.send(new DeleteBrokerCommand({ BrokerId: broker.id }));
-        } catch (error) {
-          failures.push(`${broker.name}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: brokers.length - failures.length, failures };
-    },
+    mutationFn: (brokers: BrokerRef[]) =>
+      runEach(
+        brokers,
+        (broker) => broker.name,
+        (broker) => client.send(new DeleteBrokerCommand({ BrokerId: broker.id })),
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: brokersQueryKey }),
   });
 }

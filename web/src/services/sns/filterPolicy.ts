@@ -13,14 +13,9 @@ const valueText = (value: unknown): string =>
 // {"type": ["order"], "region": ["us", "eu"]} → "type = order, region = us | eu"
 export function summarizeFilterPolicy(text?: string): string {
   if (!text) return NOT_AVAILABLE;
-  let policy: unknown;
-  try {
-    policy = JSON.parse(text);
-  } catch {
-    return text;
-  }
-  if (typeof policy !== "object" || policy === null || Array.isArray(policy)) return text;
-  const summary = Object.entries(policy)
+  // Không phải object JSON (kể cả chỉ có khoảng trắng) thì hiện nguyên văn
+  if (!text.trim() || jsonObjectError(text)) return text;
+  const summary = Object.entries(JSON.parse(text))
     .map(([key, values]) =>
       Array.isArray(values) ? `${key} = ${values.map(valueText).join(VALUE_SEPARATOR)}` : key,
     )

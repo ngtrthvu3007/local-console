@@ -7,6 +7,7 @@ import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { usedByText } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { BucketLink } from "../../s3/components/BucketLink.tsx";
@@ -24,7 +25,6 @@ import { useUpdateDistribution } from "../hooks/useDistributions.ts";
 import { OriginModal } from "./OriginModal.tsx";
 
 const MENU = { edit: "edit", delete: "delete" } as const;
-const USED_BY_SEPARATOR = " and ";
 
 const SCHEMES: Record<OriginProtocol, string> = { "http-only": "http", "https-only": "https" };
 
@@ -69,7 +69,7 @@ export function OriginsTab({
       text: "Delete",
       disabled: !target || usedBy.length > 0,
       // Floci cho xóa rồi URL trả 502 "No origin matched the request." (spec 7 #11)
-      disabledReason: usedBy.length ? `Used by ${usedBy.join(USED_BY_SEPARATOR)}.` : undefined,
+      disabledReason: usedByText(usedBy),
     },
   ];
 

@@ -68,11 +68,6 @@ export function useItemPages(table: string, request?: SearchRequest) {
   });
 }
 
-export interface BulkResult {
-  count: number;
-  failures: string[];
-}
-
 // Item (hoặc key) trong một yêu cầu ghi hàng loạt
 const requestItem = (request: WriteRequest): Item =>
   request.PutRequest?.Item ?? request.DeleteRequest?.Key ?? {};
@@ -84,7 +79,7 @@ async function batchWrite(
   keys: IndexKeys,
   requests: WriteRequest[],
   onProgress?: (done: number) => void,
-): Promise<BulkResult> {
+) {
   const failures: string[] = [];
   const failItems = (failed: WriteRequest[], reason: string) =>
     failures.push(...failed.map((request) => `${keyLabel(requestItem(request), keys)}: ${reason}`));

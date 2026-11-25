@@ -35,11 +35,6 @@ export interface ObjectRow extends ObjectReference {
   isDeleteMarker?: boolean;
 }
 
-export interface BulkResult {
-  count: number;
-  failures: string[];
-}
-
 const folderRow = (entry: CommonPrefix, currentPrefix: string): ObjectRow => ({
   key: entry.Prefix!,
   name: entry.Prefix!.slice(currentPrefix.length),
@@ -182,7 +177,7 @@ export function useDeleteObjects(bucket: string) {
       ),
     );
   return useMutation({
-    mutationFn: async (rows: ObjectRow[]): Promise<BulkResult> => {
+    mutationFn: async (rows: ObjectRow[]) => {
       // Dòng có versionId (đang xem version) thì xóa vĩnh viễn đúng version đó
       const versions = rows
         .filter((row) => row.versionId)
@@ -233,7 +228,7 @@ export function useTransfer(bucket: string) {
   const { s3 } = useS3();
   const invalidate = useInvalidateObjects();
   return useMutation({
-    mutationFn: async (input: TransferInput): Promise<BulkResult> => {
+    mutationFn: async (input: TransferInput) => {
       const plannedPairs = await planCopies((row) => expandToKeys(s3, bucket, [row]), input);
       const pairs = plannedPairs.filter(
         (pair) => pair.from !== pair.to || input.destinationBucket !== bucket,

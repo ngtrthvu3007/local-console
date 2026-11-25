@@ -74,3 +74,8 @@ export function formatDuration(totalSeconds: number): string {
     })
     .join(" ");
 }
+
+// "A, B, and C" như câu tiếng Anh (Intl có sẵn): lý do khóa Delete khi resource đang được dùng
+const listFormat = new Intl.ListFormat("en", { type: "conjunction" });
+export const usedByText = (users: readonly string[]) =>
+  users.length ? `Used by ${listFormat.format(users)}.` : undefined;

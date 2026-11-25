@@ -2,17 +2,21 @@ import { useState } from "react";
 import ace from "ace-builds";
 // CodeEditor bật autocomplete nên cần extension này
 import "ace-builds/src-noconflict/ext-language_tools";
+import "ace-builds/src-noconflict/mode-graphqlschema";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-python";
+import "ace-builds/src-noconflict/mode-velocity";
 import "ace-builds/src-noconflict/mode-yaml";
 import "ace-builds/src-noconflict/theme-dawn";
 import "ace-builds/src-noconflict/theme-cloud_editor_dark";
 // Autocomplete tự tải snippet theo đường dẫn tương đối (404 trên Vite): nạp sẵn
+import "ace-builds/src-noconflict/snippets/graphqlschema";
 import "ace-builds/src-noconflict/snippets/javascript";
 import "ace-builds/src-noconflict/snippets/json";
 import "ace-builds/src-noconflict/snippets/python";
 import "ace-builds/src-noconflict/snippets/text";
+import "ace-builds/src-noconflict/snippets/velocity";
 import javascriptWorkerUrl from "ace-builds/src-noconflict/worker-javascript?url";
 import jsonWorkerUrl from "ace-builds/src-noconflict/worker-json?url";
 import CloudscapeCodeEditor, {
@@ -39,7 +43,9 @@ ace.require("ace/mode/yaml").Mode.prototype.createWorker = () => null;
 ace.config.setDefaultValue("renderer", "showPrintMargin", false);
 
 // "text": chế độ chữ thường có sẵn trong ace, không cần nạp thêm
-export type EditorLanguage = "json" | "javascript" | "python" | "yaml" | "text";
+// graphqlschema, velocity: schema / query và mapping template của AppSync
+export type EditorLanguage =
+  "json" | "javascript" | "python" | "yaml" | "graphqlschema" | "velocity" | "text";
 
 interface Props {
   value: string;

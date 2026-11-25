@@ -16,9 +16,10 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { REDIS_ERROR_CODES, type KeySummary } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DELETE_PREVIEW_COUNT, DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { errorMessage, notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -380,13 +381,11 @@ export function KeysTab({ cluster, keyCount }: Props) {
         onConfirm={confirmDelete}
         onDismiss={closeModal}
       >
-        <Box>
-          {deleteNames.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-            <div key={name} style={keyNameStyle}>
-              {name}
-            </div>
+        <DeletePreview
+          lines={deleteNames.map((name) => (
+            <span style={keyNameStyle}>{name}</span>
           ))}
-        </Box>
+        />
       </ConfirmModal>
       <ConfirmModal
         visible={modal === "flush"}

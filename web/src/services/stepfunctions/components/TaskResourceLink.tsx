@@ -1,6 +1,5 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
-import { useTableExists } from "../../dynamodb/hooks/useTables.ts";
-import { dynamodbRoutes } from "../../dynamodb/routes.ts";
+import { TableLink } from "../../dynamodb/components/TableLink.tsx";
 import { useFunctionExists } from "../../lambda/hooks/useFunctions.ts";
 import { lambdaRoutes } from "../../lambda/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
@@ -22,11 +21,6 @@ function LambdaTaskLink({ name }: { name: string }) {
   return <ReferenceLink name={name} href={lambdaRoutes.function(name)} missing={missing} />;
 }
 
-function TableTaskLink({ name }: { name: string }) {
-  const missing = useTableExists(name).data === false;
-  return <ReferenceLink name={name} href={dynamodbRoutes.table(name)} missing={missing} />;
-}
-
 const linkOf = (resource: Exclude<TaskResource, { kind: "other" }>) => {
   switch (resource.kind) {
     case "sqs":
@@ -38,7 +32,7 @@ const linkOf = (resource: Exclude<TaskResource, { kind: "other" }>) => {
     case "lambda":
       return <LambdaTaskLink name={resource.name} />;
     case "dynamodb":
-      return <TableTaskLink name={resource.name} />;
+      return <TableLink name={resource.name} />;
   }
 };
 

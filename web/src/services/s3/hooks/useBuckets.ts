@@ -10,7 +10,7 @@ import {
   PutBucketVersioningCommand,
   type BucketLocationConstraint,
 } from "@aws-sdk/client-s3";
-import { isNotFoundError } from "@shared/aws.ts";
+import { existsUnlessMissing } from "@shared/aws.ts";
 import type { Tag } from "@shared/components/TagsModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import {
@@ -39,15 +39,7 @@ export function useBucketExists(bucket: string) {
   const { s3 } = useS3();
   return useQuery({
     queryKey: bucketQueryKey(bucket, "exists"),
-    queryFn: async () => {
-      try {
-        await s3.send(new HeadBucketCommand({ Bucket: bucket }));
-        return true;
-      } catch (error) {
-        if (isNotFoundError(error)) return false;
-        throw error;
-      }
-    },
+    queryFn: () => existsUnlessMissing(() => s3.send(new HeadBucketCommand({ Bucket: bucket }))),
   });
 }
 

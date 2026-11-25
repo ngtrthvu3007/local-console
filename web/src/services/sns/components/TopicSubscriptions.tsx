@@ -1,8 +1,9 @@
 import Header from "@cloudscape-design/components/header";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
+import { lastArnPart } from "@shared/arn.ts";
 import { summarizeFilterPolicy } from "../filterPolicy.ts";
 import { useSubscriptionsOfEndpoint } from "../hooks/useSubscriptions.ts";
-import { topicNameOfArn, type Subscription } from "../topics.ts";
+import { type Subscription } from "../topics.ts";
 import { TopicLink } from "./TopicLink.tsx";
 
 const COLUMNS: TableProps.ColumnDefinition<Subscription>[] = [
@@ -10,7 +11,7 @@ const COLUMNS: TableProps.ColumnDefinition<Subscription>[] = [
     id: "topic",
     header: "Topic",
     isRowHeader: true,
-    cell: (subscription) => <TopicLink name={topicNameOfArn(subscription.topicArn)} />,
+    cell: (subscription) => <TopicLink name={lastArnPart(subscription.topicArn)} />,
   },
   { id: "raw", header: "Raw", cell: (subscription) => (subscription.rawDelivery ? "Yes" : "No") },
   {

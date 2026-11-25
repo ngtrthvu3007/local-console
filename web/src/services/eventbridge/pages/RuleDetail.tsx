@@ -11,11 +11,12 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { StackLink } from "@shared/StackLink.tsx";
+import { isNotFoundError } from "@shared/aws.ts";
 import { DeleteRulesModal } from "../components/DeleteRulesModal.tsx";
 import { RuleDetailsTab } from "../components/RuleDetailsTab.tsx";
 import { TargetsTab } from "../components/TargetsTab.tsx";
 import { RULE_TYPES } from "../constants.ts";
-import { isRuleMissing, useRule, useSetRulesEnabled } from "../hooks/useRules.ts";
+import { useRule, useSetRulesEnabled } from "../hooks/useRules.ts";
 import { useTargets } from "../hooks/useTargets.ts";
 import { ruleType, type Rule } from "../rules.ts";
 import {
@@ -133,7 +134,7 @@ export function RuleDetail() {
 
   const state = pageState(details, {
     ready: Boolean(details.data),
-    notFound: details.isError && isRuleMissing(details.error),
+    notFound: details.isError && isNotFoundError(details.error),
     title: `Rule ${ruleName} not found`,
     backHref: eventbridgeRoutes.rules(bus),
     backText: "View rules",

@@ -5,6 +5,7 @@ import {
   formatDuration,
   nounFor,
   pluralize,
+  usedByText,
 } from "../../src/shared/format.ts";
 
 describe("formatBytes", () => {
@@ -62,5 +63,14 @@ describe("formatDuration", () => {
     expect(formatDuration(59 * 60 + 12)).toBe("59m 12s");
     expect(formatDuration(6 * 3600 + 30)).toBe("6h 0m");
     expect(formatDuration(3 * 86400 + 4 * 3600 + 59)).toBe("3d 4h");
+  });
+});
+
+describe("usedByText", () => {
+  it("lists who uses a resource the way a sentence reads", () => {
+    expect(usedByText(["Query.getTodo"])).toBe("Used by Query.getTodo.");
+    expect(usedByText(["A", "B"])).toBe("Used by A and B.");
+    expect(usedByText(["A", "B", "C"])).toBe("Used by A, B, and C.");
+    expect(usedByText([])).toBeUndefined();
   });
 });

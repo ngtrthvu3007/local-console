@@ -65,8 +65,7 @@ export const createTableSchema = z
     kmsKeyId: kmsKeyIdSchema,
   })
   .superRefine((values, context) => {
-    const addIssue = (path: (string | number)[], message: string) =>
-      context.addIssue({ code: "custom", path, message });
+    const addIssue = issueAdder(context);
     if (!values.partitionKey.name)
       addIssue(["partitionKey", "name"], "Enter a partition key name.");
     // "Customer managed key" mà để mặc định thì thành key AWS managed: bắt chọn key
@@ -146,8 +145,7 @@ export const itemSearchSchema = (keysFor: (indexName: string) => IndexKeys) =>
       descending: z.boolean(),
     })
     .superRefine((values, context) => {
-      const addIssue = (path: (string | number)[], message: string) =>
-        context.addIssue({ code: "custom", path, message });
+      const addIssue = issueAdder(context);
       const keys = keysFor(values.indexName);
 
       if (values.mode === SEARCH_MODES.query) {

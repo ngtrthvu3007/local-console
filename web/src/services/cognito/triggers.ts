@@ -95,13 +95,10 @@ export function toLambdaConfig(
 export const functionOptionArns = (functionArns: string[], currentArn?: string): string[] =>
   currentArn && !functionArns.includes(currentArn) ? [...functionArns, currentArn] : functionArns;
 
-// ARN trigger có thể kèm version / alias: arn:…:function:fn:prod
-export const matchesFunction = isArnOrQualified;
-
 export const triggerLabelsOf = (
   config: LambdaConfigType | undefined,
   functionArn: string,
 ): string[] =>
   poolTriggerRows(config)
-    .filter(({ arn }) => arn && matchesFunction(arn, functionArn))
+    .filter(({ arn }) => arn && isArnOrQualified(arn, functionArn))
     .map(({ label }) => label);

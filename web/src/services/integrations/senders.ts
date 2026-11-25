@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { ListEventSourceMappingsCommand, type LambdaClient } from "@aws-sdk/client-lambda";
 import type { SESv2Client } from "@aws-sdk/client-sesv2";
-import { targetsArn } from "../eventbridge/eventSources.ts";
+import { isArnOrQualified } from "@shared/arn.ts";
 import { functionNameOfMapping } from "../lambda/helpers.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
 import { s3Routes } from "../s3/routes.ts";
@@ -30,7 +30,7 @@ interface SenderClients {
 
 // ARN function có thể kèm version / alias (my-function:prod); queue, topic thì khớp đúng ARN
 const refersTo = (candidate: string | undefined, arn: string) =>
-  candidate !== undefined && targetsArn(candidate, arn, true);
+  candidate !== undefined && isArnOrQualified(candidate, arn);
 
 // S3 notification trỏ tới resource. Function đã có dòng S3 trong bảng Triggers nên không quét
 async function fromS3(s3: S3Client, arn: string): Promise<Sender[]> {

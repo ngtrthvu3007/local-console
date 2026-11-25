@@ -8,7 +8,6 @@ import { ruleSchema, addTargetSchema } from "../../../src/services/eventbridge/s
 import {
   busNameOfArn,
   qualifierOfArn,
-  resourceNameOfArn,
   targetId,
   targetKindOfArn,
 } from "../../../src/services/eventbridge/targets.ts";
@@ -109,8 +108,7 @@ describe("targets", () => {
     expect(targetKindOfArn("arn:aws:kinesis:r:0:stream/s")).toBe("other");
   });
 
-  it("takes the resource name and builds an id of at most 64 characters", () => {
-    expect(resourceNameOfArn("arn:aws:lambda:r:0:function:fn")).toBe("fn");
+  it("builds an id of at most 64 characters", () => {
     expect(targetId("lambda", "arn:aws:lambda:r:0:function:fn")).toBe("lambda-fn");
     expect(targetId("sqs", `arn:aws:sqs:r:0:${"a".repeat(80)}`)).toHaveLength(64);
     // Bus: lấy tên sau "event-bus/", id target không cho phép dấu /

@@ -8,7 +8,7 @@ import {
   type TableDescription,
 } from "@aws-sdk/client-dynamodb";
 import { existsUnlessMissing } from "@shared/aws.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import {
   SSE_TYPE_KMS,
   TABLE_ENCRYPTION,
@@ -184,19 +184,12 @@ export function useDeleteTables() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (tables: string[]) => {
-      const failures: string[] = [];
-
-      for (const table of tables) {
-        try {
-          await client.send(new DeleteTableCommand({ TableName: table }));
-        } catch (error) {
-          failures.push(`${table}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: tables.length - failures.length, failures };
-    },
+    mutationFn: (tables: string[]) =>
+      runEach(
+        tables,
+        (table) => table,
+        (table) => client.send(new DeleteTableCommand({ TableName: table })),
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tablesQueryKey }),
   });
 }

@@ -9,7 +9,7 @@ import {
   type SNSClient,
   type Subscription as ListedSubscription,
 } from "@aws-sdk/client-sns";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import { ATTRIBUTE_TRUE } from "../../sqs/constants.ts";
 import {
   RAW_DELIVERY_PROTOCOLS,
@@ -156,28 +156,18 @@ export const filterPolicyAttributes = ({ filterPolicy, filterScope }: FilterPoli
   };
 };
 
-export const rawDeliveryAttributes = (rawDelivery: boolean) => ({
-  [SUBSCRIPTION_ATTRIBUTES.rawDelivery]: String(rawDelivery),
-});
-
 export function useDeleteSubscriptions(topicName: string) {
   const client = useSNS();
   const invalidate = useInvalidateSubscriptions();
 
   return useMutation({
-    mutationFn: async (subscriptions: readonly Subscription[]) => {
-      const failures: string[] = [];
-
-      for (const subscription of subscriptions) {
-        try {
-          await client.send(new UnsubscribeCommand({ SubscriptionArn: subscription.arn }));
-        } catch (error) {
-          failures.push(`${subscription.endpoint}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: subscriptions.length - failures.length, failures };
-    },
+    mutationFn: (subscriptions: readonly Subscription[]) =>
+      runEach(
+        subscriptions,
+        (subscription) => subscription.endpoint,
+        (subscription) =>
+          client.send(new UnsubscribeCommand({ SubscriptionArn: subscription.arn })),
+      ),
     onSuccess: () => invalidate(topicName),
   });
 }

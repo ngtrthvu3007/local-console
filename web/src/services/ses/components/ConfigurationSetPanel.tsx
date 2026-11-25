@@ -11,8 +11,9 @@ import { EmptyState } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { errorMessage, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { BusLink } from "../../eventbridge/components/BusLink.tsx";
-import { busNameOfArn, resourceNameOfArn } from "../../eventbridge/targets.ts";
+import { busNameOfArn } from "../../eventbridge/targets.ts";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import { eventTypeLabel, toInput } from "../configurationSets.ts";
 import { DESTINATION_KIND_LABELS, SIMULATOR_HINTS } from "../constants.ts";
@@ -29,7 +30,7 @@ function TargetCell({ destination }: { destination: EventDestination }) {
       {DESTINATION_KIND_LABELS[target.kind]}
       {DETAIL_SEPARATOR}
       {target.kind === "sns" ? (
-        <TopicLink name={resourceNameOfArn(target.arn)} />
+        <TopicLink name={lastArnPart(target.arn)} />
       ) : (
         <BusLink name={busNameOfArn(target.arn)} />
       )}

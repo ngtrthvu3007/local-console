@@ -18,6 +18,7 @@ import {
 } from "@aws-sdk/client-kms";
 import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { prettyJson } from "@shared/json.ts";
 import type { KeyManager } from "../constants.ts";
 import type { NewKey } from "../schemas.ts";
 import { KEY_ACTIONS, aliasesOf, isKeyMissing, keyOptions, type KeyAction } from "../keys.ts";
@@ -136,7 +137,6 @@ export function useKeyAction() {
 
 // Key chỉ có policy tên "default"
 const DEFAULT_POLICY = "default";
-const JSON_INDENT = 2;
 
 export function useKeyPolicy(keyId: string) {
   const client = useKMS();
@@ -147,7 +147,7 @@ export function useKeyPolicy(keyId: string) {
       const { Policy = "" } = await client.send(
         new GetKeyPolicyCommand({ KeyId: keyId, PolicyName: DEFAULT_POLICY }),
       );
-      return JSON.stringify(JSON.parse(Policy), null, JSON_INDENT);
+      return prettyJson(JSON.parse(Policy));
     },
   });
 }

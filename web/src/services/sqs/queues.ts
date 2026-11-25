@@ -1,6 +1,5 @@
 import type { QueueAttributeName } from "@aws-sdk/client-sqs";
 import { z } from "zod";
-import { lastArnPart } from "@shared/arn.ts";
 import { DETAIL_SEPARATOR, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
 import { ATTRIBUTE_TRUE, KIBIBYTE, QUEUE_TYPES } from "./constants.ts";
 
@@ -35,8 +34,6 @@ export interface Queue {
 
 // "http://localhost:4566/000000000000/orders" → "orders"
 export const queueNameOfUrl = (url: string) => url.split(URL_PATH_SEPARATOR).pop() ?? url;
-// "arn:aws:sqs:ap-southeast-1:000000000000:orders" → "orders"
-export const queueNameOfArn = lastArnPart;
 
 // URL của queue theo host khác (vd: floci:4566 cho app chạy trong compose), giữ nguyên đường dẫn
 export const queueUrlAt = (base: string, queueUrl: string) =>

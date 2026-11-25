@@ -12,7 +12,7 @@ import {
   type SecretListEntry,
   type SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
-import { matchesFunction } from "../../cognito/triggers.ts";
+import { isArnOrQualified } from "@shared/arn.ts";
 import { useSecretsManager } from "./useSecretsManager.ts";
 
 // Mọi query của Secrets Manager nằm dưới key gốc này
@@ -50,7 +50,7 @@ export async function listRotatedSecrets(client: SecretsManagerClient, functionA
         Name &&
         RotationEnabled &&
         RotationLambdaARN &&
-        matchesFunction(RotationLambdaARN, functionArn)
+        isArnOrQualified(RotationLambdaARN, functionArn)
       )
         names.push(Name);
     }
