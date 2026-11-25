@@ -8,6 +8,7 @@ import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
+import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { isNotFoundError } from "@shared/aws.ts";
 import { pageState } from "@shared/components/PageState.tsx";
@@ -16,6 +17,7 @@ import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
+import { secretSample } from "../codeSamples.ts";
 import { DeleteSecretModal } from "../components/DeleteSecretModal.tsx";
 import { EditDescriptionModal } from "../components/EditDescriptionModal.tsx";
 import { RotationSection } from "../components/RotationSection.tsx";
@@ -83,6 +85,7 @@ function SecretView({ name, secret, query }: ViewProps) {
           </Container>
           <SecretValue name={name} />
           <RotationSection name={name} secret={secret} />
+          <ConnectCard sample={secretSample(name)} />
         </SpaceBetween>
         {modal === MODALS.description && (
           <EditDescriptionModal

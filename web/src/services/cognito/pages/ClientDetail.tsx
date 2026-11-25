@@ -11,6 +11,7 @@ import KeyValuePairs, {
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar } from "@shared/components/ActionBar.tsx";
+import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
@@ -21,6 +22,7 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { hostedUiBlocker } from "../auth.ts";
+import { clientSample } from "../codeSamples.ts";
 import { OpenHostedUiModal } from "../components/OpenHostedUiModal.tsx";
 import { CLIENT_GENERAL_COLUMNS } from "../constants.ts";
 import { isCognitoMissing } from "../hooks/useCognito.ts";
@@ -154,6 +156,7 @@ function ClientView({
           <Container header={<Header variant='h2'>OAuth</Header>}>
             <KeyValuePairs columns={compact ? 1 : GENERAL_COLUMNS} items={oauthItems} />
           </Container>
+          <ConnectCard sample={clientSample(client)} />
         </SpaceBetween>
       </ContentLayout>
       {openingHostedUi && (

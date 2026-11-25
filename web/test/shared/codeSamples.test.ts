@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { clientSample } from "../../src/services/cognito/codeSamples.ts";
 import { tableSample } from "../../src/services/dynamodb/codeSamples.ts";
+import { secretSample } from "../../src/services/secretsmanager/codeSamples.ts";
+import { parameterSample } from "../../src/services/ssm/codeSamples.ts";
 import { brokerUrl } from "../../src/services/mq/codeSamples.ts";
 import { bucketSample } from "../../src/services/s3/codeSamples.ts";
 import { senderOf } from "../../src/services/ses/codeSamples.ts";
@@ -48,6 +51,46 @@ describe("code samples", () => {
   it("sends from an address of a domain identity", () => {
     expect(senderOf("dev@app.local")).toBe("dev@app.local");
     expect(senderOf("app.local")).toBe("noreply@app.local");
+  });
+
+  it("decrypts only SecureString parameters and splits only StringList ones", () => {
+    const secure = parameterSample("/app/db-password", "SecureString");
+    expect(secure.node).toContain("WithDecryption: true");
+    expect(secure.python).toContain("WithDecryption=True");
+    const plain = parameterSample("/app/host", "String");
+    expect(plain.node).not.toContain("WithDecryption");
+    expect(plain.node).not.toContain(".split(");
+    expect(parameterSample("/app/hosts", "StringList").python).toContain('.split(",")');
+  });
+
+  it("reads the secret by its name", () => {
+    const sample = secretSample("prod/db");
+    expect(sample.node).toContain('SecretId: "prod/db"');
+    expect(sample.python).toContain('SecretId="prod/db"');
+  });
+
+  it("adds SECRET_HASH only for a client with a secret, read from the environment", () => {
+    const flows = ["ALLOW_USER_PASSWORD_AUTH"];
+    const publicClient = clientSample({ ClientId: "abc", ExplicitAuthFlows: flows });
+    expect(publicClient.node).toContain('const ClientId = "abc";');
+    expect(publicClient.node).not.toContain("SECRET_HASH");
+    expect(publicClient.node).not.toContain("Turn on");
+
+    const secret = "s3cr3t-value";
+    const withSecret = clientSample({
+      ClientId: "abc",
+      ClientSecret: secret,
+      ExplicitAuthFlows: flows,
+    });
+    expect(withSecret.node).toContain("process.env.COGNITO_CLIENT_SECRET");
+    expect(withSecret.python).toContain('params["SECRET_HASH"]');
+    expect(withSecret.node + withSecret.python).not.toContain(secret);
+  });
+
+  it("says to turn on USER_PASSWORD_AUTH when the client doesn't allow it", () => {
+    expect(clientSample({ ClientId: "abc", ExplicitAuthFlows: [] }).python).toContain(
+      "# Turn on ALLOW_USER_PASSWORD_AUTH",
+    );
   });
 
   it("leaves user and password to fill in the AMQP URL", () => {

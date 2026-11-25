@@ -13,6 +13,9 @@ services:
       FLOCI_HOSTNAME: localhost.floci.io
       # Bật khi deploy CDK có custom resource Node; URL Floci trả về thành https:// (development.md › Traps)
       FLOCI_TLS_ENABLED: ${FLOCI_TLS_ENABLED:-false}
+      # Không cho EC2 gắn Floci vào network VPC riêng: restart Floci lúc còn gắn thì Lambda chạy trên
+      # network VPC, không tới được DNS của Floci, mọi lệnh SDK trong Lambda lỗi (development.md › Traps)
+      FLOCI_SERVICES_EC2_VPC_NETWORKS_ENABLED: "false"
     extra_hosts:
       - "host.docker.internal:host-gateway" # để SNS HTTP subscription tới được app chạy trên máy dev (Linux)
     volumes:

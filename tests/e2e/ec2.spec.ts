@@ -91,8 +91,11 @@ test("lists the instance, filters by state, and reboots from Actions", async ({ 
   await page.getByRole("button", { name: /Filter by state/ }).click();
   await page.getByRole("option", { name: "Stopped" }).click();
   await expect(page.getByRole("link", { name: instanceName })).toHaveCount(0);
-  await page.getByRole("button", { name: /Filter by state/ }).click();
-  await page.getByRole("option", { name: "All states" }).click();
+  // Lọc state ra rỗng là "No matches", không phải "No instances"; Clear filter bỏ cả ô tìm lẫn state
+  await expect(page.getByText("No matches")).toBeVisible();
+  await page.getByRole("button", { name: "Clear filter" }).click();
+  await expect(page.getByRole("button", { name: /Filter by state/ })).toContainText("All states");
+  await expect(page.getByPlaceholder("Find instances by name or ID")).toHaveValue("");
 
   // Nhãn của radio là Instance ID, không có Name: chọn theo dòng
   await page

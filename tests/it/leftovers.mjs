@@ -2,6 +2,7 @@
 //   node it/leftovers.mjs            liệt kê
 //   node it/leftovers.mjs --delete   xoá (chỉ resource có tiền tố của test)
 import { execFileSync } from "node:child_process";
+import { amazonMq, elastiCache } from "./helpers.ts";
 import {
   S3Client,
   ListBucketsCommand,
@@ -213,7 +214,7 @@ for await (const page of paginateDescribeDBInstances({ client: rds }, {})) {
     ...mine((page.DBInstances ?? []).map((database) => database.DBInstanceIdentifier)),
   );
 }
-// Instance Terminated Floci giữ ~1 giờ rồi tự bỏ: chỉ gom instance còn sống
+// Floci giữ instance Terminated (không tự bỏ sau 1 giờ như AWS): chỉ gom instance còn sống
 const instances = [];
 for await (const page of paginateDescribeInstances({ client: ec2 }, {})) {
   for (const { Instances = [] } of page.Reservations ?? []) {
@@ -224,6 +225,29 @@ for await (const page of paginateDescribeInstances({ client: ec2 }, {})) {
     }
   }
 }
+// ElastiCache, MQ không có SDK trong tests: gọi thẳng API như IT (helpers.ts).
+// Replication group xóa cả node của nó; cluster một node (CreateCacheCluster) thì không thuộc group nào
+const tagValues = (xml, tag) =>
+  [...xml.matchAll(new RegExp(`<${tag}>([^<]*)</${tag}>`, "g"))].map((m) => m[1]);
+const replicationGroups = mine(
+  tagValues(
+    (await elastiCache(region, "DescribeReplicationGroups", {})).text,
+    "ReplicationGroupId",
+  ),
+);
+const cacheClusters = mine(
+  (
+    (await elastiCache(region, "DescribeCacheClusters", {})).text.match(
+      /<CacheCluster>[\s\S]*?<\/CacheCluster>/g,
+    ) ?? []
+  )
+    .filter((cluster) => !cluster.includes("<ReplicationGroupId>"))
+    .flatMap((cluster) => tagValues(cluster, "CacheClusterId")),
+);
+// Broker xóa theo id, lọc theo tên
+const brokers = ((await amazonMq(region, "GET", "/v1/brokers")).body?.brokerSummaries ?? [])
+  .filter((broker) => mine([broker.brokerName]).length)
+  .map((broker) => broker.brokerId);
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -251,6 +275,9 @@ console.log(
       parameters,
       databases,
       instances,
+      replicationGroups,
+      cacheClusters,
+      brokers,
       identities,
       configurationSets,
       templates,
@@ -337,6 +364,11 @@ if (process.argv.includes("--delete")) {
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
     );
   if (instances.length) await ec2.send(new TerminateInstancesCommand({ InstanceIds: instances }));
+  for (const id of replicationGroups)
+    await elastiCache(region, "DeleteReplicationGroup", { ReplicationGroupId: id });
+  for (const id of cacheClusters)
+    await elastiCache(region, "DeleteCacheCluster", { CacheClusterId: id });
+  for (const id of brokers) await amazonMq(region, "DELETE", `/v1/brokers/${id}`);
   for (const name of identities)
     await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
   for (const name of configurationSets)

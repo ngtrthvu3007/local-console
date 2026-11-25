@@ -51,3 +51,11 @@ export async function choose(
   await dialog.getByRole("button", { name: field }).last().click();
   await page.getByRole("option", option).click();
 }
+
+// Modal xóa bắt gõ chữ xác nhận ghi ở placeholder
+export async function confirmDelete(dialog: Locator) {
+  const confirm = dialog.getByRole("textbox");
+  if (await confirm.count())
+    await confirm.fill((await confirm.getAttribute("placeholder")) ?? "confirm");
+  await dialog.getByRole("button", { name: /Delete/ }).click();
+}

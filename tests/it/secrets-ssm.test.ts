@@ -128,6 +128,11 @@ describe("secrets", () => {
     );
     expect(RotationEnabled).toBe(true);
     expect(LastRotatedDate).toBeDefined();
+
+    // Tab Triggers của Lambda tìm secret theo RotationLambdaARN trong ListSecrets, không DescribeSecret
+    const { SecretList = [] } = await secrets.send(new ListSecretsCommand({}));
+    const listed = SecretList.find((secret) => secret.Name === rotatedName);
+    expect(listed?.RotationLambdaARN).toBe(FunctionArn);
   }, 180_000);
 });
 

@@ -12,6 +12,7 @@ export const PARAMETER_TYPES = {
 } as const;
 export type ParameterType = keyof typeof PARAMETER_TYPES;
 export const SECURE_STRING: ParameterType = "SecureString";
+export const STRING_LIST: ParameterType = "StringList";
 
 // DeleteParameters nhận tối đa 10 tên một lần
 export const DELETE_PARAMETERS_BATCH = 10;

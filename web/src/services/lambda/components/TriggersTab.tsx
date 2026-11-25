@@ -62,6 +62,7 @@ const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
   eventbridge: "rule",
   scheduler: "schedule",
   cognito: "user pool",
+  secretsmanager: "secret",
 };
 
 // Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
