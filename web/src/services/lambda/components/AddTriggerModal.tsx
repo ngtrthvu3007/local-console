@@ -17,6 +17,7 @@ import { useTables } from "../../dynamodb/hooks/useTables.ts";
 import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { useStreams } from "../../kinesis/hooks/useStreams.ts";
 import { kinesisRoutes } from "../../kinesis/routes.ts";
+import { bucketOptions } from "../../s3/helpers.ts";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import { sqsRoutes } from "../../sqs/routes.ts";
@@ -112,10 +113,6 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
     disabled: linked(queue.arn),
     description: linked(queue.arn) ? ALREADY_TRIGGERED : queue.arn,
   }));
-  const bucketOptions = (buckets.data ?? []).map((bucket) => ({
-    value: bucket.Name!,
-    label: bucket.Name!,
-  }));
 
   // Mỗi nguồn là một cụm field: bọc SpaceBetween vì fragment làm FormModal mất khoảng cách giữa các field
   const s3Fields = (
@@ -126,7 +123,7 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
         label='Bucket'
         placeholder='Choose a bucket'
         empty='No buckets'
-        options={bucketOptions}
+        options={bucketOptions(buckets.data)}
       />
       <FormMultiselect
         control={form.control}

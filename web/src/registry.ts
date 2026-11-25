@@ -2,6 +2,7 @@ import type { RouteObject } from "react-router";
 import type { Icon } from "@tabler/icons-react";
 import type { ServiceCategory } from "@shared/constants.ts";
 import { cloudformationService } from "./services/cloudformation/index.tsx";
+import { cloudfrontService } from "./services/cloudfront/index.tsx";
 import { cognitoService } from "./services/cognito/index.tsx";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { ec2Service } from "./services/ec2/index.tsx";
@@ -43,6 +44,7 @@ export const services: ServiceDefinition[] = [
   ec2Service,
   dynamodbService,
   rdsService,
+  cloudfrontService,
   sqsService,
   snsService,
   kinesisService,

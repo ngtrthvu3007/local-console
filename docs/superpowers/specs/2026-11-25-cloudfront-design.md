@@ -1,6 +1,6 @@
 # CloudFront — Thiết kế
 
-> Ngày: 2026-11-25 · Trạng thái: chờ duyệt · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 4
+> Ngày: 2026-11-25 · Trạng thái: đã làm · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 4
 
 ## 1. Mục tiêu
 
@@ -39,13 +39,13 @@ Mọi thao tác gọi thẳng Floci bằng AWS SDK qua proxy `/aws`. **Server kh
 
 ### Để sau
 
-| Tính năng                                                                   | Lý do                                                                                                                                                |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Xem path của invalidation cũ                                                | `ListInvalidations` không trả path; phải gọi `GetInvalidation` từng dòng (trái nguyên tắc). Floci không cache nên invalidation cũ ít đáng xem (đoán) |
-| Chọn policy có sẵn (cache / origin request / response headers) cho behavior | User chốt chỉ hiện tên. Response headers policy có áp thật (CORS, 7 #8): **cần user xác nhận** có muốn cho chọn không                                |
-| Origin group (failover)                                                     | (đoán) ít thử ở local; chưa kiểm Floci                                                                                                               |
-| Signed URL / cookie (trusted key group)                                     | Chưa kiểm Floci có kiểm chữ ký không                                                                                                                 |
-| Cảnh báo khi xóa bucket đang được distribution dùng                         | Origin đã hiện "(not found)" sau khi xóa (`BucketLink`); cảnh báo trước cần quét distribution trong modal xóa của S3                                 |
+| Tính năng                                                                   | Lý do                                                                                                                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Xem path của invalidation cũ                                                | `ListInvalidations` không trả path; phải gọi `GetInvalidation` từng dòng (trái nguyên tắc). Floci không cache nên invalidation cũ ít đáng xem (đoán)                      |
+| Chọn policy có sẵn (cache / origin request / response headers) cho behavior | User chốt chỉ hiện tên. Response headers policy có áp thật (CORS, 7 #8) nhưng frontend gọi API cùng distribution (`/api/*`) không cần CORS: để sau (user chốt 2026-11-25) |
+| Origin group (failover)                                                     | (đoán) ít thử ở local; chưa kiểm Floci                                                                                                                                    |
+| Signed URL / cookie (trusted key group)                                     | Chưa kiểm Floci có kiểm chữ ký không                                                                                                                                      |
+| Cảnh báo khi xóa bucket đang được distribution dùng                         | Origin đã hiện "(not found)" sau khi xóa (`BucketLink`); cảnh báo trước cần quét distribution trong modal xóa của S3                                                      |
 
 ### Không làm
 
@@ -213,13 +213,13 @@ Invalidations (2)                                    [↻] [Create invalidation]
 | Chi tiết                                            | `GetDistribution` (cấu hình + ETag); tab Behaviors thêm ba `List*Policies`          |
 | Tạo                                                 | `CreateDistribution`                                                                |
 | Sửa (settings, origin, behavior, thứ tự, bật / tắt) | `GetDistributionConfig` → áp thay đổi → `UpdateDistribution(IfMatch: ETag vừa đọc)` |
-| Xóa                                                 | `GetDistribution` (ETag mới) → `DeleteDistribution(IfMatch)`                        |
+| Xóa                                                 | `GetDistributionConfig` (ETag mới) → `DeleteDistribution(IfMatch)`                  |
 | Invalidation                                        | `ListInvalidations`, `CreateInvalidation`                                           |
 | `BucketLink`                                        | `HeadBucket` (`useBucketExists` có sẵn)                                             |
 
 **Sửa cấu hình.** CloudFront bắt gửi lại **toàn bộ** cấu hình kèm ETag. Mỗi lần lưu, hook `useUpdateDistribution` đọc `GetDistributionConfig` ngay lúc đó, áp một hàm thuần (`distributions.ts`: `withSettings`, `withOrigin`, `withoutOrigin`, `withBehavior`, `withoutBehavior`, `moveBehavior`, `withEnabled`) rồi gửi `UpdateDistribution` với ETag vừa đọc. Hàm thuần tìm origin theo ID, behavior theo path, nên thay đổi người khác vừa làm (CDK deploy lại, app gọi API) ở phần khác được giữ. Floci từ chối ETag cũ (`InvalidIfMatchVersion`, 7 #5) nên hai lần lưu chen nhau không ghi đè lẫn nhau. Origin / behavior đang sửa đã bị xóa ở cấu hình mới → lỗi "… no longer exists. Refresh the page." Không lưu nháp: modal điền từ dữ liệu trang đang có.
 
-**URL local.** `localUrl(flociPublicUrl, id)`: lấy `flociPublicUrl` (`useLoadedConfig`), đổi host thành `<id viết thường>.cloudfront.<host>` → `http://e2abcdef123456.cloudfront.localhost:4566/`. Floci nhận cả `*.cloudfront.localhost` và `*.cloudfront.localhost.floci.io` (7 #2).
+**URL local.** `localUrl(flociPublicUrl, id)`: luôn là host `<id viết thường>.cloudfront.localhost`, chỉ lấy port của `flociPublicUrl` (`useLoadedConfig`) → `http://e2abcdef123456.cloudfront.localhost:4566/`. Không dựng từ host của `flociPublicUrl`: đặt `http://127.0.0.1:4566` sẽ ra `….cloudfront.127.0.0.1` hỏng. Floci nhận cả `*.cloudfront.localhost` và `*.cloudfront.localhost.floci.io` (7 #2).
 
 **Bucket của origin.** `bucketOfOriginDomain(domain)`: khớp `<bucket>.s3.amazonaws.com` và `<bucket>.s3.<region>.amazonaws.com` (hai dạng Floci phục vụ từ S3 của nó, 7 #3). Domain khác (kể cả website endpoint `s3-website-…`) không phải bucket của Floci.
 
@@ -230,7 +230,7 @@ Invalidations (2)                                    [↻] [Create invalidation]
 | Tình huống                                           | Hiển thị                                                                               |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Distribution không có                                | "Distribution … not found" kèm link về danh sách                                       |
-| Lưu khi cấu hình vừa đổi (`InvalidIfMatchVersion`)   | Lỗi "The distribution changed while saving. Try again." và tải lại trang               |
+| Lưu khi cấu hình vừa đổi (`InvalidIfMatchVersion`)   | Lỗi "The distribution changed while saving. Try again." (lần lưu sau tự đọc lại)       |
 | Xóa distribution đang bật                            | Menu khóa với lý do (3.1); Floci trả 409 `DistributionNotDisabled` nếu gọi từ chỗ khác |
 | Xóa origin đang được behavior dùng                   | Menu khóa với lý do (3.2)                                                              |
 | Origin ID trùng, path pattern trùng, origin path sai | Form chặn (Floci nhận, 7 #11)                                                          |
@@ -310,7 +310,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-25 qua proxy `/aws` (REST-XML `/202
 | 12  | **Thứ tự behavior**              | **Thêm:** khớp theo thứ tự trong danh sách: `/a/*` đứng trước `/a/b/*` thì `/a/b/c.txt` đi theo `/a/*` (như precedence của AWS)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 13  | **Region**                       | **Thêm:** dữ liệu toàn cục: ký bằng `us-east-1` hay `ap-southeast-1` (region console, SDK dùng khi đặt endpoint) đều thấy cùng danh sách                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
-**Chưa kiểm:** Lambda container (dùng DNS của Floci) có mở được URL local không; origin group; signed URL; path pattern có `?`.
+**Chưa kiểm:** Lambda container (dùng DNS của Floci) có mở được URL local không; Node / Python trên Windows và Linux có resolve `*.localhost` không (trình duyệt thì có trên mọi hệ điều hành; script deploy gọi URL local có thể lỗi); origin group; signed URL; path pattern có `?`.
 
 ---
 
@@ -325,7 +325,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-25 qua proxy `/aws` (REST-XML `/202
 7. Invalidations.
 8. Nối S3 (khối 3.7, `?bucket=`), StackLink và `resourceLinks.ts`.
 9. Test: integration `tests/it/cloudfront.test.ts` (tạo → URL local trả root object, SPA deep link trả 200, behavior `/api/*` sang bucket thứ hai, update với ETag cũ bị từ chối, invalidation `Completed`, tắt → 404, xóa); E2E một luồng chính (tạo bucket + `index.html` bằng SDK → Create distribution từ trang bucket có SPA → URL local trả 200 qua `page.request` → thêm origin + behavior → Create invalidation → Disable → Delete; không cố ý trỏ bucket đã xóa, vì `HeadBucket` 404 làm trình duyệt ghi `console.error` và E2E fail (development.md › Traps)); danh sách, chi tiết và Create distribution vào `tests/ui/responsive.spec.ts`; `tests/it/leftovers.mjs`: distribution có origin S3 là bucket `lc-it-*` / `lc-e2e-*` → tắt rồi xóa (ETag).
-10. development.md › Traps: URL local chỉ dùng từ máy dev (7 #2); host private cần `FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS`, không có trong compose (7 #6); website endpoint S3 ra internet (7 #6); Floci không kiểm cấu hình, console chặn (7 #11). README: dòng CloudFront trong bảng Features.
+10. development.md › Traps: URL local chỉ dùng từ máy dev (7 #2), Node / Python trên Windows / Linux có thể không resolve `*.localhost` (chưa kiểm); host private cần `FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS`, không có trong compose (7 #6); website endpoint S3 ra internet (7 #6); Floci không kiểm cấu hình, console chặn (7 #11). README: dòng CloudFront trong bảng Features.
 
 **Kiểm tra:** chạy trên Floci thật, chụp 1440, 1024, 390 và 320px, light / dark, không trang nào cuộn ngang.
 
@@ -343,10 +343,10 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-25 qua proxy `/aws` (REST-XML `/202
 
 **Host của URL local**
 
-| Cách                                                                                | Đánh đổi                                                                        | Chọn                    |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------- |
-| **A. `<id>.cloudfront.<host của FLOCI_PUBLIC_URL>`** (`…cloudfront.localhost:4566`) | Không cần DNS (chạy offline); theo đúng địa chỉ console đã cấu hình cho máy dev | ✅ (đề xuất của Claude) |
-| B. `<id>.cloudfront.localhost.floci.io:4566` (như roadmap)                          | Cần DNS công khai; offline không thêm được vào `/etc/hosts` (không có wildcard) |                         |
+| Cách                                                           | Đánh đổi                                                                         | Chọn                    |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------- |
+| **A. `<id>.cloudfront.localhost:<port của FLOCI_PUBLIC_URL>`** | Không cần DNS (chạy offline); host cố định nên `FLOCI_PUBLIC_URL` là IP vẫn đúng | ✅ (đề xuất của Claude) |
+| B. `<id>.cloudfront.localhost.floci.io:4566` (như roadmap)     | Cần DNS công khai; offline không thêm được vào `/etc/hosts` (không có wildcard)  |                         |
 
 ## 10. Quyết định
 
@@ -357,8 +357,9 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-25 qua proxy `/aws` (REST-XML `/202
 | `allowed-private-origin-hosts` không thêm vào compose; chỉ gợi ý trong form và ghi Trap                                                | User chốt 2026-11-25                                                                            |
 | Không làm Functions / Lambda@Edge, tạo / sửa policy, OAC, logging, WAF, ACM / alternate domain                                         | User chốt 2026-11-25                                                                            |
 | Route `/cloudfront/distributions`, `…/create?bucket=`, `…/:id?tab=` (General, Origins, Behaviors, Invalidations)                       | Đề xuất của Claude: như EC2; ID distribution không có `/`; tab giống AWS console                |
-| Sửa bằng đọc lại cấu hình lúc lưu + ETag vừa đọc; ETag lệch → báo "changed while saving", tải lại                                      | Đề xuất của Claude (mục 9)                                                                      |
-| URL local dựng từ `flociPublicUrl`: `<id>.cloudfront.localhost:4566`                                                                   | Đề xuất của Claude (mục 9)                                                                      |
+| Sửa bằng đọc lại cấu hình lúc lưu + ETag vừa đọc; ETag lệch → báo "changed while saving, try again"                                    | Đề xuất của Claude (mục 9)                                                                      |
+| URL local `<id>.cloudfront.localhost` + port của `flociPublicUrl`                                                                      | Đề xuất của Claude (mục 9), user duyệt 2026-11-25                                               |
+| Không cho chọn response headers policy; mô tả ô Origin domain vẫn gợi ý biến môi trường host private (ngoài Trap)                      | User duyệt đề xuất 2026-11-25: không có thì 502 mà lý do chỉ nằm trong log Floci                |
 | Cột danh sách: ID, Description, Local URL, Origins, Status, Last modified                                                              | Đề xuất của Claude: giống AWS, bỏ cột Floci không có (alternate domain); thêm Local URL         |
 | Status hiện Enabled / Disabled; không hiện `Status` của Floci                                                                          | Đề xuất của Claude: Floci luôn `Deployed`                                                       |
 | Sidebar nhóm mới "Networking & content delivery", mục Distributions; invalidation trong trang distribution                             | Đề xuất của Claude: như AWS console; API Gateway sau này cũng vào nhóm này                      |

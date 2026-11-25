@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import Alert from "@cloudscape-design/components/alert";
@@ -13,6 +13,7 @@ import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { errorMessage, notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   DEFAULT_AMI_ARCHITECTURE,
@@ -78,19 +79,7 @@ export function LaunchInstance() {
       // Lỗi đã báo bằng notifyOutcome; chỉ cần giữ promise để biết khi nào gửi xong
       .catch(() => undefined),
   );
-  // Form kiểm tra bất đồng bộ nên isPending chưa kịp bật khi lần bấm thứ hai tới: không có ref này,
-  // bấm đúp Launch tạo hai instance (đã gặp ở E2E)
-  const submitting = useRef(false);
-  const submitOnce = async () => {
-    if (submitting.current) return;
-    submitting.current = true;
-
-    try {
-      await submit();
-    } finally {
-      submitting.current = false;
-    }
-  };
+  const submitOnce = useSubmitOnce(submit);
 
   const actions = (
     <ResponsiveActions footer>

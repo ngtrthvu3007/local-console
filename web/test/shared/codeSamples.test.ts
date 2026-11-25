@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { distributionSample } from "../../src/services/cloudfront/codeSamples.ts";
 import { clientSample } from "../../src/services/cognito/codeSamples.ts";
 import { tableSample } from "../../src/services/dynamodb/codeSamples.ts";
 import { streamSample } from "../../src/services/kinesis/codeSamples.ts";
@@ -102,6 +103,15 @@ describe("code samples", () => {
     expect(clientSample({ ClientId: "abc", ExplicitAuthFlows: [] }).python).toContain(
       "# Turn on ALLOW_USER_PASSWORD_AUTH",
     );
+  });
+
+  it("invalidates the whole distribution like a deploy script", () => {
+    const sample = distributionSample("E2ABC");
+    expect(sample.node).toContain("CreateInvalidationCommand");
+    expect(sample.node).toContain('"E2ABC"');
+    expect(sample.node).toContain('"/*"');
+    expect(sample.python).toContain("create_invalidation");
+    expect(sample.python).toContain('"E2ABC"');
   });
 
   it("fills the key and picks the calls by key usage", () => {

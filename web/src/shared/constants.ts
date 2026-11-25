@@ -74,6 +74,7 @@ export const SERVICE_CATEGORIES = {
   compute: { label: "Compute", color: "#ED7100" },
   storage: { label: "Storage", color: "#3F8624" },
   database: { label: "Database", color: "#2E27AD" },
+  networking: { label: "Networking & content delivery", color: "#8C4FFF" },
   integration: { label: "Application integration", color: "#E7157B" },
   security: { label: "Security, identity, & compliance", color: "#DD344C" },
   business: { label: "Business applications", color: "#DD344C" },
