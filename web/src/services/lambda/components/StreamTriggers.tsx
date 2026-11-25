@@ -13,6 +13,7 @@ import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   ALREADY_TRIGGERED,
@@ -169,6 +170,10 @@ export function StreamTriggersTable({ description, compact, ...modalProps }: Tab
   ];
 
   const addButton = <Button onClick={() => setAdding(true)}>Add trigger</Button>;
+  const barActions: BarAction[] = [
+    refreshAction(triggers),
+    { id: "add", text: "Add trigger", onClick: () => setAdding(true) },
+  ];
 
   return (
     <SpaceBetween size='l'>
@@ -189,7 +194,7 @@ export function StreamTriggersTable({ description, compact, ...modalProps }: Tab
             description={
               triggers.data && count === 0 ? "No Lambda reads this stream yet." : description
             }
-            actions={addButton}
+            actions={<ActionBar compact={compact} actions={barActions} />}
           >
             Lambda triggers
           </Header>

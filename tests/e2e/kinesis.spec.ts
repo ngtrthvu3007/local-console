@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { DeleteStreamCommand, KinesisClient } from "@aws-sdk/client-kinesis";
+import { CreateStreamCommand, DeleteStreamCommand, KinesisClient } from "@aws-sdk/client-kinesis";
 // Có sẵn qua mọi client AWS SDK (phụ thuộc chung), không khai báo riêng trong package.json
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { consoleConfig, viaConsole } from "../it/helpers.ts";
@@ -16,10 +16,16 @@ const TEXT_DATA = "Xin chào Việt Nam";
 
 test.describe.configure({ mode: "serial" });
 
+let config: ReturnType<typeof viaConsole>;
+// SDK Kinesis trên Node mặc định HTTP/2, proxy /aws của console chỉ nói HTTP/1.1 (gọi thẳng Floci thì được) (spec 7 #13)
+const kinesisClient = () => new KinesisClient({ ...config, requestHandler: new NodeHttpHandler() });
+
+test.beforeAll(async () => {
+  config = viaConsole((await consoleConfig()).region);
+});
+
 test.afterAll(async () => {
-  const config = viaConsole((await consoleConfig()).region);
-  // SDK Kinesis trên Node mặc định HTTP/2, proxy /aws của console chỉ nói HTTP/1.1 (gọi thẳng Floci thì được) (spec 7 #13)
-  await new KinesisClient({ ...config, requestHandler: new NodeHttpHandler() })
+  await kinesisClient()
     .send(new DeleteStreamCommand({ StreamName: stream, EnforceConsumerDeletion: true }))
     .catch(() => undefined);
 });
@@ -81,10 +87,43 @@ test("puts records and reads them back in the Data viewer", async ({ page }) => 
   await expect(page.getByRole("row", { name: /user-1/ })).toBeVisible();
 });
 
+// Review 2026-11-25: Latest rỗng vẫn đọc tiếp được, record gửi sau đó hiện ở Next records
+test("reads records that arrive after a read from Latest", async ({ page }) => {
+  await page.goto(`/kinesis/streams/${stream}`);
+  await page.getByRole("button", { name: /Trim horizon/ }).click();
+  await page.getByRole("option", { name: "Latest" }).click();
+  await page.getByRole("button", { name: "Get records" }).click();
+  await expect(page.getByText("No records from this position.")).toBeVisible();
+
+  await putRecord(page, "user-3", "sau Latest");
+  await page.getByRole("button", { name: "Next records" }).click();
+  await expect(page.getByRole("row", { name: /user-3/ })).toContainText("sau Latest");
+});
+
 test("shows the configuration and the open shard", async ({ page }) => {
   await page.goto(`/kinesis/streams/${stream}?tab=configuration`);
   await expect(page.getByText(`:stream/${stream}`)).toBeVisible();
   await expect(page.getByRole("row", { name: /shardId-000000000000/ })).toContainText("Open");
+});
+
+test("refreshes the Lambda triggers of the stream", async ({ page }) => {
+  await page.goto(`/kinesis/streams/${stream}?tab=lambda-triggers`);
+  // Một nút của header trang, một nút của bảng trigger
+  await expect(page.getByRole("button", { name: "Refresh" })).toHaveCount(2);
+});
+
+// Review 2026-11-25: xóa từ trang chi tiết phải báo xong và về danh sách, không kẹt ở "not found"
+test("deletes a stream from its detail page", async ({ page }) => {
+  const other = uniqueName("kinesis");
+  await kinesisClient().send(
+    new CreateStreamCommand({ StreamName: other, StreamModeDetails: { StreamMode: "ON_DEMAND" } }),
+  );
+
+  await page.goto(`/kinesis/streams/${other}`);
+  await page.getByRole("button", { name: "Delete" }).click();
+  await confirmDelete(page.getByRole("dialog"));
+  await expect(flash(page)).toContainText("Deleted");
+  await expect(page).toHaveURL(/\/kinesis\/streams$/);
 });
 
 test("deletes the stream from the list", async ({ page }) => {

@@ -12,7 +12,7 @@ import {
 } from "@aws-sdk/client-kinesis";
 import { ListEventSourceMappingsCommand } from "@aws-sdk/client-lambda";
 import { allPages, orEmptyWhenNotFound } from "@shared/aws.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import type { NewStream } from "../schemas.ts";
 import { useLambda } from "../../lambda/hooks/useLambda.ts";
 import { useKinesis } from "./useKinesis.ts";
@@ -20,6 +20,7 @@ import { useKinesis } from "./useKinesis.ts";
 // Mọi query của Kinesis nằm dưới key gốc này
 const KINESIS_QUERY_ROOT = "kinesis";
 const streamsQueryKey = [KINESIS_QUERY_ROOT, "streams"];
+const WITH_TRIGGERS = "with-triggers";
 const streamQueryKey = (name: string, part?: string) =>
   part ? [KINESIS_QUERY_ROOT, "stream", name, part] : [KINESIS_QUERY_ROOT, "stream", name];
 
@@ -144,7 +145,7 @@ export function useStreamsWithTriggers(streams: readonly Pick<StreamRow, "name" 
   const { lambda } = useLambda();
 
   return useQuery({
-    queryKey: [KINESIS_QUERY_ROOT, "with-triggers", streams.map((stream) => stream.arn).join()],
+    queryKey: [KINESIS_QUERY_ROOT, WITH_TRIGGERS, streams.map((stream) => stream.arn).join()],
     queryFn: async () => {
       const checks = await Promise.all(
         streams.map(async (stream) => {
@@ -164,22 +165,20 @@ export function useDeleteStreams() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (names: readonly string[]) => {
-      const failures: string[] = [];
-
-      for (const name of names) {
-        try {
-          // Stream còn consumer (enhanced fan-out) thì AWS từ chối xóa nếu không bật cờ này
-          await client.send(
-            new DeleteStreamCommand({ StreamName: name, EnforceConsumerDeletion: true }),
-          );
-        } catch (error) {
-          failures.push(`${name}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: names.length - failures.length, failures };
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KINESIS_QUERY_ROOT] }),
+    mutationFn: (names: readonly string[]) =>
+      runEach(
+        names,
+        (name) => name,
+        // Stream còn consumer (enhanced fan-out) thì AWS từ chối xóa nếu không bật cờ này
+        (name) =>
+          client.send(new DeleteStreamCommand({ StreamName: name, EnforceConsumerDeletion: true })),
+      ),
+    // Không đụng query chi tiết: xóa từ trang chi tiết mà tải lại stream vừa xóa thì trang thành
+    // "not found", gỡ modal trước khi kịp báo xong và về danh sách
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: streamsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: [KINESIS_QUERY_ROOT, WITH_TRIGGERS] }),
+      ]),
   });
 }

@@ -48,10 +48,11 @@ export function useRecords(stream: string) {
     },
     onSuccess: ({ fresh, records, nextIterator }) =>
       setPage((previous) =>
-        // Next records hết record: giữ trang đang xem, chỉ khóa nút
+        // Next records hết record: giữ trang đang xem, chỉ khóa nút. Lần đọc mới rỗng (vd Latest)
+        // vẫn cho Next records để thấy record gửi tới sau
         !fresh && !records.length && previous
           ? { ...previous, atEnd: true }
-          : { records, nextIterator, atEnd: !records.length || !nextIterator },
+          : { records, nextIterator, atEnd: !nextIterator },
       ),
   });
 

@@ -291,6 +291,7 @@ const kinesis = new KinesisClient({ ...config, requestHandler: new NodeHttpHandl
 const streams = [];
 for await (const page of paginateListStreams({ client: kinesis }, {})) {
   streams.push(...mine(page.StreamNames ?? []));
+}
 // Distribution không có tên: nhận ra qua origin S3 là bucket của test (<bucket>.s3[.<region>].amazonaws.com)
 const distributions = [];
 for await (const page of paginateListDistributions({ client: cloudfront }, {})) {
