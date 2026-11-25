@@ -14,7 +14,7 @@ import {
 } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { reformatJson } from "@shared/json.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -30,11 +30,11 @@ import {
   isLocalUrl,
   PROTOCOLS,
   RAW_DELIVERY_PROTOCOLS,
+  SUBSCRIPTION_ATTRIBUTES,
   type Protocol,
 } from "../constants.ts";
 import {
   filterPolicyAttributes,
-  rawDeliveryAttributes,
   useCreateSubscription,
   useDeleteSubscriptions,
   useSetSubscriptionAttributes,
@@ -274,7 +274,7 @@ export function EditRawDeliveryModal({
       loading={setRawDelivery.isPending}
       onSubmit={() =>
         setRawDelivery.mutate(
-          rawDeliveryAttributes(rawDelivery),
+          { [SUBSCRIPTION_ATTRIBUTES.rawDelivery]: String(rawDelivery) },
           notifyOutcome({
             success: "Saved raw message delivery",
             errorHeader: "Couldn't save raw message delivery",
@@ -307,7 +307,6 @@ export function DeleteSubscriptionsModal({
   onDone: () => void;
 }) {
   const deleteSubscriptions = useDeleteSubscriptions(topicName);
-  const hiddenCount = subscriptions.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteSubscriptions.mutate(
@@ -329,12 +328,7 @@ export function DeleteSubscriptionsModal({
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      <Box>
-        {subscriptions.slice(0, DELETE_PREVIEW_COUNT).map((subscription) => (
-          <div key={subscription.arn}>{subscription.endpoint}</div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
+      <DeletePreview lines={subscriptions.map((subscription) => subscription.endpoint)} />
     </ConfirmModal>
   );
 }

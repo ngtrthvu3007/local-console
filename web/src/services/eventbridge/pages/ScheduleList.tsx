@@ -20,6 +20,7 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { CreateGroupModal } from "../components/CreateGroupModal.tsx";
 import { EnabledState } from "../components/EnabledState.tsx";
 import { DeleteGroupModal } from "../components/DeleteGroupModal.tsx";
@@ -29,14 +30,14 @@ import { DEFAULT_SCHEDULE_GROUP } from "../constants.ts";
 import { useScheduleGroups, useSchedules, useSetSchedulesEnabled } from "../hooks/useSchedules.ts";
 import { SEARCH_PARAMS, eventbridgeRoutes, schedulesCrumbs } from "../routes.ts";
 import type { ScheduleRow } from "../schedules.ts";
-import { TARGET_KINDS, resourceNameOfArn, targetKindOfArn } from "../targets.ts";
+import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
 
 const NAME_FIELD = "name";
 const ALL_GROUPS = "";
 const PAGE_SIZE = 50;
 
 const targetLabel = (row: ScheduleRow) =>
-  `${TARGET_KINDS[targetKindOfArn(row.targetArn)]} ${resourceNameOfArn(row.targetArn)}`;
+  `${TARGET_KINDS[targetKindOfArn(row.targetArn)]} ${lastArnPart(row.targetArn)}`;
 const rowKey = (row: ScheduleRow) => `${row.group}/${row.name}`;
 
 type Modal = "delete" | "createGroup" | "deleteGroup" | null;

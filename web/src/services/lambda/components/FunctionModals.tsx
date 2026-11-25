@@ -1,10 +1,9 @@
 import { useState } from "react";
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
 import Checkbox from "@cloudscape-design/components/checkbox";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
@@ -33,7 +32,6 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
   const referenced = useReferencedNames(functions).data ?? [];
   const cognitoUses = useCognitoTriggerUses(functions).data ?? [];
   const rotationUses = useRotationUses(functions).data ?? [];
-  const hiddenCount = functions.length - DELETE_PREVIEW_COUNT;
   const logGroupLabel =
     functions.length === 1 ? `log group ${functions[0].logGroup}` : "their log groups";
 
@@ -47,15 +45,6 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
       }),
     );
 
-  const preview = (
-    <Box>
-      {functions.slice(0, DELETE_PREVIEW_COUNT).map((item) => (
-        <div key={item.name}>{item.name}</div>
-      ))}
-      {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-    </Box>
-  );
-
   return (
     <ConfirmModal
       visible
@@ -66,7 +55,7 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      {preview}
+      <DeletePreview lines={functions.map((item) => item.name)} />
       <Checkbox
         checked={deleteLogGroups}
         onChange={({ detail }) => setDeleteLogGroups(detail.checked)}

@@ -1,8 +1,7 @@
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { keyLabel, type Item } from "../itemJson.ts";
@@ -20,7 +19,6 @@ interface Props {
 export function DeleteItemsModal({ table, items, onDismiss, onDone }: Props) {
   const keys = keySchemaOf(table);
   const deleteItems = useDeleteItems(table.TableName!, keys);
-  const hiddenCount = items.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteItems.mutate(
@@ -32,15 +30,6 @@ export function DeleteItemsModal({ table, items, onDismiss, onDone }: Props) {
       }),
     );
 
-  const preview = (
-    <Box>
-      {items.slice(0, DELETE_PREVIEW_COUNT).map((item) => (
-        <div key={keyLabel(item, keys)}>{keyLabel(item, keys)}</div>
-      ))}
-      {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-    </Box>
-  );
-
   return (
     <ConfirmModal
       visible
@@ -51,7 +40,7 @@ export function DeleteItemsModal({ table, items, onDismiss, onDone }: Props) {
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      {preview}
+      <DeletePreview lines={items.map((item) => keyLabel(item, keys))} />
       <Alert type='warning'>This can't be undone.</Alert>
     </ConfirmModal>
   );

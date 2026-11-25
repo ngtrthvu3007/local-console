@@ -1,8 +1,7 @@
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
 import type { IdentityInfo } from "@aws-sdk/client-sesv2";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useDeleteIdentities } from "../hooks/useIdentities.ts";
@@ -17,7 +16,6 @@ interface Props {
 export function DeleteIdentitiesModal({ identities, onDismiss, onDone }: Props) {
   const deleteIdentities = useDeleteIdentities();
   const names = identities.flatMap((identity) => identity.IdentityName ?? []);
-  const hiddenCount = names.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteIdentities.mutate(
@@ -39,12 +37,7 @@ export function DeleteIdentitiesModal({ identities, onDismiss, onDone }: Props) 
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      <Box>
-        {names.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-          <div key={name}>{name}</div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
+      <DeletePreview lines={names} />
       <Alert type='warning'>Your app can't send from these addresses after you delete them.</Alert>
     </ConfirmModal>
   );

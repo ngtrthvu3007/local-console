@@ -27,12 +27,6 @@ export interface KeyPage {
   cursor: string | null; // null = đã quét hết DB
 }
 
-interface KeyBase {
-  name: string;
-  type: string;
-  ttl: number | null;
-}
-
 interface HashEntry {
   field: string;
   value: string;
@@ -50,12 +44,12 @@ interface ScoredMember {
 
 // Một trang giá trị của key. Collection có cursor để Load more; null = hết
 export type KeyValue =
-  | (KeyBase & { kind: "string"; length: number; value: string | null }) // null: binary hoặc quá lớn
-  | (KeyBase & { kind: "hash"; length: number; items: HashEntry[]; cursor: string | null })
-  | (KeyBase & { kind: "list"; length: number; items: ListElement[]; cursor: string | null })
-  | (KeyBase & { kind: "set"; length: number; items: string[]; cursor: string | null })
-  | (KeyBase & { kind: "zset"; length: number; items: ScoredMember[]; cursor: string | null })
-  | (KeyBase & { kind: "unsupported" });
+  | (KeySummary & { kind: "string"; length: number; value: string | null }) // null: binary hoặc quá lớn
+  | (KeySummary & { kind: "hash"; length: number; items: HashEntry[]; cursor: string | null })
+  | (KeySummary & { kind: "list"; length: number; items: ListElement[]; cursor: string | null })
+  | (KeySummary & { kind: "set"; length: number; items: string[]; cursor: string | null })
+  | (KeySummary & { kind: "zset"; length: number; items: ScoredMember[]; cursor: string | null })
+  | (KeySummary & { kind: "unsupported" });
 
 const nameSchema = z.string().min(1);
 const textSchema = z.string(); // giá trị Redis được phép rỗng

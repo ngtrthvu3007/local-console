@@ -4,7 +4,7 @@ import type {
 } from "@aws-sdk/client-lambda";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { reformatJson } from "@shared/json.ts";
-import { resourceNameOfArn } from "../eventbridge/targets.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import {
   REPORT_BATCH_FAILURES,
   STARTING_POSITIONS,
@@ -36,16 +36,6 @@ export const DEFAULT_MAPPING_OPTIONS: MappingOptions = {
   onFailureKind: "none",
   onFailureArn: "",
 };
-
-// Lấy đúng các ô tùy chọn từ giá trị của form (form có thêm nhiều ô khác)
-export const pickMappingOptions = (values: MappingOptions): MappingOptions => ({
-  filterPatterns: values.filterPatterns,
-  reportBatchFailures: values.reportBatchFailures,
-  retryAttempts: values.retryAttempts,
-  maxRecordAge: values.maxRecordAge,
-  onFailureKind: values.onFailureKind,
-  onFailureArn: values.onFailureArn,
-});
 
 type MappingParams = Pick<
   CreateEventSourceMappingCommandInput,
@@ -120,7 +110,7 @@ export function mappingDetails(source: TriggerRowSource, mapping: EventSourceMap
       retry !== STREAM_RETRY_ATTEMPTS.default &&
       `Retry ${retry}`,
     destination &&
-      `On failure: ${onFailureKindOf(destination).toUpperCase()} ${resourceNameOfArn(destination)}`,
+      `On failure: ${onFailureKindOf(destination).toUpperCase()} ${lastArnPart(destination)}`,
   ]
     .filter(Boolean)
     .join(DETAIL_SEPARATOR);

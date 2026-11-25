@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchJson } from "@shared/api.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import {
   RABBIT_ERROR_CODES,
   type CreateQueueInput,
@@ -69,17 +69,13 @@ export const useCreateQueue = (broker: string, authorization: string) =>
   );
 
 export const useDeleteQueues = (broker: string, authorization: string) =>
-  useRabbitMutation(broker, async (names: string[]) => {
-    const failures: string[] = [];
-    for (const name of names) {
-      try {
-        await send(rabbitUrl(broker, `queues/${segment(name)}`), authorization, "DELETE");
-      } catch (error) {
-        failures.push(`${name}: ${errorMessage(error)}`);
-      }
-    }
-    return { count: names.length - failures.length, failures };
-  });
+  useRabbitMutation(broker, (names: string[]) =>
+    runEach(
+      names,
+      (name) => name,
+      (name) => send(rabbitUrl(broker, `queues/${segment(name)}`), authorization, "DELETE"),
+    ),
+  );
 
 export const usePurgeQueue = (broker: string, authorization: string) =>
   useRabbitMutation(broker, (name: string) =>

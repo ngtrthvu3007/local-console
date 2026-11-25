@@ -1,9 +1,8 @@
 import type { HistoryEvent } from "@aws-sdk/client-sfn";
 import { z } from "zod";
+import { lastArnPart } from "@shared/arn.ts";
 import { functionNameOfArn } from "../lambda/helpers.ts";
 import { queueNameOfUrl } from "../sqs/queues.ts";
-import { topicNameOfArn } from "../sns/topics.ts";
-import { stateMachineNameOfArn } from "./stateMachines.ts";
 
 type LinkedKind = "lambda" | "sqs" | "dynamodb" | "sns" | "statemachine";
 
@@ -24,8 +23,8 @@ const TARGET_OF_RESOURCE_TYPE: Record<
   },
   sqs: { kind: "sqs", key: "QueueUrl", read: queueNameOfUrl },
   dynamodb: { kind: "dynamodb", key: "TableName", read: (value) => value },
-  sns: { kind: "sns", key: "TopicArn", read: topicNameOfArn },
-  states: { kind: "statemachine", key: "StateMachineArn", read: stateMachineNameOfArn },
+  sns: { kind: "sns", key: "TopicArn", read: lastArnPart },
+  states: { kind: "statemachine", key: "StateMachineArn", read: lastArnPart },
 };
 
 const parametersSchema = z.record(z.string(), z.unknown()).catch({});

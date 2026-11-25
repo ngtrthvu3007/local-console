@@ -10,7 +10,7 @@ import {
 import { allPages } from "@shared/aws.ts";
 import { DEFAULT_ROLE_ARN } from "../lambda/constants.ts";
 import { SCHEDULE_STATES } from "./constants.ts";
-import { SCHEDULE_TARGET_KINDS, targetKindOfArn, type ScheduleTargetKind } from "./targets.ts";
+import { ADDABLE_TARGET_KINDS, targetKindOfArn, type AddableTargetKind } from "./targets.ts";
 
 // Một dòng của ListSchedules: không có biểu thức, chỉ có đích (spec 7 #11)
 export interface ScheduleRow {
@@ -73,9 +73,9 @@ export function toUpdateInput(
 }
 
 // Loại đích form biểu diễn được; ECS, Kinesis, universal target… thì khóa phần Target khi sửa
-export function editableTargetKind(target?: Target): ScheduleTargetKind | undefined {
+export function editableTargetKind(target?: Target): AddableTargetKind | undefined {
   const kind = targetKindOfArn(target?.Arn ?? "");
-  return SCHEDULE_TARGET_KINDS.find((allowed) => allowed === kind);
+  return ADDABLE_TARGET_KINDS.find((allowed) => allowed === kind);
 }
 
 // Target mới từ form; tham số lạ của target cũ (retry, DLQ, RoleArn thật) giữ nguyên khi sửa

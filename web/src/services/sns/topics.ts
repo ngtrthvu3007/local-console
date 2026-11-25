@@ -37,14 +37,11 @@ export interface Subscription {
 export const topicArn = (region: string, name: string) =>
   `arn:aws:sns:${region}:${FLOCI_ACCOUNT_ID}:${name}`;
 
-// "arn:aws:sns:ap-southeast-1:000000000000:orders" → "orders"
-export const topicNameOfArn = lastArnPart;
-
 const numberOf = (value?: string) => Number(value ?? 0);
 
 export function toTopic(arn: string, attributes: Attributes): Topic {
   return {
-    name: topicNameOfArn(arn),
+    name: lastArnPart(arn),
     arn,
     fifo: attributes.FifoTopic === ATTRIBUTE_TRUE,
     contentBasedDedup: attributes.ContentBasedDeduplication === ATTRIBUTE_TRUE,

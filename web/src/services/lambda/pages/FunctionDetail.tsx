@@ -11,10 +11,11 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
-import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { LeaveModal } from "@shared/components/LeaveModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { skipLeaveGuard, useLeaveGuard } from "@shared/hooks/useLeaveGuard.ts";
 import { StackLink } from "@shared/StackLink.tsx";
 import { CodeTab } from "../components/CodeTab.tsx";
 import { ConfigurationTab } from "../components/ConfigurationTab.tsx";
@@ -24,12 +25,10 @@ import { TestTab } from "../components/TestTab.tsx";
 import { TriggersTab } from "../components/TriggersTab.tsx";
 import { logGroupOf } from "../helpers.ts";
 import { useFunction } from "../hooks/useFunctions.ts";
-import { useLeaveGuard } from "../hooks/useLeaveGuard.ts";
 import type { CodeEdits } from "../zipArchive.ts";
 import {
   FUNCTION_TABS,
   SEARCH_PARAMS,
-  SKIP_LEAVE_GUARD,
   functionCrumbs,
   lambdaRoutes,
   type FunctionTab,
@@ -173,18 +172,12 @@ export function FunctionDetail() {
         <DeleteFunctionsModal
           functions={[{ name, arn, logGroup }]}
           onDismiss={() => setDeleting(false)}
-          onDone={() => navigate(lambdaRoutes.functions, { state: { [SKIP_LEAVE_GUARD]: true } })}
+          onDone={() => navigate(lambdaRoutes.functions, skipLeaveGuard)}
         />
       )}
-      <ConfirmModal
-        visible={leaveBlocker.state === "blocked"}
-        header='Leave this page?'
-        actionText='Leave'
-        onConfirm={() => leaveBlocker.proceed?.()}
-        onDismiss={() => leaveBlocker.reset?.()}
-      >
+      <LeaveModal blocker={leaveBlocker}>
         Your code changes aren't deployed and will be lost.
-      </ConfirmModal>
+      </LeaveModal>
     </ContentLayout>
   );
 }

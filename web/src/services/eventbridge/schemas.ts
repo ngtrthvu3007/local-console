@@ -14,7 +14,7 @@ import {
 } from "./constants.ts";
 import { patternError } from "./pattern.ts";
 import { timingErrors } from "./scheduleExpression.ts";
-import { ADDABLE_TARGET_KINDS, SCHEDULE_TARGET_KINDS } from "./targets.ts";
+import { ADDABLE_TARGET_KINDS } from "./targets.ts";
 
 // Tên bus, rule, schedule và schedule group chung một luật; chỉ khác nhãn và độ dài tối đa
 const nameSchema = (label: string, maxLength: number) =>
@@ -89,7 +89,7 @@ export const addTargetSchema = (fifoArns: ReadonlySet<string>) =>
 export type AddTargetForm = z.input<ReturnType<typeof addTargetSchema>>;
 
 // "other": đích form không biểu diễn được (ECS, Kinesis…), khóa khi sửa
-const SCHEDULE_TARGET_IDS = [...SCHEDULE_TARGET_KINDS, "other"] as const;
+const SCHEDULE_TARGET_IDS = [...ADDABLE_TARGET_KINDS, "other"] as const;
 
 const FLEXIBLE_MINUTES = { min: 1, max: 1440 };
 

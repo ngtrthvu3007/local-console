@@ -12,13 +12,9 @@ export const TARGET_KINDS = {
   other: "Other",
 } as const;
 type TargetKind = keyof typeof TARGET_KINDS;
-// Loại target thêm được từ console. Event bus để nối bus này sang bus khác
+// Loại target chọn được từ console, cho cả rule lẫn schedule. Event bus để nối sang bus khác
 export const ADDABLE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus", "stepfunctions"] as const;
 export type AddableTargetKind = (typeof ADDABLE_TARGET_KINDS)[number];
-
-// Đích của schedule
-export const SCHEDULE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus", "stepfunctions"] as const;
-export type ScheduleTargetKind = (typeof SCHEDULE_TARGET_KINDS)[number];
 
 // Phần dịch vụ của ARN → loại target
 const KIND_BY_ARN_SERVICE: Record<string, TargetKind> = {
@@ -40,13 +36,10 @@ export const qualifierOfArn = (arn: string) => arn.split(ARN_SEPARATOR)[FUNCTION
 const BUS_ARN_MARKER = "event-bus/";
 export const busNameOfArn = (arn: string) => arn.split(BUS_ARN_MARKER).pop() ?? arn;
 
-// Tên resource là phần cuối của ARN (function, queue, topic, state machine)
-export const resourceNameOfArn = lastArnPart;
-
 // Id target tự sinh từ loại và tên resource; luật của AWS: 1–64 ký tự
 // Tên bus nằm sau "event-bus/" (có dấu /, id target không cho phép), nên lấy riêng
 export const targetId = (kind: TargetKind, arn: string) =>
-  `${kind}-${kind === "eventbus" ? busNameOfArn(arn) : resourceNameOfArn(arn)}`.slice(
+  `${kind}-${kind === "eventbus" ? busNameOfArn(arn) : lastArnPart(arn)}`.slice(
     0,
     MAX_TARGET_ID_LENGTH,
   );
