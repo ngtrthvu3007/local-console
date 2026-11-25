@@ -17,6 +17,7 @@ import { UnsubscribeCommand, type SNSClient } from "@aws-sdk/client-sns";
 import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import type { SchedulerClient } from "@aws-sdk/client-scheduler";
 import type { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
+import type { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
@@ -31,6 +32,9 @@ import { listSubscriptionsOfEndpoint } from "../../sns/hooks/useSubscriptions.ts
 import { SNS_QUERY_ROOT } from "../../sns/hooks/useTopics.ts";
 import { topicNameOfArn } from "../../sns/topics.ts";
 import { useS3 } from "../../s3/hooks/useS3.ts";
+import { listRotatedSecrets } from "../../secretsmanager/hooks/useSecrets.ts";
+import { useSecretsManager } from "../../secretsmanager/hooks/useSecretsManager.ts";
+import { secretsRoutes } from "../../secretsmanager/routes.ts";
 import {
   overlapMessage,
   overlappingRule,
@@ -55,6 +59,7 @@ import { functionQueryKey } from "./useFunctions.ts";
 import { useLambda } from "./useLambda.ts";
 
 const ARN_SEPARATOR = ":";
+const ROTATION_DETAILS = "Rotation";
 
 export interface TriggerRow {
   id: string;
@@ -67,7 +72,7 @@ export interface TriggerRow {
   sourceArn?: string; // SQS, DynamoDB: ARN của queue / stream mà mapping đọc
   subscriptionArn?: string; // SNS: subscription của topic tới function
   mapping?: EventSourceMappingConfiguration; // SQS, DynamoDB: cấu hình đầy đủ, để sửa
-  href?: string; // EventBridge, Scheduler, Cognito: link sang rule / schedule / tab Triggers của pool
+  href?: string; // EventBridge, Scheduler, Cognito, Secrets Manager: link sang trang của nguồn
 }
 
 // Rule trỏ tới function, kể cả ARN có version/alias (my-function:prod)
@@ -218,6 +223,19 @@ async function listCognitoTriggers(cognito: CognitoIdentityProviderClient, funct
   }));
 }
 
+// Secret xoay vòng bằng function: sửa ở khối Rotation của secret
+async function listRotationTriggers(secrets: SecretsManagerClient, functionArn: string) {
+  const names = await listRotatedSecrets(secrets, functionArn);
+
+  return names.map((name): TriggerRow => ({
+    id: `secretsmanager:${name}`,
+    source: "secretsmanager",
+    resource: name,
+    details: ROTATION_DETAILS,
+    href: secretsRoutes.secret(name),
+  }));
+}
+
 async function listMappingTriggers(lambda: LambdaClient, functionName: string) {
   const rows: TriggerRow[] = [];
 
@@ -242,19 +260,21 @@ export function useTriggers(functionName: string, functionArn: string) {
   const events = useEventBridge();
   const scheduler = useScheduler();
   const cognito = useCognito();
+  const secrets = useSecretsManager();
 
   return useQuery({
     queryKey: triggersQueryKey(functionName),
     queryFn: async () => {
-      const [s3Rows, mappingRows, snsRows, eventBridgeRows, cognitoRows] = await Promise.all([
+      const rows = await Promise.all([
         listS3Triggers(s3, functionArn),
         listMappingTriggers(lambda, functionName),
         listSnsTriggers(sns, functionArn),
         listEventBridgeTriggers(events, scheduler, functionArn),
         listCognitoTriggers(cognito, functionArn),
+        listRotationTriggers(secrets, functionArn),
       ]);
 
-      return [...s3Rows, ...mappingRows, ...snsRows, ...eventBridgeRows, ...cognitoRows];
+      return rows.flat();
     },
   });
 }

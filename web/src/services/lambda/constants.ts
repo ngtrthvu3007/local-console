@@ -88,23 +88,27 @@ export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
 
-// Nguồn chỉ xem ở đây; tạo từ trang của nó (SNS: topic, rule/schedule: EventBridge, Cognito: user pool)
+// Nguồn chỉ xem ở đây; tạo từ trang của nó (SNS: topic, rule/schedule: EventBridge, Cognito: user pool,
+// Secrets Manager: rotation của secret)
 const DISPLAY_ONLY_SOURCES = {
   kinesis: "Kinesis",
   sns: "SNS",
   eventbridge: "EventBridge",
   scheduler: "Scheduler",
   cognito: "Cognito",
+  secretsmanager: "Secrets Manager",
 } as const;
 
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
 
-// Rule / schedule của EventBridge, trigger của user pool: chỉ xem ở đây, sửa / xóa ở trang của nguồn
+// Rule / schedule của EventBridge, trigger của user pool, rotation của secret: chỉ xem ở đây,
+// sửa / xóa ở trang của nguồn
 export const VIEW_ONLY_SOURCES: readonly TriggerRowSource[] = [
   "eventbridge",
   "scheduler",
   "cognito",
+  "secretsmanager",
 ];
 
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;

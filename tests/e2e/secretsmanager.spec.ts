@@ -345,6 +345,24 @@ test.describe("rotation", () => {
     await expect(flash(page)).not.toContainText("Couldn't");
   });
 
+  test("the rotation function lists the secret and warns before it is deleted", async ({
+    page,
+  }) => {
+    // Tab Triggers cũng có nút Delete (xóa trigger): mở modal xóa function từ tab mặc định
+    await page.goto(`/lambda/functions/${brokenFunction}`);
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText(/Secrets Manager rotates/)).toContainText(brokenSecret);
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+
+    await page.goto(`/lambda/functions/${brokenFunction}?tab=triggers`);
+    const row = page.getByRole("row").filter({ hasText: brokenSecret });
+    await expect(row).toContainText("Secrets Manager");
+    await expect(row).toContainText("Rotation");
+    await row.getByRole("link", { name: brokenSecret }).click();
+    await expect(page.getByRole("heading", { level: 1, name: brokenSecret })).toBeVisible();
+  });
+
   test("turns rotation off", async ({ page }) => {
     await open(page, rotating);
     await page.getByRole("button", { name: "Edit rotation" }).click();

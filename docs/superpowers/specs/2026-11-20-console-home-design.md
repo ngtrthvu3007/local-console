@@ -1,6 +1,6 @@
 # Console Home mới + ô search service — Thiết kế
 
-> Ngày: 2026-11-20 · Trạng thái: đã duyệt (2026-11-20) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · Thay bảng Services trên Home bằng thẻ Recently visited
+> Ngày: 2026-11-20 · Trạng thái: đã làm (2026-11-20) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · Thay bảng Services trên Home bằng thẻ Recently visited
 
 ## 1. Mục tiêu
 

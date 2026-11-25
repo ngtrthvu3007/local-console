@@ -1,6 +1,6 @@
 # SES — Thiết kế
 
-> Ngày: 2026-11-17 · Cập nhật: 2026-11-18 (đối chiếu với code và Floci, mục 7; cắt phạm vi theo ponytail ultra, mục 9) · Trạng thái: chờ duyệt · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
+> Ngày: 2026-11-17 · Cập nhật: 2026-11-18 (đối chiếu với code và Floci, mục 7; cắt phạm vi theo ponytail ultra, mục 9) · Trạng thái: đã làm (2026-11-18) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
 
 ## 1. Mục tiêu
 

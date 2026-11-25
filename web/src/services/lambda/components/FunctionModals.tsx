@@ -12,6 +12,7 @@ import {
   useCognitoTriggerUses,
   useDeleteFunctions,
   useFunctionsWithTriggers,
+  useRotationUses,
   type FunctionToDelete,
 } from "../hooks/useFunctions.ts";
 
@@ -31,6 +32,7 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
   const withTriggers = useFunctionsWithTriggers(functions.map((item) => item.name)).data ?? [];
   const referenced = useReferencedNames(functions).data ?? [];
   const cognitoUses = useCognitoTriggerUses(functions).data ?? [];
+  const rotationUses = useRotationUses(functions).data ?? [];
   const hiddenCount = functions.length - DELETE_PREVIEW_COUNT;
   const logGroupLabel =
     functions.length === 1 ? `log group ${functions[0].logGroup}` : "their log groups";
@@ -93,6 +95,13 @@ export function DeleteFunctionsModal({ functions, onDismiss, onDone }: Props) {
             .map(({ poolName, label, fn }) => `${fn} as ${poolName}'s ${label} trigger`)
             .join(LIST_SEPARATOR)}
           . Sign-ups and sign-ins in those pools fail until their triggers are changed.
+        </Alert>
+      )}
+      {rotationUses.length > 0 && (
+        <Alert type='warning'>
+          Secrets Manager rotates{" "}
+          {rotationUses.map(({ secret, fn }) => `${secret} with ${fn}`).join(LIST_SEPARATOR)}. Their
+          next rotation fails until the rotation function is changed.
         </Alert>
       )}
       <Alert type='warning'>This can't be undone.</Alert>

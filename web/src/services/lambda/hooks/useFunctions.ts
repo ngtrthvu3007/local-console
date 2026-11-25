@@ -19,6 +19,8 @@ import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
+import { listRotatedSecrets } from "../../secretsmanager/hooks/useSecrets.ts";
+import { useSecretsManager } from "../../secretsmanager/hooks/useSecretsManager.ts";
 import { DEFAULT_ROLE_ARN } from "../constants.ts";
 import { logGroupExists } from "./useFunctionLogs.ts";
 import { useLambda } from "./useLambda.ts";
@@ -138,6 +140,24 @@ export function useCognitoTriggerUses(functions: readonly { name: string; arn: s
       const uses = await Promise.all(
         functions.map(async ({ name, arn }) =>
           (await listPoolTriggers(cognito, arn)).map((trigger) => ({ ...trigger, fn: name })),
+        ),
+      );
+
+      return uses.flat();
+    },
+  });
+}
+
+// Floci giữ rotation trỏ tới function đã xóa: lần xoay vòng sau của secret sẽ lỗi, nên cảnh báo trước
+export function useRotationUses(functions: readonly { name: string; arn: string }[]) {
+  const secrets = useSecretsManager();
+
+  return useQuery({
+    queryKey: functionQueryKey(functions.map(({ name }) => name).join(), "rotations"),
+    queryFn: async () => {
+      const uses = await Promise.all(
+        functions.map(async ({ name, arn }) =>
+          (await listRotatedSecrets(secrets, arn)).map((secret) => ({ secret, fn: name })),
         ),
       );
 

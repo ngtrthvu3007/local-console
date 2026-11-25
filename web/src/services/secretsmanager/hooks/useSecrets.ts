@@ -10,7 +10,9 @@ import {
   UpdateSecretCommand,
   paginateListSecrets,
   type SecretListEntry,
+  type SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
+import { matchesFunction } from "../../cognito/triggers.ts";
 import { useSecretsManager } from "./useSecretsManager.ts";
 
 // Mọi query của Secrets Manager nằm dưới key gốc này
@@ -35,6 +37,26 @@ export function useSecrets() {
       return secrets;
     },
   });
+}
+
+// Tên các secret đang bật rotation bằng function này. ListSecrets của Floci 2.4.0 trả đủ
+// RotationLambdaARN (đã kiểm 2026-11-25) nên không cần DescribeSecret từng cái
+export async function listRotatedSecrets(client: SecretsManagerClient, functionArn: string) {
+  const names: string[] = [];
+
+  for await (const page of paginateListSecrets({ client }, {})) {
+    for (const { Name, RotationEnabled, RotationLambdaARN } of page.SecretList ?? []) {
+      if (
+        Name &&
+        RotationEnabled &&
+        RotationLambdaARN &&
+        matchesFunction(RotationLambdaARN, functionArn)
+      )
+        names.push(Name);
+    }
+  }
+
+  return names;
 }
 
 interface NewSecret {

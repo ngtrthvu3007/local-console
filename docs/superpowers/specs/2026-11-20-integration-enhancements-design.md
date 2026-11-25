@@ -1,6 +1,6 @@
 # Tích hợp nâng cao: Lambda destination, trigger nâng cao, SES → SNS — Thiết kế
 
-> Ngày: 2026-11-20 · Trạng thái: chờ duyệt · **Làm sau [EventBridge](2026-11-19-eventbridge-design.md)** (user chốt 2026-11-20) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · Mở rộng (không sửa): [Lambda](2026-11-09-lambda-design.md), [SQS](2026-11-17-sqs-design.md), [DynamoDB](2026-11-09-dynamodb-design.md), [SES](2026-11-17-ses-design.md)
+> Ngày: 2026-11-20 · Trạng thái: đã làm (2026-11-21; IT `it/integration-enhancements.test.ts`, E2E `integration-enhancements.spec.ts`) · **Làm sau [EventBridge](2026-11-19-eventbridge-design.md)** (user chốt 2026-11-20) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · Mở rộng (không sửa): [Lambda](2026-11-09-lambda-design.md), [SQS](2026-11-17-sqs-design.md), [DynamoDB](2026-11-09-dynamodb-design.md), [SES](2026-11-17-ses-design.md)
 
 ## 1. Mục tiêu
 

@@ -1,6 +1,6 @@
 # SNS Text messaging (SMS) — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · Mở rộng [SNS](2026-11-18-sns-design.md), làm sau khi SNS vào `main`
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-20) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · Mở rộng [SNS](2026-11-18-sns-design.md), làm sau khi SNS vào `main`
 
 > **Cập nhật 2026-11-19 (khi làm): Floci không xóa được từng SMS.** `DELETE /_aws/sns` là route xóa duy nhất, không đọc tham số nào (bỏ qua `?id=` và `?phone=`) và xóa **mọi tin của mọi region**. Đã xác nhận bằng nguồn Floci 2.4.0 (`SnsInspectionController.clearMessages()`) và chạy thật. Vì vậy trang chỉ có **Delete all**, không có xóa theo dòng; chi tiết ở 2, 3.1, 7 #2 và 9. `GET /_aws/sns` thì có lọc `?phone=` và `?id=` (khớp chính xác) nhưng chưa dùng, vì ô tìm lọc phía trình duyệt (khớp một phần, theo cả nội dung).
 

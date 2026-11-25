@@ -49,9 +49,6 @@ export function InstanceList() {
   const { region } = useLoadedConfig();
   const instances = useInstances();
   const [state, setState] = useState(STATE_FILTER_ALL);
-  const shown = (instances.data ?? []).filter(
-    (instance) => state === STATE_FILTER_ALL || stateOf(instance) === state,
-  );
 
   const launchButton = (
     <Button variant='primary' href={ec2Routes.launchInstance} onFollow={follow}>
@@ -60,7 +57,7 @@ export function InstanceList() {
   );
 
   const { items, collectionProps, filterProps, paginationProps, filteredItemsCount, actions } =
-    useCollection<Instance>(shown, {
+    useCollection<Instance>(instances.data ?? [], {
       filtering: {
         empty: emptyOrError(
           instances,
@@ -73,10 +70,22 @@ export function InstanceList() {
         noMatch: (
           <EmptyState
             title='No matches'
-            action={<Button onClick={() => actions.setFiltering("")}>Clear filter</Button>}
+            action={
+              <Button
+                onClick={() => {
+                  actions.setFiltering("");
+                  setState(STATE_FILTER_ALL);
+                }}
+              >
+                Clear filter
+              </Button>
+            }
           />
         ),
-        filteringFunction: matchesText,
+        // Lọc state ở đây chứ không lọc trước: useCollection chỉ hiện "No matches" khi danh sách gốc có item
+        filteringFunction: (instance, text) =>
+          (state === STATE_FILTER_ALL || stateOf(instance) === state) &&
+          matchesText(instance, text),
       },
       // Instance mới launch nằm trên cùng
       sorting: {

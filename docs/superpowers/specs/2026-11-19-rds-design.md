@@ -1,6 +1,6 @@
 # RDS — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-23, branch `feat/rds`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-23) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 3
 
 ## 1. Mục tiêu
 
