@@ -1,4 +1,5 @@
-const ARN_SEPARATOR = ":";
+import { ARN_SEPARATOR, lastArnPart } from "@shared/arn.ts";
+
 const ARN_SERVICE_INDEX = 2;
 const MAX_TARGET_ID_LENGTH = 64;
 
@@ -40,7 +41,7 @@ const BUS_ARN_MARKER = "event-bus/";
 export const busNameOfArn = (arn: string) => arn.split(BUS_ARN_MARKER).pop() ?? arn;
 
 // Tên resource là phần cuối của ARN (function, queue, topic, state machine)
-export const resourceNameOfArn = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
+export const resourceNameOfArn = lastArnPart;
 
 // Id target tự sinh từ loại và tên resource; luật của AWS: 1–64 ký tự
 // Tên bus nằm sau "event-bus/" (có dấu /, id target không cho phép), nên lấy riêng

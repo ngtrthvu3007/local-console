@@ -13,7 +13,7 @@ export function useAllAliases() {
   });
 }
 
-export interface AliasInput {
+interface AliasInput {
   name: string;
   keyId: string;
   replace: boolean; // tên đã thuộc key khác → UpdateAlias trỏ sang key này

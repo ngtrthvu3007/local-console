@@ -1,7 +1,7 @@
 import type { AttributeValue } from "@aws-sdk/client-dynamodb";
 import { marshall, NumberValueImpl, unmarshall } from "@aws-sdk/util-dynamodb";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes } from "@shared/format.ts";
+import { formatBytes, truncate } from "@shared/format.ts";
 import { prettyJson } from "@shared/json.ts";
 import {
   ATTRIBUTE_VALUE_TYPES,
@@ -18,8 +18,6 @@ import type { IndexKeys, KeyAttribute } from "./hooks/useTables.ts";
 
 export type Item = Record<string, AttributeValue>;
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
-
-const ELLIPSIS = "…";
 
 // ---------- Binary ↔ base64 ----------
 
@@ -300,17 +298,12 @@ function compactText(value: AttributeValue): string {
   return NOT_AVAILABLE;
 }
 
-const truncate = (text: string) =>
-  text.length > CELL_PREVIEW_MAX_LENGTH
-    ? `${text.slice(0, CELL_PREVIEW_MAX_LENGTH)}${ELLIPSIS}`
-    : text;
-
 export function cellText(value: AttributeValue | undefined): string {
   if (!value) return NOT_AVAILABLE;
-  if (value.S !== undefined) return truncate(value.S);
+  if (value.S !== undefined) return truncate(value.S, CELL_PREVIEW_MAX_LENGTH);
   if (value.N !== undefined) return value.N;
   if (value.B) return `Binary (${formatBytes(value.B.length)})`;
-  return truncate(compactText(value));
+  return truncate(compactText(value), CELL_PREVIEW_MAX_LENGTH);
 }
 
 // Giá trị lồng nhau (Map, List, Set) in màu xám để key và giá trị chính nổi lên

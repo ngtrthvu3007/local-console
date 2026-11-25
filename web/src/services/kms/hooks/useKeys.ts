@@ -33,7 +33,7 @@ export interface KeyRow {
   aliases: string[];
 }
 
-export async function listKeyEntries(client: KMSClient) {
+async function listKeyEntries(client: KMSClient) {
   const keys: KeyListEntry[] = [];
   for await (const page of paginateListKeys({ client }, {})) keys.push(...(page.Keys ?? []));
   return keys;
@@ -103,7 +103,7 @@ export function useKeyExists(key: string) {
   });
 }
 
-export interface KeyActionInput {
+interface KeyActionInput {
   keyId: string;
   action: KeyAction;
   days?: number;

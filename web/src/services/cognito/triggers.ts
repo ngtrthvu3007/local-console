@@ -1,4 +1,5 @@
 import type { LambdaConfigType } from "@aws-sdk/client-cognito-identity-provider";
+import { isArnOrQualified } from "@shared/arn.ts";
 
 type TriggerDefinition = { key: keyof LambdaConfigType; label: string };
 
@@ -95,8 +96,7 @@ export const functionOptionArns = (functionArns: string[], currentArn?: string):
   currentArn && !functionArns.includes(currentArn) ? [...functionArns, currentArn] : functionArns;
 
 // ARN trigger có thể kèm version / alias: arn:…:function:fn:prod
-export const matchesFunction = (arn: string, functionArn: string): boolean =>
-  arn === functionArn || arn.startsWith(`${functionArn}:`);
+export const matchesFunction = isArnOrQualified;
 
 export const triggerLabelsOf = (
   config: LambdaConfigType | undefined,

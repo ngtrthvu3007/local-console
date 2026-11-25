@@ -1,10 +1,10 @@
 import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { truncate } from "@shared/format.ts";
 import { jsonObjectError } from "@shared/json.ts";
 import { FILTER_SUMMARY_MAX_LENGTH } from "./constants.ts";
 
 const VALUE_SEPARATOR = " | ";
 const KEY_SEPARATOR = ", ";
-const ELLIPSIS = "…";
 
 // Giá trị trong policy: chuỗi, số, hoặc operator như {"prefix": "a"}
 const valueText = (value: unknown): string =>
@@ -25,9 +25,7 @@ export function summarizeFilterPolicy(text?: string): string {
       Array.isArray(values) ? `${key} = ${values.map(valueText).join(VALUE_SEPARATOR)}` : key,
     )
     .join(KEY_SEPARATOR);
-  return summary.length > FILTER_SUMMARY_MAX_LENGTH
-    ? `${summary.slice(0, FILTER_SUMMARY_MAX_LENGTH)}${ELLIPSIS}`
-    : summary;
+  return truncate(summary, FILTER_SUMMARY_MAX_LENGTH);
 }
 
 // Rỗng = bỏ filter. Luật chi tiết của policy do SNS kiểm, lỗi gốc hiện trong modal

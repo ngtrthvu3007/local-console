@@ -1,4 +1,5 @@
 import type { Subscription as SnsSubscription } from "@aws-sdk/client-sns";
+import { lastArnPart } from "@shared/arn.ts";
 import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 import { ATTRIBUTE_TRUE } from "../sqs/constants.ts";
 import {
@@ -9,8 +10,6 @@ import {
   type FilterScope,
   type Protocol,
 } from "./constants.ts";
-
-const ARN_SEPARATOR = ":";
 
 export type Attributes = Record<string, string | undefined>;
 
@@ -39,7 +38,7 @@ export const topicArn = (region: string, name: string) =>
   `arn:aws:sns:${region}:${FLOCI_ACCOUNT_ID}:${name}`;
 
 // "arn:aws:sns:ap-southeast-1:000000000000:orders" → "orders"
-export const topicNameOfArn = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
+export const topicNameOfArn = lastArnPart;
 
 const numberOf = (value?: string) => Number(value ?? 0);
 

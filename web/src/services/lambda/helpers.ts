@@ -2,6 +2,7 @@ import type {
   EventSourceMappingConfiguration,
   FunctionConfiguration,
 } from "@aws-sdk/client-lambda";
+import { ARN_SEPARATOR } from "@shared/arn.ts";
 import { proxyEndpoint } from "@shared/aws.ts";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { LOG_GROUP_PREFIX } from "./constants.ts";
@@ -23,8 +24,6 @@ export const logMessageText = (message = "") =>
   message.replace(CARRIAGE_RETURNS, LINE_BREAK).trimEnd();
 
 const FUNCTION_ARN_MARKER = ":function:";
-
-const ARN_SEPARATOR = ":";
 
 // "arn:aws:lambda:…:function:my-function:prod" → "my-function" (bỏ version / alias)
 export const functionNameOfArn = (arn: string) =>

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { GetBucketNotificationConfigurationCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import { isArnOrQualified as refersTo } from "@shared/arn.ts";
 import { listRuleTargets, listScheduleTargets } from "../../eventbridge/eventSources.ts";
 import { useEventBridge } from "../../eventbridge/hooks/useEventBridge.ts";
 import { useScheduler } from "../../eventbridge/hooks/useScheduler.ts";
@@ -8,12 +9,7 @@ import { listSubscriptionsOfEndpoint } from "../../sns/hooks/useSubscriptions.ts
 import { toNotificationRules } from "../notificationRules.ts";
 import { useS3 } from "./useS3.ts";
 
-const ARN_SEPARATOR = ":";
 const REFERENCES = "references";
-
-// ARN function có thể kèm version / alias
-const refersTo = (candidate: string, arn: string) =>
-  candidate === arn || candidate.startsWith(`${arn}${ARN_SEPARATOR}`);
 
 // Floci không dọn tham chiếu khi xóa nên cảnh báo trước; local ít resource nên quét hết khi mở modal
 export function useReferencedNames(items: readonly { name: string; arn: string }[]) {

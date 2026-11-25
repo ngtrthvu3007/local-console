@@ -7,7 +7,7 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { EventSources } from "../../eventbridge/components/EventSources.tsx";
 import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -20,8 +20,6 @@ const CONNECT_COLUMNS = 2;
 // Topic nhận từ S3 (notification), Lambda (đích async, đích lỗi của trigger) và SES (configuration set)
 const TOPIC_SENDER_KINDS = ["s3", "lambda", "ses"] as const;
 const ENDPOINT_VARIABLE = "AWS_ENDPOINT_URL";
-
-const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
 
 export function DetailsTab({ topic }: { topic: Topic }) {
   const { flociPublicUrl, flociInternalUrl } = useLoadedConfig();

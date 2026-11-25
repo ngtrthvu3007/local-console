@@ -38,6 +38,15 @@ export function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+const ELLIPSIS = "…";
+// Cắt chuỗi dài cho ô bảng / tóm tắt; "…" báo phần còn lại bị ẩn
+export const truncate = (text: string, length: number) =>
+  text.length > length ? `${text.slice(0, length)}${ELLIPSIS}` : text;
+
+// Đếm theo byte UTF-8 như giới hạn của AWS, không theo số ký tự
+const textEncoder = new TextEncoder();
+export const byteLength = (text: string) => textEncoder.encode(text).length;
+
 export const nounFor = (count: number, singular: string, pluralForm = `${singular}s`) =>
   count === 1 ? singular : pluralForm;
 
