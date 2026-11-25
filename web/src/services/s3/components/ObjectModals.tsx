@@ -16,7 +16,13 @@ import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { asFolderKey, fileNameOf, s3Uri, withoutTrailingDelimiter } from "../helpers.ts";
+import {
+  asFolderKey,
+  bucketOptions,
+  fileNameOf,
+  s3Uri,
+  withoutTrailingDelimiter,
+} from "../helpers.ts";
 import { useBuckets } from "../hooks/useBuckets.ts";
 import {
   useEditMetadata,
@@ -155,10 +161,6 @@ export function TransferModal({
 
   const verb = move ? "Move" : "Copy";
   const pastTense = move ? "Moved" : "Copied";
-  const bucketOptions = (buckets.data ?? []).map((item) => ({
-    value: item.Name!,
-    label: item.Name!,
-  }));
 
   const submit = form.handleSubmit(({ destinationBucket, destinationFolder }) => {
     const destinationPrefix = destinationFolder ? asFolderKey(destinationFolder) : "";
@@ -185,7 +187,7 @@ export function TransferModal({
         control={form.control}
         name='destinationBucket'
         label='Destination bucket'
-        options={bucketOptions}
+        options={bucketOptions(buckets.data)}
       />
       <FormInput
         control={form.control}

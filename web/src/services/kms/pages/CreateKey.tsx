@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import Button from "@cloudscape-design/components/button";
@@ -16,6 +16,7 @@ import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   KEY_TYPES,
@@ -73,8 +74,6 @@ export function CreateKey() {
   const usage = useWatch({ control: form.control, name: "usage" });
   const spec = useWatch({ control: form.control, name: "spec" });
   const specs = specsFor(type, usage);
-  // form kiểm tra bất đồng bộ nên isPending bật chậm: ref chặn bấm đúp (như Launch instance của EC2)
-  const submitting = useRef(false);
 
   // Đổi loại key thì đặt lại cách dùng mặc định của loại đó
   useEffect(() => {
@@ -100,16 +99,7 @@ export function CreateKey() {
     ),
   );
 
-  const submitOnce = async () => {
-    if (submitting.current) return;
-    submitting.current = true;
-
-    try {
-      await submit();
-    } finally {
-      submitting.current = false;
-    }
-  };
+  const submitOnce = useSubmitOnce(submit);
 
   const actions = (
     <ResponsiveActions footer>

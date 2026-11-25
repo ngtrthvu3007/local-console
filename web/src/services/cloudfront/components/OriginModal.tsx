@@ -14,6 +14,7 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { bucketOptions } from "../../s3/helpers.ts";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import {
   ORIGIN_PORTS,
@@ -140,7 +141,7 @@ export function OriginModal({ distributionId, config, origin, onDismiss }: Props
             name='bucket'
             label='Bucket'
             placeholder='Choose a bucket'
-            options={(buckets.data ?? []).map(({ Name = "" }) => ({ value: Name, label: Name }))}
+            options={bucketOptions(buckets.data)}
           />
         ) : (
           <>

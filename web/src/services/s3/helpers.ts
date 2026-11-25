@@ -1,4 +1,4 @@
-import type { Tag as S3Tag } from "@aws-sdk/client-s3";
+import type { Bucket, Tag as S3Tag } from "@aws-sdk/client-s3";
 import type { Tag } from "@shared/components/TagsModal.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import {
@@ -67,3 +67,7 @@ export function previewKind(key: string, contentType = "", size = 0): PreviewKin
     ? "json"
     : "text";
 }
+
+// Option cho ô chọn bucket ở form của S3 và service khác (Lambda trigger, CloudFront origin)
+export const bucketOptions = (buckets: readonly Bucket[] = []) =>
+  buckets.flatMap(({ Name }) => (Name ? [{ value: Name, label: Name }] : []));

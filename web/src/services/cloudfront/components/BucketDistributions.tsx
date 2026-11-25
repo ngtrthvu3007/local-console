@@ -4,17 +4,16 @@ import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { distributionsServing, localUrl } from "../distributions.ts";
+import { distributionsServing } from "../distributions.ts";
 import { useDistributions } from "../hooks/useDistributions.ts";
 import { cloudfrontRoutes } from "../routes.ts";
 import { DistributionStatus } from "./DistributionStatus.tsx";
+import { LocalUrlLink } from "./LocalUrlLink.tsx";
 
 // Khối ở tab Properties của bucket: distribution nào phục vụ bucket này (spec 3.7)
 export function BucketDistributions({ bucket }: { bucket: string }) {
   const follow = useFollow();
-  const { flociPublicUrl } = useLoadedConfig();
   const distributions = useDistributions();
   const serving = distributionsServing(distributions.data ?? [], bucket);
 
@@ -53,14 +52,7 @@ export function BucketDistributions({ bucket }: { bucket: string }) {
         {
           id: "url",
           header: "Local URL",
-          cell: (summary) => {
-            const url = localUrl(flociPublicUrl, summary.Id ?? "");
-            return (
-              <Link href={url} external>
-                {url}
-              </Link>
-            );
-          },
+          cell: (summary) => <LocalUrlLink id={summary.Id ?? ""} />,
         },
         {
           id: "status",

@@ -12,13 +12,12 @@ import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
-import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useDistributionActions } from "../components/DistributionActions.tsx";
 import { DistributionStatus } from "../components/DistributionStatus.tsx";
-import { localUrl } from "../distributions.ts";
+import { LocalUrlLink } from "../components/LocalUrlLink.tsx";
 import { useDistributions } from "../hooks/useDistributions.ts";
 import { cloudfrontBaseCrumbs, cloudfrontRoutes } from "../routes.ts";
 
@@ -41,7 +40,6 @@ export function DistributionList() {
   useBreadcrumbs(cloudfrontBaseCrumbs);
   const follow = useFollow();
   const { ref, compact } = useIsCompact();
-  const { flociPublicUrl } = useLoadedConfig();
   const distributions = useDistributions();
 
   const createButton = (
@@ -112,14 +110,7 @@ export function DistributionList() {
     {
       id: "url",
       header: "Local URL",
-      cell: (summary) => {
-        const url = localUrl(flociPublicUrl, summary.Id ?? "");
-        return (
-          <Link href={url} external>
-            {url}
-          </Link>
-        );
-      },
+      cell: (summary) => <LocalUrlLink id={summary.Id ?? ""} />,
     },
     {
       id: "origins",

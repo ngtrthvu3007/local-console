@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
@@ -12,7 +11,9 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { bucketOptions } from "../../s3/helpers.ts";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import { s3Routes } from "../../s3/routes.ts";
 import { SPA_DESCRIPTION, SPA_TEXT } from "../components/SettingsModal.tsx";
@@ -41,8 +42,6 @@ export function CreateDistribution() {
     spa: false,
     description: "",
   });
-  // form kiểm tra bất đồng bộ nên isPending bật chậm: ref chặn bấm đúp (như Create key của KMS)
-  const submitting = useRef(false);
   const noBuckets = buckets.data?.length === 0;
 
   const submit = form.handleSubmit((values) =>
@@ -56,16 +55,7 @@ export function CreateDistribution() {
     ),
   );
 
-  const submitOnce = async () => {
-    if (submitting.current) return;
-    submitting.current = true;
-
-    try {
-      await submit();
-    } finally {
-      submitting.current = false;
-    }
-  };
+  const submitOnce = useSubmitOnce(submit);
 
   const actions = (
     <ResponsiveActions footer>
@@ -103,7 +93,7 @@ export function CreateDistribution() {
               name='bucket'
               label='Bucket'
               placeholder='Choose a bucket'
-              options={(buckets.data ?? []).map(({ Name = "" }) => ({ value: Name, label: Name }))}
+              options={bucketOptions(buckets.data)}
               description={
                 noBuckets && (
                   <>

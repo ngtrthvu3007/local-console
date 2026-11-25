@@ -8,7 +8,7 @@ import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
@@ -43,16 +43,13 @@ export function GeneralTab({
         <KeyValuePairs
           columns={compact ? 1 : DETAILS_COLUMNS}
           items={[
-            {
-              label: "Distribution ID",
-              value: <CopyButton variant='inline' text={id} label={id} />,
-            },
-            { label: "ARN", value: <CopyButton variant='inline' text={arn} label={arn} /> },
+            { label: "Distribution ID", value: copyable(id) },
+            { label: "ARN", value: copyable(arn) },
             {
               label: "Domain name",
               value: (
                 <div>
-                  <CopyButton variant='inline' text={domain} label={domain} />
+                  {copyable(domain)}
                   <Box variant='small' display='block' color='text-body-secondary'>
                     AWS name. On Floci, use the local URL.
                   </Box>
@@ -80,7 +77,7 @@ export function GeneralTab({
                 label: "Local URL",
                 value: (
                   <SpaceBetween size='xs' direction='horizontal' alignItems='center'>
-                    <CopyButton variant='inline' text={url} label={url} />
+                    {copyable(url)}
                     <Link href={url} external>
                       Open
                     </Link>
