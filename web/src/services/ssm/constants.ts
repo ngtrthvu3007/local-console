@@ -17,6 +17,5 @@ export const STRING_LIST: ParameterType = "StringList";
 // DeleteParameters nhận tối đa 10 tên một lần
 export const DELETE_PARAMETERS_BATCH = 10;
 
-// Tên service trong alias key AWS managed; SecureString không đặt key thì Floci lưu KeyId này
+// Tên service trong alias key AWS managed: alias/aws/ssm
 export const SSM_KEY_SERVICE = "ssm";
-export const SSM_DEFAULT_KEY_ID = "alias/aws/ssm";

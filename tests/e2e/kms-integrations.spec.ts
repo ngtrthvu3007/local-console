@@ -77,7 +77,7 @@ test.afterAll(async () => {
   await new SNSClient(config)
     .send(
       new DeleteTopicCommand({
-        TopicArn: `arn:aws:sns:${config.region}:000000000000:${topicName}`,
+        TopicArn: `arn:aws:sns:${config.region}:${ACCOUNT_ID}:${topicName}`,
       }),
     )
     .catch(() => undefined);
@@ -257,7 +257,7 @@ test("a key typed then hidden doesn't block creating the queue", async ({ page }
   await page.goto("/sqs/queues/create");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill(plainQueueName);
   await page.getByText("SSE-KMS", { exact: true }).click();
-  await choose(page, page.locator("body"), /Encryption key/, { name: "Enter a key ARN" });
+  await choose(page, page.locator("body"), /Encryption key/, { name: "Enter a key manually" });
   await page.getByPlaceholder(/arn:aws:kms:/).fill("abc");
   await page.getByText("SSE-SQS", { exact: true }).click();
   await page.getByRole("button", { name: "Create queue" }).click();

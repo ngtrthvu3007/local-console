@@ -83,7 +83,7 @@ function SecretView({ name, secret, query }: ViewProps) {
                 { label: "Description", value: secret.Description || NOT_AVAILABLE },
                 { label: "Last changed", value: formatDate(secret.LastChangedDate) },
                 {
-                  label: "KMS key",
+                  label: "Encryption",
                   value: secret.KmsKeyId ? (
                     <KeyLink value={secret.KmsKeyId} />
                   ) : (

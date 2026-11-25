@@ -69,6 +69,9 @@ export const createTableSchema = z
       context.addIssue({ code: "custom", path, message });
     if (!values.partitionKey.name)
       addIssue(["partitionKey", "name"], "Enter a partition key name.");
+    // "Customer managed key" mà để mặc định thì thành key AWS managed: bắt chọn key
+    if (values.encryption === TABLE_ENCRYPTION.customer && !values.kmsKeyId)
+      addIssue(["kmsKeyId"], "Choose a KMS key.");
 
     // DynamoDB bắt buộc: cùng một tên attribute thì cùng kiểu, ở bảng và mọi index
     const typeByName = new Map<string, KeyType>();

@@ -17,13 +17,8 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import {
-  PARAMETER_TYPES,
-  SECURE_STRING,
-  SSM_DEFAULT_KEY_ID,
-  SSM_KEY_SERVICE,
-} from "../constants.ts";
+import { awsManagedAlias, defaultKeyLabel } from "../../kms/keys.ts";
+import { PARAMETER_TYPES, SECURE_STRING, SSM_KEY_SERVICE } from "../constants.ts";
 import { isParameterMissing, useParameter, usePutParameter } from "../hooks/useParameters.ts";
 import { SEARCH_PARAMS, parameterCrumbs, ssmBaseCrumbs, ssmRoutes } from "../routes.ts";
 import { parameterSchema, type ParameterForm as ParameterValues } from "../schemas.ts";
@@ -171,7 +166,7 @@ function EditParameter({ name }: { name: string }) {
         type: parameter.Type ?? "String",
         value: parameter.Value ?? "",
         // Key mặc định hiện là option "(default)" của ô chọn
-        keyId: keyId === SSM_DEFAULT_KEY_ID ? "" : keyId,
+        keyId: keyId === awsManagedAlias(SSM_KEY_SERVICE) ? "" : keyId,
       }}
     />
   );

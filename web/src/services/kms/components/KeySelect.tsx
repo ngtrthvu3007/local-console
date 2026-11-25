@@ -6,10 +6,11 @@ import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { KEY_ARN_PREFIX } from "../constants.ts";
 import { useKeyOptions } from "../hooks/useKeys.ts";
-import { kmsKeyIdSchema } from "../schemas.ts";
+import { KEY_PENDING, kmsKeyIdSchema } from "../schemas.ts";
 
 const CUSTOM_VALUE = "custom";
-const CUSTOM_OPTION = { value: CUSTOM_VALUE, label: "Enter a key ARN" };
+// Nhãn chung: Lambda chỉ nhận ARN, service khác nhận cả key ID / alias; lỗi của schema nói rõ
+const CUSTOM_OPTION = { value: CUSTOM_VALUE, label: "Enter a key manually" };
 // Floci ghi nhận key nhưng vẫn dùng khi key tắt / xóa (spec KMS 7 #3)
 const FLOCI_NOTE =
   "Floci records the key but doesn't stop using it when the key is disabled or deleted.";
@@ -60,16 +61,16 @@ export function FormKeySelect<TValues extends FieldValues>(props: Props<TValues>
           onChange={({ detail }) => {
             const picked = detail.selectedOption.value ?? "";
             setTyping(picked === CUSTOM_VALUE);
-            field.onChange(picked === CUSTOM_VALUE ? "" : picked);
+            field.onChange(picked === CUSTOM_VALUE ? KEY_PENDING : picked);
           }}
           onBlur={field.onBlur}
         />
         {custom && (
           <Input
-            value={value}
+            value={value === KEY_PENDING ? "" : value}
             placeholder={`${KEY_ARN_PREFIX}…:key/…`}
             invalid={Boolean(fieldState.error)}
-            onChange={({ detail }) => field.onChange(detail.value)}
+            onChange={({ detail }) => field.onChange(detail.value || KEY_PENDING)}
             onBlur={field.onBlur}
           />
         )}

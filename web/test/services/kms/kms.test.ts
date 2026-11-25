@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   ACTION_ALLOWED,
+  awsManagedAlias,
+  preferredRsaAlgorithm,
   contextOf,
   derToPem,
   isKeyMissing,
@@ -14,6 +16,8 @@ import { KEY_TABS, kmsRoutes } from "../../../src/services/kms/routes.ts";
 import {
   aliasSchema,
   createKeySchema,
+  KEY_PENDING,
+  kmsKeyArnSchema,
   kmsKeyIdSchema,
   ciphertextSchema,
   scheduleDeletionSchema,
@@ -57,13 +61,17 @@ describe("kms", () => {
   });
 
   it("lists customer keys once each, aliased or not, never AWS managed", () => {
+    const arn = (id: string) => `arn:aws:kms:ap-southeast-1:000000000000:key/${id}`;
     const options = keyOptions(
-      [{ KeyId: "k1" }, { KeyId: "k2" }, { KeyId: "aws1" }],
+      [
+        { KeyId: "k1", KeyArn: arn("k1") },
+        { KeyId: "k2", KeyArn: arn("k2") },
+        { KeyId: "aws1", KeyArn: arn("aws1") },
+      ],
       [
         { AliasName: "alias/orders", TargetKeyId: "k1" },
         { AliasName: "alias/aws/sqs", TargetKeyId: "aws1" },
       ],
-      "ap-southeast-1",
     );
 
     expect(options.map((option) => option.label)).toEqual(["alias/orders", "k2"]);
@@ -131,6 +139,27 @@ describe("kms", () => {
       false,
     );
     expect(createKeySchema(["alias/orders"]).safeParse({ ...form, alias: "" }).success).toBe(true);
+  });
+
+  it("prefers RSAES_OAEP_SHA_256 whatever order Floci returns", () => {
+    expect(preferredRsaAlgorithm(["RSAES_OAEP_SHA_1", "RSAES_OAEP_SHA_256"])).toBe(
+      "RSAES_OAEP_SHA_256",
+    );
+    expect(preferredRsaAlgorithm(["RSAES_OAEP_SHA_1"])).toBe("RSAES_OAEP_SHA_1");
+    expect(preferredRsaAlgorithm([])).toBeUndefined();
+  });
+
+  it("builds the AWS managed alias of a service", () => {
+    expect(awsManagedAlias("sqs")).toBe("alias/aws/sqs");
+  });
+
+  it("asks for a key once 'Enter a key' is picked, and Lambda takes ARNs only", () => {
+    expect(kmsKeyIdSchema.safeParse(KEY_PENDING).success).toBe(false);
+    expect(
+      kmsKeyArnSchema.safeParse("arn:aws:kms:ap-southeast-1:000000000000:key/k1").success,
+    ).toBe(true);
+    expect(kmsKeyArnSchema.safeParse("alias/orders").success).toBe(false);
+    expect(kmsKeyArnSchema.safeParse("").success).toBe(true);
   });
 
   it("wraps a DER public key as PEM", () => {

@@ -1,6 +1,6 @@
 import type { AliasListEntry, KeyListEntry, KeyMetadata } from "@aws-sdk/client-kms";
 import type { KeyValue } from "@shared/components/KeyValueEditor.tsx";
-import { FLOCI_ACCOUNT_ID, NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { fromBase64 } from "../dynamodb/itemJson.ts";
 import {
   ALIAS_PREFIX,
@@ -20,9 +20,6 @@ const WHITESPACE = /\s/g;
 
 // ARN key → ID; ID / alias giữ nguyên
 const keyIdOf = (value: string) => value.split(KEY_ARN_MARKER)[1] ?? value;
-
-export const keyArn = (region: string, keyId: string) =>
-  `arn:aws:kms:${region}:${FLOCI_ACCOUNT_ID}:key/${keyId}`;
 
 // Nhãn ngắn cho giá trị service khác lưu: alias giữ nguyên, ARN alias → alias, ARN key → ID
 export function keyLabel(value: string): string {
@@ -94,7 +91,6 @@ export interface KeyOption {
 export function keyOptions(
   keys: readonly KeyListEntry[],
   aliases: readonly AliasListEntry[],
-  region: string,
 ): KeyOption[] {
   const awsManaged = new Set(
     aliases.flatMap(({ AliasName, TargetKeyId }) =>
@@ -102,10 +98,11 @@ export function keyOptions(
     ),
   );
 
-  return keys.flatMap(({ KeyId }) => {
-    if (!KeyId || awsManaged.has(KeyId)) return [];
+  // ListKeys đã trả ARN của key: dùng thẳng, không tự dựng từ region + account
+  return keys.flatMap(({ KeyId, KeyArn }) => {
+    if (!KeyId || !KeyArn || awsManaged.has(KeyId)) return [];
     const [alias] = aliasesOf(aliases, KeyId);
-    return [{ value: keyArn(region, KeyId), label: alias ?? KeyId, description: alias && KeyId }];
+    return [{ value: KeyArn, label: alias ?? KeyId, description: alias && KeyId }];
   });
 }
 
@@ -119,3 +116,11 @@ export function contextOf(entries: readonly KeyValue[]): Record<string, string> 
 
 // Nhãn option mặc định của ô chọn key / dòng "KMS key" khi resource không đặt key: "aws/sqs (default)"
 export const defaultKeyLabel = (service: string) => `aws/${service} (default)`;
+
+// Floci trả RSAES_OAEP_SHA_1 trước SHA_256: chọn SHA_256 như khuyến nghị của AWS (Try it và Connect card)
+const PREFERRED_RSA_ALGORITHM = "RSAES_OAEP_SHA_256";
+export const preferredRsaAlgorithm = <T extends string>(algorithms: readonly T[]) =>
+  algorithms.find((algorithm) => algorithm === PREFERRED_RSA_ALGORITHM) ?? algorithms[0];
+
+// Alias key AWS managed của service: alias/aws/sqs
+export const awsManagedAlias = (service: string) => `${AWS_ALIAS_PREFIX}${service}`;

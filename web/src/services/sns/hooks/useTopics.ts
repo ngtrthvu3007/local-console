@@ -13,7 +13,8 @@ import { existsUnlessMissing, isNotFoundError } from "@shared/aws.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { ATTRIBUTE_TRUE } from "../../sqs/constants.ts";
-import { SNS_DEFAULT_KEY_ID, type AttributeDataType, type TopicType } from "../constants.ts";
+import { awsManagedAlias } from "../../kms/keys.ts";
+import { SNS_KEY_SERVICE, type AttributeDataType, type TopicType } from "../constants.ts";
 import { toTopic, topicArn, topicNameOfArn, type Topic } from "../topics.ts";
 import { useSNS } from "./useSNS.ts";
 
@@ -110,7 +111,7 @@ export function useCreateTopic() {
             ...(type === "fifo"
               ? { FifoTopic: ATTRIBUTE_TRUE, ContentBasedDeduplication: String(contentBasedDedup) }
               : {}),
-            ...(encrypted ? { KmsMasterKeyId: kmsKeyId || SNS_DEFAULT_KEY_ID } : {}),
+            ...(encrypted ? { KmsMasterKeyId: kmsKeyId || awsManagedAlias(SNS_KEY_SERVICE) } : {}),
           },
         }),
       ),

@@ -18,7 +18,6 @@ import {
 } from "@aws-sdk/client-kms";
 import { existsUnlessMissing } from "@shared/aws.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
-import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import type { KeyManager } from "../constants.ts";
 import type { NewKey } from "../schemas.ts";
 import { KEY_ACTIONS, aliasesOf, isKeyMissing, keyOptions, type KeyAction } from "../keys.ts";
@@ -197,13 +196,11 @@ export function useCreateKey() {
 // Ô chọn key của service khác: chỉ ListKeys + ListAliases, không DescribeKey từng key
 export function useKeyOptions() {
   const client = useKMS();
-  const { region } = useLoadedConfig();
-
   return useQuery({
-    queryKey: [KMS_QUERY_ROOT, "options", region],
+    queryKey: [KMS_QUERY_ROOT, "options"],
     queryFn: async () => {
       const [keys, aliases] = await Promise.all([listKeyEntries(client), listAliasEntries(client)]);
-      return keyOptions(keys, aliases, region);
+      return keyOptions(keys, aliases);
     },
   });
 }

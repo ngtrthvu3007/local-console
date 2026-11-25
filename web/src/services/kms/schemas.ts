@@ -83,6 +83,15 @@ export const ciphertextSchema = z.string().trim().min(1, "Enter a value.");
 
 export const descriptionSchema = z.object({ description: z.string().trim() });
 
+// Đã chọn "Enter a key…" mà chưa gõ: giá trị này không hợp lệ để form báo lỗi, thay vì lặng lẽ dùng key mặc định
+export const KEY_PENDING = "key-pending";
+
+// Lambda chỉ nhận ARN cho KMSKeyArn
+export const kmsKeyArnSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || value.startsWith(KEY_ARN_PREFIX), "Enter a KMS key ARN.");
+
 // Key ID trơn (UUID) mà resource tạo bằng CLI có thể đang lưu (put-parameter --key-id …)
 const KEY_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

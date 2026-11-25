@@ -8,9 +8,7 @@ import {
   type CodeSample,
 } from "@shared/codeSamples.ts";
 import { KEY_USAGES, SYMMETRIC_SPEC } from "./constants.ts";
-
-// Floci trả RSAES_OAEP_SHA_1 trước SHA_256: chọn SHA_256 như khuyến nghị của AWS
-const PREFERRED_RSA_ALGORITHM = "RSAES_OAEP_SHA_256";
+import { preferredRsaAlgorithm } from "./keys.ts";
 
 type KeyInfo = Pick<
   KeyMetadata,
@@ -130,9 +128,5 @@ export function keySample(meta: KeyInfo, reference: string): CodeSample {
   if (meta.KeyUsage === KEY_USAGES.mac) return macSample(reference, meta.MacAlgorithms?.[0] ?? "");
   if (meta.KeySpec === SYMMETRIC_SPEC) return encryptSample(reference);
 
-  const algorithms = meta.EncryptionAlgorithms ?? [];
-  const algorithm = algorithms.includes(PREFERRED_RSA_ALGORITHM)
-    ? PREFERRED_RSA_ALGORITHM
-    : algorithms[0];
-  return encryptSample(reference, algorithm);
+  return encryptSample(reference, preferredRsaAlgorithm(meta.EncryptionAlgorithms ?? []));
 }

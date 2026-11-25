@@ -17,4 +17,10 @@ describe("createTableSchema encryption", () => {
       createTableSchema.safeParse({ ...base, encryption: "customer", kmsKeyId: "k1" }).success,
     ).toBe(false);
   });
+
+  it("needs a key when a customer managed key is chosen", () => {
+    expect(
+      createTableSchema.safeParse({ ...base, encryption: "customer", kmsKeyId: "" }).success,
+    ).toBe(false);
+  });
 });

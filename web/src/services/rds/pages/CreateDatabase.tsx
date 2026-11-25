@@ -19,7 +19,6 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   RDS_KEY_SERVICE,
-  SECRET_KEY_SERVICE,
   CREDENTIAL_TYPES,
   DEFAULT_ENGINE,
   DEFAULT_USERNAMES,
@@ -32,6 +31,7 @@ import {
 } from "../constants.ts";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
 import { defaultKeyLabel } from "../../kms/keys.ts";
+import { SECRETS_KEY_SERVICE } from "../../secretsmanager/constants.ts";
 import { useCreateDatabase } from "../hooks/useDatabases.ts";
 import { rdsBaseCrumbs, rdsRoutes } from "../routes.ts";
 import { createDatabaseSchema, type CreateDatabaseForm } from "../schemas.ts";
@@ -172,7 +172,7 @@ export function CreateDatabase() {
                   control={form.control}
                   name='secretKmsKeyId'
                   label='Secret encryption key'
-                  defaultLabel={defaultKeyLabel(SECRET_KEY_SERVICE)}
+                  defaultLabel={defaultKeyLabel(SECRETS_KEY_SERVICE)}
                 />
               )}
               <FormInput

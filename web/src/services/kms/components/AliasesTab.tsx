@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import Alert from "@cloudscape-design/components/alert";
 import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
@@ -14,7 +15,8 @@ import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { KEY_MANAGERS } from "../constants.ts";
 import { useAllAliases, useDeleteAlias, useSaveAlias } from "../hooks/useAliases.ts";
 import type { KeyRow } from "../hooks/useKeys.ts";
-import { aliasesOf } from "../keys.ts";
+import { aliasesOf, keyLabel } from "../keys.ts";
+import { KEY_TABS, SEARCH_PARAMS } from "../routes.ts";
 import { aliasSchema } from "../schemas.ts";
 
 interface AliasRow {
@@ -23,7 +25,8 @@ interface AliasRow {
 
 // Chỉ mount khi mở. Tên đã thuộc key khác thì hỏi rồi trỏ alias sang key này (UpdateAlias)
 function CreateAliasModal({ keyId, onDismiss }: { keyId: string; onDismiss: () => void }) {
-  const allAliases = useAllAliases().data ?? [];
+  const aliases = useAllAliases();
+  const allAliases = aliases.data ?? [];
   const save = useSaveAlias();
   const [moving, setMoving] = useState<string | null>(null);
   const form = useZodForm(aliasSchema(aliasesOf(allAliases, keyId)), { name: "" });
@@ -64,6 +67,8 @@ function CreateAliasModal({ keyId, onDismiss }: { keyId: string; onDismiss: () =
       header='Create alias'
       actionText='Create alias'
       loading={save.isPending}
+      // Chưa có danh sách alias thì chưa biết tên trùng: chặn gửi để không ghi đè alias của key khác
+      disabled={!aliases.data}
       onSubmit={submit}
       onDismiss={onDismiss}
     >
@@ -85,6 +90,7 @@ export function AliasesTab({ row }: { row: KeyRow }) {
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<AliasRow[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const deleteAlias = useDeleteAlias();
   const items = row.aliases.map((name) => ({ name }));
   const target = selected[0]?.name ?? "";
@@ -98,6 +104,10 @@ export function AliasesTab({ row }: { row: KeyRow }) {
         then: () => {
           setDeleting(false);
           setSelected([]);
+          // Trang đang mở bằng chính alias (hoặc ARN alias) vừa xóa: chuyển sang key ID, không thì báo "not found"
+          if (keyLabel(searchParams.get(SEARCH_PARAMS.key) ?? "") === target) {
+            setSearchParams({ [SEARCH_PARAMS.key]: keyId, [SEARCH_PARAMS.tab]: KEY_TABS.aliases });
+          }
         },
       }),
     );

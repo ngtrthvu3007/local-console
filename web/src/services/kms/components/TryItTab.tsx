@@ -29,6 +29,7 @@ import {
   useVerify,
   useVerifyMac,
 } from "../hooks/useCrypto.ts";
+import { preferredRsaAlgorithm } from "../keys.ts";
 import { ciphertextSchema, tryItInputSchema } from "../schemas.ts";
 
 const TEXTAREA_ROWS = 3;
@@ -145,7 +146,7 @@ function EncryptPanels({ meta }: { meta: KeyMetadata }) {
   const symmetric = meta.KeySpec === SYMMETRIC_SPEC;
   const algorithms = meta.EncryptionAlgorithms ?? [];
   const [algorithm, setAlgorithm] = useState<EncryptionAlgorithmSpec | undefined>(
-    symmetric ? undefined : algorithms[algorithms.length - 1],
+    symmetric ? undefined : preferredRsaAlgorithm(algorithms),
   );
   const [encryptContext, setEncryptContext] = useState<KeyValue[]>([]);
   const [decryptContext, setDecryptContext] = useState<KeyValue[]>([]);

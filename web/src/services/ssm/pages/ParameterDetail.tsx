@@ -78,7 +78,7 @@ function ParameterView({ name, parameter, description, keyId, query }: ViewProps
                 ...(parameter.Type === SECURE_STRING
                   ? [
                       {
-                        label: "KMS key",
+                        label: "Encryption",
                         value: keyId ? <KeyLink value={keyId} /> : defaultKeyLabel(SSM_KEY_SERVICE),
                       },
                     ]
