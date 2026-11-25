@@ -4,6 +4,8 @@ import {
   CreateStreamCommand,
   DeleteStreamCommand,
   DescribeStreamSummaryCommand,
+  GetRecordsCommand,
+  GetShardIteratorCommand,
   KinesisClient,
   ListStreamsCommand,
   PutRecordCommand,
@@ -35,6 +37,9 @@ const TRIGGER_BATCH_SIZE = 2;
 // Trigger tắt: chờ chừng này mà function không chạy là đủ tin
 const DISABLED_QUIET_MS = 10_000;
 const BATCH_MARKER = "LC_IT_KINESIS_BATCH";
+// Stream on-demand của Floci có một shard
+const FIRST_SHARD = "shardId-000000000000";
+const PAGE_LIMIT = 2;
 
 // Ghi số record của batch và data đã giải mã, để test đếm theo log
 const CONSUMER_SOURCE = `
@@ -164,6 +169,64 @@ describe("streams", () => {
       name: "ResourceNotFoundException",
       $metadata: { httpStatusCode: HTTP_BAD_REQUEST },
     });
+  });
+});
+
+// Data viewer (spec 3.4): đọc theo iterator, trang theo Limit + NextShardIterator
+describe("records", () => {
+  const put = (data: string) =>
+    kinesis.send(
+      new PutRecordCommand({ StreamName: onDemand, PartitionKey: "pk", Data: strToU8(data) }),
+    );
+
+  const iterator = async (type: "TRIM_HORIZON" | "LATEST" | "AT_TIMESTAMP", timestamp?: Date) =>
+    (
+      await kinesis.send(
+        new GetShardIteratorCommand({
+          StreamName: onDemand,
+          ShardId: FIRST_SHARD,
+          ShardIteratorType: type,
+          Timestamp: timestamp,
+        }),
+      )
+    ).ShardIterator ?? "";
+
+  const strFromBytes = (bytes?: Uint8Array) => new TextDecoder().decode(bytes);
+
+  const read = async (shardIterator: string) => {
+    const { Records = [], NextShardIterator } = await kinesis.send(
+      new GetRecordsCommand({ ShardIterator: shardIterator, Limit: PAGE_LIMIT }),
+    );
+    return { data: Records.map((record) => strFromBytes(record.Data)), next: NextShardIterator };
+  };
+
+  it("pages from Trim horizon with Limit and NextShardIterator", async () => {
+    for (const data of ["p1", "p2", "p3"]) await put(data);
+
+    const first = await read(await iterator("TRIM_HORIZON"));
+    expect(first.data).toEqual(["p1", "p2"]);
+    const second = await read(first.next ?? "");
+    expect(second.data).toEqual(["p3"]);
+    // Hết record vẫn có iterator để đọc tiếp
+    const third = await read(second.next ?? "");
+    expect(third.data).toEqual([]);
+    expect(third.next).toBeTruthy();
+  });
+
+  // Console để mở Next records sau lần đọc Latest rỗng (review 2026-11-25)
+  it("reads nothing from Latest, then the records put after it", async () => {
+    const latest = await read(await iterator("LATEST"));
+    expect(latest.data).toEqual([]);
+
+    await put("after-latest");
+    expect((await read(latest.next ?? "")).data).toEqual(["after-latest"]);
+  });
+
+  it("reads from a timestamp only the records that arrived after it", async () => {
+    const since = new Date();
+    await put("after-timestamp");
+    const { data } = await read(await iterator("AT_TIMESTAMP", since));
+    expect(data).toEqual(["after-timestamp"]);
   });
 });
 
