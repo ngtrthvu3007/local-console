@@ -11,6 +11,7 @@ import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { topicSample } from "../codeSamples.ts";
 import { topicTypeLabel, type Topic } from "../topics.ts";
 
@@ -31,6 +32,10 @@ export function DetailsTab({ topic }: { topic: Topic }) {
     { label: "Type", value: topicTypeLabel(topic) },
     { label: "Subscriptions", value: topic.subscriptions },
     { label: "ARN", value: copyable(topic.arn) },
+    {
+      label: "Encryption",
+      value: topic.kmsKeyId ? <KeyLink value={topic.kmsKeyId} /> : "Off",
+    },
     ...(topic.fifo
       ? [
           {

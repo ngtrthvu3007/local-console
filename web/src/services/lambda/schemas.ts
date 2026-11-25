@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { formatBytes } from "@shared/format.ts";
 import { jsonObjectError } from "@shared/json.ts";
 import { enumOfKeys, isWholeNumberIn, wholeNumberIn } from "@shared/schemas.ts";
@@ -59,7 +60,10 @@ const textEncoder = new TextEncoder();
 const byteLength = (text: string) => textEncoder.encode(text).length;
 
 export const environmentSchema = z
-  .object({ entries: z.array(z.object({ key: z.string().trim(), value: z.string() })) })
+  .object({
+    entries: z.array(z.object({ key: z.string().trim(), value: z.string() })),
+    kmsKeyArn: kmsKeyIdSchema,
+  })
   .superRefine(({ entries }, context) => {
     const seenKeys = new Set<string>();
 

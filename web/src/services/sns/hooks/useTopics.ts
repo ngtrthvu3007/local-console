@@ -13,7 +13,7 @@ import { existsUnlessMissing, isNotFoundError } from "@shared/aws.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { ATTRIBUTE_TRUE } from "../../sqs/constants.ts";
-import type { AttributeDataType, TopicType } from "../constants.ts";
+import { SNS_DEFAULT_KEY_ID, type AttributeDataType, type TopicType } from "../constants.ts";
 import { toTopic, topicArn, topicNameOfArn, type Topic } from "../topics.ts";
 import { useSNS } from "./useSNS.ts";
 
@@ -93,6 +93,8 @@ interface CreateTopicInput {
   name: string;
   type: TopicType;
   contentBasedDedup: boolean;
+  encrypted: boolean;
+  kmsKeyId: string;
 }
 
 export function useCreateTopic() {
@@ -100,14 +102,16 @@ export function useCreateTopic() {
   const invalidate = useInvalidateTopic();
 
   return useMutation({
-    mutationFn: ({ name, type, contentBasedDedup }: CreateTopicInput) =>
+    mutationFn: ({ name, type, contentBasedDedup, encrypted, kmsKeyId }: CreateTopicInput) =>
       client.send(
         new CreateTopicCommand({
           Name: name,
-          Attributes:
-            type === "fifo"
+          Attributes: {
+            ...(type === "fifo"
               ? { FifoTopic: ATTRIBUTE_TRUE, ContentBasedDeduplication: String(contentBasedDedup) }
-              : undefined,
+              : {}),
+            ...(encrypted ? { KmsMasterKeyId: kmsKeyId || SNS_DEFAULT_KEY_ID } : {}),
+          },
         }),
       ),
     onSuccess: (_result, input) => invalidate(input.name),

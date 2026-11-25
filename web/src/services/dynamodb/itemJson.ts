@@ -23,7 +23,7 @@ const ELLIPSIS = "…";
 
 // ---------- Binary ↔ base64 ----------
 
-function toBase64(bytes: Uint8Array): string {
+export function toBase64(bytes: Uint8Array): string {
   let text = "";
   for (const byte of bytes) text += String.fromCharCode(byte);
   return btoa(text);

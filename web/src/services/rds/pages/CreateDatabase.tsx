@@ -6,13 +6,20 @@ import Container from "@cloudscape-design/components/container";
 import Form from "@cloudscape-design/components/form";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { FormInput, FormRadioGroup, FormTiles } from "@shared/components/form/FormFields.tsx";
+import {
+  FormToggle,
+  FormInput,
+  FormRadioGroup,
+  FormTiles,
+} from "@shared/components/form/FormFields.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
+  RDS_KEY_SERVICE,
+  SECRET_KEY_SERVICE,
   CREDENTIAL_TYPES,
   DEFAULT_ENGINE,
   DEFAULT_USERNAMES,
@@ -23,6 +30,8 @@ import {
   PASSWORD_RULE,
   USERNAME_MAX_LENGTH,
 } from "../constants.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { useCreateDatabase } from "../hooks/useDatabases.ts";
 import { rdsBaseCrumbs, rdsRoutes } from "../routes.ts";
 import { createDatabaseSchema, type CreateDatabaseForm } from "../schemas.ts";
@@ -48,6 +57,9 @@ const INITIAL_VALUES: CreateDatabaseForm = {
   password: "",
   confirmPassword: "",
   databaseName: "",
+  storageEncrypted: false,
+  kmsKeyId: "",
+  secretKmsKeyId: "",
 };
 
 export function CreateDatabase() {
@@ -58,6 +70,7 @@ export function CreateDatabase() {
   const form = useZodForm(createDatabaseSchema, INITIAL_VALUES);
   const engine = useWatch({ control: form.control, name: "engine" });
   const selfManaged = useWatch({ control: form.control, name: "credentials" }) === "selfManaged";
+  const storageEncrypted = useWatch({ control: form.control, name: "storageEncrypted" });
   const { getFieldState, setValue } = form;
 
   // Đổi engine thì đổi username mặc định theo, trừ khi người dùng đã tự gõ
@@ -154,6 +167,14 @@ export function CreateDatabase() {
                   type='password'
                 />
               )}
+              {!selfManaged && (
+                <FormKeySelect
+                  control={form.control}
+                  name='secretKmsKeyId'
+                  label='Secret encryption key'
+                  defaultLabel={defaultKeyLabel(SECRET_KEY_SERVICE)}
+                />
+              )}
               <FormInput
                 control={form.control}
                 name='databaseName'
@@ -161,6 +182,19 @@ export function CreateDatabase() {
                 constraintText='Optional. Letters, numbers and underscores. Start with a letter.'
                 placeholder='appdb'
               />
+            </SpaceBetween>
+          </Container>
+          <Container header={<Header variant='h2'>Encryption</Header>}>
+            <SpaceBetween size='l'>
+              <FormToggle control={form.control} name='storageEncrypted' text='Encrypt storage' />
+              {storageEncrypted && (
+                <FormKeySelect
+                  control={form.control}
+                  name='kmsKeyId'
+                  label='Encryption key'
+                  defaultLabel={defaultKeyLabel(RDS_KEY_SERVICE)}
+                />
+              )}
             </SpaceBetween>
           </Container>
         </SpaceBetween>

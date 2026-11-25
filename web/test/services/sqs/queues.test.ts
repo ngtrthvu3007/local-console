@@ -46,6 +46,15 @@ describe("parseRedrivePolicy", () => {
 });
 
 describe("toQueue", () => {
+  it("reads the encryption of the queue", () => {
+    const url = "http://localhost.floci.io:4566/000000000000/orders";
+    expect(toQueue(url, { KmsMasterKeyId: "alias/orders" }).encryption).toEqual({
+      kmsKeyId: "alias/orders",
+      sqsManaged: false,
+    });
+    expect(toQueue(url, { SqsManagedSseEnabled: "true" }).encryption.sqsManaged).toBe(true);
+  });
+
   it("reads string attributes into numbers, flags and dates", () => {
     const queue = toQueue(QUEUE_URL, {
       QueueArn: "arn:aws:sqs:ap-southeast-1:000000000000:orders.fifo",

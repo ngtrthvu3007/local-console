@@ -16,7 +16,14 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { PARAMETER_TYPES, SECURE_STRING } from "../constants.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import {
+  PARAMETER_TYPES,
+  SECURE_STRING,
+  SSM_DEFAULT_KEY_ID,
+  SSM_KEY_SERVICE,
+} from "../constants.ts";
 import { isParameterMissing, useParameter, usePutParameter } from "../hooks/useParameters.ts";
 import { SEARCH_PARAMS, parameterCrumbs, ssmBaseCrumbs, ssmRoutes } from "../routes.ts";
 import { parameterSchema, type ParameterForm as ParameterValues } from "../schemas.ts";
@@ -33,7 +40,13 @@ const TYPE_ITEMS = Object.entries(PARAMETER_TYPES).map(([value, { label, descrip
   description,
 }));
 
-const NEW_PARAMETER: ParameterValues = { name: "", description: "", type: "String", value: "" };
+const NEW_PARAMETER: ParameterValues = {
+  name: "",
+  description: "",
+  type: "String",
+  value: "",
+  keyId: "",
+};
 
 // Sửa thì tên bị khóa, hiện dạng chữ
 function ParameterFormView({ initial, editing }: { initial: ParameterValues; editing: boolean }) {
@@ -120,6 +133,14 @@ function ParameterFormView({ initial, editing }: { initial: ParameterValues; edi
                 </Checkbox>
               )}
             </SpaceBetween>
+            {secure && (
+              <FormKeySelect
+                control={form.control}
+                name='keyId'
+                label='Encryption key'
+                defaultLabel={defaultKeyLabel(SSM_KEY_SERVICE)}
+              />
+            )}
           </SpaceBetween>
         </Container>
       </Form>
@@ -139,7 +160,7 @@ function EditParameter({ name }: { name: string }) {
   });
   if (state || !details.data) return state;
 
-  const { parameter, description } = details.data;
+  const { parameter, description, keyId } = details.data;
 
   return (
     <ParameterFormView
@@ -149,6 +170,8 @@ function EditParameter({ name }: { name: string }) {
         description,
         type: parameter.Type ?? "String",
         value: parameter.Value ?? "",
+        // Key mặc định hiện là option "(default)" của ô chọn
+        keyId: keyId === SSM_DEFAULT_KEY_ID ? "" : keyId,
       }}
     />
   );

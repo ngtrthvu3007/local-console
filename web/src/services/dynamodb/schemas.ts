@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import { formatBytes } from "@shared/format.ts";
 import {
@@ -9,6 +10,7 @@ import {
   streamBatchSizeSchema,
 } from "../lambda/schemas.ts";
 import {
+  TABLE_ENCRYPTION,
   BOOLEAN_TEXTS,
   IMPORT_FILE_EXTENSION,
   IMPORT_MAX_BYTES,
@@ -55,6 +57,12 @@ export const createTableSchema = z
     indexes: z.array(
       z.object({ name: z.string().trim(), partitionKey: keyField, sortKey: keyField }),
     ),
+    encryption: z.enum([
+      TABLE_ENCRYPTION.awsOwned,
+      TABLE_ENCRYPTION.awsManaged,
+      TABLE_ENCRYPTION.customer,
+    ]),
+    kmsKeyId: kmsKeyIdSchema,
   })
   .superRefine((values, context) => {
     const addIssue = (path: (string | number)[], message: string) =>

@@ -5,6 +5,7 @@ import {
   HeadBucketCommand,
   ListBucketsCommand,
   ListObjectVersionsCommand,
+  PutBucketEncryptionCommand,
   PutBucketTaggingCommand,
   PutBucketVersioningCommand,
   type BucketLocationConstraint,
@@ -12,7 +13,11 @@ import {
 import { isNotFoundError } from "@shared/aws.ts";
 import type { Tag } from "@shared/components/TagsModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { REGION_WITHOUT_LOCATION_CONSTRAINT, VERSIONING_STATUS } from "../constants.ts";
+import {
+  REGION_WITHOUT_LOCATION_CONSTRAINT,
+  SSE_KMS_ALGORITHM,
+  VERSIONING_STATUS,
+} from "../constants.ts";
 import { toS3TagSet } from "../helpers.ts";
 import { deleteAllVersions } from "../operations.ts";
 import { objectsQueryKey } from "./useObjects.ts";
@@ -63,6 +68,7 @@ interface CreateBucketInput {
   name: string;
   versioning: boolean;
   tags: Tag[];
+  kmsKeyId?: string; // có (kể cả "" = aws/s3) thì đặt mã hóa mặc định SSE-KMS
 }
 
 export function useCreateBucket() {
@@ -72,7 +78,7 @@ export function useCreateBucket() {
   const needsLocation = region !== REGION_WITHOUT_LOCATION_CONSTRAINT;
 
   return useMutation({
-    mutationFn: async ({ name, versioning, tags }: CreateBucketInput) => {
+    mutationFn: async ({ name, versioning, tags, kmsKeyId }: CreateBucketInput) => {
       const createBucketConfiguration = needsLocation
         ? { LocationConstraint: region as BucketLocationConstraint }
         : undefined;
@@ -93,6 +99,23 @@ export function useCreateBucket() {
       if (tags.length) {
         await s3.send(
           new PutBucketTaggingCommand({ Bucket: name, Tagging: { TagSet: toS3TagSet(tags) } }),
+        );
+      }
+      if (kmsKeyId !== undefined) {
+        await s3.send(
+          new PutBucketEncryptionCommand({
+            Bucket: name,
+            ServerSideEncryptionConfiguration: {
+              Rules: [
+                {
+                  ApplyServerSideEncryptionByDefault: {
+                    SSEAlgorithm: SSE_KMS_ALGORITHM,
+                    KMSMasterKeyID: kmsKeyId || undefined,
+                  },
+                },
+              ],
+            },
+          }),
         );
       }
     },

@@ -3,6 +3,7 @@ import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
 import { ec2Routes } from "../ec2/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
+import { kmsRoutes } from "../kms/routes.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
 import { rdsRoutes } from "../rds/routes.ts";
 import { s3Routes } from "../s3/routes.ts";
@@ -53,6 +54,8 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::Cognito::UserPool": (id) => cognitoRoutes.pool(id),
   "AWS::SecretsManager::Secret": (id) => secretsRoutes.secretOfArn(id),
   "AWS::SSM::Parameter": (id) => ssmRoutes.parameter(id),
+  "AWS::KMS::Key": (id) => kmsRoutes.key(id),
+  "AWS::KMS::Alias": (name) => kmsRoutes.key(name),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
   "AWS::StepFunctions::StateMachine": (id) =>
     stepfunctionsRoutes.stateMachine(stateMachineNameOfArn(id)),

@@ -6,6 +6,7 @@ import { formatBytes, pluralize } from "@shared/format.ts";
 import { notifyBulkResult, setLiveMessage } from "@shared/hooks/useNotify.ts";
 import { createStore } from "@shared/store.ts";
 import {
+  SSE_KMS_ALGORITHM,
   MIN_MULTIPART_PART_BYTES,
   UPLOAD_FILES_IN_PARALLEL,
   UPLOAD_PARTS_IN_PARALLEL,
@@ -30,6 +31,7 @@ interface UploadBatch {
   bucket: string;
   prefix: string;
   items: UploadItem[];
+  kmsKeyId?: string; // có thì SSE-KMS ("" = aws/s3), không thì theo mặc định của bucket
   running: boolean;
   detached: boolean; // trang Upload đã đóng: xong thì bỏ khỏi bộ nhớ (giữ File rất tốn RAM)
 }
@@ -122,6 +124,9 @@ async function uploadItem(
       Key: batch.prefix + item.path,
       Body: item.file,
       ContentType: item.file.type || undefined,
+      ...(batch.kmsKeyId === undefined
+        ? {}
+        : { ServerSideEncryption: SSE_KMS_ALGORITHM, SSEKMSKeyId: batch.kmsKeyId || undefined }),
     },
   });
 
@@ -192,7 +197,7 @@ export async function runBatch(s3: S3Client, batchId: number, onFinished: () => 
 
 export function startBatch(
   s3: S3Client,
-  target: { bucket: string; prefix: string; items: UploadItem[] },
+  target: { bucket: string; prefix: string; items: UploadItem[]; kmsKeyId?: string },
   onFinished: () => void,
 ) {
   const batchId = nextId++;

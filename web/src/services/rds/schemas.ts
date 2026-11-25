@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import {
   CREDENTIAL_TYPES,
@@ -43,6 +44,9 @@ export const createDatabaseSchema = z
         (name) => !name || DATABASE_NAME_PATTERN.test(name),
         "Start with a letter; use letters, numbers and underscores.",
       ),
+    storageEncrypted: z.boolean(),
+    kmsKeyId: kmsKeyIdSchema,
+    secretKmsKeyId: kmsKeyIdSchema,
   })
   .superRefine((form, context) => {
     // Secrets Manager tự sinh password: không kiểm hai ô password

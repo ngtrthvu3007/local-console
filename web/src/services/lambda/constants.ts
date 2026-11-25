@@ -225,3 +225,6 @@ export const ON_FAILURE_KIND_IDS = [
 ] as const satisfies readonly DestinationKind[];
 
 export type OnFailureKind = (typeof ON_FAILURE_KIND_IDS)[number];
+
+// Tên service trong alias key AWS managed mã hóa biến môi trường: alias/aws/lambda
+export const LAMBDA_KEY_SERVICE = "lambda";

@@ -6,7 +6,7 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { usePutSecretValue } from "../hooks/useSecrets.ts";
 import { keyValueSchema, plaintextSchema } from "../schemas.ts";
 import { textOfKeyValue, type KeyValue } from "../secretValue.ts";
-import { KeyValueEditor } from "./KeyValueEditor.tsx";
+import { KeyValueEditor } from "@shared/components/KeyValueEditor.tsx";
 
 interface ModalProps {
   name: string;

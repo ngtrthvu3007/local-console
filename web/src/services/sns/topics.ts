@@ -20,6 +20,7 @@ export interface Topic {
   fifo: boolean;
   contentBasedDedup: boolean;
   subscriptions: number; // đã xác nhận + đang chờ
+  kmsKeyId?: string; // không có = không mã hóa
 }
 
 export interface Subscription {
@@ -50,6 +51,7 @@ export function toTopic(arn: string, attributes: Attributes): Topic {
     contentBasedDedup: attributes.ContentBasedDeduplication === ATTRIBUTE_TRUE,
     subscriptions:
       numberOf(attributes.SubscriptionsConfirmed) + numberOf(attributes.SubscriptionsPending),
+    kmsKeyId: attributes.KmsMasterKeyId,
   };
 }
 

@@ -146,3 +146,15 @@ export const examplePublicReadPolicy = (bucket: string) => ({
     },
   ],
 });
+
+// Mã hóa phía server: SSE-S3 (mặc định của S3) hoặc SSE-KMS với key chọn được
+export const ENCRYPTION_TYPES = { sseS3: "sse-s3", sseKms: "sse-kms" } as const;
+export const SSE_KMS_ALGORITHM = "aws:kms";
+export const SSE_LABELS: Record<string, string> = { AES256: "SSE-S3", "aws:kms": "SSE-KMS" };
+// Tên service trong alias key AWS managed: alias/aws/s3
+export const S3_KEY_SERVICE = "s3";
+// Floci không áp mã hóa mặc định của bucket cho object mới (spec KMS 7 #3)
+export const DEFAULT_ENCRYPTION_NOTE =
+  "Floci doesn't apply the bucket's default encryption to new objects: choose a key when you upload.";
+// Mã hóa từng object khi upload: theo mặc định của bucket, hoặc SSE-KMS với key chọn được
+export const UPLOAD_ENCRYPTION = { bucketDefault: "bucket-default", sseKms: "sse-kms" } as const;

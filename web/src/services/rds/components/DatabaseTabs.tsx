@@ -10,9 +10,11 @@ import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { secretsRoutes } from "../../secretsmanager/routes.ts";
 import { connectionUrl, databaseSample } from "../codeSamples.ts";
-import { CREDENTIAL_TYPES, errorLogGroup } from "../constants.ts";
+import { RDS_KEY_SERVICE, CREDENTIAL_TYPES, errorLogGroup } from "../constants.ts";
 import {
   addressText,
   endpointOf,
@@ -126,6 +128,24 @@ export function ConfigurationTab({ database }: { database: DBInstance }) {
             label: "Master credentials",
             value: <MasterCredentials secretArn={database.MasterUserSecret?.SecretArn} />,
           },
+          {
+            label: "Storage encryption",
+            value: !database.StorageEncrypted ? (
+              "Not encrypted"
+            ) : database.KmsKeyId ? (
+              <KeyLink value={database.KmsKeyId} />
+            ) : (
+              defaultKeyLabel(RDS_KEY_SERVICE)
+            ),
+          },
+          ...(database.MasterUserSecret?.KmsKeyId
+            ? [
+                {
+                  label: "Secret encryption key",
+                  value: <KeyLink value={database.MasterUserSecret.KmsKeyId} />,
+                },
+              ]
+            : []),
         ]}
       />
     </Container>

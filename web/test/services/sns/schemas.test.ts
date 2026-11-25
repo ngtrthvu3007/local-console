@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toTopic } from "../../../src/services/sns/topics.ts";
 import {
   createSubscriptionSchema,
   createTopicSchema,
@@ -10,7 +11,13 @@ const firstMessage = (result: { success: boolean; error?: { issues: { message: s
 
 describe("createTopicSchema", () => {
   const check = (type: "standard" | "fifo", name: string) =>
-    createTopicSchema.safeParse({ type, name, contentBasedDedup: false });
+    createTopicSchema.safeParse({
+      type,
+      name,
+      contentBasedDedup: false,
+      encrypted: false,
+      kmsKeyId: "",
+    });
 
   it("accepts valid names", () => {
     expect(check("standard", "order-events_v2").success).toBe(true);
@@ -107,5 +114,25 @@ describe("publishSchema", () => {
 
     const contentBased = publishSchema({ fifo: true, contentBasedDedup: true });
     expect(contentBased.safeParse({ ...message, groupId: "g" }).success).toBe(true);
+  });
+});
+
+describe("createTopicSchema encryption", () => {
+  it("is off by default and takes a KMS key ARN when on", () => {
+    const base = { type: "standard", name: "events", contentBasedDedup: false };
+    expect(createTopicSchema.parse({ ...base, encrypted: false, kmsKeyId: "" }).encrypted).toBe(
+      false,
+    );
+    expect(createTopicSchema.safeParse({ ...base, encrypted: true, kmsKeyId: "k1" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("toTopic encryption", () => {
+  it("reads the topic's KMS key", () => {
+    const arn = "arn:aws:sns:ap-southeast-1:000000000000:events";
+    expect(toTopic(arn, { KmsMasterKeyId: "alias/events" }).kmsKeyId).toBe("alias/events");
+    expect(toTopic(arn, {}).kmsKeyId).toBeUndefined();
   });
 });
