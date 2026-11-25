@@ -20,9 +20,9 @@ import { MEGABYTE_UNIT } from "../constants.ts";
 import { logGroupOf } from "../helpers.ts";
 import { useFunctions } from "../hooks/useFunctions.ts";
 import { lambdaBaseCrumbs, lambdaRoutes } from "../routes.ts";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 
 const FUNCTION_NAME_FIELD = "FunctionName";
-const PAGE_SIZE = 50;
 
 export function FunctionList() {
   useBreadcrumbs(lambdaBaseCrumbs);
@@ -59,7 +59,7 @@ export function FunctionList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: FUNCTION_NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: FUNCTION_NAME_FIELD },
     });
 

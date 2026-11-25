@@ -1,14 +1,13 @@
 import type { Runtime } from "@aws-sdk/client-lambda";
 import {
   FLOCI_ACCOUNT_ID,
+  KIBIBYTE,
+  MEBIBYTE,
   MILLISECONDS_PER_SECOND,
   SECONDS_PER_DAY,
   SECONDS_PER_HOUR,
   SECONDS_PER_MINUTE,
 } from "@shared/constants.ts";
-
-const KIBIBYTE = 1024;
-const MEBIBYTE = 1024 * KIBIBYTE;
 
 // Chỉ hỗ trợ Node.js và Python (sửa code ngay trên trang được), mới trước cũ.
 // Function runtime khác (deploy bằng tool khác) vẫn xem, test, cấu hình được
@@ -85,13 +84,17 @@ export const DEFAULT_LOG_RANGE: LogRangeId = "1h";
 export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 
 // Trigger
-export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
+export const TRIGGER_SOURCES = {
+  s3: "S3",
+  sqs: "SQS",
+  dynamodb: "DynamoDB",
+  kinesis: "Kinesis",
+} as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
 
 // Nguồn chỉ xem ở đây; tạo từ trang của nó (SNS: topic, rule/schedule: EventBridge, Cognito: user pool,
 // Secrets Manager: rotation của secret)
 const DISPLAY_ONLY_SOURCES = {
-  kinesis: "Kinesis",
   sns: "SNS",
   eventbridge: "EventBridge",
   scheduler: "Scheduler",

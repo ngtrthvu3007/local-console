@@ -3,6 +3,7 @@ import { apiSample } from "../../src/services/appsync/codeSamples.ts";
 import { distributionSample } from "../../src/services/cloudfront/codeSamples.ts";
 import { clientSample } from "../../src/services/cognito/codeSamples.ts";
 import { tableSample } from "../../src/services/dynamodb/codeSamples.ts";
+import { streamSample } from "../../src/services/kinesis/codeSamples.ts";
 import { keySample } from "../../src/services/kms/codeSamples.ts";
 import { secretSample } from "../../src/services/secretsmanager/codeSamples.ts";
 import { parameterSample } from "../../src/services/ssm/codeSamples.ts";
@@ -29,6 +30,15 @@ describe("code samples", () => {
     const fifo = queueSample(queue(true, false));
     expect(fifo.node).toContain("MessageDeduplicationId: crypto.randomUUID()");
     expect(fifo.python).toContain("import uuid");
+  });
+
+  it("puts a record and reads the first shard of the stream", () => {
+    const sample = streamSample("clicks");
+    expect(sample.node).toContain('const StreamName = "clicks";');
+    expect(sample.node).toContain("PutRecordCommand");
+    expect(sample.node).toContain('ShardIteratorType: "TRIM_HORIZON"');
+    expect(sample.python).toContain('stream = "clicks"');
+    expect(sample.python).toContain("kinesis.get_records(");
   });
 
   it("uses path-style S3 in both languages", () => {

@@ -96,6 +96,8 @@ import {
   DeleteRuleCommand,
   DeleteEventBusCommand,
 } from "@aws-sdk/client-eventbridge";
+import { KinesisClient, paginateListStreams, DeleteStreamCommand } from "@aws-sdk/client-kinesis";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
 const { region } = await (await fetch(`${consoleUrl}/api/config`)).json();
@@ -290,6 +292,12 @@ for await (const page of paginateListKeys({ client: kms }, {})) {
   }
 }
 const aliases = kmsAliases.map((alias) => alias.AliasName);
+// SDK Kinesis trên Node mặc định HTTP/2, proxy /aws của console chỉ nói HTTP/1.1 (gọi thẳng Floci thì được)
+const kinesis = new KinesisClient({ ...config, requestHandler: new NodeHttpHandler() });
+const streams = [];
+for await (const page of paginateListStreams({ client: kinesis }, {})) {
+  streams.push(...mine(page.StreamNames ?? []));
+}
 const graphqlApis = [];
 for await (const page of paginateListGraphqlApis({ client: appsync }, {})) {
   for (const api of page.graphqlApis ?? []) {
@@ -336,6 +344,7 @@ console.log(
       instances,
       aliases,
       kmsKeys,
+      streams,
       replicationGroups,
       cacheClusters,
       brokers,
@@ -443,6 +452,10 @@ if (process.argv.includes("--delete")) {
   for (const name of aliases) await kms.send(new DeleteAliasCommand({ AliasName: name }));
   for (const id of kmsKeys)
     await kms.send(new ScheduleKeyDeletionCommand({ KeyId: id, PendingWindowInDays: 7 }));
+  for (const name of streams)
+    await kinesis.send(
+      new DeleteStreamCommand({ StreamName: name, EnforceConsumerDeletion: true }),
+    );
   for (const id of replicationGroups)
     await elastiCache(region, "DeleteReplicationGroup", { ReplicationGroupId: id });
   for (const id of cacheClusters)

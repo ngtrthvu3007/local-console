@@ -19,9 +19,9 @@ import { DeleteStackModal } from "../components/DeleteStackModal.tsx";
 import { StackStatus } from "../components/StackStatus.tsx";
 import { useStacks } from "../hooks/useStacks.ts";
 import { cloudformationRoutes, stacksCrumbs } from "../routes.ts";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 
 const NAME_FIELD = "StackName";
-const PAGE_SIZE = 50;
 
 export function StackList() {
   useBreadcrumbs(stacksCrumbs);
@@ -54,7 +54,7 @@ export function StackList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     });
 

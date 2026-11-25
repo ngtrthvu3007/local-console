@@ -33,6 +33,8 @@ const PAGES = [
   { slug: "cognito-pools", path: "/cognito/user-pools" },
   { slug: "secretsmanager-secrets", path: "/secretsmanager/secrets" },
   { slug: "secretsmanager-create", path: "/secretsmanager/secrets/create" },
+  { slug: "kinesis-streams", path: "/kinesis/streams" },
+  { slug: "kinesis-create", path: "/kinesis/streams/create" },
   { slug: "kms-keys", path: "/kms/keys" },
   { slug: "kms-aws-keys", path: "/kms/aws-keys" },
   { slug: "kms-create", path: "/kms/keys/create" },

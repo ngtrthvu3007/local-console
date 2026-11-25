@@ -2,14 +2,13 @@ import Alert from "@cloudscape-design/components/alert";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
+import { LIST_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import { useQueueLinks } from "../hooks/useQueueTriggers.ts";
 import { useDeleteQueues } from "../hooks/useQueues.ts";
 import type { Queue } from "../queues.ts";
-
-const LIST_SEPARATOR = ", ";
 
 interface Props {
   queues: readonly Queue[];

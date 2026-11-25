@@ -4,6 +4,7 @@ import Checkbox from "@cloudscape-design/components/checkbox";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
+import { LIST_SEPARATOR } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
@@ -14,8 +15,6 @@ import {
   useRotationUses,
   type FunctionToDelete,
 } from "../hooks/useFunctions.ts";
-
-const LIST_SEPARATOR = ", ";
 
 interface Props {
   functions: FunctionToDelete[];

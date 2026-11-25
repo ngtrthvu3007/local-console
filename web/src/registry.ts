@@ -9,6 +9,7 @@ import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { ec2Service } from "./services/ec2/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
+import { kinesisService } from "./services/kinesis/index.tsx";
 import { kmsService } from "./services/kms/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
@@ -47,6 +48,7 @@ export const services: ServiceDefinition[] = [
   cloudfrontService,
   sqsService,
   snsService,
+  kinesisService,
   eventbridgeService,
   appsyncService,
   stepfunctionsService,

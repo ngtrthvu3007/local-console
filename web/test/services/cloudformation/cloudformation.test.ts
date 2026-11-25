@@ -123,6 +123,7 @@ describe("resourceHref", () => {
     expect(resourceHref("AWS::Lambda::Url", "arn:aws:lambda:r:000000000000:function:my-fn")).toBe(
       "/lambda/functions/my-fn",
     );
+    expect(resourceHref("AWS::Kinesis::Stream", "clicks")).toBe("/kinesis/streams/clicks");
 
     expect(
       resourceHref(

@@ -17,7 +17,12 @@ import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.ts
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
+import {
+  DETAIL_SEPARATOR,
+  ITEM_LIST_WIDTH_PX,
+  NOT_AVAILABLE,
+  TABLE_PAGE_SIZE,
+} from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -25,7 +30,6 @@ import { isUnauthorized, useDeleteQueues, usePurgeQueue, useQueues } from "../ho
 import { CreateQueueModal, PeekModal, PublishModal } from "./QueueModals.tsx";
 
 const NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 type Modal =
   | { id: "create" }
@@ -76,7 +80,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     });
 

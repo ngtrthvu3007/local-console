@@ -1,7 +1,7 @@
 import type { QueueAttributeName } from "@aws-sdk/client-sqs";
 import { z } from "zod";
-import { DETAIL_SEPARATOR, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
-import { ATTRIBUTE_TRUE, KIBIBYTE, QUEUE_TYPES } from "./constants.ts";
+import { DETAIL_SEPARATOR, KIBIBYTE, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
+import { ATTRIBUTE_TRUE, QUEUE_TYPES } from "./constants.ts";
 
 const URL_PATH_SEPARATOR = "/";
 

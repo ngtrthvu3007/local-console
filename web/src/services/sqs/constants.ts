@@ -5,8 +5,6 @@ import {
   SECONDS_PER_HOUR,
 } from "@shared/constants.ts";
 
-export const KIBIBYTE = 1024;
-
 // Luật đặt tên queue của SQS: 1–80 ký tự (tính cả đuôi .fifo)
 export const QUEUE_NAME_MAX_LENGTH = 80;
 export const QUEUE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;

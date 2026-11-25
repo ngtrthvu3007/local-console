@@ -12,7 +12,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -28,7 +28,6 @@ import { ec2BaseCrumbs, ec2Routes } from "../routes.ts";
 
 const ID_FIELD = "InstanceId";
 const LAUNCH_TIME_FIELD = "LaunchTime";
-const PAGE_SIZE = 50;
 // Ô tìm rộng đủ cho placeholder; khung hẹp thì ô lọc state xuống dòng dưới
 const FILTER_GRID: GridProps.ElementDefinition[] = [
   { colspan: { default: 12, xs: 8 } },
@@ -91,7 +90,7 @@ export function InstanceList() {
       sorting: {
         defaultState: { sortingColumn: { sortingField: LAUNCH_TIME_FIELD }, isDescending: true },
       },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: ID_FIELD },
     });
 

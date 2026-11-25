@@ -20,14 +20,13 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { DeleteTablesModal } from "../components/DeleteTablesModal.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { KeyLabel, keyText } from "../components/KeyLabel.tsx";
 import { TABLE_STATUS_ACTIVE } from "../constants.ts";
 import { indexCountOf, keySchemaOf, useTables } from "../hooks/useTables.ts";
 import { dynamodbBaseCrumbs, dynamodbRoutes } from "../routes.ts";
 
 const TABLE_NAME_FIELD = "TableName";
-const PAGE_SIZE = 50;
 
 const itemCountText = (table: TableDescription) => (table.ItemCount ?? 0).toLocaleString();
 
@@ -101,7 +100,7 @@ export function TableList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: TABLE_NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: TABLE_NAME_FIELD },
     });
 

@@ -13,7 +13,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -34,7 +34,6 @@ import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
 
 const NAME_FIELD = "name";
 const ALL_GROUPS = "";
-const PAGE_SIZE = 50;
 
 const targetLabel = (row: ScheduleRow) =>
   `${TARGET_KINDS[targetKindOfArn(row.targetArn)]} ${lastArnPart(row.targetArn)}`;
@@ -94,7 +93,7 @@ export function ScheduleList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: rowKey },
     });
 

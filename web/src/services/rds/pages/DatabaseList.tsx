@@ -9,7 +9,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -22,7 +22,6 @@ import { useDatabases } from "../hooks/useDatabases.ts";
 import { rdsBaseCrumbs, rdsRoutes } from "../routes.ts";
 
 const ID_FIELD = "DBInstanceIdentifier";
-const PAGE_SIZE = 50;
 
 const idOf = (database: DBInstance) => database.DBInstanceIdentifier ?? "";
 
@@ -59,7 +58,7 @@ export function DatabaseList() {
         fields: [ID_FIELD],
       },
       sorting: { defaultState: { sortingColumn: { sortingField: ID_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: ID_FIELD },
     });
 

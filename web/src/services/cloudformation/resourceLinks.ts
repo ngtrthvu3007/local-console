@@ -6,6 +6,7 @@ import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
 import { ec2Routes } from "../ec2/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
+import { kinesisRoutes } from "../kinesis/routes.ts";
 import { kmsRoutes } from "../kms/routes.ts";
 import { functionNameOfArn } from "../lambda/helpers.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
@@ -84,6 +85,7 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::SecretsManager::Secret": (id) => secretsRoutes.secretOfArn(id),
   "AWS::SSM::Parameter": (id) => ssmRoutes.parameter(id),
   "AWS::KMS::Key": (id) => kmsRoutes.key(id),
+  "AWS::Kinesis::Stream": (name) => kinesisRoutes.stream(name),
   "AWS::KMS::Alias": (name) => kmsRoutes.key(name),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
   "AWS::StepFunctions::StateMachine": (id) => stepfunctionsRoutes.stateMachine(lastArnPart(id)),

@@ -9,10 +9,12 @@ export const TARGET_KINDS = {
   sns: "SNS",
   eventbus: "Event bus",
   stepfunctions: "Step Functions",
+  kinesis: "Kinesis",
   other: "Other",
 } as const;
 type TargetKind = keyof typeof TARGET_KINDS;
 // Loại target chọn được từ console, cho cả rule lẫn schedule. Event bus để nối sang bus khác
+// Không có Kinesis: Floci 2.4.0 nhận target nhưng không giao event vào stream (spec Kinesis 7 #16)
 export const ADDABLE_TARGET_KINDS = ["lambda", "sqs", "sns", "eventbus", "stepfunctions"] as const;
 export type AddableTargetKind = (typeof ADDABLE_TARGET_KINDS)[number];
 
@@ -23,6 +25,7 @@ const KIND_BY_ARN_SERVICE: Record<string, TargetKind> = {
   sns: "sns",
   events: "eventbus",
   states: "stepfunctions",
+  kinesis: "kinesis",
 };
 
 export const targetKindOfArn = (arn: string): TargetKind =>

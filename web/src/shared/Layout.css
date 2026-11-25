@@ -280,6 +280,13 @@ html {
   }
 }
 
+/* Chữ của ô copy inline (ARN, URI): Cloudscape để break-all nên ngắt giữa chữ. Xuống dòng ở <wbr>
+   sau ":" "/" trước, hết chỗ mới ngắt giữa chữ */
+.local-console [class*="awsui_text-to-display_"] {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
 /* Mobile uses the same Cloudscape components, with room for fingers and long identifiers. */
 .local-console :is(h1, h2, h3),
 .local-console [class*="awsui_description_"],

@@ -3,6 +3,7 @@ import {
   formatBytes,
   formatDate,
   formatDuration,
+  identifierParts,
   nounFor,
   pluralize,
   usedByText,
@@ -63,6 +64,26 @@ describe("formatDuration", () => {
     expect(formatDuration(59 * 60 + 12)).toBe("59m 12s");
     expect(formatDuration(6 * 3600 + 30)).toBe("6h 0m");
     expect(formatDuration(3 * 86400 + 4 * 3600 + 59)).toBe("3d 4h");
+  });
+});
+
+// ARN / URL dài xuống dòng ở dấu phân cách, không ngắt giữa chữ
+describe("identifierParts", () => {
+  it("ends each part at a colon or a slash", () => {
+    expect(identifierParts("arn:aws:kinesis:ap-southeast-1:000000000000:stream/demo")).toEqual([
+      "arn:",
+      "aws:",
+      "kinesis:",
+      "ap-southeast-1:",
+      "000000000000:",
+      "stream/",
+      "demo",
+    ]);
+  });
+
+  it("keeps the text whole when nothing separates it", () => {
+    expect(identifierParts("orders")).toEqual(["orders"]);
+    expect(identifierParts("http://localhost:4566/").join("")).toBe("http://localhost:4566/");
   });
 });
 

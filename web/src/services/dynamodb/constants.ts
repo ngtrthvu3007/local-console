@@ -1,7 +1,5 @@
 import type { KeyType as KeyRole } from "@aws-sdk/client-dynamodb";
-
-const KIBIBYTE = 1024;
-const MEBIBYTE = 1024 * KIBIBYTE;
+import { MEBIBYTE } from "@shared/constants.ts";
 
 // Kiểu dữ liệu được phép làm key (DynamoDB chỉ cho String, Number, Binary)
 export const KEY_TYPES = { S: "String", N: "Number", B: "Binary" } as const;

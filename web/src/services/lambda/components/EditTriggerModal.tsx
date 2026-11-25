@@ -16,7 +16,7 @@ interface Props {
 
 // Chỉ mount khi mở. Không đổi được nguồn (queue / bảng) hay starting position: AWS không cho
 export function EditTriggerModal({ row, saving, onSave, onDismiss }: Props) {
-  const source = row.source === "sqs" ? "sqs" : "dynamodb";
+  const source = row.source === "sqs" || row.source === "kinesis" ? row.source : "dynamodb";
   const limits = source === "sqs" ? SQS_BATCH_SIZE : STREAM_BATCH_SIZE;
   const form = useZodForm(editTriggerSchema(source), {
     batchSize: String(row.mapping?.BatchSize ?? limits.default),

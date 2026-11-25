@@ -16,7 +16,7 @@ import {
 } from "./constants.ts";
 
 // Nguồn có tùy chọn nâng cao; S3 và SNS không phải event source mapping
-export type MappingSource = "sqs" | "dynamodb";
+export type MappingSource = "sqs" | "dynamodb" | "kinesis";
 
 // Các ô của form, gộp chung cho SQS và DynamoDB: mỗi nguồn chỉ dùng phần của mình
 export interface MappingOptions {
