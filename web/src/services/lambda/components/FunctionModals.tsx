@@ -16,7 +16,6 @@ import {
   type FunctionToDelete,
 } from "../hooks/useFunctions.ts";
 
-
 interface Props {
   functions: FunctionToDelete[];
   onDismiss: () => void;

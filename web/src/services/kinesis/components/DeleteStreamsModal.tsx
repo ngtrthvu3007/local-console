@@ -6,7 +6,6 @@ import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useDeleteStreams, useStreamsWithTriggers, type StreamRow } from "../hooks/useStreams.ts";
 
-
 interface Props {
   streams: readonly Pick<StreamRow, "name" | "arn">[];
   onDismiss: () => void;

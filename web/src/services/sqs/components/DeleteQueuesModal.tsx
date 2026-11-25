@@ -10,7 +10,6 @@ import { useQueueLinks } from "../hooks/useQueueTriggers.ts";
 import { useDeleteQueues } from "../hooks/useQueues.ts";
 import type { Queue } from "../queues.ts";
 
-
 interface Props {
   queues: readonly Queue[];
   onDismiss: () => void;

@@ -50,7 +50,6 @@ export const putRecordSchema = (maxBytes: number) =>
       .refine((text) => byteLength(text) <= maxBytes, `Must be at most ${maxBytes} bytes.`),
   });
 
-
 const isDate = (text: string) => !Number.isNaN(new Date(text).getTime());
 
 export const dataViewerSchema = z

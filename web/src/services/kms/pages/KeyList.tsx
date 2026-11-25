@@ -21,7 +21,6 @@ import { useKeys, type KeyRow } from "../hooks/useKeys.ts";
 import { keyTypeLabel, keyUsageLabel } from "../keys.ts";
 import { kmsBaseCrumbs, kmsRoutes } from "../routes.ts";
 
-
 const keyIdOfRow = (row: KeyRow) => row.meta.KeyId ?? "";
 
 const matchesText = (row: KeyRow, text: string) => {
