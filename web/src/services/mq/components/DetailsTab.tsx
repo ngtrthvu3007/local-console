@@ -7,7 +7,7 @@ import KeyValuePairs, {
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import type { DescribeBrokerResponse } from "@aws-sdk/client-mq";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -16,9 +16,6 @@ import { ENGINE_LABEL, HOST_PORT_HINT } from "../constants.ts";
 
 const CONNECT_COLUMNS = 2;
 const GENERAL_COLUMNS = 4;
-
-const copyable = (text?: string) =>
-  text ? <CopyButton variant='inline' text={text} label={text} /> : NOT_AVAILABLE;
 
 export function DetailsTab({ broker }: { broker: DescribeBrokerResponse }) {
   // Khung hẹp: một cột, để endpoint không bị bẻ giữa chữ

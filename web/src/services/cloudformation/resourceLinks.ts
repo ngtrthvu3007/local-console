@@ -1,3 +1,4 @@
+import { ARN_SEPARATOR, lastArnPart } from "@shared/arn.ts";
 import { cloudfrontRoutes } from "../cloudfront/routes.ts";
 import { cognitoRoutes } from "../cognito/routes.ts";
 import { eventbridgeRoutes } from "../eventbridge/routes.ts";
@@ -5,6 +6,7 @@ import { dynamodbRoutes } from "../dynamodb/routes.ts";
 import { ec2Routes } from "../ec2/routes.ts";
 import { elasticacheRoutes } from "../elasticache/routes.ts";
 import { kmsRoutes } from "../kms/routes.ts";
+import { functionNameOfArn } from "../lambda/helpers.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
 import { rdsRoutes } from "../rds/routes.ts";
 import { s3Routes } from "../s3/routes.ts";
@@ -18,19 +20,14 @@ import { stateMachineNameOfArn } from "../stepfunctions/stateMachines.ts";
 import { stepfunctionsRoutes } from "../stepfunctions/routes.ts";
 import { cloudformationRoutes } from "./routes.ts";
 
-const ARN_SEPARATOR = ":";
 const LAMBDA_LOG_GROUP_PREFIX = "/aws/lambda/";
-const FUNCTION_ARN_MARKER = "function:";
 // ARN stack: "…:stack/<tên>/<uuid>"
 const STACK_ARN_SEPARATOR = "/";
 const STACK_ARN_NAME_INDEX = 1;
 
-const lastArnPart = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
 // ARN của subscription là ARN topic + ":<uuid>"
 const topicNameOfSubscriptionArn = (arn: string) =>
   arn.split(ARN_SEPARATOR).slice(-2, -1)[0] ?? arn;
-const functionNameOfArn = (arn: string) =>
-  arn.slice(arn.indexOf(FUNCTION_ARN_MARKER) + FUNCTION_ARN_MARKER.length);
 export const stackNameOfArn = (arn: string) =>
   lastArnPart(arn).split(STACK_ARN_SEPARATOR)[STACK_ARN_NAME_INDEX] ?? arn;
 

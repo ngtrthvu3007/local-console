@@ -8,7 +8,7 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
 import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -28,8 +28,6 @@ const CONNECT_COLUMNS = 2;
 const SETTINGS_COLUMNS = 3;
 const MODALS = { settings: "settings", deadLetter: "deadLetter" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
-
-const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
 
 // Queue nhận từ S3 (notification) và Lambda (đích async, đích lỗi của trigger)
 const QUEUE_SENDER_KINDS = ["s3", "lambda"] as const;

@@ -80,7 +80,7 @@ export const ACTION_ALLOWED: Record<KeyAction, (state: string) => boolean> = {
 export const isKeyMissing = (error: unknown) =>
   (error as { name?: string } | undefined)?.name === KMS_NOT_FOUND_ERROR;
 
-export interface KeyOption {
+interface KeyOption {
   value: string;
   label: string;
   description?: string;

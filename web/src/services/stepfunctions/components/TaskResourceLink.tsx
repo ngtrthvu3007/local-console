@@ -1,6 +1,4 @@
-import Link from "@cloudscape-design/components/link";
-import { MissingReference } from "@shared/components/MissingReference.tsx";
-import { useFollow } from "@shared/hooks/useFollow.ts";
+import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useTableExists } from "../../dynamodb/hooks/useTables.ts";
 import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { useFunctionExists } from "../../lambda/hooks/useFunctions.ts";
@@ -20,23 +18,13 @@ const SERVICE_LABELS = {
 
 // Bước gọi function / bảng đã bị xóa thì báo "(not found)" thay vì link sang trang trống
 function LambdaTaskLink({ name }: { name: string }) {
-  const follow = useFollow();
-  if (useFunctionExists(name).data === false) return <MissingReference name={name} />;
-  return (
-    <Link href={lambdaRoutes.function(name)} onFollow={follow}>
-      {name}
-    </Link>
-  );
+  const missing = useFunctionExists(name).data === false;
+  return <ReferenceLink name={name} href={lambdaRoutes.function(name)} missing={missing} />;
 }
 
 function TableTaskLink({ name }: { name: string }) {
-  const follow = useFollow();
-  if (useTableExists(name).data === false) return <MissingReference name={name} />;
-  return (
-    <Link href={dynamodbRoutes.table(name)} onFollow={follow}>
-      {name}
-    </Link>
-  );
+  const missing = useTableExists(name).data === false;
+  return <ReferenceLink name={name} href={dynamodbRoutes.table(name)} missing={missing} />;
 }
 
 const linkOf = (resource: Exclude<TaskResource, { kind: "other" }>) => {

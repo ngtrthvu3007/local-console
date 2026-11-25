@@ -10,7 +10,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { REDIS_ERROR_CODES } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
 import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
@@ -33,9 +33,6 @@ import { ClusterStatus } from "./ClusterStatus.tsx";
 const CONNECT_COLUMNS = 3;
 const SERVER_COLUMNS = 4;
 const GENERAL_COLUMNS = 4;
-
-const copyable = (text?: string) =>
-  text ? <CopyButton variant='inline' text={text} label={text} /> : NOT_AVAILABLE;
 
 const connectionString = (host: string, port: number) => `${REDIS_URL_SCHEME}${host}:${port}`;
 

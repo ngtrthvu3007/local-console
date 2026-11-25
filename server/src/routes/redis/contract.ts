@@ -33,17 +33,17 @@ interface KeyBase {
   ttl: number | null;
 }
 
-export interface HashEntry {
+interface HashEntry {
   field: string;
   value: string;
 }
 
-export interface ListElement {
+interface ListElement {
   index: number;
   value: string;
 }
 
-export interface ScoredMember {
+interface ScoredMember {
   member: string;
   score: string; // giữ chuỗi gốc của Redis (có thể là "inf")
 }

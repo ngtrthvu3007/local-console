@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { byteLength } from "@shared/format.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import {
   ALIAS_PREFIX,
@@ -66,8 +67,6 @@ export const scheduleDeletionSchema = z.object({
     .min(PENDING_WINDOW_DAYS.min, `Must be at least ${PENDING_WINDOW_DAYS.min} days.`)
     .max(PENDING_WINDOW_DAYS.max, `Must be at most ${PENDING_WINDOW_DAYS.max} days.`),
 });
-
-const byteLength = (text: string) => new TextEncoder().encode(text).length;
 
 // Plaintext / message của Try it: giới hạn 4096 byte của AWS, đếm theo UTF-8
 export const tryItInputSchema = z

@@ -1,5 +1,5 @@
 import CopyToClipboard from "@cloudscape-design/components/copy-to-clipboard";
-import { COPY_TEXTS } from "../constants.ts";
+import { COPY_TEXTS, NOT_AVAILABLE } from "../constants.ts";
 
 interface Props {
   text?: string;
@@ -19,3 +19,7 @@ export function CopyButton({ text, label = COPY_TEXTS.copy, variant = "button" }
     />
   );
 }
+
+// Giá trị trong bảng chi tiết (ID, ARN, URL): hiện chữ kèm nút copy; trống thì NOT_AVAILABLE
+export const copyable = (text?: string) =>
+  text ? <CopyButton variant='inline' text={text} label={text} /> : NOT_AVAILABLE;
