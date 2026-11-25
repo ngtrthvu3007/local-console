@@ -36,6 +36,8 @@ const PAGES = [
   { slug: "kms-keys", path: "/kms/keys" },
   { slug: "kms-aws-keys", path: "/kms/aws-keys" },
   { slug: "kms-create", path: "/kms/keys/create" },
+  { slug: "cloudfront-distributions", path: "/cloudfront/distributions" },
+  { slug: "cloudfront-create", path: "/cloudfront/distributions/create" },
   { slug: "ssm-parameters", path: "/ssm/parameters" },
   { slug: "ssm-create", path: "/ssm/parameters/create" },
 ];

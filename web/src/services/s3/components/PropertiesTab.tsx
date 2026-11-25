@@ -1,5 +1,6 @@
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
+import { BucketDistributions } from "../../cloudfront/components/BucketDistributions.tsx";
 import { bucketSample } from "../codeSamples.ts";
 import { BucketTagsSection } from "./properties/BucketTagsSection.tsx";
 import { LifecycleSection } from "./properties/LifecycleSection.tsx";
@@ -16,6 +17,7 @@ export function PropertiesTab({ bucket }: { bucket: string }) {
       <VersioningSection bucket={bucket} />
       <BucketTagsSection bucket={bucket} />
       <NotificationsSection bucket={bucket} />
+      <BucketDistributions bucket={bucket} />
       <LifecycleSection bucket={bucket} />
       <MultipartUploadsSection bucket={bucket} />
     </SpaceBetween>

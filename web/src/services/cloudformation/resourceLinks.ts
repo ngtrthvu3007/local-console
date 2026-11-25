@@ -1,4 +1,5 @@
 import { ARN_SEPARATOR, lastArnPart } from "@shared/arn.ts";
+import { cloudfrontRoutes } from "../cloudfront/routes.ts";
 import { cognitoRoutes } from "../cognito/routes.ts";
 import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
@@ -33,6 +34,7 @@ export const stackNameOfArn = (arn: string) =>
 // Chỉ link khi physical ID khớp thẳng route
 const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> = {
   "AWS::S3::Bucket": (id) => s3Routes.bucket(id),
+  "AWS::CloudFront::Distribution": (id) => cloudfrontRoutes.distribution(id),
   "AWS::Lambda::Function": (id) => lambdaRoutes.function(id),
   "AWS::Lambda::Url": (id) => lambdaRoutes.function(functionNameOfArn(id)),
   "AWS::Logs::LogGroup": (id) =>
