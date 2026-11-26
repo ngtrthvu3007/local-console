@@ -17,12 +17,12 @@ import {
 } from "@aws-sdk/client-lambda";
 import { existsUnlessMissing } from "@shared/aws.ts";
 import { runEach } from "@shared/hooks/useNotify.ts";
+import { logGroupExists } from "@shared/logs/useLogEvents.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
 import { listRotatedSecrets } from "../../secretsmanager/hooks/useSecrets.ts";
 import { useSecretsManager } from "../../secretsmanager/hooks/useSecretsManager.ts";
 import { DEFAULT_ROLE_ARN } from "../constants.ts";
-import { logGroupExists } from "./useFunctionLogs.ts";
 import { useLambda } from "./useLambda.ts";
 
 // Mọi query của Lambda nằm dưới key gốc này (service khác đổi trigger thì invalidate cả gốc)

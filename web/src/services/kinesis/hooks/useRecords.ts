@@ -8,6 +8,7 @@ import {
 } from "@aws-sdk/client-kinesis";
 import { notifyError } from "@shared/hooks/useNotify.ts";
 import { RECORDS_PAGE_SIZE } from "../constants.ts";
+import { gunzipIfGzip } from "../recordData.ts";
 import type { DataViewerForm } from "../schemas.ts";
 import { useKinesis } from "./useKinesis.ts";
 
@@ -44,7 +45,13 @@ export function useRecords(stream: string) {
       const { Records = [], NextShardIterator } = await client.send(
         new GetRecordsCommand({ ShardIterator: iterator, Limit: RECORDS_PAGE_SIZE }),
       );
-      return { fresh, records: Records, nextIterator: NextShardIterator };
+      // Record gzip (subscription filter của CloudWatch Logs) giải nén trước khi hiện
+      const records = await Promise.all(
+        Records.map(async (record) =>
+          record.Data ? { ...record, Data: await gunzipIfGzip(record.Data) } : record,
+        ),
+      );
+      return { fresh, records, nextIterator: NextShardIterator };
     },
     onSuccess: ({ fresh, records, nextIterator }) =>
       setPage((previous) =>

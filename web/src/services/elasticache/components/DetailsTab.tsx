@@ -18,7 +18,13 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { cacheSample } from "../codeSamples.ts";
-import { CLUSTER_STATUS_AVAILABLE, NODE_ROLE_LABELS, REDIS_URL_SCHEME } from "../constants.ts";
+import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
+import {
+  CLUSTER_STATUS_AVAILABLE,
+  NODE_ROLE_LABELS,
+  REDIS_URL_SCHEME,
+  engineLogGroup,
+} from "../constants.ts";
 import {
   addressText,
   engineLabel,
@@ -148,6 +154,7 @@ export function DetailsTab({ cluster }: { cluster: Cluster }) {
     { label: "Node type", value: cluster.nodeType ?? NOT_AVAILABLE },
     { label: "Created", value: formatDate(cluster.createdAt) },
     { label: "ARN", value: copyable(cluster.arn) },
+    { label: "Log group", value: <LogGroupLink name={engineLogGroup(cluster.id)} /> },
   ];
 
   const roleText = (node: ClusterNode) =>

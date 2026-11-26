@@ -168,6 +168,12 @@ test("runs a task with an environment override and shows its exit code and logs"
   await expect(page.getByText(`SEC=${SECRET_VALUE} EXTRA=x1`)).toBeVisible({
     timeout: TASK_TIMEOUT_MS,
   });
+  // Stream awslogs là <prefix>/<container>/<task ID> (spec Logs 3.8)
+  const taskId = new URL(page.url()).pathname.split("/").pop() ?? "";
+  await expect(page.getByRole("link", { name: "View in CloudWatch Logs" })).toHaveAttribute(
+    "href",
+    `/logs/groups/stream?${new URLSearchParams({ group: logGroup, stream: `e2e/main/${taskId}` })}`,
+  );
 });
 
 test("creates a service, scales it to zero and deletes it", async ({ page }) => {

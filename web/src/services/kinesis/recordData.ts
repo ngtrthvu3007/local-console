@@ -31,6 +31,19 @@ export function recordText(data: Uint8Array | undefined): RecordText {
   return { kind: "text", text };
 }
 
+// Record do subscription filter của CloudWatch Logs gửi là gzip JSON: giải nén để Data viewer đọc được.
+// Không phải gzip hoặc gzip hỏng thì giữ nguyên byte
+const GZIP_MAGIC = [0x1f, 0x8b];
+export async function gunzipIfGzip(data: Uint8Array): Promise<Uint8Array> {
+  if (!GZIP_MAGIC.every((byte, index) => data[index] === byte)) return data;
+  try {
+    const stream = new Blob([data.slice()]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch {
+    return data;
+  }
+}
+
 // "arn:aws:kinesis:…:stream/clicks" → "clicks"
 const STREAM_ARN_MARKER = ":stream/";
 export const streamNameOfArn = (arn: string) => arn.split(STREAM_ARN_MARKER)[1] ?? NOT_AVAILABLE;

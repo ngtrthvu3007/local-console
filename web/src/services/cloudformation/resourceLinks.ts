@@ -11,7 +11,8 @@ import { elasticacheRoutes } from "../elasticache/routes.ts";
 import { kinesisRoutes } from "../kinesis/routes.ts";
 import { kmsRoutes } from "../kms/routes.ts";
 import { functionNameOfArn } from "../lambda/helpers.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../lambda/routes.ts";
+import { lambdaRoutes } from "../lambda/routes.ts";
+import { logsRoutes } from "../logs/routes.ts";
 import { rdsRoutes } from "../rds/routes.ts";
 import { s3Routes } from "../s3/routes.ts";
 import { secretsRoutes } from "../secretsmanager/routes.ts";
@@ -23,7 +24,6 @@ import { queueNameOfUrl } from "../sqs/queues.ts";
 import { stepfunctionsRoutes } from "../stepfunctions/routes.ts";
 import { cloudformationRoutes } from "./routes.ts";
 
-const LAMBDA_LOG_GROUP_PREFIX = "/aws/lambda/";
 // ARN stack: "…:stack/<tên>/<uuid>"
 const STACK_ARN_SEPARATOR = "/";
 const STACK_ARN_NAME_INDEX = 1;
@@ -70,10 +70,7 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::AppSync::FunctionConfiguration": appsyncFunctionHref,
   "AWS::Lambda::Function": (id) => lambdaRoutes.function(id),
   "AWS::Lambda::Url": (id) => lambdaRoutes.function(functionNameOfArn(id)),
-  "AWS::Logs::LogGroup": (id) =>
-    id.startsWith(LAMBDA_LOG_GROUP_PREFIX)
-      ? lambdaRoutes.function(id.slice(LAMBDA_LOG_GROUP_PREFIX.length), FUNCTION_TABS.monitor)
-      : undefined,
+  "AWS::Logs::LogGroup": (id) => logsRoutes.group(id),
   "AWS::DynamoDB::Table": (id) => dynamodbRoutes.table(id),
   "AWS::SQS::Queue": (id) => sqsRoutes.queue(queueNameOfUrl(id)),
   "AWS::EC2::Instance": (id) => ec2Routes.instance(id),

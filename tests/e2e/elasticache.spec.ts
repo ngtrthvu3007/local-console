@@ -32,6 +32,14 @@ test("creates a cluster and waits until it is available", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Create key" }).first()).toBeEnabled({
     timeout: 120_000,
   });
+
+  // Log của cluster mở thẳng trang CloudWatch Logs (spec Logs 3.8)
+  const engineGroup = `/aws/elasticache/cluster/${cluster}/engine-log`;
+  await page.getByRole("tab", { name: "Details" }).click();
+  await expect(page.getByRole("link", { name: engineGroup })).toHaveAttribute(
+    "href",
+    `/logs/groups/detail?${new URLSearchParams({ group: engineGroup })}`,
+  );
 });
 
 test("creates a string key and reads it back", async ({ page }) => {

@@ -15,7 +15,8 @@ import {
   type ClusterRow,
 } from "../clusters.ts";
 import { clusterSample } from "../codeSamples.ts";
-import { TEXT } from "../constants.ts";
+import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
+import { TEXT, auditLogGroup } from "../constants.ts";
 
 const DETAILS_COLUMNS = 4;
 
@@ -31,6 +32,7 @@ export function ConnectivityTab({ cluster }: { cluster: ClusterRow }) {
             { label: "Reader endpoint", value: copyable(cluster.readerEndpoint) },
             { label: "Port", value: cluster.port },
             { label: "Master username", value: cluster.username ?? NOT_AVAILABLE },
+            { label: "Log group", value: <LogGroupLink name={auditLogGroup(cluster.id)} /> },
           ]}
         />
       </Container>

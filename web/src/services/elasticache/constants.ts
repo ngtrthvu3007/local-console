@@ -10,6 +10,9 @@ export const DEFAULT_ENGINE = "valkey";
 export const CACHE_NODE_TYPE = "cache.t3.micro";
 // Cluster tạo từ console: một node, không replica
 export const NODE_COUNT = 1;
+// Tên group theo mẫu AWS, id là ReplicationGroupId; để link qua lại với trang CloudWatch Logs
+export const ELASTICACHE_LOG_GROUP_PREFIX = "/aws/elasticache/cluster/";
+export const engineLogGroup = (id: string) => `${ELASTICACHE_LOG_GROUP_PREFIX}${id}/engine-log`;
 
 // Luật tên của ElastiCache
 export const CLUSTER_NAME_MAX_LENGTH = 40;

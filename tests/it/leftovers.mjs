@@ -73,6 +73,11 @@ import {
   DeleteSecretCommand,
 } from "@aws-sdk/client-secrets-manager";
 import {
+  CloudWatchLogsClient,
+  DeleteLogGroupCommand,
+  paginateDescribeLogGroups,
+} from "@aws-sdk/client-cloudwatch-logs";
+import {
   RDSClient,
   paginateDescribeDBClusters,
   paginateDescribeDBInstances,
@@ -145,6 +150,7 @@ const cognito = new CognitoIdentityProviderClient(config);
 const secretsManager = new SecretsManagerClient(config);
 const ssm = new SSMClient(config);
 const rds = new RDSClient(config);
+const logs = new CloudWatchLogsClient(config);
 const ec2 = new EC2Client(config);
 const kms = new KMSClient(config);
 const cloudfront = new CloudFrontClient(config);
@@ -270,6 +276,16 @@ for await (const page of paginateDescribeDBClusters(
     ...mine((page.DBClusters ?? []).map((cluster) => cluster.DBClusterIdentifier)),
   );
 }
+// Log group mang tên resource ở giữa (/aws/lambda/lc-e2e-…, /lc-it-…): lọc theo "chứa" thay vì "bắt đầu".
+// Group của Amazon MQ chỉ có ID broker (b-…) nên không nhận ra được, bỏ qua
+const logGroups = [];
+for await (const page of paginateDescribeLogGroups({ client: logs }, {})) {
+  logGroups.push(
+    ...(page.logGroups ?? [])
+      .map((group) => group.logGroupName)
+      .filter((name) => PREFIXES.some((prefix) => name?.includes(prefix))),
+  );
+}
 // Floci giữ instance Terminated (không tự bỏ sau 1 giờ như AWS): chỉ gom instance còn sống
 const instances = [];
 for await (const page of paginateDescribeInstances({ client: ec2 }, {})) {
@@ -393,6 +409,7 @@ console.log(
       parameters,
       databases,
       docdbClusters,
+      logGroups,
       instances,
       aliases,
       kmsKeys,
@@ -505,6 +522,7 @@ if (process.argv.includes("--delete")) {
     await rds.send(
       new DeleteDBClusterCommand({ DBClusterIdentifier: id, SkipFinalSnapshot: true }),
     );
+  for (const name of logGroups) await logs.send(new DeleteLogGroupCommand({ logGroupName: name }));
   if (instances.length) await ec2.send(new TerminateInstancesCommand({ InstanceIds: instances }));
   for (const name of aliases) await kms.send(new DeleteAliasCommand({ AliasName: name }));
   for (const id of kmsKeys)

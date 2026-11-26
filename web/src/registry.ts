@@ -13,6 +13,7 @@ import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { kinesisService } from "./services/kinesis/index.tsx";
 import { kmsService } from "./services/kms/index.tsx";
+import { logsService } from "./services/logs/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
 import { rdsService } from "./services/rds/index.tsx";
@@ -57,6 +58,7 @@ export const services: ServiceDefinition[] = [
   appsyncService,
   stepfunctionsService,
   cloudformationService,
+  logsService,
   elasticacheService,
   mqService,
   sesService,
