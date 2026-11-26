@@ -1,4 +1,5 @@
 import { generatePath } from "react-router";
+import { withTab } from "@shared/routes.ts";
 
 export const ELASTICACHE_SERVICE_ID = "elasticache";
 const ELASTICACHE_ROOT = `/${ELASTICACHE_SERVICE_ID}`;
@@ -7,7 +8,7 @@ export const CLUSTER_TABS = { keys: "keys", details: "details" } as const;
 export type ClusterTab = (typeof CLUSTER_TABS)[keyof typeof CLUSTER_TABS];
 
 // key: key đang mở trong panel
-export const SEARCH_PARAMS = { tab: "tab", key: "key" } as const;
+export const SEARCH_PARAMS = { key: "key" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const ELASTICACHE_ROUTE_PATTERNS = {
@@ -22,12 +23,12 @@ export const elasticacheRoutes = {
   clusters: fullPath(ELASTICACHE_ROUTE_PATTERNS.clusters),
   createCluster: fullPath(ELASTICACHE_ROUTE_PATTERNS.createCluster),
   // Tab mặc định (Keys) không ghi lên URL
-  cluster: (cluster: string, tab?: ClusterTab) => {
-    const path = generatePath(fullPath(ELASTICACHE_ROUTE_PATTERNS.cluster), { cluster });
-    return tab && tab !== CLUSTER_TABS.keys
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  cluster: (cluster: string, tab?: ClusterTab) =>
+    withTab(
+      generatePath(fullPath(ELASTICACHE_ROUTE_PATTERNS.cluster), { cluster }),
+      tab,
+      CLUSTER_TABS.keys,
+    ),
 };
 
 export const elasticacheBaseCrumbs = [

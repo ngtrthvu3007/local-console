@@ -97,6 +97,19 @@ import {
   DeleteEventBusCommand,
 } from "@aws-sdk/client-eventbridge";
 import { KinesisClient, paginateListStreams, DeleteStreamCommand } from "@aws-sdk/client-kinesis";
+import {
+  ECSClient,
+  paginateListClusters,
+  paginateListTaskDefinitionFamilies,
+  paginateListTaskDefinitions,
+  ListServicesCommand,
+  ListTasksCommand,
+  StopTaskCommand,
+  DeleteServiceCommand,
+  DeleteClusterCommand,
+  DeregisterTaskDefinitionCommand,
+  DeleteTaskDefinitionsCommand,
+} from "@aws-sdk/client-ecs";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
@@ -109,6 +122,12 @@ const config = {
 // IT dùng lc-it-, e2e dùng lc-e2e-
 const PREFIXES = ["lc-it-", "lc-e2e-"];
 const mine = (names) => names.filter((name) => PREFIXES.some((prefix) => name?.startsWith(prefix)));
+// DeleteParameters, DeleteTaskDefinitions nhận tối đa 10 tên một lần
+const BATCH = 10;
+const chunks = (items) =>
+  Array.from({ length: Math.ceil(items.length / BATCH) }, (_, i) =>
+    items.slice(i * BATCH, (i + 1) * BATCH),
+  );
 
 const s3 = new S3Client({ ...config, forcePathStyle: true });
 const dynamodb = new DynamoDBClient(config);
@@ -298,6 +317,26 @@ const streams = [];
 for await (const page of paginateListStreams({ client: kinesis }, {})) {
   streams.push(...mine(page.StreamNames ?? []));
 }
+const ecs = new ECSClient(config);
+const ecsClusters = [];
+for await (const page of paginateListClusters({ client: ecs }, {})) {
+  ecsClusters.push(...mine((page.clusterArns ?? []).map((arn) => arn.split("/").pop())));
+}
+// Family đã deregister vẫn còn revision INACTIVE: cần DeleteTaskDefinitions
+const taskDefinitions = [];
+for (const status of ["ACTIVE", "INACTIVE"]) {
+  for await (const page of paginateListTaskDefinitionFamilies({ client: ecs }, { status })) {
+    for (const family of mine(page.families ?? [])) {
+      for await (const revisions of paginateListTaskDefinitions(
+        { client: ecs },
+        { familyPrefix: family, status },
+      ))
+        taskDefinitions.push(
+          ...(revisions.taskDefinitionArns ?? []).map((arn) => ({ arn, status })),
+        );
+    }
+  }
+}
 const graphqlApis = [];
 for await (const page of paginateListGraphqlApis({ client: appsync }, {})) {
   for (const api of page.graphqlApis ?? []) {
@@ -345,6 +384,8 @@ console.log(
       aliases,
       kmsKeys,
       streams,
+      ecsClusters,
+      taskDefinitions: taskDefinitions.map((definition) => definition.arn),
       replicationGroups,
       cacheClusters,
       brokers,
@@ -441,9 +482,8 @@ if (process.argv.includes("--delete")) {
       new DeleteSecretCommand({ SecretId: name, ForceDeleteWithoutRecovery: true }),
     );
   }
-  // DeleteParameters nhận tối đa 10 tên một lần
-  for (let start = 0; start < parameters.length; start += 10)
-    await ssm.send(new DeleteParametersCommand({ Names: parameters.slice(start, start + 10) }));
+  for (const batch of chunks(parameters))
+    await ssm.send(new DeleteParametersCommand({ Names: batch }));
   for (const id of databases)
     await rds.send(
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
@@ -456,6 +496,20 @@ if (process.argv.includes("--delete")) {
     await kinesis.send(
       new DeleteStreamCommand({ StreamName: name, EnforceConsumerDeletion: true }),
     );
+  // Cluster còn service / task thì không xóa được: xóa service (force) và dừng task trước
+  for (const cluster of ecsClusters) {
+    const { serviceArns = [] } = await ecs.send(new ListServicesCommand({ cluster }));
+    for (const service of serviceArns)
+      await ecs.send(new DeleteServiceCommand({ cluster, service, force: true }));
+    const { taskArns = [] } = await ecs.send(new ListTasksCommand({ cluster }));
+    for (const task of taskArns) await ecs.send(new StopTaskCommand({ cluster, task }));
+    await ecs.send(new DeleteClusterCommand({ cluster }));
+  }
+  for (const { arn, status } of taskDefinitions)
+    if (status === "ACTIVE")
+      await ecs.send(new DeregisterTaskDefinitionCommand({ taskDefinition: arn }));
+  for (const batch of chunks(taskDefinitions.map((definition) => definition.arn)))
+    await ecs.send(new DeleteTaskDefinitionsCommand({ taskDefinitions: batch }));
   for (const id of replicationGroups)
     await elastiCache(region, "DeleteReplicationGroup", { ReplicationGroupId: id });
   for (const id of cacheClusters)

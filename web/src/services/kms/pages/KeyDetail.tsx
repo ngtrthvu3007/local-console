@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
@@ -17,16 +18,12 @@ import { TryItTab } from "../components/TryItTab.tsx";
 import { KEY_MANAGERS } from "../constants.ts";
 import { useKey } from "../hooks/useKeys.ts";
 import { keyTypeLabel, keyUsageLabel } from "../keys.ts";
-import { KEY_TABS, SEARCH_PARAMS, keyCrumbs, kmsRoutes, type KeyTab } from "../routes.ts";
-
-const isKeyTab = (value: string | null): value is KeyTab =>
-  Object.values<string | null>(KEY_TABS).includes(value);
+import { KEY_TABS, SEARCH_PARAMS, keyCrumbs, kmsRoutes } from "../routes.ts";
 
 export function KeyDetail() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const key = searchParams.get(SEARCH_PARAMS.key) ?? "";
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isKeyTab(requestedTab) ? requestedTab : KEY_TABS.details;
+  const [tab, setTab] = useTabParam(KEY_TABS, KEY_TABS.details, [SEARCH_PARAMS.key]);
   const { ref, compact } = useIsCompact();
   const details = useKey(key);
   const row = details.data ?? undefined;
@@ -87,18 +84,7 @@ export function KeyDetail() {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams({
-              [SEARCH_PARAMS.key]: key,
-              ...(detail.activeTabId === KEY_TABS.details
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId }),
-            })
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
         {keyActions.modal}
       </ContentLayout>
     </div>

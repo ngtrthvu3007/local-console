@@ -128,7 +128,15 @@ function ScheduleView({ schedule }: { schedule: Schedule }) {
   ];
   const targetItems: KeyValuePairsProps.Item[] = [
     { label: "Type", value: TARGET_KINDS[targetKindOfArn(target?.Arn ?? "")] },
-    { label: "Resource", value: <TargetResource arn={target?.Arn ?? ""} /> },
+    {
+      label: "Resource",
+      value: (
+        <TargetResource
+          arn={target?.Arn ?? ""}
+          ecsTaskDefinition={target?.EcsParameters?.TaskDefinitionArn}
+        />
+      ),
+    },
     ...(target?.Input
       ? [{ label: "Input", value: <CodeSnippet code={reformatJson(target.Input)} /> }]
       : []),

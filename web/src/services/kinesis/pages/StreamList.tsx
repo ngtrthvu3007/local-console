@@ -6,6 +6,7 @@ import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
 import TextFilter from "@cloudscape-design/components/text-filter";
+import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
@@ -18,10 +19,10 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { DeleteStreamsModal } from "../components/DeleteStreamsModal.tsx";
-import { StreamStatus } from "../components/StreamStatus.tsx";
 import { useStreams, type StreamRow } from "../hooks/useStreams.ts";
 import { streamModeLabel } from "../recordData.ts";
 import { kinesisBaseCrumbs, kinesisRoutes } from "../routes.ts";
+import { STREAM_STATUS_STYLES } from "../constants.ts";
 
 const NAME_FIELD = "name";
 
@@ -86,7 +87,7 @@ export function StreamList() {
   const statusColumn: TableProps.ColumnDefinition<StreamRow> = {
     id: "status",
     header: "Status",
-    cell: (stream) => <StreamStatus status={stream.status} />,
+    cell: (stream) => <StatusBadge status={stream.status} styles={STREAM_STATUS_STYLES} />,
   };
 
   const wideColumns: TableProps.ColumnDefinition<StreamRow>[] = [

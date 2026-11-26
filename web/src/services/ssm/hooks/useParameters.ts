@@ -8,7 +8,7 @@ import {
   type ParameterMetadata,
 } from "@aws-sdk/client-ssm";
 import { DELETE_PARAMETERS_BATCH, SECURE_STRING, type ParameterType } from "../constants.ts";
-import { chunks } from "../parameters.ts";
+import { chunks } from "@shared/aws.ts";
 import { useSSM } from "./useSSM.ts";
 
 // Mọi query của SSM nằm dưới key gốc này

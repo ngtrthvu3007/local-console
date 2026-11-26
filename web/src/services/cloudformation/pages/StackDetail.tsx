@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import type { Stack } from "@aws-sdk/client-cloudformation";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
@@ -7,6 +7,7 @@ import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
@@ -30,18 +31,9 @@ import {
   useStackResources,
 } from "../hooks/useStacks.ts";
 import { isStackMissing } from "../stacks.ts";
-import {
-  SEARCH_PARAMS,
-  STACK_TABS,
-  cloudformationRoutes,
-  stackCrumbs,
-  type StackTab,
-} from "../routes.ts";
+import { STACK_TABS, cloudformationRoutes, stackCrumbs } from "../routes.ts";
 import { editLockReason, isRunning } from "../status.ts";
 import { latestReasons, stubbedResources } from "../stub.ts";
-
-const isStackTab = (value: string | null): value is StackTab =>
-  Object.values<string | null>(STACK_TABS).includes(value);
 
 function StubAlert({ stack, running }: { stack: string; running: boolean }) {
   const events = useStackEvents(stack, running);
@@ -91,9 +83,7 @@ function DeleteFailedAlert({ stack }: { stack: string }) {
 function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof useStack> }) {
   const { ref, compact } = useIsCompact();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isStackTab(requestedTab) ? requestedTab : STACK_TABS.events;
+  const [tab, setTab] = useTabParam(STACK_TABS, STACK_TABS.events);
   const [deleting, setDeleting] = useState(false);
   const name = stack.StackName ?? "";
   const running = isRunning(stack.StackStatus);
@@ -172,13 +162,7 @@ function StackView({ stack, query }: { stack: Stack; query: ReturnType<typeof us
           <Tabs
             activeTabId={tab}
             tabs={tabs}
-            onChange={({ detail }) =>
-              setSearchParams(
-                detail.activeTabId === STACK_TABS.events
-                  ? {}
-                  : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-              )
-            }
+            onChange={({ detail }) => setTab(detail.activeTabId)}
           />
         </SpaceBetween>
       </ContentLayout>

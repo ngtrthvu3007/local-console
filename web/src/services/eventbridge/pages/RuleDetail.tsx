@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { pageState } from "@shared/components/PageState.tsx";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
@@ -19,23 +20,12 @@ import { RULE_TYPES } from "../constants.ts";
 import { useRule, useSetRulesEnabled } from "../hooks/useRules.ts";
 import { useTargets } from "../hooks/useTargets.ts";
 import { ruleType, type Rule } from "../rules.ts";
-import {
-  RULE_TABS,
-  SEARCH_PARAMS,
-  eventbridgeRoutes,
-  ruleCrumbs,
-  type RuleTab,
-} from "../routes.ts";
-
-const isRuleTab = (value: string | null): value is RuleTab =>
-  Object.values<string | null>(RULE_TABS).includes(value);
+import { RULE_TABS, eventbridgeRoutes, ruleCrumbs } from "../routes.ts";
 
 function RuleView({ rule }: { rule: Rule }) {
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isRuleTab(requestedTab) ? requestedTab : RULE_TABS.targets;
+  const [tab, setTab] = useTabParam(RULE_TABS, RULE_TABS.targets);
   const [deleting, setDeleting] = useState(false);
   const targets = useTargets(rule.bus, rule.name);
   const setEnabled = useSetRulesEnabled();
@@ -103,17 +93,7 @@ function RuleView({ rule }: { rule: Rule }) {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === RULE_TABS.targets
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       </ContentLayout>
       {deleting && (
         <DeleteRulesModal

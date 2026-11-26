@@ -1,12 +1,11 @@
 import { generatePath } from "react-router";
+import { withTab } from "@shared/routes.ts";
 
 export const CLOUDFORMATION_SERVICE_ID = "cloudformation";
 const CLOUDFORMATION_ROOT = `/${CLOUDFORMATION_SERVICE_ID}`;
 
 export const STACK_TABS = { events: "events", resources: "resources", outputs: "outputs" } as const;
 export type StackTab = (typeof STACK_TABS)[keyof typeof STACK_TABS];
-
-export const SEARCH_PARAMS = { tab: "tab" } as const;
 
 // Pattern tương đối cho router; link dựng từ đây
 export const CLOUDFORMATION_ROUTE_PATTERNS = {
@@ -26,13 +25,12 @@ export const cloudformationRoutes = {
   editStack: (stack: string) =>
     generatePath(fullPath(CLOUDFORMATION_ROUTE_PATTERNS.editStack), { stack }),
   // Tab mặc định (Events) không ghi lên URL
-  stack: (stack: string, tab?: StackTab) => {
-    const path = generatePath(fullPath(CLOUDFORMATION_ROUTE_PATTERNS.stack), { stack });
-
-    return tab && tab !== STACK_TABS.events
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  stack: (stack: string, tab?: StackTab) =>
+    withTab(
+      generatePath(fullPath(CLOUDFORMATION_ROUTE_PATTERNS.stack), { stack }),
+      tab,
+      STACK_TABS.events,
+    ),
 };
 
 export const stacksCrumbs = [

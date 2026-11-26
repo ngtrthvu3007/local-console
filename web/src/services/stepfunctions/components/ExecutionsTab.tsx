@@ -8,6 +8,7 @@ import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
 import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
+import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
@@ -15,11 +16,14 @@ import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, TABLE_PAGE_SIZE } from "@shared/c
 import { formatDate } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { EXECUTION_STATUS_FILTERS, STATUS_FILTER_ALL } from "../constants.ts";
+import {
+  EXECUTION_STATUS_FILTERS,
+  STATUS_FILTER_ALL,
+  EXECUTION_STATUS_STYLES,
+} from "../constants.ts";
 import { useExecutionList } from "../hooks/useExecutions.ts";
 import { stepfunctionsRoutes } from "../routes.ts";
 import { formatElapsed } from "../steps.ts";
-import { ExecutionStatus as StatusLabel } from "./ExecutionStatus.tsx";
 
 const STATUS_OPTIONS = [{ value: STATUS_FILTER_ALL, label: "All" }, ...EXECUTION_STATUS_FILTERS];
 
@@ -51,7 +55,11 @@ export function ExecutionsTab({ machineArn }: { machineArn: string }) {
   );
   const wideColumns: TableProps.ColumnDefinition<ExecutionListItem>[] = [
     { id: "name", header: "Name", isRowHeader: true, cell: nameLink },
-    { id: "status", header: "Status", cell: (item) => <StatusLabel status={item.status} /> },
+    {
+      id: "status",
+      header: "Status",
+      cell: (item) => <StatusBadge status={item.status} styles={EXECUTION_STATUS_STYLES} />,
+    },
     { id: "started", header: "Started", cell: (item) => formatDate(item.startDate) },
     { id: "duration", header: "Duration", cell: elapsedOf },
   ];
@@ -65,7 +73,7 @@ export function ExecutionsTab({ machineArn }: { machineArn: string }) {
         <div>
           <SpaceBetween size='xs' direction='horizontal'>
             {nameLink(item)}
-            <StatusLabel status={item.status} />
+            <StatusBadge status={item.status} styles={EXECUTION_STATUS_STYLES} />
           </SpaceBetween>
           <Box variant='small' display='block' color='text-body-secondary'>
             {[formatDate(item.startDate), elapsedOf(item)].join(DETAIL_SEPARATOR)}

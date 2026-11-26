@@ -69,6 +69,26 @@ export const ruleSchema = z
 
 export type RuleForm = z.input<typeof ruleSchema>;
 
+// Target ECS task: task definition + subnet (Floci bắt buộc subnet có thật, spec ECS 7 #11).
+// Mặc định rỗng để form của loại khác không phải khai báo
+const ecsTargetFields = {
+  taskFamily: z.string().default(""),
+  taskRevision: z.string().default(""),
+  subnets: z.array(z.string()).default([]),
+  securityGroups: z.array(z.string()).default([]),
+};
+
+type AddIssue = (path: string, message: string) => void;
+
+function checkEcsTarget(
+  values: { taskFamily: string; taskRevision: string; subnets: string[] },
+  addIssue: AddIssue,
+) {
+  if (!values.taskFamily) addIssue("taskFamily", "Choose a task definition.");
+  if (!values.taskRevision) addIssue("taskRevision", "Choose a revision.");
+  if (!values.subnets.length) addIssue("subnets", "Choose at least one subnet.");
+}
+
 // fifoArns: queue FIFO cần message group ID (luật của SQS)
 export const addTargetSchema = (fifoArns: ReadonlySet<string>) =>
   z
@@ -76,19 +96,19 @@ export const addTargetSchema = (fifoArns: ReadonlySet<string>) =>
       kind: z.enum(ADDABLE_TARGET_KINDS),
       arn: z.string().min(1, "Choose a resource."),
       groupId: z.string().trim(),
+      ...ecsTargetFields,
     })
     .superRefine((values, context) => {
+      const addIssue: AddIssue = (path, message) =>
+        context.addIssue({ code: "custom", path: [path], message });
       if (fifoArns.has(values.arn) && !values.groupId)
-        context.addIssue({
-          code: "custom",
-          path: ["groupId"],
-          message: "Enter a message group ID.",
-        });
+        addIssue("groupId", "Enter a message group ID.");
+      if (values.kind === "ecs") checkEcsTarget(values, addIssue);
     });
 
 export type AddTargetForm = z.input<ReturnType<typeof addTargetSchema>>;
 
-// "other": đích form không biểu diễn được (ECS, Kinesis…), khóa khi sửa
+// "other": đích form không biểu diễn được (Kinesis…), khóa khi sửa
 const SCHEDULE_TARGET_IDS = [...ADDABLE_TARGET_KINDS, "other"] as const;
 
 const FLEXIBLE_MINUTES = { min: 1, max: 1440 };
@@ -122,9 +142,10 @@ export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
       detailType: z.string().trim(),
       input: z.string(),
       enabled: z.boolean(),
+      ...ecsTargetFields,
     })
     .superRefine((values, context) => {
-      const addIssue = (path: string, message: string) =>
+      const addIssue: AddIssue = (path, message) =>
         context.addIssue({ code: "custom", path: [path], message });
 
       for (const [path, message] of Object.entries(timingErrors(values))) addIssue(path, message);
@@ -137,6 +158,8 @@ export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
       if (!values.targetArn) addIssue("targetArn", "Choose a resource.");
       if (fifoArns.has(values.targetArn) && !values.groupId)
         addIssue("groupId", "Enter a message group ID.");
+
+      if (values.targetKind === "ecs") checkEcsTarget(values, addIssue);
 
       if (values.targetKind === "eventbus") {
         if (!values.source) addIssue("source", "Enter a source.");

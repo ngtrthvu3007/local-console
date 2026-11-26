@@ -1,4 +1,5 @@
 import { generatePath } from "react-router";
+import { withTab } from "@shared/routes.ts";
 
 export const LAMBDA_SERVICE_ID = "lambda";
 const LAMBDA_ROOT = `/${LAMBDA_SERVICE_ID}`;
@@ -11,8 +12,6 @@ export const FUNCTION_TABS = {
   triggers: "triggers",
 } as const;
 export type FunctionTab = (typeof FUNCTION_TABS)[keyof typeof FUNCTION_TABS];
-
-export const SEARCH_PARAMS = { tab: "tab" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const LAMBDA_ROUTE_PATTERNS = {
@@ -27,12 +26,12 @@ export const lambdaRoutes = {
   functions: fullPath(LAMBDA_ROUTE_PATTERNS.functions),
   createFunction: fullPath(LAMBDA_ROUTE_PATTERNS.createFunction),
   // Tab mặc định (Code) không ghi lên URL
-  function: (name: string, tab?: FunctionTab) => {
-    const path = generatePath(fullPath(LAMBDA_ROUTE_PATTERNS.function), { name });
-    return tab && tab !== FUNCTION_TABS.code
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  function: (name: string, tab?: FunctionTab) =>
+    withTab(
+      generatePath(fullPath(LAMBDA_ROUTE_PATTERNS.function), { name }),
+      tab,
+      FUNCTION_TABS.code,
+    ),
 };
 
 export const lambdaBaseCrumbs = [

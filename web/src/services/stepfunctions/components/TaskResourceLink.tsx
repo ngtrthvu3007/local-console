@@ -1,5 +1,7 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { TableLink } from "../../dynamodb/components/TableLink.tsx";
+import { ClusterLink } from "../../ecs/components/ClusterLink.tsx";
+import { CLUSTER_TABS } from "../../ecs/routes.ts";
 import { useFunctionExists } from "../../lambda/hooks/useFunctions.ts";
 import { lambdaRoutes } from "../../lambda/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
@@ -13,6 +15,7 @@ const SERVICE_LABELS = {
   dynamodb: "DynamoDB",
   sns: "SNS",
   statemachine: "Step Functions",
+  ecscluster: "ECS",
 } as const;
 
 // Bước gọi function / bảng đã bị xóa thì báo "(not found)" thay vì link sang trang trống
@@ -33,6 +36,8 @@ const linkOf = (resource: Exclude<TaskResource, { kind: "other" }>) => {
       return <LambdaTaskLink name={resource.name} />;
     case "dynamodb":
       return <TableLink name={resource.name} />;
+    case "ecscluster":
+      return <ClusterLink name={resource.name} tab={CLUSTER_TABS.tasks} />;
   }
 };
 

@@ -1,9 +1,6 @@
 import Alert from "@cloudscape-design/components/alert";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
-import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DeletePreview } from "@shared/components/DeletePreview.tsx";
-import { pluralize } from "@shared/format.ts";
-import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
+import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { keyLabel, type Item } from "../itemJson.ts";
 import { useDeleteItems } from "../hooks/useItems.ts";
 import { keySchemaOf } from "../hooks/useTables.ts";
@@ -20,28 +17,16 @@ export function DeleteItemsModal({ table, items, onDismiss, onDone }: Props) {
   const keys = keySchemaOf(table);
   const deleteItems = useDeleteItems(table.TableName!, keys);
 
-  const submit = () =>
-    deleteItems.mutate(
-      items,
-      notifyBulkOutcome({
-        success: (result) => `Deleted ${pluralize(result.count, "item")}`,
-        errorHeader: "Couldn't delete",
-        then: onDone,
-      }),
-    );
-
   return (
-    <ConfirmModal
-      visible
-      header={`Delete ${pluralize(items.length, "item")}?`}
-      confirmText={CONFIRM_DELETE}
-      actionText='Delete'
-      loading={deleteItems.isPending}
-      onConfirm={submit}
+    <BulkActionModal
+      mutation={deleteItems}
+      items={items}
+      lines={items.map((item) => keyLabel(item, keys))}
+      noun='item'
       onDismiss={onDismiss}
+      onDone={onDone}
     >
-      <DeletePreview lines={items.map((item) => keyLabel(item, keys))} />
       <Alert type='warning'>This can't be undone.</Alert>
-    </ConfirmModal>
+    </BulkActionModal>
   );
 }

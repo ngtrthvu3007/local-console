@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
@@ -23,22 +24,11 @@ import {
   useStateMachine,
   type StateMachineDetails,
 } from "../hooks/useStateMachines.ts";
-import {
-  SEARCH_PARAMS,
-  STATE_MACHINE_TABS,
-  stateMachineCrumbs,
-  stepfunctionsRoutes,
-  type StateMachineTab,
-} from "../routes.ts";
-
-const isStateMachineTab = (value: string | null): value is StateMachineTab =>
-  Object.values<string | null>(STATE_MACHINE_TABS).includes(value);
+import { STATE_MACHINE_TABS, stateMachineCrumbs, stepfunctionsRoutes } from "../routes.ts";
 
 function StateMachineView({ machine }: { machine: StateMachineDetails }) {
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isStateMachineTab(requestedTab) ? requestedTab : STATE_MACHINE_TABS.executions;
+  const [tab, setTab] = useTabParam(STATE_MACHINE_TABS, STATE_MACHINE_TABS.executions);
   const [starting, setStarting] = useState(false);
 
   const tabs: TabsProps.Tab[] = [
@@ -96,17 +86,7 @@ function StateMachineView({ machine }: { machine: StateMachineDetails }) {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === STATE_MACHINE_TABS.executions
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       </ContentLayout>
       {starting && (
         <StartExecutionModal machineArn={machine.arn} onDismiss={() => setStarting(false)} />

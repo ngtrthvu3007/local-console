@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
@@ -17,13 +18,10 @@ import { SettingsTab } from "../components/SettingsTab.tsx";
 import { TriggersTab } from "../components/TriggersTab.tsx";
 import { isQueueMissing, useDeadLetterSources, useQueue } from "../hooks/useQueues.ts";
 import { messageCountsText, queueTypeLabel, type Queue } from "../queues.ts";
-import { QUEUE_TABS, SEARCH_PARAMS, queueCrumbs, sqsRoutes, type QueueTab } from "../routes.ts";
+import { QUEUE_TABS, queueCrumbs, sqsRoutes } from "../routes.ts";
 
 const MODALS = { send: "send", purge: "purge", delete: "delete", redrive: "redrive" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
-
-const isQueueTab = (value: string | null): value is QueueTab =>
-  Object.values<string | null>(QUEUE_TABS).includes(value);
 
 // "Standard · 12 available · 1 in flight · 0 delayed · DLQ: orders-dlq"
 const queueSummary = (queue: Queue) =>
@@ -46,16 +44,11 @@ function QueueView({
 }) {
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isQueueTab(requestedTab) ? requestedTab : QUEUE_TABS.messages;
+  const [tab, setTab] = useTabParam(QUEUE_TABS, QUEUE_TABS.messages);
   const sources = useDeadLetterSources(queue);
   const sourceNames = sources.data ?? [];
   const [modal, setModal] = useState<ModalId | null>(null);
   const closeModal = () => setModal(null);
-
-  const selectTab = (nextTab: string) =>
-    setSearchParams(nextTab === QUEUE_TABS.messages ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
   const tabs: TabsProps.Tab[] = [
     {
@@ -101,11 +94,7 @@ function QueueView({
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) => selectTab(detail.activeTabId)}
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       </ContentLayout>
       {modal === MODALS.send && <SendMessageModal queue={queue} onDismiss={closeModal} />}
       {modal === MODALS.purge && <PurgeModal queue={queue} onDismiss={closeModal} />}

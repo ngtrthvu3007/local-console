@@ -1,3 +1,4 @@
+import { TAB_PARAM, withQuery } from "@shared/routes.ts";
 export const KMS_SERVICE_ID = "kms";
 const KMS_ROOT = `/${KMS_SERVICE_ID}`;
 
@@ -26,11 +27,11 @@ export const kmsRoutes = {
   awsKeys: fullPath(KMS_ROUTE_PATTERNS.awsKeys),
   createKey: fullPath(KMS_ROUTE_PATTERNS.createKey),
   // key: ID, ARN key, tên alias hoặc ARN alias — DescribeKey tự phân giải. Tab mặc định không ghi lên URL
-  key: (key: string, tab?: KeyTab) => {
-    const params = new URLSearchParams({ [SEARCH_PARAMS.key]: key });
-    if (tab && tab !== KEY_TABS.details) params.set(SEARCH_PARAMS.tab, tab);
-    return `${fullPath(KMS_ROUTE_PATTERNS.key)}?${params}`;
-  },
+  key: (key: string, tab?: KeyTab) =>
+    withQuery(fullPath(KMS_ROUTE_PATTERNS.key), {
+      [SEARCH_PARAMS.key]: key,
+      [TAB_PARAM]: tab === KEY_TABS.details ? undefined : tab,
+    }),
 };
 
 export const kmsBaseCrumbs = [

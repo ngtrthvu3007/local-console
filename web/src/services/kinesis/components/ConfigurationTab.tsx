@@ -4,6 +4,7 @@ import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
+import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
@@ -14,7 +15,7 @@ import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { streamSample } from "../codeSamples.ts";
 import { useShards } from "../hooks/useStreams.ts";
 import { isShardOpen, streamModeLabel } from "../recordData.ts";
-import { StreamStatus } from "./StreamStatus.tsx";
+import { STREAM_STATUS_STYLES } from "../constants.ts";
 
 const DETAILS_COLUMNS = 3;
 const NO_ENCRYPTION = "NONE";
@@ -56,7 +57,10 @@ export function ConfigurationTab({ stream }: { stream: StreamDescriptionSummary 
           columns={DETAILS_COLUMNS}
           items={[
             { label: "ARN", value: copyable(stream.StreamARN) },
-            { label: "Status", value: <StreamStatus status={stream.StreamStatus} /> },
+            {
+              label: "Status",
+              value: <StatusBadge status={stream.StreamStatus} styles={STREAM_STATUS_STYLES} />,
+            },
             {
               label: "Capacity mode",
               value: streamModeLabel(stream.StreamModeDetails?.StreamMode),

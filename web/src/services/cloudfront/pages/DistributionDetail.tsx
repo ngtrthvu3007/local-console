@@ -1,7 +1,8 @@
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
@@ -15,24 +16,13 @@ import { GeneralTab } from "../components/GeneralTab.tsx";
 import { InvalidationsTab } from "../components/InvalidationsTab.tsx";
 import { OriginsTab } from "../components/OriginsTab.tsx";
 import { useDistribution } from "../hooks/useDistributions.ts";
-import {
-  DISTRIBUTION_TABS,
-  SEARCH_PARAMS,
-  cloudfrontRoutes,
-  distributionCrumbs,
-  type DistributionTab,
-} from "../routes.ts";
-
-const isDistributionTab = (value: string | null): value is DistributionTab =>
-  Object.values<string | null>(DISTRIBUTION_TABS).includes(value);
+import { DISTRIBUTION_TABS, cloudfrontRoutes, distributionCrumbs } from "../routes.ts";
 
 export function DistributionDetail() {
   const { distributionId: id = "" } = useParams();
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isDistributionTab(requestedTab) ? requestedTab : DISTRIBUTION_TABS.general;
+  const [tab, setTab] = useTabParam(DISTRIBUTION_TABS, DISTRIBUTION_TABS.general);
   const details = useDistribution(id);
   const distribution = details.data ?? undefined;
   const config = distribution?.DistributionConfig;
@@ -101,17 +91,7 @@ export function DistributionDetail() {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === DISTRIBUTION_TABS.general
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
         {actions.modal}
       </ContentLayout>
     </div>

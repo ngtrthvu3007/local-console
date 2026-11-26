@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { StatusBadge } from "@shared/components/StatusBadge.tsx";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
@@ -15,27 +17,16 @@ import { ConfigurationTab } from "../components/ConfigurationTab.tsx";
 import { DataViewerTab } from "../components/DataViewerTab.tsx";
 import { DeleteStreamsModal } from "../components/DeleteStreamsModal.tsx";
 import { PutRecordModal } from "../components/PutRecordModal.tsx";
-import { StreamStatus } from "../components/StreamStatus.tsx";
 import { useStream } from "../hooks/useStreams.ts";
 import { streamModeLabel } from "../recordData.ts";
-import {
-  SEARCH_PARAMS,
-  STREAM_TABS,
-  kinesisRoutes,
-  streamCrumbs,
-  type StreamTab,
-} from "../routes.ts";
-
-const isStreamTab = (value: string | null): value is StreamTab =>
-  Object.values<string | null>(STREAM_TABS).includes(value);
+import { STREAM_TABS, kinesisRoutes, streamCrumbs } from "../routes.ts";
+import { STREAM_STATUS_STYLES } from "../constants.ts";
 
 export function StreamDetail() {
   const { streamName: name = "" } = useParams();
   const { ref, compact } = useIsCompact();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isStreamTab(requestedTab) ? requestedTab : STREAM_TABS.dataViewer;
+  const [tab, setTab] = useTabParam(STREAM_TABS, STREAM_TABS.dataViewer);
   const details = useStream(name);
   const stream = details.data ?? undefined;
   const [deleting, setDeleting] = useState(false);
@@ -92,7 +83,7 @@ export function StreamDetail() {
       variant='h1'
       description={
         <>
-          <StreamStatus status={stream.StreamStatus} />
+          <StatusBadge status={stream.StreamStatus} styles={STREAM_STATUS_STYLES} />
           {DETAIL_SEPARATOR}
           {streamModeLabel(stream.StreamModeDetails?.StreamMode)}
           {DETAIL_SEPARATOR}
@@ -109,17 +100,7 @@ export function StreamDetail() {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === STREAM_TABS.dataViewer
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       </ContentLayout>
       {putting && <PutRecordModal stream={stream} onDismiss={() => setPutting(false)} />}
       {deleting && (
