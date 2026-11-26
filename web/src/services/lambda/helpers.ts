@@ -16,13 +16,6 @@ export function codeDownloadUrl(location: string) {
 export const logGroupOf = (configuration: FunctionConfiguration) =>
   configuration.LoggingConfig?.LogGroup ?? `${LOG_GROUP_PREFIX}${configuration.FunctionName}`;
 
-// Runtime Python ghi log nhiều dòng (stack trace) bằng \r để CloudWatch giữ thành một event
-const CARRIAGE_RETURNS = /\r\n?/g;
-const LINE_BREAK = "\n";
-
-export const logMessageText = (message = "") =>
-  message.replace(CARRIAGE_RETURNS, LINE_BREAK).trimEnd();
-
 const FUNCTION_ARN_MARKER = ":function:";
 
 // "arn:aws:lambda:…:function:my-function:prod" → "my-function" (bỏ version / alias)

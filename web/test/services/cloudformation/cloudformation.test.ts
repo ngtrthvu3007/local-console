@@ -76,6 +76,13 @@ describe("resourceHref", () => {
 
   it("links resources whose physical ID matches a route", () => {
     expect(resourceHref("AWS::S3::Bucket", "photos")).toBe("/s3/buckets/photos");
+    // Mọi log group mở trang CloudWatch Logs, không chỉ group của Lambda
+    expect(resourceHref("AWS::Logs::LogGroup", "/aws/lambda/fn")).toBe(
+      "/logs/groups/detail?group=%2Faws%2Flambda%2Ffn",
+    );
+    expect(resourceHref("AWS::Logs::LogGroup", "/my-app/api")).toBe(
+      "/logs/groups/detail?group=%2Fmy-app%2Fapi",
+    );
 
     expect(resourceHref("AWS::SQS::Queue", "http://localhost:4566/000000000000/orders")).toBe(
       "/sqs/queues/orders",
@@ -146,12 +153,7 @@ describe("resourceHref", () => {
     ).toBe("/stepfunctions/statemachines/flow");
   });
 
-  it("links a Lambda log group to the function's Monitor tab, others stay text", () => {
-    expect(resourceHref("AWS::Logs::LogGroup", "/aws/lambda/fn")).toBe(
-      "/lambda/functions/fn?tab=monitor",
-    );
-
-    expect(resourceHref("AWS::Logs::LogGroup", "/other/group")).toBeUndefined();
+  it("leaves types without a console page as text", () => {
     expect(resourceHref("AWS::IAM::Role", "role")).toBeUndefined();
   });
 });

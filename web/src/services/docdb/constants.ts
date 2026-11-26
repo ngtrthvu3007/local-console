@@ -5,6 +5,9 @@ export const DOCDB_ENGINE = "docdb";
 // DocumentDB dùng chung API với RDS: mọi lời gọi lọc theo engine để không lẫn database của RDS
 export const ENGINE_FILTER = [{ Name: "engine", Values: [DOCDB_ENGINE] }];
 export const DOCDB_PORT = 27017;
+// Tên group theo mẫu AWS, để link qua lại với trang CloudWatch Logs
+export const DOCDB_LOG_GROUP_PREFIX = "/aws/docdb/cluster/";
+export const auditLogGroup = (id: string) => `${DOCDB_LOG_GROUP_PREFIX}${id}/audit`;
 
 export const INSTANCE_CLASSES = ["db.t3.medium", "db.r5.large", "db.r6g.large"] as const;
 export const DEFAULT_INSTANCE_CLASS = INSTANCE_CLASSES[0];

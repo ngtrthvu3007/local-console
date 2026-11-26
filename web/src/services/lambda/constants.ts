@@ -4,9 +4,6 @@ import {
   KIBIBYTE,
   MEBIBYTE,
   MILLISECONDS_PER_SECOND,
-  SECONDS_PER_DAY,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_MINUTE,
 } from "@shared/constants.ts";
 
 // Chỉ hỗ trợ Node.js và Python (sửa code ngay trên trang được), mới trước cũ.
@@ -70,18 +67,6 @@ export const INVOCATION_TYPES = { sync: "RequestResponse", async: "Event" } as c
 export type InvocationType = (typeof INVOCATION_TYPES)[keyof typeof INVOCATION_TYPES];
 // Đồng hồ của container Floci và của trình duyệt có thể lệch nhau chút ít
 export const LOG_CLOCK_SKEW_MS = MILLISECONDS_PER_SECOND;
-
-// Tab Monitor
-export const LOG_RANGES = [
-  { id: "15m", text: "15m", milliseconds: 15 * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND },
-  { id: "1h", text: "1h", milliseconds: SECONDS_PER_HOUR * MILLISECONDS_PER_SECOND },
-  { id: "1d", text: "1d", milliseconds: SECONDS_PER_DAY * MILLISECONDS_PER_SECOND },
-  { id: "7d", text: "7d", milliseconds: 7 * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND },
-] as const;
-
-export type LogRangeId = (typeof LOG_RANGES)[number]["id"];
-export const DEFAULT_LOG_RANGE: LogRangeId = "1h";
-export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 
 // Trigger
 export const TRIGGER_SOURCES = {

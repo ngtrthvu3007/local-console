@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { OutputLogEvent } from "@aws-sdk/client-cloudwatch-logs";
 import type { TaskDefinition } from "@aws-sdk/client-ecs";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
@@ -7,31 +6,15 @@ import Header from "@cloudscape-design/components/header";
 import Select from "@cloudscape-design/components/select";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Toggle from "@cloudscape-design/components/toggle";
-import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
+import Table from "@shared/components/ResponsiveTable.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
+import { ViewInLogsLink } from "../../logs/components/LogGroupLink.tsx";
+import { logsRoutes } from "../../logs/routes.ts";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { formatDate } from "@shared/format.ts";
-import { logMessageText } from "../../lambda/helpers.ts";
+import { logEventColumns } from "@shared/logs/columns.tsx";
 import { NO_AWSLOGS_TEXT } from "../constants.ts";
 import { useTaskLogs } from "../hooks/useTaskLogs.ts";
 import { awslogsTarget } from "../taskDefinitionJson.ts";
-
-// Giữ nguyên xuống dòng của log, dòng dài thì xuống dòng thay vì cuộn ngang (như Lambda › Monitor)
-const messageStyle = { whiteSpace: "pre-wrap", wordBreak: "break-word" } as const;
-
-const columns: TableProps.ColumnDefinition<OutputLogEvent>[] = [
-  { id: "timestamp", header: "Timestamp", cell: (event) => formatDate(event.timestamp) },
-  {
-    id: "message",
-    header: "Message",
-    isRowHeader: true,
-    cell: (event) => (
-      <div style={messageStyle}>
-        <Box variant='code'>{logMessageText(event.message)}</Box>
-      </div>
-    ),
-  },
-];
 
 interface Props {
   taskId: string;
@@ -73,7 +56,7 @@ export function TaskLogsTab({ taskId, definition, loading }: Props) {
       items={logs.data ?? []}
       loading={logs.isLoading}
       loadingText='Loading logs'
-      columnDefinitions={columns}
+      columnDefinitions={logEventColumns}
       wrapLines
       empty={emptyOrError(
         logs,
@@ -87,6 +70,7 @@ export function TaskLogsTab({ taskId, definition, loading }: Props) {
           description={target && `${target.group} › ${target.stream}`}
           actions={
             <ResponsiveActions>
+              {target && <ViewInLogsLink href={logsRoutes.stream(target.group, target.stream)} />}
               <Toggle
                 checked={autoRefresh}
                 onChange={({ detail }) => setAutoRefresh(detail.checked)}

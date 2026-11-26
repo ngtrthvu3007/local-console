@@ -6,7 +6,7 @@ import {
 import { InvokeCommand } from "@aws-sdk/client-lambda";
 import { orEmptyWhenNotFound } from "@shared/aws.ts";
 import { reformatJson } from "@shared/json.ts";
-import { logMessageText } from "../helpers.ts";
+import { logMessageText } from "@shared/logs/format.ts";
 import { INVOCATION_TYPES, LOG_CLOCK_SKEW_MS, type InvocationType } from "../constants.ts";
 import { useLambda } from "./useLambda.ts";
 

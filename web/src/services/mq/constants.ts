@@ -6,6 +6,9 @@ export const ENGINE_LABEL = "RabbitMQ";
 export const ENGINE_VERSION = "3.13";
 export const HOST_INSTANCE_TYPE = "mq.t3.micro";
 export const DEPLOYMENT_MODE = "SINGLE_INSTANCE";
+// Tên group theo mẫu AWS, để link qua lại với trang CloudWatch Logs
+export const MQ_LOG_GROUP_PREFIX = "/aws/amazonmq/broker/";
+export const brokerLogGroup = (brokerId: string) => `${MQ_LOG_GROUP_PREFIX}${brokerId}/general`;
 
 export const BROKER_RUNNING = "RUNNING";
 export const FAILED_STATES = ["CREATION_FAILED", "CRITICAL_ACTION_REQUIRED"];

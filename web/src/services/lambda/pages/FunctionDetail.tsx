@@ -100,7 +100,7 @@ export function FunctionDetail() {
     {
       id: FUNCTION_TABS.monitor,
       label: "Monitor",
-      content: <MonitorTab functionName={name} logGroup={logGroup} />,
+      content: <MonitorTab logGroup={logGroup} />,
     },
     {
       id: FUNCTION_TABS.configuration,

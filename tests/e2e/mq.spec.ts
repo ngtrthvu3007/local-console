@@ -56,6 +56,14 @@ test("creates a broker and signs in once it is running", async ({ page }) => {
     if (await retry.isVisible()) await retry.click();
     await expect(page.getByText("No queues")).toBeVisible({ timeout: 10_000 });
   }).toPass({ timeout: 120_000 });
+
+  // Log của broker mở thẳng trang CloudWatch Logs (spec Logs 3.8)
+  const generalGroup = `/aws/amazonmq/broker/${brokerId}/general`;
+  await page.getByRole("tab", { name: "Details" }).click();
+  await expect(page.getByRole("link", { name: generalGroup })).toHaveAttribute(
+    "href",
+    `/logs/groups/detail?${new URLSearchParams({ group: generalGroup })}`,
+  );
 });
 
 test("creates a queue, publishes to it and peeks the message", async ({ page }) => {

@@ -12,6 +12,7 @@ const PAGES = [
   { slug: "dynamodb-create", path: "/dynamodb/tables/create" },
   { slug: "rds-databases", path: "/rds/databases" },
   { slug: "docdb-clusters", path: "/docdb/clusters" },
+  { slug: "logs-groups", path: "/logs/groups" },
   { slug: "docdb-create", path: "/docdb/clusters/create" },
   { slug: "rds-create", path: "/rds/databases/create" },
   { slug: "ec2-instances", path: "/ec2/instances" },

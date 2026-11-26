@@ -14,6 +14,7 @@ import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { defaultKeyLabel } from "../../kms/keys.ts";
 import { secretsRoutes } from "../../secretsmanager/routes.ts";
 import { connectionUrl, databaseSample } from "../codeSamples.ts";
+import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
 import { RDS_KEY_SERVICE, CREDENTIAL_TYPES, errorLogGroup } from "../constants.ts";
 import {
   addressText,
@@ -149,7 +150,7 @@ export function ConfigurationTab({ database }: { database: DBInstance }) {
   );
 }
 
-// CloudWatch Logs chưa có trang trong console nên chỉ hiện tên group để copy
+// Tên group là link sang trang CloudWatch Logs, kèm nút copy để dán vào code / CLI
 export function LogsTab({ id }: { id: string }) {
   return (
     <Container
@@ -159,7 +160,19 @@ export function LogsTab({ id }: { id: string }) {
         </Header>
       }
     >
-      <KeyValuePairs items={[{ label: "Log group", value: copyable(errorLogGroup(id)) }]} />
+      <KeyValuePairs
+        items={[
+          {
+            label: "Log group",
+            value: (
+              <>
+                <LogGroupLink name={errorLogGroup(id)} />{" "}
+                <CopyButton variant='icon' text={errorLogGroup(id)} label={errorLogGroup(id)} />
+              </>
+            ),
+          },
+        ]}
+      />
     </Container>
   );
 }

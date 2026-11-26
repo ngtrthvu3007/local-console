@@ -73,6 +73,12 @@ test("creates a cluster with two instances and shows how to connect", async ({ p
   ).toBeVisible();
   await expect(page.getByText(`floci-aws-docdb-${cluster}`).first()).toBeVisible();
   await expect(page.getByText(/-p 127\.0\.0\.1:27017:27017/)).toBeVisible();
+  // Log của cluster mở thẳng trang CloudWatch Logs (spec Logs 3.8)
+  const auditGroup = `/aws/docdb/cluster/${cluster}/audit`;
+  await expect(page.getByRole("link", { name: auditGroup })).toHaveAttribute(
+    "href",
+    `/logs/groups/detail?${new URLSearchParams({ group: auditGroup })}`,
+  );
   await expect(page.getByText(/Percent-encode special characters/)).toHaveCount(2);
   await expect(page.getByText(/before docker compose down/)).toBeVisible();
 });

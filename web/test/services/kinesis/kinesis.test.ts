@@ -1,6 +1,8 @@
+import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
   isShardOpen,
+  gunzipIfGzip,
   recordText,
   streamNameOfArn,
 } from "../../../src/services/kinesis/recordData.ts";
@@ -110,5 +112,18 @@ describe("kinesisRoutes", () => {
     expect(kinesisRoutes.stream("clicks", STREAM_TABS.configuration)).toBe(
       "/kinesis/streams/clicks?tab=configuration",
     );
+  });
+});
+
+// Subscription filter của CloudWatch Logs gửi record gzip JSON (spec Logs 3.9)
+describe("gunzipIfGzip", () => {
+  it("decompresses gzip records and leaves other bytes alone", async () => {
+    const json = '{"logEvents":[{"message":"ERROR boom"}]}';
+    const gz = new Uint8Array(gzipSync(json));
+    expect(new TextDecoder().decode(await gunzipIfGzip(gz))).toBe(json);
+    const plain = new TextEncoder().encode('{"a":1}');
+    expect(await gunzipIfGzip(plain)).toBe(plain);
+    const broken = new Uint8Array([0x1f, 0x8b, 1, 2, 3]);
+    expect(await gunzipIfGzip(broken)).toBe(broken);
   });
 });
