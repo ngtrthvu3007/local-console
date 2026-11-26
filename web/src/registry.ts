@@ -5,6 +5,7 @@ import { appsyncService } from "./services/appsync/index.tsx";
 import { cloudformationService } from "./services/cloudformation/index.tsx";
 import { cloudfrontService } from "./services/cloudfront/index.tsx";
 import { cognitoService } from "./services/cognito/index.tsx";
+import { docdbService } from "./services/docdb/index.tsx";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { ec2Service } from "./services/ec2/index.tsx";
 import { ecsService } from "./services/ecs/index.tsx";
@@ -47,6 +48,7 @@ export const services: ServiceDefinition[] = [
   ecsService,
   dynamodbService,
   rdsService,
+  docdbService,
   cloudfrontService,
   sqsService,
   snsService,

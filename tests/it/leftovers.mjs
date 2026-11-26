@@ -74,7 +74,9 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import {
   RDSClient,
+  paginateDescribeDBClusters,
   paginateDescribeDBInstances,
+  DeleteDBClusterCommand,
   DeleteDBInstanceCommand,
 } from "@aws-sdk/client-rds";
 import {
@@ -258,6 +260,16 @@ for await (const page of paginateDescribeDBInstances({ client: rds }, {})) {
     ...mine((page.DBInstances ?? []).map((database) => database.DBInstanceIdentifier)),
   );
 }
+// Cluster DocumentDB: instance của nó đã nằm trong `databases` (cùng API RDS), xóa cluster sau
+const docdbClusters = [];
+for await (const page of paginateDescribeDBClusters(
+  { client: rds },
+  { Filters: [{ Name: "engine", Values: ["docdb"] }] },
+)) {
+  docdbClusters.push(
+    ...mine((page.DBClusters ?? []).map((cluster) => cluster.DBClusterIdentifier)),
+  );
+}
 // Floci giữ instance Terminated (không tự bỏ sau 1 giờ như AWS): chỉ gom instance còn sống
 const instances = [];
 for await (const page of paginateDescribeInstances({ client: ec2 }, {})) {
@@ -380,6 +392,7 @@ console.log(
       secrets,
       parameters,
       databases,
+      docdbClusters,
       instances,
       aliases,
       kmsKeys,
@@ -487,6 +500,10 @@ if (process.argv.includes("--delete")) {
   for (const id of databases)
     await rds.send(
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
+    );
+  for (const id of docdbClusters)
+    await rds.send(
+      new DeleteDBClusterCommand({ DBClusterIdentifier: id, SkipFinalSnapshot: true }),
     );
   if (instances.length) await ec2.send(new TerminateInstancesCommand({ InstanceIds: instances }));
   for (const name of aliases) await kms.send(new DeleteAliasCommand({ AliasName: name }));
