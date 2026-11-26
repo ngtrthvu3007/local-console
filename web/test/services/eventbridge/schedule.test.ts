@@ -97,6 +97,21 @@ describe("scheduleSchema", () => {
     expect(schema.safeParse(form).success).toBe(true);
   });
 
+  it("needs a task definition and a subnet for an ECS task", () => {
+    const ecs = {
+      ...form,
+      targetKind: "ecs" as const,
+      targetArn: "arn:aws:ecs:r:0:cluster/app",
+      taskFamily: "migrate",
+      taskRevision: "2",
+      subnets: ["subnet-a"],
+      securityGroups: [],
+    };
+    expect(schema.safeParse(ecs).success).toBe(true);
+    expect(messageAt({ ...ecs, taskRevision: "" }, "taskRevision")).toBeDefined();
+    expect(messageAt({ ...ecs, subnets: [] }, "subnets")).toBeDefined();
+  });
+
   it("checks the name", () => {
     expect(messageAt({ ...form, name: "" }, "name")).toMatch(/Enter a schedule name/);
     expect(messageAt({ ...form, name: "a b" }, "name")).toMatch(/Use only letters/);
@@ -189,6 +204,62 @@ describe("schedule model", () => {
       RoleArn: "arn:aws:iam::0:role/real",
       Input: "hi",
       RetryPolicy: { MaximumRetryAttempts: 3 },
+    });
+  });
+
+  it("builds ECS parameters for a Fargate task", () => {
+    const target = buildTarget({
+      arn: "arn:aws:ecs:r:0:cluster/app",
+      input: "",
+      ecs: {
+        taskDefinitionArn: "arn:aws:ecs:r:0:task-definition/migrate:2",
+        subnets: ["subnet-a"],
+        securityGroups: [],
+      },
+    });
+    expect(target.EcsParameters).toEqual({
+      TaskDefinitionArn: "arn:aws:ecs:r:0:task-definition/migrate:2",
+      LaunchType: "FARGATE",
+      TaskCount: 1,
+      NetworkConfiguration: { awsvpcConfiguration: { Subnets: ["subnet-a"] } },
+    });
+    expect(target.RoleArn).toMatch(/role\/lambda-role$/);
+  });
+
+  // Finding #2: sửa schedule ECS do CDK tạo không được làm mất tham số form không có
+  it("keeps ECS settings the form doesn't have when the target is rebuilt", () => {
+    const existing = {
+      Arn: "arn:aws:ecs:r:0:cluster/app",
+      RoleArn: "arn:aws:iam::0:role/real",
+      EcsParameters: {
+        TaskDefinitionArn: "arn:aws:ecs:r:0:task-definition/migrate:1",
+        TaskCount: 3,
+        PlatformVersion: "1.4.0",
+        LaunchType: "FARGATE" as const,
+        NetworkConfiguration: {
+          awsvpcConfiguration: { Subnets: ["subnet-old"], AssignPublicIp: "ENABLED" as const },
+        },
+      },
+    };
+    const target = buildTarget(
+      {
+        arn: existing.Arn,
+        input: "",
+        ecs: {
+          taskDefinitionArn: "arn:aws:ecs:r:0:task-definition/migrate:2",
+          subnets: ["subnet-new"],
+          securityGroups: [],
+        },
+      },
+      existing,
+    );
+    expect(target.EcsParameters).toMatchObject({
+      TaskDefinitionArn: "arn:aws:ecs:r:0:task-definition/migrate:2",
+      TaskCount: 3,
+      PlatformVersion: "1.4.0",
+      NetworkConfiguration: {
+        awsvpcConfiguration: { Subnets: ["subnet-new"], AssignPublicIp: "ENABLED" },
+      },
     });
   });
 

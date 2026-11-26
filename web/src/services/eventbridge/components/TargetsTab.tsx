@@ -27,7 +27,12 @@ const columns: TableProps.ColumnDefinition<Target>[] = [
   {
     id: "resource",
     header: "Resource",
-    cell: (target) => <TargetResource arn={target.Arn ?? ""} />,
+    cell: (target) => (
+      <TargetResource
+        arn={target.Arn ?? ""}
+        ecsTaskDefinition={target.EcsParameters?.TaskDefinitionArn}
+      />
+    ),
   },
 ];
 

@@ -1,7 +1,8 @@
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
@@ -26,25 +27,14 @@ import { TriggersTab } from "../components/TriggersTab.tsx";
 import { logGroupOf } from "../helpers.ts";
 import { useFunction } from "../hooks/useFunctions.ts";
 import type { CodeEdits } from "../zipArchive.ts";
-import {
-  FUNCTION_TABS,
-  SEARCH_PARAMS,
-  functionCrumbs,
-  lambdaRoutes,
-  type FunctionTab,
-} from "../routes.ts";
+import { FUNCTION_TABS, functionCrumbs, lambdaRoutes } from "../routes.ts";
 
 const OVERVIEW_COLUMNS = 3;
-
-const isFunctionTab = (value: string | null): value is FunctionTab =>
-  Object.values<string | null>(FUNCTION_TABS).includes(value);
 
 export function FunctionDetail() {
   const { name = "" } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isFunctionTab(requestedTab) ? requestedTab : FUNCTION_TABS.code;
+  const [tab, setTab] = useTabParam(FUNCTION_TABS, FUNCTION_TABS.code);
   const details = useFunction(name);
   const [deleting, setDeleting] = useState(false);
   // Code sửa chưa deploy nằm ở đây để không mất khi đổi tab (Tabs chỉ render tab đang mở)
@@ -54,9 +44,6 @@ export function FunctionDetail() {
   const leaveBlocker = useLeaveGuard(hasUndeployedChanges);
 
   useBreadcrumbs(functionCrumbs(name));
-
-  const selectTab = (nextTab: string) =>
-    setSearchParams(nextTab === FUNCTION_TABS.code ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
   const state = pageState(details, {
     ready: Boolean(details.data?.Configuration),
@@ -106,7 +93,7 @@ export function FunctionDetail() {
           functionName={name}
           logGroup={logGroup}
           hasUndeployedChanges={hasUndeployedChanges}
-          onOpenMonitor={() => selectTab(FUNCTION_TABS.monitor)}
+          onOpenMonitor={() => setTab(FUNCTION_TABS.monitor)}
         />
       ),
     },
@@ -161,11 +148,7 @@ export function FunctionDetail() {
             <KeyValuePairs columns={OVERVIEW_COLUMNS} items={overviewItems} />
           </SpaceBetween>
         </Container>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) => selectTab(detail.activeTabId)}
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       </SpaceBetween>
 
       {deleting && (

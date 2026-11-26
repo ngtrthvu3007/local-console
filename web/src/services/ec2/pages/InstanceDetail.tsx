@@ -1,7 +1,8 @@
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
@@ -15,23 +16,12 @@ import { UserDataTab } from "../components/UserDataTab.tsx";
 import { useImages } from "../hooks/useImages.ts";
 import { useInstance } from "../hooks/useInstances.ts";
 import { instanceName } from "../instances.ts";
-import {
-  INSTANCE_TABS,
-  SEARCH_PARAMS,
-  ec2Routes,
-  instanceCrumbs,
-  type InstanceTab,
-} from "../routes.ts";
-
-const isInstanceTab = (value: string | null): value is InstanceTab =>
-  Object.values<string | null>(INSTANCE_TABS).includes(value);
+import { INSTANCE_TABS, ec2Routes, instanceCrumbs } from "../routes.ts";
 
 export function InstanceDetail() {
   const { instanceId: id = "" } = useParams();
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isInstanceTab(requestedTab) ? requestedTab : INSTANCE_TABS.details;
+  const [tab, setTab] = useTabParam(INSTANCE_TABS, INSTANCE_TABS.details);
   const details = useInstance(id);
   const images = useImages();
   const instance = details.data ?? undefined;
@@ -90,17 +80,7 @@ export function InstanceDetail() {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === INSTANCE_TABS.details
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
         {stateActions.modal}
       </ContentLayout>
     </div>

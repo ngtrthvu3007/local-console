@@ -1,6 +1,7 @@
 import { generatePath } from "react-router";
 import { SEARCH_PARAMS as SES_SEARCH_PARAMS, sesRoutes } from "../ses/routes.ts";
 import { SEARCH_PARAMS as SNS_SEARCH_PARAMS, snsRoutes } from "../sns/routes.ts";
+import { withTab } from "@shared/routes.ts";
 
 export const COGNITO_SERVICE_ID = "cognito";
 const COGNITO_ROOT = `/${COGNITO_SERVICE_ID}`;
@@ -36,13 +37,8 @@ const fullPath = (pattern: string) => `${COGNITO_ROOT}/${pattern}`;
 export const cognitoRoutes = {
   pools: fullPath(COGNITO_ROUTE_PATTERNS.pools),
   // Tab mặc định (Users) không ghi lên URL
-  pool: (poolId: string, tab?: PoolTab) => {
-    const path = generatePath(fullPath(COGNITO_ROUTE_PATTERNS.pool), { poolId });
-
-    return tab && tab !== POOL_TABS.users
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  pool: (poolId: string, tab?: PoolTab) =>
+    withTab(generatePath(fullPath(COGNITO_ROUTE_PATTERNS.pool), { poolId }), tab, POOL_TABS.users),
   user: (poolId: string, username: string) =>
     generatePath(fullPath(COGNITO_ROUTE_PATTERNS.user), { poolId, username }),
   group: (poolId: string, group: string) =>

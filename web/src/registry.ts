@@ -7,6 +7,7 @@ import { cloudfrontService } from "./services/cloudfront/index.tsx";
 import { cognitoService } from "./services/cognito/index.tsx";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { ec2Service } from "./services/ec2/index.tsx";
+import { ecsService } from "./services/ecs/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { kinesisService } from "./services/kinesis/index.tsx";
@@ -43,6 +44,7 @@ export const services: ServiceDefinition[] = [
   s3Service,
   lambdaService,
   ec2Service,
+  ecsService,
   dynamodbService,
   rdsService,
   cloudfrontService,

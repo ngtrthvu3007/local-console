@@ -1,10 +1,7 @@
 import Alert from "@cloudscape-design/components/alert";
-import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { LIST_SEPARATOR } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
-import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import { useQueueLinks } from "../hooks/useQueueTriggers.ts";
 import { useDeleteQueues } from "../hooks/useQueues.ts";
@@ -25,27 +22,15 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
   const deadLetterQueues = links.data?.deadLetterQueues ?? [];
   const referenced = useReferencedNames(queues).data ?? [];
 
-  const submit = () =>
-    deleteQueues.mutate(
-      queues,
-      notifyBulkOutcome({
-        success: (result) => `Deleted ${pluralize(result.count, "queue")}`,
-        errorHeader: "Couldn't delete",
-        then: onDone,
-      }),
-    );
-
   return (
-    <ConfirmModal
-      visible
-      header={`Delete ${pluralize(names.length, "queue")}?`}
-      confirmText={CONFIRM_DELETE}
-      actionText='Delete'
-      loading={deleteQueues.isPending}
-      onConfirm={submit}
+    <BulkActionModal
+      mutation={deleteQueues}
+      items={queues}
+      lines={names}
+      noun='queue'
       onDismiss={onDismiss}
+      onDone={onDone}
     >
-      <DeletePreview lines={names} />
       {withTriggers.length > 0 && (
         <Alert type='warning'>
           Lambda triggers on {withTriggers.join(LIST_SEPARATOR)} stop running.
@@ -59,6 +44,6 @@ export function DeleteQueuesModal({ queues, onDismiss, onDone }: Props) {
       )}
       <ReferencedWarning names={referenced} />
       <Alert type='warning'>Every message in these queues is deleted. This can't be undone.</Alert>
-    </ConfirmModal>
+    </BulkActionModal>
   );
 }

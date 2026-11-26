@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { LeaveModal } from "@shared/components/LeaveModal.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
@@ -19,18 +20,13 @@ import { SettingsTab } from "../components/SettingsTab.tsx";
 import { authLabel } from "../apis.ts";
 import { useApi } from "../hooks/useApis.ts";
 import { useQueryDraft } from "../hooks/useQueryDraft.ts";
-import { API_TABS, SEARCH_PARAMS, apiCrumbs, appsyncRoutes, type ApiTab } from "../routes.ts";
-
-const isApiTab = (value: string | null): value is ApiTab =>
-  Object.values<string | null>(API_TABS).includes(value);
+import { API_TABS, apiCrumbs, appsyncRoutes } from "../routes.ts";
 
 export function ApiDetail() {
   const { apiId = "" } = useParams();
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isApiTab(requestedTab) ? requestedTab : API_TABS.schema;
+  const [tab, setTab] = useTabParam(API_TABS, API_TABS.schema);
   const details = useApi(apiId);
   const api = details.data ?? undefined;
   const actions = useApiActions(api, () => navigate(appsyncRoutes.apis, skipLeaveGuard));
@@ -109,17 +105,7 @@ export function ApiDetail() {
   return (
     <div ref={ref}>
       <ContentLayout header={header}>
-        <Tabs
-          activeTabId={tab}
-          tabs={tabs}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === API_TABS.schema
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
-        />
+        <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
         {actions.modal}
         <LeaveModal blocker={leaveBlocker}>
           Your schema changes aren&apos;t saved and will be lost.

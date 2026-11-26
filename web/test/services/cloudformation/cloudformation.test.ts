@@ -90,6 +90,19 @@ describe("resourceHref", () => {
     ).toBe("/cloudformation/stacks/Child");
   });
 
+  it("links ECS task definitions by ARN", () => {
+    expect(
+      resourceHref(
+        "AWS::ECS::TaskDefinition",
+        "arn:aws:ecs:ap-southeast-1:000000000000:task-definition/migrate:2",
+      ),
+    ).toBe("/ecs/task-definitions/migrate/2");
+    expect(resourceHref("AWS::ECS::Cluster", "app")).toBe("/ecs/clusters/app");
+    expect(resourceHref("AWS::ECS::Service", "arn:aws:ecs:r:0:service/app/api")).toBe(
+      "/ecs/clusters/app/services/api",
+    );
+  });
+
   it("links AppSync resources by API ID and ARN", () => {
     const arn = "arn:aws:appsync:ap-southeast-1:000000000000:apis/a1";
     expect(resourceHref("AWS::AppSync::GraphQLApi", "a1")).toBe("/appsync/apis/a1");

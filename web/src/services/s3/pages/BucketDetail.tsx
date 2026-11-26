@@ -2,6 +2,7 @@ import { useParams, useSearchParams } from "react-router";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
@@ -11,16 +12,12 @@ import { PermissionsTab } from "../components/PermissionsTab.tsx";
 import { PropertiesTab } from "../components/PropertiesTab.tsx";
 import { s3Uri } from "../helpers.ts";
 import { useBucketExists } from "../hooks/useBuckets.ts";
-import { BUCKET_TABS, SEARCH_PARAMS, bucketCrumbs, s3Routes, type BucketTab } from "../routes.ts";
-
-const isBucketTab = (value: string | null): value is BucketTab =>
-  Object.values<string | null>(BUCKET_TABS).includes(value);
+import { BUCKET_TABS, SEARCH_PARAMS, bucketCrumbs, s3Routes } from "../routes.ts";
 
 export function BucketDetail() {
   const { bucket = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isBucketTab(requestedTab) ? requestedTab : BUCKET_TABS.objects;
+  const [tab, setTab] = useTabParam(BUCKET_TABS, BUCKET_TABS.objects);
   const prefix = searchParams.get(SEARCH_PARAMS.prefix) ?? "";
   const exists = useBucketExists(bucket);
 
@@ -28,9 +25,6 @@ export function BucketDetail() {
 
   const openFolder = (nextPrefix: string) =>
     setSearchParams(nextPrefix ? { [SEARCH_PARAMS.prefix]: nextPrefix } : {});
-  const selectTab = (nextTab: string) =>
-    setSearchParams(nextTab === BUCKET_TABS.objects ? {} : { [SEARCH_PARAMS.tab]: nextTab });
-
   const state = pageState(exists, {
     ready: exists.data === true,
     notFound: exists.data === false,
@@ -73,11 +67,7 @@ export function BucketDetail() {
 
   return (
     <ContentLayout header={header}>
-      <Tabs
-        activeTabId={tab}
-        tabs={tabs}
-        onChange={({ detail }) => selectTab(detail.activeTabId)}
-      />
+      <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
     </ContentLayout>
   );
 }

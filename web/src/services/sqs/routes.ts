@@ -1,4 +1,5 @@
 import { generatePath } from "react-router";
+import { withTab } from "@shared/routes.ts";
 
 export const SQS_SERVICE_ID = "sqs";
 const SQS_ROOT = `/${SQS_SERVICE_ID}`;
@@ -11,7 +12,7 @@ export const QUEUE_TABS = {
 export type QueueTab = (typeof QUEUE_TABS)[keyof typeof QUEUE_TABS];
 
 // message: message đang mở ở panel (tab Messages)
-export const SEARCH_PARAMS = { tab: "tab", message: "message" } as const;
+export const SEARCH_PARAMS = { message: "message" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const SQS_ROUTE_PATTERNS = {
@@ -26,12 +27,8 @@ export const sqsRoutes = {
   queues: fullPath(SQS_ROUTE_PATTERNS.queues),
   createQueue: fullPath(SQS_ROUTE_PATTERNS.createQueue),
   // Tab mặc định (Messages) không ghi lên URL
-  queue: (queue: string, tab?: QueueTab) => {
-    const path = generatePath(fullPath(SQS_ROUTE_PATTERNS.queue), { queue });
-    return tab && tab !== QUEUE_TABS.messages
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  queue: (queue: string, tab?: QueueTab) =>
+    withTab(generatePath(fullPath(SQS_ROUTE_PATTERNS.queue), { queue }), tab, QUEUE_TABS.messages),
 };
 
 export const sqsBaseCrumbs = [

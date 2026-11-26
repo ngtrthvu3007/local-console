@@ -18,10 +18,12 @@ import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { isNotFoundError } from "@shared/aws.ts";
+import { ECS_TARGET_NAMES, EcsTargetFields, ecsTargetOf } from "../components/EcsTargetFields.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
 import {
   AFTER_COMPLETION,
@@ -42,6 +44,7 @@ import { buildExpression, parseExpression } from "../scheduleExpression.ts";
 import { scheduleSchema, type ScheduleForm as ScheduleFormValues } from "../schemas.ts";
 import { buildTarget, editableTargetKind, toUpdateInput, type Schedule } from "../schedules.ts";
 import { TARGET_KINDS } from "../targets.ts";
+import { taskDefinitionRefOf } from "../../ecs/arns.ts";
 
 const CRON_DESCRIPTION = "Example: 0 9 ? * MON-FRI * runs at 9:00 on weekdays.";
 // Floci chạy ngay schedule `at` có giờ đã qua (AWS thì từ chối), và xóa nó luôn nếu bật Delete after completion
@@ -74,6 +77,10 @@ const RATE_UNIT_OPTIONS = RATE_UNITS.map((unit) => ({ value: unit, label: unit }
 function initialValues(group: string, existing?: Schedule): ScheduleFormValues {
   const timing = parseExpression(existing?.ScheduleExpression ?? "");
   const target = existing?.Target;
+  const ecs = target?.EcsParameters;
+  const taskDefinition = ecs?.TaskDefinitionArn
+    ? taskDefinitionRefOf(ecs.TaskDefinitionArn)
+    : undefined;
 
   return {
     name: existing?.Name ?? "",
@@ -97,6 +104,10 @@ function initialValues(group: string, existing?: Schedule): ScheduleFormValues {
     detailType: target?.EventBridgeParameters?.DetailType ?? "",
     input: target?.Input ?? "",
     enabled: existing ? existing.State === SCHEDULE_STATES.enabled : true,
+    taskFamily: taskDefinition?.family ?? "",
+    taskRevision: taskDefinition ? String(taskDefinition.revision) : "",
+    subnets: ecs?.NetworkConfiguration?.awsvpcConfiguration?.Subnets ?? [],
+    securityGroups: ecs?.NetworkConfiguration?.awsvpcConfiguration?.SecurityGroups ?? [],
   };
 }
 
@@ -111,6 +122,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
   const groups = useScheduleGroups();
   const { optionsByKind, emptyText, fifoArns } = useTargetOptions();
   const save = useSaveSchedule(Boolean(existing));
+  const { region } = useLoadedConfig();
 
   const form = useZodForm(scheduleSchema(fifoArns), initialValues(group, existing));
 
@@ -155,6 +167,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
                   values.targetKind === "eventbus"
                     ? { source: values.source, detailType: values.detailType }
                     : undefined,
+                ecs: values.targetKind === "ecs" ? ecsTargetOf(values, region) : undefined,
               },
               existing?.Target,
             ),
@@ -331,6 +344,11 @@ function ScheduleFormView({ group, existing }: FormProps) {
             <SpaceBetween size='l'>
               <FormInput control={form.control} name='source' label='Source' />
               <FormInput control={form.control} name='detailType' label='Detail type' />
+            </SpaceBetween>
+          )}
+          {targetKind === "ecs" && (
+            <SpaceBetween size='l'>
+              <EcsTargetFields control={form.control} names={ECS_TARGET_NAMES} />
             </SpaceBetween>
           )}
           <SpaceBetween size='xs'>

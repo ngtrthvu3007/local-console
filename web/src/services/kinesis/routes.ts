@@ -1,4 +1,5 @@
 import { generatePath } from "react-router";
+import { withTab } from "@shared/routes.ts";
 
 export const KINESIS_SERVICE_ID = "kinesis";
 const KINESIS_ROOT = `/${KINESIS_SERVICE_ID}`;
@@ -9,8 +10,6 @@ export const STREAM_TABS = {
   lambdaTriggers: "lambda-triggers",
 } as const;
 export type StreamTab = (typeof STREAM_TABS)[keyof typeof STREAM_TABS];
-
-export const SEARCH_PARAMS = { tab: "tab" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const KINESIS_ROUTE_PATTERNS = {
@@ -25,12 +24,12 @@ export const kinesisRoutes = {
   streams: fullPath(KINESIS_ROUTE_PATTERNS.streams),
   createStream: fullPath(KINESIS_ROUTE_PATTERNS.createStream),
   // Tab mặc định (Data viewer) không ghi lên URL
-  stream: (streamName: string, tab?: StreamTab) => {
-    const path = generatePath(fullPath(KINESIS_ROUTE_PATTERNS.stream), { streamName });
-    return tab && tab !== STREAM_TABS.dataViewer
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  stream: (streamName: string, tab?: StreamTab) =>
+    withTab(
+      generatePath(fullPath(KINESIS_ROUTE_PATTERNS.stream), { streamName }),
+      tab,
+      STREAM_TABS.dataViewer,
+    ),
 };
 
 export const kinesisBaseCrumbs = [

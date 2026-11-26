@@ -81,3 +81,14 @@ export async function allPages<T>(
 
   return items;
 }
+
+// Chia danh sách theo giới hạn số tên mỗi lần gọi của AWS (DeleteParameters, Describe* của ECS…)
+export function chunks<T>(items: readonly T[], size: number): T[][] {
+  const batches: T[][] = [];
+
+  for (let start = 0; start < items.length; start += size) {
+    batches.push(items.slice(start, start + size));
+  }
+
+  return batches;
+}

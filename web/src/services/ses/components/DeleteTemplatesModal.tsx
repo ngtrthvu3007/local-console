@@ -1,9 +1,6 @@
 import Alert from "@cloudscape-design/components/alert";
 import type { EmailTemplateMetadata } from "@aws-sdk/client-sesv2";
-import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DeletePreview } from "@shared/components/DeletePreview.tsx";
-import { pluralize } from "@shared/format.ts";
-import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
+import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { useDeleteTemplates } from "../hooks/useTemplates.ts";
 
 interface Props {
@@ -17,28 +14,16 @@ export function DeleteTemplatesModal({ templates, onDismiss, onDone }: Props) {
   const deleteTemplates = useDeleteTemplates();
   const names = templates.flatMap((template) => template.TemplateName ?? []);
 
-  const submit = () =>
-    deleteTemplates.mutate(
-      names,
-      notifyBulkOutcome({
-        success: (result) => `Deleted ${pluralize(result.count, "template")}`,
-        errorHeader: "Couldn't delete",
-        then: () => onDone(names),
-      }),
-    );
-
   return (
-    <ConfirmModal
-      visible
-      header={`Delete ${pluralize(names.length, "template")}?`}
-      confirmText={CONFIRM_DELETE}
-      actionText='Delete'
-      loading={deleteTemplates.isPending}
-      onConfirm={submit}
+    <BulkActionModal
+      mutation={deleteTemplates}
+      items={names}
+      lines={names}
+      noun='template'
       onDismiss={onDismiss}
+      onDone={() => onDone(names)}
     >
-      <DeletePreview lines={names} />
       <Alert type='warning'>Your app can't send with these templates after you delete them.</Alert>
-    </ConfirmModal>
+    </BulkActionModal>
   );
 }

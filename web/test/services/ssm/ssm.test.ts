@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunks } from "../../../src/services/ssm/parameters.ts";
+import { chunks } from "../../../src/shared/aws.ts";
 import { ssmRoutes } from "../../../src/services/ssm/routes.ts";
 import { parameterSchema } from "../../../src/services/ssm/schemas.ts";
 
