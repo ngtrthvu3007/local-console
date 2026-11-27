@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreateEventSourceMappingCommand,
   DeleteEventSourceMappingCommand,
+  GetPolicyCommand,
   paginateListEventSourceMappings,
   UpdateEventSourceMappingCommand,
   type EventSourceMappingConfiguration,
@@ -17,9 +18,20 @@ import { UnsubscribeCommand, type SNSClient } from "@aws-sdk/client-sns";
 import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import type { SchedulerClient } from "@aws-sdk/client-scheduler";
 import type { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
+import type { APIGatewayClient } from "@aws-sdk/client-api-gateway";
+import type { ApiGatewayV2Client } from "@aws-sdk/client-apigatewayv2";
+import { orEmptyWhenNotFound } from "@shared/aws.ts";
 import type { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { isArnOrQualified, lastArnPart } from "@shared/arn.ts";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { listApis, type ApiRow } from "../../apigateway/apis.ts";
+import { AUTHORIZERS_ARN_SEGMENT } from "../../apigateway/constants.ts";
+import { useApiGateway } from "../../apigateway/hooks/useApiGateway.ts";
+import {
+  apiGatewaySourcesOf,
+  type ApiGatewaySource,
+} from "../../apigateway/lambdaPermissions.ts";
+import { apigatewayRoutes } from "../../apigateway/routes.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
 import { cognitoRoutes, POOL_TABS } from "../../cognito/routes.ts";
@@ -63,7 +75,7 @@ export interface TriggerRow {
   rule?: NotificationRule; // S3: rule notification trỏ tới function
   subscriptionArn?: string; // SNS: subscription của topic tới function
   mapping?: EventSourceMappingConfiguration; // SQS, DynamoDB: cấu hình đầy đủ (UUID, State, ARN nguồn), để sửa và bật/tắt
-  href?: string; // EventBridge, Scheduler, Cognito, Secrets Manager: link sang trang của nguồn
+  href?: string; // EventBridge, Scheduler, Cognito, Secrets Manager, API Gateway: link sang trang của nguồn
 }
 
 // Rule trỏ tới function, kể cả ARN có version/alias (my-function:prod)
@@ -209,6 +221,55 @@ async function listCognitoTriggers(cognito: CognitoIdentityProviderClient, funct
   }));
 }
 
+// Permission của Lambda authorizer có dạng <apiId>/authorizers/<authorizerId>, không có method
+function triggerDetailsOf({ stage, method, path }: ApiGatewaySource): string {
+  if (stage === AUTHORIZERS_ARN_SEGMENT) return `Authorizer ${method}`;
+  return [method, path].filter(Boolean).join(" ");
+}
+
+// API đã bị xóa thì policy còn nhưng không có hàng trong apis: chỉ hiện ID, không link
+export function apigatewayTriggerRows(
+  sources: ApiGatewaySource[],
+  apis: ApiRow[],
+): TriggerRow[] {
+  return sources.map((source): TriggerRow => {
+    const { apiId, method, path } = source;
+    const api = apis.find(({ id }) => id === apiId);
+
+    return {
+      id: `apigateway:${apiId}:${method}:${path}`,
+      source: "apigateway",
+      resource: api?.name ?? apiId,
+      details: triggerDetailsOf(source),
+      href: api && apigatewayRoutes.api(api.version, apiId),
+    };
+  });
+}
+
+// Chỉ gọi danh sách API khi policy có nguồn API Gateway; function không có policy thì [] (404)
+async function listApiGatewayTriggers(
+  lambda: LambdaClient,
+  v1: APIGatewayClient,
+  v2: ApiGatewayV2Client,
+  functionName: string,
+) {
+  const policy = await orEmptyWhenNotFound(
+    async () =>
+      (await lambda.send(new GetPolicyCommand({ FunctionName: functionName }))).Policy ?? "",
+    "",
+  );
+
+  const sources = apiGatewaySourcesOf(policy);
+  if (sources.length === 0) return [];
+
+  const { rows, failures } = await listApis(v1, v2);
+  const hasUnknownApi = sources.some(({ apiId }) => !rows.some(({ id }) => id === apiId));
+  // API không thấy có thể thuộc nửa bị lỗi: để lỗi hiện ra thay vì báo nhầm là đã xóa
+  if (hasUnknownApi && failures.length > 0) throw failures[0].error;
+
+  return apigatewayTriggerRows(sources, rows);
+}
+
 // Secret xoay vòng bằng function: sửa ở khối Rotation của secret
 async function listRotationTriggers(secrets: SecretsManagerClient, functionArn: string) {
   const names = await listRotatedSecrets(secrets, functionArn);
@@ -246,6 +307,7 @@ export function useTriggers(functionName: string, functionArn: string) {
   const events = useEventBridge();
   const scheduler = useScheduler();
   const cognito = useCognito();
+  const { v1, v2 } = useApiGateway();
   const secrets = useSecretsManager();
 
   return useQuery({
@@ -258,6 +320,7 @@ export function useTriggers(functionName: string, functionArn: string) {
         listEventBridgeTriggers(events, scheduler, functionArn),
         listCognitoTriggers(cognito, functionArn),
         listRotationTriggers(secrets, functionArn),
+        listApiGatewayTriggers(lambda, v1, v2, functionName),
       ]);
 
       return rows.flat();

@@ -103,6 +103,12 @@ import {
   DeleteRuleCommand,
   DeleteEventBusCommand,
 } from "@aws-sdk/client-eventbridge";
+import {
+  APIGatewayClient,
+  GetRestApisCommand,
+  DeleteRestApiCommand,
+} from "@aws-sdk/client-api-gateway";
+import { ApiGatewayV2Client, GetApisCommand, DeleteApiCommand } from "@aws-sdk/client-apigatewayv2";
 import { KinesisClient, paginateListStreams, DeleteStreamCommand } from "@aws-sdk/client-kinesis";
 import {
   ECSClient,
@@ -150,6 +156,8 @@ const cognito = new CognitoIdentityProviderClient(config);
 const secretsManager = new SecretsManagerClient(config);
 const ssm = new SSMClient(config);
 const rds = new RDSClient(config);
+const apigateway = new APIGatewayClient(config);
+const apigatewayV2 = new ApiGatewayV2Client(config);
 const logs = new CloudWatchLogsClient(config);
 const ec2 = new EC2Client(config);
 const kms = new KMSClient(config);
@@ -266,6 +274,16 @@ for await (const page of paginateDescribeDBInstances({ client: rds }, {})) {
     ...mine((page.DBInstances ?? []).map((database) => database.DBInstanceIdentifier)),
   );
 }
+// Floci 2.4.0 trả hết một lượt, không cần phân trang (REST: limit mặc định 25 nên đặt cao)
+const API_LIST_LIMIT = 500;
+const restApis = (
+  (await apigateway.send(new GetRestApisCommand({ limit: API_LIST_LIMIT }))).items ?? []
+)
+  .filter((api) => mine([api.name]).length)
+  .map((api) => api.id);
+const httpApis = ((await apigatewayV2.send(new GetApisCommand({}))).Items ?? [])
+  .filter((api) => mine([api.Name]).length)
+  .map((api) => api.ApiId);
 // Cluster DocumentDB: instance của nó đã nằm trong `databases` (cùng API RDS), xóa cluster sau
 const docdbClusters = [];
 for await (const page of paginateDescribeDBClusters(
@@ -408,6 +426,8 @@ console.log(
       secrets,
       parameters,
       databases,
+      restApis,
+      httpApis,
       docdbClusters,
       logGroups,
       instances,
@@ -518,6 +538,8 @@ if (process.argv.includes("--delete")) {
     await rds.send(
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
     );
+  for (const id of restApis) await apigateway.send(new DeleteRestApiCommand({ restApiId: id }));
+  for (const id of httpApis) await apigatewayV2.send(new DeleteApiCommand({ ApiId: id }));
   for (const id of docdbClusters)
     await rds.send(
       new DeleteDBClusterCommand({ DBClusterIdentifier: id, SkipFinalSnapshot: true }),

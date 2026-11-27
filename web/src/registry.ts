@@ -15,6 +15,7 @@ import { kinesisService } from "./services/kinesis/index.tsx";
 import { kmsService } from "./services/kms/index.tsx";
 import { logsService } from "./services/logs/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
+import { apigatewayService } from "./services/apigateway/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
 import { rdsService } from "./services/rds/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
@@ -45,6 +46,7 @@ export interface ServiceDefinition {
 export const services: ServiceDefinition[] = [
   s3Service,
   lambdaService,
+  apigatewayService,
   ec2Service,
   ecsService,
   dynamodbService,

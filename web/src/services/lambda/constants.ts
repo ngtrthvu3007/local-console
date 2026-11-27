@@ -84,18 +84,20 @@ const DISPLAY_ONLY_SOURCES = {
   eventbridge: "EventBridge",
   scheduler: "Scheduler",
   cognito: "Cognito",
+  apigateway: "API Gateway",
   secretsmanager: "Secrets Manager",
 } as const;
 
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
 
-// Rule / schedule của EventBridge, trigger của user pool, rotation của secret: chỉ xem ở đây,
-// sửa / xóa ở trang của nguồn
+// Rule / schedule của EventBridge, trigger của user pool, rotation của secret, nguồn API Gateway:
+// chỉ xem ở đây, sửa / xóa ở trang của nguồn
 export const VIEW_ONLY_SOURCES: readonly TriggerRowSource[] = [
   "eventbridge",
   "scheduler",
   "cognito",
+  "apigateway",
   "secretsmanager",
 ];
 

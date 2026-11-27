@@ -64,6 +64,7 @@ const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
   eventbridge: "rule",
   scheduler: "schedule",
   cognito: "user pool",
+  apigateway: "API",
   secretsmanager: "secret",
 };
 
@@ -225,7 +226,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, records arrive in Kinesis, a topic publishes in SNS, or an EventBridge rule or schedule fires.'
+      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, records arrive in Kinesis, a topic publishes in SNS, an EventBridge rule or schedule fires, or an API Gateway route is called.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers
@@ -236,7 +237,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     triggers,
     <EmptyState
       title='No triggers'
-      description='Add an S3, SQS or DynamoDB trigger to run this function. SNS subscriptions and EventBridge rules are added from their own pages.'
+      description='Add an S3, SQS or DynamoDB trigger to run this function. SNS subscriptions and EventBridge rules are added from their own pages. API Gateway routes show here once the API has permission to invoke the function.'
     />,
   );
 

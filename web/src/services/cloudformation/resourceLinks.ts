@@ -1,3 +1,5 @@
+import { CFN_API_TYPES } from "../apigateway/constants.ts";
+import { API_VERSIONS, apigatewayRoutes } from "../apigateway/routes.ts";
 import { ARN_SEPARATOR, lastArnPart } from "@shared/arn.ts";
 import { API_TABS, appsyncRoutes } from "../appsync/routes.ts";
 import { cloudfrontRoutes } from "../cloudfront/routes.ts";
@@ -96,6 +98,8 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::Kinesis::Stream": (name) => kinesisRoutes.stream(name),
   "AWS::KMS::Alias": (name) => kmsRoutes.key(name),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
+  [CFN_API_TYPES.v1]: (id) => apigatewayRoutes.api(API_VERSIONS.rest, id),
+  [CFN_API_TYPES.v2]: (id) => apigatewayRoutes.api(API_VERSIONS.v2, id),
   "AWS::StepFunctions::StateMachine": (id) => stepfunctionsRoutes.stateMachine(lastArnPart(id)),
 };
 

@@ -153,6 +153,11 @@ describe("resourceHref", () => {
     ).toBe("/stepfunctions/statemachines/flow");
   });
 
+  it("links API Gateway REST and v2 APIs", () => {
+    expect(resourceHref("AWS::ApiGateway::RestApi", "a1")).toBe("/apigateway/v1/a1");
+    expect(resourceHref("AWS::ApiGatewayV2::Api", "b2")).toBe("/apigateway/v2/b2");
+  });
+
   it("leaves types without a console page as text", () => {
     expect(resourceHref("AWS::IAM::Role", "role")).toBeUndefined();
   });
