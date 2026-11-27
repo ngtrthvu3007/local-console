@@ -44,7 +44,7 @@ import {
   CreateStageCommand,
   DeleteApiCommand,
 } from "@aws-sdk/client-apigatewayv2";
-import { CFN_API_TYPES } from "../../web/src/services/apigateway/constants.ts";
+import { CFN_API_TYPES } from "../../core/src/services/apigateway/constants.ts";
 import { consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
 import type { Page } from "@playwright/test";
 import { expect, flash, test, uniqueName } from "./fixtures.ts";
@@ -244,6 +244,28 @@ test.describe("unknown API", () => {
     await expect(page.getByRole("link", { name: "View APIs" })).toBeVisible();
     await page.goto("/apigateway/v9/x");
     await expect(page.getByText("API x not found")).toBeVisible();
+  });
+});
+
+test.describe("API deleted while its page is open", () => {
+  test.use({ danglingProbes: true });
+
+  // Xóa ở nơi khác (CDK destroy, SDK) khi trang còn mở: tab đọc tiếp báo lỗi của Floci, trang không trắng;
+  // mở lại trang thì báo not found như API không có
+  test("the next tab shows Floci's error and a reload shows not found", async ({ page }) => {
+    const name = uniqueName("gone");
+    const id = (await v1.send(new CreateRestApiCommand({ name }))).id!;
+    await page.goto(`/apigateway/v1/${id}`);
+    await expect(page.getByRole("heading", { name })).toBeVisible();
+
+    await v1.send(new DeleteRestApiCommand({ restApiId: id }));
+    await page.getByRole("tab", { name: "Stages" }).click();
+
+    await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+    await expect(page.getByRole("heading", { name })).toBeVisible();
+    await page.reload();
+    await expect(page.getByText(`API ${id} not found`)).toBeVisible();
+    await expect(page.getByRole("link", { name: "View APIs" })).toBeVisible();
   });
 });
 

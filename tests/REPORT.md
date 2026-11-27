@@ -1,6 +1,24 @@
 # Báo cáo test — ngtrthvu3007/local-console
 
-## Kết quả mới nhất — 2026-11-17
+## Kết quả mới nhất — 2026-11-27 (sau khi tách `core/`)
+
+Working tree trên nhánh `dev` (chưa commit), sau plan [tách core](../docs/superpowers/plans/2026-11-27-core.md): logic gọi AWS của 25 service chuyển từ `web/` sang `core/` (operation + facade). Build lại Docker từ source local. Floci 2.4.0, region `ap-southeast-1`, Node 26.13.1, Playwright 1.65.0.
+
+| Bộ kiểm tra                | Kết quả                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| Typecheck / lint           | ✅ Pass (core, server, web)                                                           |
+| Unit tests                 | ✅ **629/629**: core 562, server 12, web 55                                           |
+| Integration với Floci thật | ✅ **35/35 file, 224 test** (≈3 phút); 4 test mới của API Gateway, mục 15             |
+| E2E với Floci thật         | ✅ **283/283** (5,6 phút); 1 test mới của API Gateway                                 |
+| UI responsive              | ✅ **268/268** (3,6 phút)                                                             |
+| UX                         | ✅ **11/11** (1,2 phút)                                                               |
+| Mobile (API fixtures)      | ✅ **36/36** (2,8 phút), sau khi sửa fixture, mục 14                                  |
+| Bundle so với mốc đo       | ✅ Trong ngưỡng 5%, không SDK nào trong lần tải đầu (bảng ở mục 14)                   |
+| Leftover sau khi dọn       | ✅ Không còn resource test; còn 73 tin SMS trong hộp thư giả (Floci không có API xóa) |
+
+Chi tiết ở **mục 14** (test lại sau khi tách core) và **mục 15** (API Gateway: đối chiếu spec, test bổ sung).
+
+## Kết quả 2026-11-17
 
 Retest working tree trên nhánh `test/add-test-suites`, HEAD `9ee6433`; build lại Docker từ source local. Floci 2.4.0, region **`ap-southeast-1`**, Node 24.14.1, Chrome 154.0.8037.97, Playwright 1.65.0. Chạy khoảng 19:19–19:27, giờ Việt Nam.
 
@@ -410,3 +428,113 @@ Sau khi kiểm tra xong, đã xóa **toàn bộ `tests/results/`** (ảnh, trace
 Đã ignore toàn bộ `tests/results/` và cập nhật `tests/README.md` để artifact lần chạy sau không lọt vào commit. Các đường dẫn ảnh/report trong phần lịch sử chỉ còn là tham chiếu tới output có thể tạo lại, không phải file đang được kèm repo. Báo cáo chữ và source test vẫn được giữ.
 
 Giới hạn: không phải kiểm tra trên thiết bị thật. Các finding performance và trạng thái gate ở mục 10 chưa được đo/chạy lại trong đợt UI/UX này; kết quả pass ở đây không được dùng để đóng chúng. Chưa commit hoặc push.
+
+## 14. Test lại toàn bộ sau khi tách core — 2026-11-27
+
+Chạy theo [plan core](../docs/superpowers/plans/2026-11-27-core.md) Task 25 trên console Docker build lại từ working tree (`docker compose up --build -d`), Floci 2.4.0 `ap-southeast-1`. Mỗi task tách service trước đó đã chạy E2E riêng của service đó; đây là lượt chạy toàn bộ.
+
+### Lỗi gặp khi chạy và đã sửa (do tách core, không phải lỗi tính năng)
+
+| Bộ     | Hiện tượng                                                                                | Nguyên nhân                                                                                                                                                                                 | Sửa                                                                                              |
+| ------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| IT     | `it/apigateway.test.ts`, `it/cognito.test.ts` lỗi lúc import (33 file khác: 202/202 pass) | Test import thẳng file `web/src/...` đã dời sang `core/`                                                                                                                                    | Trỏ sang `core/src/...`; `testInvokeUrl` nhận thêm đường gốc (`AWS_PROXY_PATH`). Chạy lại: 18/18 |
+| E2E    | `apigateway.spec.ts` không nạp được (phát hiện ở Task 20)                                 | Như trên (`CFN_API_TYPES`)                                                                                                                                                                  | Import từ `core/src/services/apigateway/constants.ts`                                            |
+| Mobile | Cả bộ fail (trang không có heading, timeout 1 phút)                                       | Fixture chặn mọi URL khớp glob `**/aws/**`; vite dev phục vụ module core như `/@fs/…/core/src/shared/aws/errors.ts` nên module bị trả `{}`, app không chạy. Bản build không bị vì đã bundle | `mobile/fixtures.ts` chỉ chặn `pathname` bắt đầu bằng `/aws/` hoặc `/api/`. Chạy lại: 36/36      |
+
+### Bundle (gzip, so với `tests/bundle/baseline.json`)
+
+| Phần           | Mốc (trước khi tách) | Sau khi tách | Chênh |
+| -------------- | -------------------- | ------------ | ----- |
+| Chunk `index`  | 214 KB               | 213 KB       | −0,5% |
+| Lần tải đầu    | 350 KB               | 346 KB       | −1,1% |
+| `QueueList`    | 621 KB               | 592 KB       | −4,7% |
+| `QueueDetail`  | 707 KB               | 713 KB       | +0,8% |
+| `FunctionList` | 598 KB               | 603 KB       | +0,8% |
+
+SDK trong lần tải đầu: không. Trong lúc tách CloudFormation (Task 24) lần tải đầu từng lên 453 KB: `useResourceIndex` gọi `import("@localconsole/core/cloudformation")` trong khi layout import tĩnh cùng barrel đó, Rollup coi mọi export là được dùng và kéo SDK + zod vào lần tải đầu. Đã đổi sang `import()` file `stackLookup.ts` (import tên cụ thể); ghi ở `docs/development.md` › Traps.
+
+### Leftover
+
+Trước lượt này Floci còn resource test của các lượt trước (log group do Lambda / RDS / DocumentDB / ElastiCache tự tạo, revision task definition do stack tạo, 1 broker, tin SMS). User đã chạy `npm run leftovers -w tests -- --delete`; kiểm lại chỉ còn 73 tin SMS (hộp thư giả của Floci, không có API xóa).
+
+### Lệnh
+
+```bash
+npm run typecheck && npm run lint && npm test
+docker compose up --build -d
+npm run test:it -w tests
+npm run test:e2e -w tests
+npm run test:ui -w tests
+npm run test:ux -w tests
+npm run dev:web            # cửa sổ khác, rồi:
+npm run test:mobile -w tests
+npm run build -w web && npm run bundle -w tests
+npm run leftovers -w tests
+```
+
+## 15. API Gateway — đối chiếu spec và test bổ sung — 2026-11-27
+
+Đối chiếu [spec API Gateway](../docs/superpowers/specs/2026-11-19-apigateway-design.md) (mục 2, 3, 5, 7) với test đang có. ★ = test thêm trong đợt này.
+
+| Tính năng / tình huống (spec)                                                                  | Test                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Danh sách REST, HTTP, WebSocket; tìm; xóa (3.1)                                                | E2E `lists APIs of all three types`, `deletes an API`, `deletes an API from its detail page`; IT `lists REST, HTTP and WebSocket APIs…`, `deletes REST and HTTP APIs` |
+| Chi tiết, tab theo loại API, API không có (3.2, 5)                                             | E2E `opens an API from the list`, `an unknown API shows not found`; IT `reports an unknown REST API as not found…`                                                    |
+| ★ API bị xóa khi đang mở trang (plan Task 26)                                                  | E2E `API deleted while its page is open › the next tab shows Floci's error and a reload shows not found`                                                              |
+| Cây resource + overview method; `AWS_IAM` (3.3)                                                | E2E `shows the resource tree and method overview`, `an AWS_IAM method says Floci checks only the signature`; IT `reads resources with embedded methods`               |
+| Routes HTTP / WebSocket, route selection (3.4)                                                 | E2E `lists HTTP routes with integration and authorizer`, `shows the WebSocket route selection`                                                                        |
+| Authorizers: link pool / function, JWT issuer local (3.5)                                      | E2E `REST authorizers link to the pool and the function`, `a local JWT issuer has a popover`                                                                          |
+| Invoke URL gọi được: REST, HTTP `$default`, WebSocket (3.8, 7 #11, #15)                        | IT `the invoke URL from Stages answers` (REST + HTTP), `the WebSocket URL connects`; E2E 3 test tab Stages                                                            |
+| Gọi thử method: path / query / header / body, body editor, header sai, API chưa có stage (3.7) | E2E 6 test `testing a REST method`; IT `path param, query, header and body reach the Lambda`                                                                          |
+| Route → Lambda; Lambda không tồn tại → 404 (7 #5)                                              | IT `a deleted Lambda answers 404 with the Floci message`; E2E `shows errors verbatim`                                                                                 |
+| ★ Lambda lỗi → 502 body rỗng (7 #5)                                                            | IT `a Lambda that throws answers 502 with an empty body`                                                                                                              |
+| ★ Không có `lambda:AddPermission` vẫn gọi được (7 #12)                                         | IT `reaches the Lambda without lambda:AddPermission…`                                                                                                                 |
+| Authorizer Cognito: 401 không token, 200 có IdToken (7 #9)                                     | IT + E2E `a Cognito method answers 401 without a token and 200…`                                                                                                      |
+| ★ Lambda TOKEN authorizer: 401 / 403 Deny / 200 Allow (7 #9)                                   | IT `a Lambda TOKEN authorizer answers 401 without a token, 403 on Deny, 200 on Allow`                                                                                 |
+| ★ `AWS_IAM` gọi không ký → 403 (7 #18)                                                         | IT `an AWS_IAM method answers 403 Missing Authentication Token to an unsigned call`                                                                                   |
+| Lambda › Triggers từ policy; không policy; API đã xóa (3.9)                                    | E2E 3 test `Lambda triggers`; IT `AddPermission with an execute-api SourceArn comes back from GetPolicy and parses`                                                   |
+| CloudFormation: physical ID, link qua lại (3.2)                                                | IT 2 test `CloudFormation`; E2E `… resource links to its API page, which links back to the stack`                                                                     |
+| Mobile các trang API Gateway                                                                   | Mobile suite 36/36 (mục 14)                                                                                                                                           |
+
+Kết quả: `apigateway.spec.ts` pass trong lượt E2E toàn bộ (283/283), `it/apigateway.test.ts` 16/16. **Không phát hiện lỗi tính năng.** Hành vi khi API bị xóa lúc đang mở trang: header giữ dữ liệu cũ (query không tự tải lại khi focus), tab mở tiếp hiện lỗi của Floci kèm nút Retry, tải lại trang thì báo "API … not found"; trang không trắng.
+
+Chưa kiểm (ngoài phạm vi spec hoặc Floci không hỗ trợ): API key bắt buộc (spec để sau), v2 `IntegrationSubtype` và integration S3 (Floci không chạy, 7 #6–#7), `AWS_IAM` ký bằng user không có quyền (7 › Chưa kiểm).
+
+## 16. API Gateway với service khác — 2026-11-27
+
+Theo yêu cầu test kỹ phần API Gateway nối với service khác (spec API Gateway mục 2 › Liên kết với service khác, 7 #5–#14). File mới: `tests/it/apigateway-integrations.test.ts` (12 test), `tests/e2e/apigateway-integrations.spec.ts` (4 test). Gọi qua proxy `/aws` của console (đường tab Test dùng) rồi kiểm dữ liệu ở service đích bằng SDK. Dạng URI / template theo [khảo sát Floci](../docs/superpowers/researchs/2026-11-19-floci-survey/apigateway.md).
+
+| Nối với                                | Kiểm                                                                                                                  | Kết quả                     |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| SQS (REST `AWS`, path + template form) | Body thành message trong queue (IT); qua UI: Overview "AWS → sqs" + URI, Test có header JSON → queue nhận (E2E)       | ✅                          |
+| SNS Publish (template JSON)            | Queue subscribe vào topic nhận message                                                                                | ✅                          |
+| DynamoDB PutItem                       | Item được ghi đúng                                                                                                    | ✅                          |
+| Step Functions StartExecution          | Execution được tạo, response có `executionArn`                                                                        | ✅                          |
+| EventBridge PutEvents                  | Rule trên bus chuyển event sang queue (source, detail-type, detail đúng)                                              | ✅                          |
+| Lambda non-proxy (`AWS`)               | Function nhận body, response là giá trị trả về (IT); qua UI: Test ra body, link "Lambda → fn" mở trang function (E2E) | ✅                          |
+| Lambda proxy → CloudWatch Logs         | Test → link "Lambda logs: fn › Monitor" → Monitor hiện dòng log của lần gọi (E2E)                                     | ✅                          |
+| Lambda REQUEST authorizer              | Thiếu header 401, Deny 403, Allow 200                                                                                 | ✅                          |
+| Cognito JWT (HTTP API)                 | Issuer Cognito local → 401 kể cả token hợp lệ (đúng như spec 7 #14; console có popover)                               | ✅ (ghi lại giới hạn Floci) |
+| Lambda › Triggers (authorizer)         | Permission `…/authorizers/<id>` đọc lại từ GetPolicy thành nguồn "authorizers"                                        | ✅                          |
+| WebSocket + Lambda + `@connections`    | Lambda nhận connection id; POST `@connections/<id>` đẩy tin xuống client                                              | ✅                          |
+| S3 (REST `AWS`)                        | Floci không chạy: không ghi object, trả lỗi `MissingAction`                                                           | ✅ (ghi lại giới hạn Floci) |
+| HTTP API `IntegrationSubtype` SQS      | Floci không chạy: 500, queue không có tin                                                                             | ✅ (ghi lại giới hạn Floci) |
+
+Chạy 2 lượt liên tiếp: IT API Gateway 28/28 (16 cũ + 12 mới), E2E API Gateway 31/31 (27 cũ + 4 mới; test của lỗi B4 dưới đây xanh sau khi sửa).
+
+### Lỗi tính năng tìm được
+
+**B4 — Tab Test của method REST gửi body với `Content-Type: text/plain`, mapping template `application/json` không chạy · Mức: Trung bình · Đã sửa 2026-11-27**
+
+- Tái hiện: REST method `POST /orders` tích hợp `AWS` tới SQS với `requestTemplates: { "application/json": "Action=SendMessage&MessageBody=$util.urlEncode($input.body)" }` (dạng CDK hay dùng). Mở tab Test, nhập body `{"from":"default"}`, không nhập header, bấm Test.
+- Mong đợi: như AWS (request không có Content-Type được coi là `application/json`): message vào queue.
+- Thực tế: tab Test hiện **Status 200** với body `{"errorMessage":"The request must contain the parameter Action","errorType":"MissingAction"}`, queue không có tin. Người dùng dễ tưởng đã gửi được.
+- Nguyên nhân: `useMethodTest` gọi `fetch(url, { body })` với body là chuỗi nên trình duyệt tự đặt `Content-Type: text/plain;charset=UTF-8`; Floci chọn template theo Content-Type nên không áp template nào. Đã kiểm: không gửi Content-Type → chạy đúng; `application/json` → chạy đúng; `text/plain` → lỗi trên.
+- Ảnh hưởng: mọi method dùng mapping template (integration `AWS` tới SQS, SNS, DynamoDB, Step Functions, EventBridge, Lambda non-proxy có template). Lambda proxy không bị.
+- Cách tránh hiện tại: nhập header `Content-Type: application/json` ở ô Headers.
+- Đã sửa: `web/src/services/apigateway/hooks/useMethodTest.ts` gửi body dạng `Blob` không type, nên request không có Content-Type (trừ khi người dùng tự nhập) và Floci coi là `application/json` như AWS.
+- Test: E2E `Test without a Content-Type header queues the body like AWS does` đỏ trước khi sửa (queue không có tin), xanh sau khi sửa; E2E API Gateway 31/31, unit 629/629.
+
+### Chỉnh lại mô tả trong spec
+
+Spec API Gateway (mục 2 › Liên kết, mục 5) ghi integration S3 "Test ra 500". Thực tế trên Floci 2.4.0 status theo integration response của method: với integration response mặc định 200 (như CDK tạo) thì Test ra **200** kèm lỗi `MissingAction`, không ghi object. Không có integration response thì mới ra lỗi 5xx.

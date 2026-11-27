@@ -11,6 +11,7 @@ npm run test:e2e -w tests             # E2E trên UI (desktop)
 npm run test:ui -w tests              # layout / heading / tên control trên 4 khung 1440 · 1024 · 768 · 390
 npm run test:ux -w tests              # chụp component ở các trạng thái, ảnh trong results/ux/
 npm run leftovers -w tests            # liệt kê resource lc-it-* / lc-e2e-* còn sót (thêm -- --delete để xoá)
+npm run build -w web && npm run bundle -w tests   # so bundle với mốc bundle/baseline.json (ngưỡng 5%, không SDK trong lần tải đầu)
 ```
 
 - Console ở cổng khác: `LOCAL_CONSOLE_URL=http://localhost:3702 npm run test:it -w tests`
