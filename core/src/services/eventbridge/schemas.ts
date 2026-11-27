@@ -1,0 +1,178 @@
+import { z } from "zod";
+import { jsonError } from "#shared/utils/json.ts";
+import { enumOfKeys, jsonObjectText, wholeNumberIn } from "#shared/validation/schemas.ts";
+import {
+  BUS_NAME_MAX_LENGTH,
+  NAME_PATTERN,
+  DEFAULT_BUS_NAME,
+  NAME_MAX_LENGTH,
+  FLEXIBLE_MODES,
+  RATE_UNITS,
+  RULE_TYPES,
+  SCHEDULE_EXPRESSION_PATTERN,
+  SCHEDULE_KINDS,
+} from "./constants.ts";
+import { patternError } from "./pattern.ts";
+import { timingErrors } from "./scheduleExpression.ts";
+import { ADDABLE_TARGET_KINDS } from "./targets.ts";
+
+// Tên bus, rule, schedule và schedule group chung một luật; chỉ khác nhãn và độ dài tối đa
+const nameSchema = (label: string, maxLength: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, `Enter ${label} name.`)
+    .max(maxLength, `Must be at most ${maxLength} characters.`)
+    .regex(
+      NAME_PATTERN,
+      "Use only letters, numbers, periods (.), hyphens (-) and underscores (_).",
+    );
+
+export const createBusSchema = z.object({
+  name: nameSchema("an event bus", BUS_NAME_MAX_LENGTH).refine(
+    (name) => name !== DEFAULT_BUS_NAME,
+    `"${DEFAULT_BUS_NAME}" already exists.`,
+  ),
+});
+
+export const sendEventsSchema = z.object({
+  bus: z.string().min(1, "Choose an event bus."),
+  source: z.string().trim().min(1, "Enter a source."),
+  detailType: z.string().trim().min(1, "Enter a detail type."),
+  detail: jsonObjectText.min(1, "Enter the event detail."),
+});
+
+export const ruleSchema = z
+  .object({
+    bus: z.string().min(1, "Choose an event bus."),
+    name: nameSchema("a rule", NAME_MAX_LENGTH),
+    description: z.string().trim(),
+    type: enumOfKeys(RULE_TYPES),
+    eventPattern: z.string(),
+    scheduleExpression: z.string().trim(),
+    enabled: z.boolean(),
+  })
+  .superRefine((values, context) => {
+    const addIssue = (path: string, message: string) =>
+      context.addIssue({ code: "custom", path: [path], message });
+
+    if (values.type === "pattern") {
+      const error = patternError(values.eventPattern);
+      if (error) addIssue("eventPattern", error);
+    } else if (values.bus !== DEFAULT_BUS_NAME) {
+      // Luật của AWS: rule theo lịch chỉ có trên bus default
+      addIssue("type", `Schedule rules only run on the ${DEFAULT_BUS_NAME} bus.`);
+    } else if (!SCHEDULE_EXPRESSION_PATTERN.test(values.scheduleExpression)) {
+      addIssue("scheduleExpression", "Enter rate(...) or cron(...).");
+    }
+  });
+
+export type RuleForm = z.input<typeof ruleSchema>;
+
+// Target ECS task: task definition + subnet (Floci bắt buộc subnet có thật, spec ECS 7 #11).
+// Mặc định rỗng để form của loại khác không phải khai báo
+const ecsTargetFields = {
+  taskFamily: z.string().default(""),
+  taskRevision: z.string().default(""),
+  subnets: z.array(z.string()).default([]),
+  securityGroups: z.array(z.string()).default([]),
+};
+
+type AddIssue = (path: string, message: string) => void;
+
+function checkEcsTarget(
+  values: { taskFamily: string; taskRevision: string; subnets: string[] },
+  addIssue: AddIssue,
+) {
+  if (!values.taskFamily) addIssue("taskFamily", "Choose a task definition.");
+  if (!values.taskRevision) addIssue("taskRevision", "Choose a revision.");
+  if (!values.subnets.length) addIssue("subnets", "Choose at least one subnet.");
+}
+
+// fifoArns: queue FIFO cần message group ID (luật của SQS)
+export const addTargetSchema = (fifoArns: ReadonlySet<string>) =>
+  z
+    .object({
+      kind: z.enum(ADDABLE_TARGET_KINDS),
+      arn: z.string().min(1, "Choose a resource."),
+      groupId: z.string().trim(),
+      ...ecsTargetFields,
+    })
+    .superRefine((values, context) => {
+      const addIssue: AddIssue = (path, message) =>
+        context.addIssue({ code: "custom", path: [path], message });
+      if (fifoArns.has(values.arn) && !values.groupId)
+        addIssue("groupId", "Enter a message group ID.");
+      if (values.kind === "ecs") checkEcsTarget(values, addIssue);
+    });
+
+export type AddTargetForm = z.input<ReturnType<typeof addTargetSchema>>;
+
+// "other": đích form không biểu diễn được (Kinesis…), khóa khi sửa
+const SCHEDULE_TARGET_IDS = [...ADDABLE_TARGET_KINDS, "other"] as const;
+
+const FLEXIBLE_MINUTES = { min: 1, max: 1440 };
+
+const JSON_INPUT_TARGET_KINDS: ReadonlySet<string> = new Set([
+  "lambda",
+  "eventbus",
+  "stepfunctions",
+]);
+
+// fifoArns: queue FIFO cần message group ID (luật của SQS)
+export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
+  z
+    .object({
+      name: nameSchema("a schedule", NAME_MAX_LENGTH),
+      group: z.string().min(1, "Choose a schedule group."),
+      description: z.string().trim(),
+      kind: enumOfKeys(SCHEDULE_KINDS),
+      atTime: z.string(),
+      rateValue: z.string().trim(),
+      rateUnit: z.enum(RATE_UNITS),
+      cron: z.string(),
+      timezone: z.string().min(1, "Choose a time zone."),
+      deleteAfter: z.boolean(),
+      flexMode: z.enum(FLEXIBLE_MODES),
+      flexMinutes: z.string().trim(),
+      targetKind: z.enum(SCHEDULE_TARGET_IDS),
+      targetArn: z.string(),
+      groupId: z.string().trim(),
+      source: z.string().trim(),
+      detailType: z.string().trim(),
+      input: z.string(),
+      enabled: z.boolean(),
+      ...ecsTargetFields,
+    })
+    .superRefine((values, context) => {
+      const addIssue: AddIssue = (path, message) =>
+        context.addIssue({ code: "custom", path: [path], message });
+
+      for (const [path, message] of Object.entries(timingErrors(values))) addIssue(path, message);
+
+      const flex = wholeNumberIn(FLEXIBLE_MINUTES).safeParse(values.flexMinutes);
+      if (values.flexMode === FLEXIBLE_MODES.flexible && !flex.success)
+        addIssue("flexMinutes", flex.error.issues[0].message);
+
+      if (values.targetKind === "other") return;
+      if (!values.targetArn) addIssue("targetArn", "Choose a resource.");
+      if (fifoArns.has(values.targetArn) && !values.groupId)
+        addIssue("groupId", "Enter a message group ID.");
+
+      if (values.targetKind === "ecs") checkEcsTarget(values, addIssue);
+
+      if (values.targetKind === "eventbus") {
+        if (!values.source) addIssue("source", "Enter a source.");
+        if (!values.detailType) addIssue("detailType", "Enter a detail type.");
+      }
+
+      // Luật của Floci: Lambda, event bus và state machine nhận Input là JSON; SQS, SNS nhận text bất kỳ
+      if (JSON_INPUT_TARGET_KINDS.has(values.targetKind)) {
+        const error = jsonError(values.input);
+        if (error) addIssue("input", error);
+      }
+    });
+
+export type ScheduleForm = z.input<ReturnType<typeof scheduleSchema>>;
+
+export const createGroupSchema = z.object({ name: nameSchema("a group", NAME_MAX_LENGTH) });
