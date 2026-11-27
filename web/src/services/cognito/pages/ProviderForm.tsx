@@ -18,19 +18,23 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { HOST_FROM_CONTAINER, isLocalUrl } from "../../sns/constants.ts";
-import { HOSTED_UI_PATHS, LOCKED_ATTRIBUTES, PROVIDER_TYPES } from "../constants.ts";
-import { isCognitoMissing } from "../hooks/useCognito.ts";
-import { useUserPool } from "../hooks/usePools.ts";
-import { useCreateProvider, useProvider, useUpdateProvider } from "../hooks/useProviders.ts";
-import { POOL_TABS, cognitoRoutes, poolCrumbs } from "../routes.ts";
+import { HOST_FROM_CONTAINER, isLocalUrl } from "@localconsole/core/sns";
 import {
+  HOSTED_UI_PATHS,
+  LOCKED_ATTRIBUTES,
+  PROVIDER_TYPES,
   providerEditSchema,
   providerFormOf,
   providerSchema,
   toProviderFields,
   type ProviderForm as ProviderFormValues,
-} from "../schemas.ts";
+  isCognitoMissing,
+  POOL_TABS,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
+import { useUserPool } from "../hooks/usePools.ts";
+import { useCreateProvider, useProvider, useUpdateProvider } from "../hooks/useProviders.ts";
+import { poolCrumbs } from "../routes.ts";
 
 const TYPE_ITEMS = [
   { value: PROVIDER_TYPES.OIDC, label: "OIDC" },

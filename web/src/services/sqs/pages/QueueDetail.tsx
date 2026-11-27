@@ -6,19 +6,25 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, lastArnPart } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
-import { lastArnPart } from "@shared/arn.ts";
 import { DeleteQueuesModal } from "../components/DeleteQueuesModal.tsx";
 import { MessagesTab } from "../components/MessagesTab.tsx";
 import { PurgeModal, RedriveModal, SendMessageModal } from "../components/MessageModals.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
 import { TriggersTab } from "../components/TriggersTab.tsx";
-import { isQueueMissing, useDeadLetterSources, useQueue } from "../hooks/useQueues.ts";
-import { messageCountsText, queueTypeLabel, type Queue } from "../queues.ts";
-import { QUEUE_TABS, queueCrumbs, sqsRoutes } from "../routes.ts";
+import {
+  isQueueMissing,
+  messageCountsText,
+  queueTypeLabel,
+  type Queue,
+  QUEUE_TABS,
+  sqsRoutes,
+} from "@localconsole/core/sqs";
+import { useDeadLetterSources, useQueue } from "../hooks/useQueues.ts";
+import { queueCrumbs } from "../routes.ts";
 
 const MODALS = { send: "send", purge: "purge", delete: "delete", redrive: "redrive" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];

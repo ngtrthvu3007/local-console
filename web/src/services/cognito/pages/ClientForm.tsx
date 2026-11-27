@@ -23,13 +23,17 @@ import {
   COGNITO_PROVIDER,
   OAUTH_FLOWS,
   OAUTH_SCOPES,
-} from "../constants.ts";
+  clientFormOf,
+  clientSchema,
+  type ClientForm as ClientFormValues,
+  isCognitoMissing,
+  POOL_TABS,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
 import { useClient, useCreateClient, useUpdateClient } from "../hooks/useClients.ts";
-import { isCognitoMissing } from "../hooks/useCognito.ts";
 import { useUserPool } from "../hooks/usePools.ts";
 import { useProviders } from "../hooks/useProviders.ts";
-import { POOL_TABS, cognitoRoutes, poolCrumbs } from "../routes.ts";
-import { clientFormOf, clientSchema, type ClientForm as ClientFormValues } from "../schemas.ts";
+import { poolCrumbs } from "../routes.ts";
 
 const SECRET_ITEMS = [
   {

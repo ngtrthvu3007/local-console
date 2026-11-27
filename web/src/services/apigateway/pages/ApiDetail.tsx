@@ -6,28 +6,30 @@ import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { NotFound } from "@shared/components/NotFound.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, formatDate } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
-import { formatDate } from "@shared/format.ts";
 import { StackLink } from "@shared/StackLink.tsx";
 import { DeleteApiModal } from "../components/DeleteApiModal.tsx";
 import { AuthorizersTab } from "../components/AuthorizersTab.tsx";
 import { StagesTab } from "../components/StagesTab.tsx";
 import { RoutesTab } from "../components/RoutesTab.tsx";
 import { ResourcesTab } from "../components/ResourcesTab.tsx";
-import { useApi, type ApiDetail } from "../hooks/useApiDetail.ts";
-import { API_TYPES } from "../apis.ts";
-import { CFN_API_TYPES, NOT_FOUND_DESCRIPTION, NOT_FOUND_LINK } from "../constants.ts";
 import {
+  type ApiDetail,
+  API_TYPES,
+  CFN_API_TYPES,
+  NOT_FOUND_DESCRIPTION,
+  NOT_FOUND_LINK,
   API_TABS,
   API_VERSIONS,
   SEARCH_PARAMS,
-  apiCrumbs,
   apigatewayRoutes,
   isApiVersion,
   type ApiTab,
   type ApiVersion,
-} from "../routes.ts";
+} from "@localconsole/core/apigateway";
+import { useApi } from "../hooks/useApiDetail.ts";
+import { apiCrumbs } from "../routes.ts";
 
 const tabsOf = (version: ApiVersion): ApiTab[] => [
   version === API_VERSIONS.rest ? API_TABS.resources : API_TABS.routes,

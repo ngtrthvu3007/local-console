@@ -1,6 +1,6 @@
 import Link from "@cloudscape-design/components/link";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { logsRoutes } from "../routes.ts";
+import { logsRoutes } from "@localconsole/core/logs";
 
 // Link từ trang của service khác sang CloudWatch Logs; không hỏi trước group có tồn tại không,
 // group chưa có thì trang Logs tự báo not found (spec 3.8)

@@ -11,14 +11,12 @@ import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { MILLISECONDS_PER_SECOND, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { MILLISECONDS_PER_SECOND, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { API_KEY_DAYS } from "../constants.ts";
-import { isValidKey, useApiKeys, useCreateApiKey, useDeleteApiKey } from "../hooks/useApiKeys.ts";
-import { apiKeySchema } from "../schemas.ts";
+import { API_KEY_DAYS, apiKeySchema, isValidKey } from "@localconsole/core/appsync";
+import { useApiKeys, useCreateApiKey, useDeleteApiKey } from "../hooks/useApiKeys.ts";
 
 const DELETE_ACTION = "delete";
 

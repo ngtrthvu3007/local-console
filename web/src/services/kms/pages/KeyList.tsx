@@ -8,7 +8,8 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -16,10 +17,15 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useKeyActions } from "../components/KeyActions.tsx";
 import { KeyStatus } from "../components/KeyStatus.tsx";
-import { KEY_MANAGERS, type KeyManager } from "../constants.ts";
+import {
+  KEY_MANAGERS,
+  type KeyManager,
+  keyTypeLabel,
+  keyUsageLabel,
+  kmsRoutes,
+} from "@localconsole/core/kms";
 import { useKeys, type KeyRow } from "../hooks/useKeys.ts";
-import { keyTypeLabel, keyUsageLabel } from "../keys.ts";
-import { kmsBaseCrumbs, kmsRoutes } from "../routes.ts";
+import { kmsBaseCrumbs } from "../routes.ts";
 
 const keyIdOfRow = (row: KeyRow) => row.meta.KeyId ?? "";
 

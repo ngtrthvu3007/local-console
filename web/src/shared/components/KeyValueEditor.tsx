@@ -1,10 +1,8 @@
 import AttributeEditor from "@cloudscape-design/components/attribute-editor";
 import Input from "@cloudscape-design/components/input";
-// Một cặp key / value (giá trị secret dạng JSON, encryption context của KMS)
-export interface KeyValue {
-  key: string;
-  value: string;
-}
+import type { KeyValue } from "@localconsole/core/shared";
+
+export type { KeyValue };
 
 const EMPTY_ROW: KeyValue = { key: "", value: "" };
 

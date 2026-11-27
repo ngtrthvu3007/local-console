@@ -11,18 +11,18 @@ import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import type { ClusterRow } from "../clusters.ts";
+import { type ClusterRow, docdbRoutes } from "@localconsole/core/docdb";
 import { DeleteClustersModal } from "../components/DeleteClustersModal.tsx";
 import { CLUSTER_STATUS_STYLES } from "../constants.ts";
 import { useClusters } from "../hooks/useClusters.ts";
-import { docdbBaseCrumbs, docdbRoutes } from "../routes.ts";
+import { docdbBaseCrumbs } from "../routes.ts";
 
 const ID_FIELD = "id";
 

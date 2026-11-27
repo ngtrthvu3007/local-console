@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconWorldWww } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { CLOUDFRONT_ROUTE_PATTERNS, CLOUDFRONT_SERVICE_ID, cloudfrontRoutes } from "./routes.ts";
+import {
+  CLOUDFRONT_ROUTE_PATTERNS,
+  CLOUDFRONT_SERVICE_ID,
+  cloudfrontRoutes,
+} from "@localconsole/core/cloudfront";
 
 export const cloudfrontService: ServiceDefinition = {
   id: CLOUDFRONT_SERVICE_ID,

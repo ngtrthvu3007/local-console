@@ -10,16 +10,16 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { copyable } from "@shared/components/CopyButton.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { authLabel, localEndpoint } from "../apis.ts";
+import { authLabel, localEndpoint, appsyncRoutes } from "@localconsole/core/appsync";
 import { useApiActions } from "../components/ApiActions.tsx";
 import { useApis } from "../hooks/useApis.ts";
-import { appsyncBaseCrumbs, appsyncRoutes } from "../routes.ts";
+import { appsyncBaseCrumbs } from "../routes.ts";
 
 const ID_FIELD = "apiId";
 const NAME_FIELD = "name";

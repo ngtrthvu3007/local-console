@@ -1,12 +1,12 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { TableLink } from "../../dynamodb/components/TableLink.tsx";
 import { ClusterLink } from "../../ecs/components/ClusterLink.tsx";
-import { CLUSTER_TABS } from "../../ecs/routes.ts";
+import { CLUSTER_TABS } from "@localconsole/core/ecs";
 import { useFunctionExists } from "../../lambda/hooks/useFunctions.ts";
-import { lambdaRoutes } from "../../lambda/routes.ts";
+import { lambdaRoutes } from "@localconsole/core/lambda";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
-import type { TaskResource } from "../taskResource.ts";
+import type { TaskResource } from "@localconsole/core/stepfunctions";
 import { StateMachineLink } from "./StateMachineLink.tsx";
 
 const SERVICE_LABELS = {

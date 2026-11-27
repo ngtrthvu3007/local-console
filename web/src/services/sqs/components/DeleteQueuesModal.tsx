@@ -1,11 +1,11 @@
 import Alert from "@cloudscape-design/components/alert";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { LIST_SEPARATOR } from "@shared/constants.ts";
+import { LIST_SEPARATOR } from "@localconsole/core/shared";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import { useQueueLinks } from "../hooks/useQueueTriggers.ts";
 import { useDeleteQueues } from "../hooks/useQueues.ts";
-import type { Queue } from "../queues.ts";
+import type { Queue } from "@localconsole/core/sqs";
 
 interface Props {
   queues: readonly Queue[];

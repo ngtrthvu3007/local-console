@@ -7,20 +7,24 @@ import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { pageState } from "@shared/components/PageState.tsx";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, isNotFoundError } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { StackLink } from "@shared/StackLink.tsx";
-import { isNotFoundError } from "@shared/aws.ts";
 import { DeleteRulesModal } from "../components/DeleteRulesModal.tsx";
 import { RuleDetailsTab } from "../components/RuleDetailsTab.tsx";
 import { TargetsTab } from "../components/TargetsTab.tsx";
-import { RULE_TYPES } from "../constants.ts";
+import {
+  RULE_TYPES,
+  ruleType,
+  type Rule,
+  RULE_TABS,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 import { useRule, useSetRulesEnabled } from "../hooks/useRules.ts";
 import { useTargets } from "../hooks/useTargets.ts";
-import { ruleType, type Rule } from "../rules.ts";
-import { RULE_TABS, eventbridgeRoutes, ruleCrumbs } from "../routes.ts";
+import { ruleCrumbs } from "../routes.ts";
 
 function RuleView({ rule }: { rule: Rule }) {
   const navigate = useNavigate();

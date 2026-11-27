@@ -1,7 +1,7 @@
 import StatusIndicator, {
   type StatusIndicatorProps,
 } from "@cloudscape-design/components/status-indicator";
-import { NOT_AVAILABLE } from "../constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 
 interface Props {
   status?: string;

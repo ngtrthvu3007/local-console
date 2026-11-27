@@ -1,9 +1,8 @@
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { NEVER_EXPIRE } from "../constants.ts";
+import { NEVER_EXPIRE, retentionDays, retentionSchema } from "@localconsole/core/logs";
 import { usePutRetention } from "../hooks/useLogGroups.ts";
-import { retentionDays, retentionSchema } from "../schemas.ts";
 import { RetentionSelect } from "./CreateLogGroupModal.tsx";
 
 interface Props {

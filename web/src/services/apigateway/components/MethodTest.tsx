@@ -13,7 +13,7 @@ import Textarea from "@cloudscape-design/components/textarea";
 import type { Method } from "@aws-sdk/client-api-gateway";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
+import { FUNCTION_TABS, lambdaRoutes } from "@localconsole/core/lambda";
 import {
   ANY_METHOD,
   EMPTY_BODY_TEXT,
@@ -21,13 +21,18 @@ import {
   METHOD_ORDER,
   MONITOR_SUFFIX,
   NO_STAGE_HINT,
-} from "../constants.ts";
+  describeIntegration,
+  buildTestPath,
+  parseHeaderLines,
+  pathParamsOf,
+  testInvokeUrl,
+  sendsBody,
+  type MethodTestResult,
+  API_VERSIONS,
+} from "@localconsole/core/apigateway";
 import { useStages } from "../hooks/useApiDetail.ts";
 import { useMethodTest } from "../hooks/useMethodTest.ts";
-import { describeIntegration } from "../integration.ts";
-import { buildTestPath, parseHeaderLines, pathParamsOf, testInvokeUrl } from "../invokeUrl.ts";
-import { sendsBody, type MethodTestResult } from "../methodTest.ts";
-import { API_VERSIONS } from "../routes.ts";
+import { AWS_PROXY_PATH } from "@shared/constants.ts";
 
 const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));
 
@@ -103,7 +108,7 @@ export function MethodTest({ apiId, path, method }: Props) {
     if ("error" in parsed) return setHeadersError(parsed.error);
     setHeadersError(undefined);
     test.mutate({
-      url: testInvokeUrl(apiId, stage, buildTestPath(path, paramValues), query),
+      url: testInvokeUrl(AWS_PROXY_PATH, apiId, stage, buildTestPath(path, paramValues), query),
       method: httpMethod,
       headers: parsed.headers,
       body: sendsBody(httpMethod) && body ? body : undefined,

@@ -2,7 +2,7 @@ import type { Container as TaskContainer, Task } from "@aws-sdk/client-ecs";
 import Box from "@cloudscape-design/components/box";
 import Header from "@cloudscape-design/components/header";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { TASK_STATUS_STYLES } from "../constants.ts";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 

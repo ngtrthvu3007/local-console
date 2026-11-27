@@ -12,18 +12,22 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR, LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { prettyJson } from "@shared/json.ts";
+import {
+  DETAIL_SEPARATOR,
+  LIST_SEPARATOR,
+  NOT_AVAILABLE,
+  prettyJson,
+} from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
-import { taskDefinitionLabel } from "../arns.ts";
+import { taskDefinitionLabel, STATUS, REVISION_TABS, ecsRoutes } from "@localconsole/core/ecs";
+import { REVISION_STATUS_STYLES } from "../constants.ts";
 import { ContainersTab } from "../components/ContainersTab.tsx";
 import { RevisionActionModal } from "../components/RevisionActionModal.tsx";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
-import { REVISION_STATUS_STYLES, STATUS } from "../constants.ts";
 import { useTaskDefinition } from "../hooks/useTaskDefinitions.ts";
-import { REVISION_TABS, ecsRoutes, revisionCrumbs } from "../routes.ts";
+import { revisionCrumbs } from "../routes.ts";
 
 const DETAILS_COLUMNS = 3;
 

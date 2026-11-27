@@ -1,20 +1,20 @@
 import { useQueries } from "@tanstack/react-query";
-import { lastArnPart } from "@shared/arn.ts";
-import { functionNameOfArn } from "../../lambda/helpers.ts";
+import { lastArnPart } from "@localconsole/core/shared";
+import { functionNameOfArn } from "@localconsole/core/lambda";
 import { functionExistsQuery } from "../../lambda/hooks/useFunctions.ts";
-import { useLambda } from "../../lambda/hooks/useLambda.ts";
-import { useSNS } from "../../sns/hooks/useSNS.ts";
+import { useLambdaService } from "../../lambda/hooks/useLambdaService.ts";
+import { useSnsService } from "../../sns/hooks/useSnsService.ts";
 import { topicExistsQuery } from "../../sns/hooks/useTopics.ts";
 import { queueExistsQuery } from "../../sqs/hooks/useQueues.ts";
-import { useSQS } from "../../sqs/hooks/useSQS.ts";
-import type { NotificationRule } from "../notificationRules.ts";
+import { useSqsService } from "../../sqs/hooks/useSqsService.ts";
+import type { NotificationRule } from "@localconsole/core/s3";
 
 // Các rule trỏ tới đích đã bị xóa. S3 từ chối lưu cả cấu hình nếu còn một rule như vậy.
 // Dùng chung query với link ở bảng nên không gọi thêm
 export function useMissingDestinations(rules: NotificationRule[]) {
-  const { lambda } = useLambda();
-  const sqs = useSQS();
-  const sns = useSNS();
+  const lambda = useLambdaService();
+  const sqs = useSqsService();
+  const sns = useSnsService();
   const queryOf = (rule: NotificationRule) => {
     if (rule.destination === "lambda") {
       return functionExistsQuery(lambda, functionNameOfArn(rule.arn));

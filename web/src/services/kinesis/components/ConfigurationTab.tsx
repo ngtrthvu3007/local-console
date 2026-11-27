@@ -9,12 +9,17 @@ import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { emptyOrError } from "@shared/components/TableStates.tsx";
-import { KIBIBYTE, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes, formatDate, pluralize } from "@shared/format.ts";
+import {
+  KIBIBYTE,
+  NOT_AVAILABLE,
+  formatBytes,
+  formatDate,
+  pluralize,
+} from "@localconsole/core/shared";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { streamSample } from "../codeSamples.ts";
 import { useShards } from "../hooks/useStreams.ts";
-import { isShardOpen, streamModeLabel } from "../recordData.ts";
+import { isShardOpen, streamModeLabel } from "@localconsole/core/kinesis";
 import { STREAM_STATUS_STYLES } from "../constants.ts";
 
 const DETAILS_COLUMNS = 3;

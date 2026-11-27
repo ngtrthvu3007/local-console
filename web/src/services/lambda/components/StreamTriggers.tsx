@@ -10,7 +10,7 @@ import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/For
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
@@ -23,13 +23,15 @@ import {
   STARTING_POSITIONS,
   STREAM_BATCH_SIZE,
   type StartingPosition,
-} from "../constants.ts";
-import { functionNameOfMapping } from "../helpers.ts";
+  functionNameOfMapping,
+  DEFAULT_MAPPING_OPTIONS,
+  type MappingSource,
+  streamTriggerSchema,
+  FUNCTION_TABS,
+  lambdaRoutes,
+} from "@localconsole/core/lambda";
 import { useFunctions } from "../hooks/useFunctions.ts";
 import { useAddStreamTrigger, useStreamTriggers } from "../hooks/useTriggers.ts";
-import { DEFAULT_MAPPING_OPTIONS, type MappingSource } from "../mappingOptions.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../routes.ts";
-import { streamTriggerSchema } from "../schemas.ts";
 import { BrokenTriggersAlert } from "./BrokenTriggersAlert.tsx";
 import { FunctionLink } from "./FunctionLink.tsx";
 import { MappingOptionsFields } from "./MappingOptionsFields.tsx";

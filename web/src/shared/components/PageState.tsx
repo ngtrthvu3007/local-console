@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Container from "@cloudscape-design/components/container";
 import Spinner from "@cloudscape-design/components/spinner";
-import { isNotFoundError } from "../aws.ts";
+import { isNotFoundError } from "@localconsole/core/shared";
 import { LOGO_PATH } from "../constants.ts";
 import { NotFound } from "./NotFound.tsx";
 import { ErrorState, type FailableQuery } from "./TableStates.tsx";

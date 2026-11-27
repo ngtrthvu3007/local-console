@@ -11,15 +11,18 @@ import Toggle from "@cloudscape-design/components/toggle";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDateMs } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDateMs } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { NESTED_STACK_TYPE, TLS_HINT } from "../constants.ts";
+import {
+  NESTED_STACK_TYPE,
+  stackNameOfArn,
+  isFailed,
+  needsTls,
+  cloudformationRoutes,
+} from "@localconsole/core/cloudformation";
+import { TLS_HINT } from "../constants.ts";
 import { useStackEvents } from "../hooks/useStacks.ts";
-import { stackNameOfArn } from "../resourceLinks.ts";
-import { cloudformationRoutes } from "../routes.ts";
-import { isFailed, needsTls } from "../status.ts";
 import { StackStatus } from "./StackStatus.tsx";
 
 const PAGE_SIZE = 100;

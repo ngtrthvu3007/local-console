@@ -1,5 +1,6 @@
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { STEP_STATUS_STYLES, type StepStatus } from "../constants.ts";
+import { type StepStatus } from "@localconsole/core/stepfunctions";
+import { STEP_STATUS_STYLES } from "../constants.ts";
 
 export function StepStatusIndicator({ status }: { status: StepStatus }) {
   const style = STEP_STATUS_STYLES[status];

@@ -2,13 +2,6 @@ import { useCallback, useState } from "react";
 
 // AWS không trả lại password nên giữ user / pass trong sessionStorage: còn khi tải lại, mất khi đóng tab
 const STORAGE_PREFIX = "localconsole:mq:";
-const BASIC_PREFIX = "Basic ";
-
-// Header Basic cần base64 của UTF-8; btoa chỉ nhận Latin-1 nên đổi qua byte trước
-export function basicAuthorization(username: string, password: string) {
-  const bytes = new TextEncoder().encode(`${username}:${password}`);
-  return `${BASIC_PREFIX}${btoa(String.fromCharCode(...bytes))}`;
-}
 
 // Storage có thể bị chặn (chế độ riêng tư): khi đó chỉ giữ trong lúc trang còn mở
 function read(key: string) {

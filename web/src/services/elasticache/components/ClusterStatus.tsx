@@ -1,5 +1,5 @@
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { CLUSTER_STATUS_AVAILABLE, FAILED_STATUSES } from "../constants.ts";
+import { CLUSTER_STATUS_AVAILABLE, FAILED_STATUSES } from "@localconsole/core/elasticache";
 
 // Chỉ hiện khi khác "available": tô xanh mọi dòng chỉ gây nhiễu
 export function ClusterStatus({ status }: { status?: string }) {

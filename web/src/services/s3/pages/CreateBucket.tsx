@@ -23,12 +23,13 @@ import {
   BUCKET_NAME_MIN_LENGTH,
   VERSIONING_DESCRIPTION,
   VERSIONING_STATUS,
-} from "../constants.ts";
+  createBucketSchema,
+} from "@localconsole/core/s3";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
 import { useCreateBucket } from "../hooks/useBuckets.ts";
-import { s3BaseCrumbs, s3Routes } from "../routes.ts";
-import { createBucketSchema } from "../schemas.ts";
+import { s3Routes } from "@localconsole/core/s3";
+import { s3BaseCrumbs } from "../routes.ts";
 
 const ENCRYPTION_ITEMS: RadioGroupProps.RadioButtonDefinition[] = [
   { value: ENCRYPTION_TYPES.sseS3, label: "SSE-S3", description: "Keys managed by S3." },

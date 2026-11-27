@@ -12,35 +12,31 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { formatDuration } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatDuration, lastArnPart } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { lastArnPart } from "@shared/arn.ts";
 import { BusLink } from "../../eventbridge/components/BusLink.tsx";
-import { DEFAULT_BUS_NAME } from "../../eventbridge/constants.ts";
-import { eventbridgeRoutes } from "../../eventbridge/routes.ts";
-import { busNameOfArn } from "../../eventbridge/targets.ts";
+import { DEFAULT_BUS_NAME, busNameOfArn, eventbridgeRoutes } from "@localconsole/core/eventbridge";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import {
   destinationKindOf,
   fromInvokeConfig,
   type AsyncInvocationValues,
-} from "../asyncInvocation.ts";
+} from "../asyncInvocationForm.ts";
 import {
   ASYNC_EVENT_AGE_SECONDS,
   ASYNC_RETRY_ATTEMPTS,
   DESTINATION_KINDS,
   type DestinationKind,
-} from "../constants.ts";
+  asyncInvocationSchema,
+} from "@localconsole/core/lambda";
 import {
   useAsyncInvocation,
   usePutAsyncInvocation,
   useRemoveAsyncInvocation,
 } from "../hooks/useAsyncInvocation.ts";
-import { asyncInvocationSchema } from "../schemas.ts";
 import { DestinationFields } from "./DestinationFields.tsx";
 import { FunctionLink } from "./FunctionLink.tsx";
 

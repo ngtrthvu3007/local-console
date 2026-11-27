@@ -17,11 +17,19 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { awsManagedAlias, defaultKeyLabel } from "../../kms/keys.ts";
-import { PARAMETER_TYPES, SECURE_STRING, SSM_KEY_SERVICE } from "../constants.ts";
-import { isParameterMissing, useParameter, usePutParameter } from "../hooks/useParameters.ts";
-import { SEARCH_PARAMS, parameterCrumbs, ssmBaseCrumbs, ssmRoutes } from "../routes.ts";
-import { parameterSchema, type ParameterForm as ParameterValues } from "../schemas.ts";
+import { awsManagedAlias, defaultKeyLabel } from "@localconsole/core/kms";
+import {
+  PARAMETER_TYPES,
+  SECURE_STRING,
+  SSM_KEY_SERVICE,
+  parameterSchema,
+  type ParameterForm as ParameterValues,
+  isParameterMissing,
+  SEARCH_PARAMS,
+  ssmRoutes,
+} from "@localconsole/core/ssm";
+import { useParameter, usePutParameter } from "../hooks/useParameters.ts";
+import { parameterCrumbs, ssmBaseCrumbs } from "../routes.ts";
 import "./ParameterForm.css";
 
 const MASKED_CLASS = "ssm-masked-value";

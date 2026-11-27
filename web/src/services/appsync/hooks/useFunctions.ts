@@ -1,58 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  UpdateFunctionCommand,
-  paginateListFunctions,
-  type FunctionConfiguration,
-} from "@aws-sdk/client-appsync";
-import { functionInput } from "../apis.ts";
-import type { FunctionForm } from "../schemas.ts";
+import type { SaveFunctionInput } from "@localconsole/core/appsync";
 import { APPSYNC_QUERY_ROOT } from "./useApis.ts";
-import { useAppSync } from "./useAppSync.ts";
+import { useAppSyncService } from "./useAppSyncService.ts";
 
 export const functionsQueryKey = (apiId: string) => [APPSYNC_QUERY_ROOT, "functions", apiId];
 
-// Pipeline function của API (khác function Lambda)
 export function useApiFunctions(apiId: string) {
-  const client = useAppSync();
+  const appsync = useAppSyncService();
 
   return useQuery({
     queryKey: functionsQueryKey(apiId),
-    queryFn: async () => {
-      const functions: FunctionConfiguration[] = [];
-      for await (const page of paginateListFunctions({ client }, { apiId })) {
-        functions.push(...(page.functions ?? []));
-      }
-      return functions;
-    },
+    queryFn: () => appsync.listFunctions(apiId),
   });
 }
 
-// functionId có = sửa; trả functionId để mở lại trang
 export function useSaveFunction(apiId: string) {
-  const client = useAppSync();
+  const appsync = useAppSyncService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ functionId, form }: { functionId?: string; form: FunctionForm }) => {
-      const input = { apiId, ...functionInput(form) };
-      const { functionConfiguration } = functionId
-        ? await client.send(new UpdateFunctionCommand({ ...input, functionId }))
-        : await client.send(new CreateFunctionCommand(input));
-      return functionConfiguration?.functionId ?? "";
-    },
+    mutationFn: (input: SaveFunctionInput) => appsync.saveFunction(apiId, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: functionsQueryKey(apiId) }),
   });
 }
 
 export function useDeleteFunction(apiId: string) {
-  const client = useAppSync();
+  const appsync = useAppSyncService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (functionId: string) =>
-      client.send(new DeleteFunctionCommand({ apiId, functionId })),
+    mutationFn: (functionId: string) => appsync.deleteFunction(apiId, functionId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: functionsQueryKey(apiId) }),
   });
 }

@@ -15,11 +15,16 @@ import { skipLeaveGuard, useLeaveGuard } from "@shared/hooks/useLeaveGuard.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { taskDefinitionRefOf } from "../arns.ts";
+import {
+  taskDefinitionRefOf,
+  taskDefinitionFormSchema,
+  newTaskDefinitionText,
+  revisionText,
+  SEARCH_PARAMS,
+  ecsRoutes,
+} from "@localconsole/core/ecs";
 import { useRegisterTaskDefinition, useTaskDefinition } from "../hooks/useTaskDefinitions.ts";
-import { SEARCH_PARAMS, ecsRoutes, ecsTaskDefinitionCrumbs } from "../routes.ts";
-import { taskDefinitionFormSchema } from "../schemas.ts";
-import { newTaskDefinitionText, revisionText } from "../taskDefinitionJson.ts";
+import { ecsTaskDefinitionCrumbs } from "../routes.ts";
 
 const EDITOR_HEIGHT_PX = 480;
 

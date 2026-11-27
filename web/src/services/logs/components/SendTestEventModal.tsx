@@ -2,9 +2,13 @@ import { FormInput, FormTextarea } from "@shared/components/form/FormFields.tsx"
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_TEST_STREAM, STREAM_NAME_RULE, TEXT } from "../constants.ts";
+import {
+  DEFAULT_TEST_STREAM,
+  STREAM_NAME_RULE,
+  TEXT,
+  testEventSchema,
+} from "@localconsole/core/logs";
 import { useSendTestEvent } from "../hooks/useLogStreams.ts";
-import { testEventSchema } from "../schemas.ts";
 
 // Chỉ mount khi mở
 export function SendTestEventModal({ group, onDismiss }: { group: string; onDismiss: () => void }) {

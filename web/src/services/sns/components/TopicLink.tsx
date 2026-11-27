@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useTopicExists } from "../hooks/useTopics.ts";
-import { snsRoutes } from "../routes.ts";
+import { snsRoutes } from "@localconsole/core/sns";
 
 // Tên topic thành link sang trang topic; dùng ở S3, SQS, Lambda và chính SNS
 export function TopicLink({ name }: { name: string }) {

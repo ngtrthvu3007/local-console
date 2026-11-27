@@ -15,14 +15,14 @@ import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/For
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
-import { pluralize } from "@shared/format.ts";
-import { reformatJson } from "@shared/json.ts";
+import { pluralize, reformatJson } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_EXCHANGE_LABEL, PAYLOAD_EDITOR_HEIGHT_PX } from "../constants.ts";
+import { PAYLOAD_EDITOR_HEIGHT_PX, DEFAULT_EXCHANGE_LABEL } from "../constants.ts";
 import { useCreateQueue, useExchanges, usePeek, usePublish } from "../hooks/useRabbit.ts";
-import { createQueueSchema, peekSchema, publishSchema } from "../schemas.ts";
+import { peekSchema } from "../rabbitSchemas.ts";
+import { createQueueSchema, publishSchema } from "@localconsole/core/mq";
 
 export const exchangeLabel = (name: string) => name || DEFAULT_EXCHANGE_LABEL;
 

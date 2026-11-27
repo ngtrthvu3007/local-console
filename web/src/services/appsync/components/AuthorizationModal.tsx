@@ -11,10 +11,15 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useUserPools } from "../../cognito/hooks/usePools.ts";
-import { authTypesOf, managedPoolOf, withAuthorization } from "../apis.ts";
-import { AUTH_LABELS, AUTH_TYPES } from "../constants.ts";
+import {
+  authTypesOf,
+  managedPoolOf,
+  withAuthorization,
+  AUTH_LABELS,
+  AUTH_TYPES,
+  authorizationSchema,
+} from "@localconsole/core/appsync";
 import { useUpdateApi } from "../hooks/useApis.ts";
-import { authorizationSchema } from "../schemas.ts";
 
 const AUTH_OPTIONS = Object.values(AUTH_TYPES).map((value) => ({
   value,

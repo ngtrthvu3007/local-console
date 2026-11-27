@@ -1,10 +1,14 @@
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { SQS_BATCH_SIZE, STREAM_BATCH_SIZE } from "../constants.ts";
-import type { TriggerRow } from "../hooks/useTriggers.ts";
-import { fromMapping, type MappingOptions } from "../mappingOptions.ts";
-import { editTriggerSchema } from "../schemas.ts";
+import {
+  SQS_BATCH_SIZE,
+  STREAM_BATCH_SIZE,
+  fromMapping,
+  type MappingOptions,
+  editTriggerSchema,
+  type TriggerRow,
+} from "@localconsole/core/lambda";
 import { MappingOptionsFields } from "./MappingOptionsFields.tsx";
 
 interface Props {

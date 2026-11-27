@@ -3,7 +3,7 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useCreateEmailIdentity } from "../hooks/useIdentities.ts";
-import { addEmailSchema, type AddEmailForm } from "../schemas.ts";
+import { addEmailSchema, type AddEmailForm } from "@localconsole/core/ses";
 
 interface Props {
   onDismiss: () => void;

@@ -1,9 +1,13 @@
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { JsonSettingEditor } from "@shared/components/JsonSettingEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { prettyJson, reformatJson } from "@shared/json.ts";
-import { EXAMPLE_CORS_RULES, examplePublicReadPolicy } from "../constants.ts";
-import { bucketPolicySchema, corsRulesSchema } from "../schemas.ts";
+import { prettyJson, reformatJson } from "@localconsole/core/shared";
+import {
+  EXAMPLE_CORS_RULES,
+  examplePublicReadPolicy,
+  bucketPolicySchema,
+  corsRulesSchema,
+} from "@localconsole/core/s3";
 import {
   useBucketCors,
   useBucketPolicy,

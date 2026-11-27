@@ -4,8 +4,7 @@ import Box from "@cloudscape-design/components/box";
 import { FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { hostedUiUrl } from "../auth.ts";
-import { COGNITO_PROVIDER, HOSTED_UI_PATHS } from "../constants.ts";
+import { hostedUiUrl, COGNITO_PROVIDER, HOSTED_UI_PATHS } from "@localconsole/core/cognito";
 
 const NEW_TAB_TARGET = "_blank";
 const NEW_TAB_FEATURES = "noopener";

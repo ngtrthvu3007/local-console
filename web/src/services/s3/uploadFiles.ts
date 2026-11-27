@@ -11,6 +11,20 @@ const readFile = (entry: FileSystemFileEntry) =>
 const readDirectoryBatch = (reader: FileSystemDirectoryReader) =>
   new Promise<FileSystemEntry[]>((resolve, reject) => reader.readEntries(resolve, reject));
 
+// readEntries trả từng đợt, đọc tới khi rỗng
+async function readAllEntries(reader: FileSystemDirectoryReader) {
+  const entries: FileSystemEntry[] = [];
+
+  for (
+    let batch = await readDirectoryBatch(reader);
+    batch.length;
+    batch = await readDirectoryBatch(reader)
+  )
+    entries.push(...batch);
+
+  return entries;
+}
+
 // dataTransfer.files không chứa file trong folder kéo vào nên phải tự duyệt
 export async function filesFromDrop(dataTransfer: DataTransfer): Promise<PickedFile[]> {
   const roots = [...dataTransfer.items]
@@ -26,14 +40,7 @@ export async function filesFromDrop(dataTransfer: DataTransfer): Promise<PickedF
     }
     const reader = (entry as FileSystemDirectoryEntry).createReader();
     const childPath = parentPath + entry.name + FOLDER_SEPARATOR;
-    // readEntries trả từng đợt, đọc tới khi rỗng
-    for (
-      let batch = await readDirectoryBatch(reader);
-      batch.length;
-      batch = await readDirectoryBatch(reader)
-    ) {
-      for (const child of batch) await walk(child, childPath);
-    }
+    for (const child of await readAllEntries(reader)) await walk(child, childPath);
   }
 
   for (const root of roots) await walk(root, "");

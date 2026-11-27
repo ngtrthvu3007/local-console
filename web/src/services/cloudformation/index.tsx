@@ -6,7 +6,7 @@ import {
   CLOUDFORMATION_ROUTE_PATTERNS,
   CLOUDFORMATION_SERVICE_ID,
   cloudformationRoutes,
-} from "./routes.ts";
+} from "@localconsole/core/cloudformation";
 
 export const cloudformationService: ServiceDefinition = {
   id: CLOUDFORMATION_SERVICE_ID,

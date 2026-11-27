@@ -6,24 +6,30 @@ import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { isNotFoundError } from "@shared/aws.ts";
+import { isNotFoundError, NOT_AVAILABLE } from "@localconsole/core/shared";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useUserPool } from "../../cognito/hooks/usePools.ts";
-import { cognitoRoutes } from "../../cognito/routes.ts";
-import { authLabel, authTypesOf, baseUpdate, localEndpoint, managedPoolOf } from "../apis.ts";
+import { cognitoRoutes } from "@localconsole/core/cognito";
+import {
+  authLabel,
+  authTypesOf,
+  baseUpdate,
+  localEndpoint,
+  managedPoolOf,
+  EDITABLE_AUTH_TYPES,
+  renameSchema,
+  isValidKey,
+} from "@localconsole/core/appsync";
 import { apiSample } from "../codeSamples.ts";
-import { EDITABLE_AUTH_TYPES } from "../constants.ts";
-import { isValidKey, useApiKeys } from "../hooks/useApiKeys.ts";
+import { useApiKeys } from "../hooks/useApiKeys.ts";
 import { useUpdateApi } from "../hooks/useApis.ts";
-import { renameSchema } from "../schemas.ts";
 import { ApiKeysTable } from "./ApiKeysTable.tsx";
 import { AuthorizationModal } from "./AuthorizationModal.tsx";
 

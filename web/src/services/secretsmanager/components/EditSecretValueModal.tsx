@@ -4,8 +4,12 @@ import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { usePutSecretValue } from "../hooks/useSecrets.ts";
-import { keyValueSchema, plaintextSchema } from "../schemas.ts";
-import { textOfKeyValue, type KeyValue } from "../secretValue.ts";
+import {
+  keyValueSchema,
+  plaintextSchema,
+  textOfKeyValue,
+  type KeyValue,
+} from "@localconsole/core/secretsmanager";
 import { KeyValueEditor } from "@shared/components/KeyValueEditor.tsx";
 
 interface ModalProps {

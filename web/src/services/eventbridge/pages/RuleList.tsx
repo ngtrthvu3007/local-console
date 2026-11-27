@@ -14,8 +14,8 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, pluralize } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -24,11 +24,17 @@ import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { BusSenders } from "../components/BusSenders.tsx";
 import { EnabledState } from "../components/EnabledState.tsx";
 import { DeleteRulesModal } from "../components/DeleteRulesModal.tsx";
-import { DEFAULT_BUS_NAME, RULE_TYPES } from "../constants.ts";
+import {
+  DEFAULT_BUS_NAME,
+  RULE_TYPES,
+  ruleType,
+  type RuleRow,
+  SEARCH_PARAMS,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 import { useBuses } from "../hooks/useBuses.ts";
-import { useRules, useSetRulesEnabled, type RuleRow } from "../hooks/useRules.ts";
-import { ruleType } from "../rules.ts";
-import { SEARCH_PARAMS, eventbridgeRoutes, rulesCrumbs } from "../routes.ts";
+import { useRules, useSetRulesEnabled } from "../hooks/useRules.ts";
+import { rulesCrumbs } from "../routes.ts";
 
 const NAME_FIELD = "name";
 

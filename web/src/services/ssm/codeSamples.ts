@@ -1,11 +1,6 @@
-import {
-  lines,
-  literal,
-  NODE_AWS_NOTE,
-  PYTHON_AWS_NOTE,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
-import { SECURE_STRING, STRING_LIST } from "./constants.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, NODE_AWS_NOTE, PYTHON_AWS_NOTE, type CodeSample } from "@shared/codeSamples.ts";
+import { SECURE_STRING, STRING_LIST } from "@localconsole/core/ssm";
 
 const LIST_SEPARATOR = literal(",");
 

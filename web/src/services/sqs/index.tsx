@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconStack2 } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { SQS_ROUTE_PATTERNS, SQS_SERVICE_ID, sqsRoutes } from "./routes.ts";
+import { SQS_ROUTE_PATTERNS, SQS_SERVICE_ID, sqsRoutes } from "@localconsole/core/sqs";
 
 export const sqsService: ServiceDefinition = {
   id: SQS_SERVICE_ID,

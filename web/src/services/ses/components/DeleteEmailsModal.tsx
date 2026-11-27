@@ -1,10 +1,9 @@
 import Box from "@cloudscape-design/components/box";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useDeleteEmails } from "../hooks/useMailbox.ts";
-import { NO_SUBJECT } from "../constants.ts";
-import type { Email } from "../mailbox.ts";
+import { NO_SUBJECT, type Email } from "@localconsole/core/ses";
 
 interface Props {
   emails: readonly Email[];

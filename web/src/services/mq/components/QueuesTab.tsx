@@ -17,13 +17,8 @@ import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.ts
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import {
-  DETAIL_SEPARATOR,
-  ITEM_LIST_WIDTH_PX,
-  NOT_AVAILABLE,
-  TABLE_PAGE_SIZE,
-} from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { isUnauthorized, useDeleteQueues, usePurgeQueue, useQueues } from "../hooks/useRabbit.ts";

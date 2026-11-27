@@ -9,22 +9,21 @@ import SegmentedControl from "@cloudscape-design/components/segmented-control";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { taskIdOf } from "../arns.ts";
 import {
+  taskIdOf,
   DESIRED_STATUSES,
   STATUS,
-  TASKS_NOT_KEPT,
-  TASK_STATUS_STYLES,
   type DesiredStatus,
-} from "../constants.ts";
+  exitCodeText,
+  ecsRoutes,
+} from "@localconsole/core/ecs";
+import { TASKS_NOT_KEPT, TASK_STATUS_STYLES } from "../constants.ts";
 import { useTasks } from "../hooks/useTasks.ts";
-import { exitCodeText } from "../tasks.ts";
-import { ecsRoutes } from "../routes.ts";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { StopTasksModal } from "./StopTasksModal.tsx";
 import { TaskDefinitionLink } from "./TaskDefinitionLink.tsx";

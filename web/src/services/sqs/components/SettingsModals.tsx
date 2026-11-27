@@ -3,14 +3,19 @@ import ColumnLayout from "@cloudscape-design/components/column-layout";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { SECONDS_PER_MINUTE } from "@shared/constants.ts";
-import { formatDuration } from "@shared/format.ts";
+import { SECONDS_PER_MINUTE, formatDuration } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { MAX_RECEIVE_COUNT, SETTING_LIMITS } from "../constants.ts";
+import {
+  MAX_RECEIVE_COUNT,
+  SETTING_LIMITS,
+  bytesToKiB,
+  kiBToBytes,
+  type Queue,
+  deadLetterSchema,
+  queueSettingsSchema,
+} from "@localconsole/core/sqs";
 import { useQueues, useUpdateRedrivePolicy, useUpdateSettings } from "../hooks/useQueues.ts";
-import { bytesToKiB, kiBToBytes, type Queue } from "../queues.ts";
-import { deadLetterSchema, queueSettingsSchema } from "../schemas.ts";
 
 // "0–900 seconds (up to 15m 0s)": cùng số với lỗi validate, kèm thời lượng dễ đọc khi số lớn
 const secondsRange = ({ min, max }: { min: number; max: number }) =>

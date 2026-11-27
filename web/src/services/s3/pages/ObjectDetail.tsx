@@ -16,8 +16,12 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { TagsTable } from "@shared/components/TagsTable.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes, formatDate } from "@shared/format.ts";
+import {
+  DETAIL_SEPARATOR,
+  NOT_AVAILABLE,
+  formatBytes,
+  formatDate,
+} from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -29,14 +33,14 @@ import {
 import { ObjectPreview } from "../components/ObjectPreview.tsx";
 import { ObjectVersions } from "../components/ObjectVersions.tsx";
 import { PresignModal } from "../components/PresignModal.tsx";
-import { PATH_DELIMITER, SSE_LABELS } from "../constants.ts";
-import { fileNameOf, objectUrl, s3Uri } from "../helpers.ts";
+import { PATH_DELIMITER, SSE_LABELS, fileNameOf, objectUrl, s3Uri } from "@localconsole/core/s3";
 import { useIsVersioned } from "../hooks/useBucketSettings.ts";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { useHeadObject, useObjectTags } from "../hooks/useObject.ts";
-import { useS3 } from "../hooks/useS3.ts";
-import { downloadObject } from "../presign.ts";
-import { SEARCH_PARAMS, bucketCrumbs, s3Routes } from "../routes.ts";
+import { useS3Service } from "../hooks/useS3Service.ts";
+import { downloadObject } from "../downloadObject.ts";
+import { SEARCH_PARAMS, s3Routes } from "@localconsole/core/s3";
+import { bucketCrumbs } from "../routes.ts";
 
 const MODALS = {
   delete: "delete",
@@ -72,7 +76,7 @@ export function ObjectDetail() {
   const key = searchParams.get(SEARCH_PARAMS.key) ?? "";
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
-  const { signer } = useS3();
+  const s3 = useS3Service();
   const { flociPublicUrl } = useLoadedConfig();
   const head = useHeadObject(bucket, key);
   const tags = useObjectTags(bucket, key, head.isSuccess);
@@ -101,7 +105,7 @@ export function ObjectDetail() {
   const url = objectUrl(flociPublicUrl, bucket, key);
   const metadata = Object.entries(object?.Metadata ?? {}).map(([name, value]) => ({ name, value }));
 
-  const download = () => downloadObject(signer, bucket, key);
+  const download = () => downloadObject(s3, bucket, key);
 
   const overviewItems: KeyValuePairsProps.Item[] = [
     { label: "Key", value: key },

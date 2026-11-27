@@ -18,8 +18,9 @@ import {
   ON_FAILURE_KIND_IDS,
   STREAM_RECORD_AGE_SECONDS,
   STREAM_RETRY_ATTEMPTS,
-} from "../constants.ts";
-import type { MappingOptions, MappingSource } from "../mappingOptions.ts";
+  type MappingOptions,
+  type MappingSource,
+} from "@localconsole/core/lambda";
 
 const PATTERN_EDITOR_HEIGHT_PX = 120;
 // Pattern lọc theo khóa gốc của từng nguồn (luật AWS): SQS là body, DynamoDB Stream là dynamodb

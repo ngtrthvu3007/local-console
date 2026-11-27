@@ -6,8 +6,7 @@ import type { SegmentedControlProps } from "@cloudscape-design/components/segmen
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { FormSegmentedControl, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { MILLISECONDS_PER_SECOND, formatDate } from "@localconsole/core/shared";
 import { notifyError } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
@@ -15,11 +14,11 @@ import {
   PRESIGN_EXPIRY_OPTIONS,
   PRESIGN_METHOD_LABELS,
   PRESIGN_METHODS,
-} from "../constants.ts";
-import { fileNameOf, s3Uri } from "../helpers.ts";
-import { useS3 } from "../hooks/useS3.ts";
-import { presign } from "../presign.ts";
-import { presignSchema } from "../schemas.ts";
+  fileNameOf,
+  s3Uri,
+  presignSchema,
+} from "@localconsole/core/s3";
+import { useS3Service } from "../hooks/useS3Service.ts";
 
 const METHOD_OPTIONS: SegmentedControlProps.Option[] = PRESIGN_METHODS.map((method) => ({
   id: method,
@@ -45,7 +44,7 @@ interface SignedUrl {
 
 // Chỉ mount khi mở
 export function PresignModal({ bucket, objectKey, onDismiss }: Props) {
-  const { signer } = useS3();
+  const s3 = useS3Service();
   const [signed, setSigned] = useState<SignedUrl>();
   const [creating, setCreating] = useState(false);
   const form = useZodForm(presignSchema, INITIAL_VALUES);
@@ -58,7 +57,7 @@ export function PresignModal({ bucket, objectKey, onDismiss }: Props) {
     setCreating(true);
     const seconds = Number(values.expiresIn);
     try {
-      const url = await presign(signer, {
+      const url = await s3.presign({
         bucket,
         key: objectKey,
         method: values.method,

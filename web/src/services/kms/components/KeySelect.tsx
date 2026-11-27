@@ -4,9 +4,8 @@ import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
 import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { KEY_ARN_PREFIX } from "../constants.ts";
+import { KEY_ARN_PREFIX, KEY_PENDING, kmsKeyIdSchema } from "@localconsole/core/kms";
 import { useKeyOptions } from "../hooks/useKeys.ts";
-import { KEY_PENDING, kmsKeyIdSchema } from "../schemas.ts";
 
 const CUSTOM_VALUE = "custom";
 // Nhãn chung: Lambda chỉ nhận ARN, service khác nhận cả key ID / alias; lỗi của schema nói rõ

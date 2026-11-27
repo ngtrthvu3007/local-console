@@ -9,16 +9,16 @@ import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize, DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { DeleteTablesModal } from "../components/DeleteTablesModal.tsx";
 import { ItemsTab } from "../components/ItemsTab.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
 import { keyText } from "../components/KeyLabel.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { StackLink } from "@shared/StackLink.tsx";
-import { keySchemaOf, useTable } from "../hooks/useTables.ts";
-import { TABLE_TABS, dynamodbRoutes, tableCrumbs } from "../routes.ts";
+import { useTable } from "../hooks/useTables.ts";
+import { keySchemaOf, TABLE_TABS, dynamodbRoutes } from "@localconsole/core/dynamodb";
+import { tableCrumbs } from "../routes.ts";
 
 // "pk String · sk String · 1,204 items · Stream on": thay cho khối overview, để mở tab là thấy dữ liệu
 function tableSummary(table: TableDescription) {

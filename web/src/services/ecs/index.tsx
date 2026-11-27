@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconContainer } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { ECS_ROUTE_PATTERNS, ECS_SERVICE_ID, ecsRoutes } from "./routes.ts";
+import { ECS_ROUTE_PATTERNS, ECS_SERVICE_ID, ecsRoutes } from "@localconsole/core/ecs";
 
 export const ecsService: ServiceDefinition = {
   id: ECS_SERVICE_ID,

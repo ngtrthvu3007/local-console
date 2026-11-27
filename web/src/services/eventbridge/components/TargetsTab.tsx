@@ -5,13 +5,12 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize, lastArnPart } from "@localconsole/core/shared";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { lastArnPart } from "@shared/arn.ts";
 import { useRemoveTargets, useTargets } from "../hooks/useTargets.ts";
-import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
+import { TARGET_KINDS, targetKindOfArn } from "@localconsole/core/eventbridge";
 import { AddTargetModal } from "./AddTargetModal.tsx";
 import { TargetResource } from "./TargetResource.tsx";
 

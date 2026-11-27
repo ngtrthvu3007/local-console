@@ -7,14 +7,12 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { usedByText } from "@shared/format.ts";
+import { NOT_AVAILABLE, usedByText } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { runtimeLabel } from "../apis.ts";
+import { runtimeLabel, appsyncRoutes } from "@localconsole/core/appsync";
 import { useApiUsage } from "../hooks/useApiUsage.ts";
 import { useApiFunctions, useDeleteFunction } from "../hooks/useFunctions.ts";
-import { appsyncRoutes } from "../routes.ts";
 
 const MENU = { edit: "edit", delete: "delete" } as const;
 const LIST_SEPARATOR = ", ";

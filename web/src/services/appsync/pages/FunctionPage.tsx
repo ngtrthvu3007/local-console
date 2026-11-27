@@ -16,14 +16,23 @@ import { skipLeaveGuard, useLeaveGuard } from "@shared/hooks/useLeaveGuard.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { dataSourceOptions, formOfFunction } from "../apis.ts";
+import {
+  dataSourceOptions,
+  formOfFunction,
+  DATA_SOURCE_TYPES,
+  LAMBDA_INVOKE_NOTE,
+  RUNTIME_LABELS,
+  RUNTIMES,
+  templateFor,
+  functionSchema,
+  type FunctionForm,
+  API_TABS,
+  appsyncRoutes,
+} from "@localconsole/core/appsync";
 import { CodeSection, useCodeTemplate } from "../components/CodeSection.tsx";
-import { DATA_SOURCE_TYPES, LAMBDA_INVOKE_NOTE, RUNTIME_LABELS, RUNTIMES } from "../constants.ts";
 import { useDataSources } from "../hooks/useDataSources.ts";
 import { useApiFunctions, useSaveFunction } from "../hooks/useFunctions.ts";
-import { templateFor } from "../resolverTemplates.ts";
-import { API_TABS, apiCrumbs, appsyncRoutes } from "../routes.ts";
-import { functionSchema, type FunctionForm } from "../schemas.ts";
+import { apiCrumbs } from "../routes.ts";
 
 const RUNTIME_ITEMS = Object.values(RUNTIMES).map((value) => ({
   value,

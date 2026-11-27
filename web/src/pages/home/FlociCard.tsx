@@ -8,7 +8,7 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useFlociStatus } from "@shared/hooks/useFlociStatus.ts";
 import { ResetFlociModal } from "./ResetFlociModal.tsx";
 

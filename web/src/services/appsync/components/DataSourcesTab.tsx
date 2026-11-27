@@ -6,13 +6,16 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { usedByText } from "@shared/format.ts";
+import { NOT_AVAILABLE, usedByText } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { TableLink } from "../../dynamodb/components/TableLink.tsx";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
-import { DATA_SOURCE_LABELS, DATA_SOURCE_TYPES, isDataSourceKind } from "../constants.ts";
+import {
+  DATA_SOURCE_LABELS,
+  DATA_SOURCE_TYPES,
+  isDataSourceKind,
+} from "@localconsole/core/appsync";
 import { useApiUsage } from "../hooks/useApiUsage.ts";
 import { useDataSources, useDeleteDataSource } from "../hooks/useDataSources.ts";
 import { DataSourceModal } from "./DataSourceModal.tsx";

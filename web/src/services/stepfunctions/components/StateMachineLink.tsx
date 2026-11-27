@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useStateMachineExists } from "../hooks/useStateMachines.ts";
-import { stepfunctionsRoutes } from "../routes.ts";
+import { stepfunctionsRoutes } from "@localconsole/core/stepfunctions";
 
 // Tên state machine thành link sang trang state machine; dùng ở EventBridge, bước Task lồng nhau
 // và chính Step Functions

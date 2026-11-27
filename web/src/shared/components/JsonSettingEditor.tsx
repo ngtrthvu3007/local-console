@@ -5,7 +5,7 @@ import FormField from "@cloudscape-design/components/form-field";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
-import { jsonError } from "../json.ts";
+import { jsonError } from "@localconsole/core/shared";
 import { ConfirmModal } from "./ConfirmModal.tsx";
 import { ErrorState, type FailableQuery } from "./TableStates.tsx";
 

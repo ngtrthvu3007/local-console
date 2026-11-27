@@ -12,7 +12,8 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { logEventColumns } from "@shared/logs/columns.tsx";
 import { useLogGroup } from "../hooks/useLogGroups.ts";
 import { useStreamEvents } from "../hooks/useLogStreams.ts";
-import { SEARCH_PARAMS, groupCrumbs, logsRoutes } from "../routes.ts";
+import { SEARCH_PARAMS, logsRoutes } from "@localconsole/core/logs";
+import { groupCrumbs } from "../routes.ts";
 
 export function LogStream() {
   const [params] = useSearchParams();

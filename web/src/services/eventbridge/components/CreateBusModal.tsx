@@ -2,9 +2,12 @@ import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { BUS_NAME_MAX_LENGTH, nameConstraint } from "../constants.ts";
+import {
+  BUS_NAME_MAX_LENGTH,
+  nameConstraint,
+  createBusSchema,
+} from "@localconsole/core/eventbridge";
 import { useCreateBus } from "../hooks/useBuses.ts";
-import { createBusSchema } from "../schemas.ts";
 
 // Chỉ mount khi mở
 export function CreateBusModal({ onDismiss }: { onDismiss: () => void }) {

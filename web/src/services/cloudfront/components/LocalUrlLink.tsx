@@ -1,6 +1,6 @@
 import Link from "@cloudscape-design/components/link";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { localUrl } from "../distributions.ts";
+import { localUrl } from "@localconsole/core/cloudfront";
 
 // URL local của distribution, mở tab mới (danh sách distribution, khối ở trang bucket)
 export function LocalUrlLink({ id }: { id: string }) {

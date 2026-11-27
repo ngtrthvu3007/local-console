@@ -7,16 +7,17 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import {
   appConnectionString,
   localConnectionString,
   socatCommand,
   type ClusterRow,
-} from "../clusters.ts";
+  auditLogGroup,
+} from "@localconsole/core/docdb";
+import { TEXT } from "../constants.ts";
 import { clusterSample } from "../codeSamples.ts";
 import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
-import { TEXT, auditLogGroup } from "../constants.ts";
 
 const DETAILS_COLUMNS = 4;
 

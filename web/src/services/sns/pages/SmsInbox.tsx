@@ -11,16 +11,22 @@ import Toggle from "@cloudscape-design/components/toggle";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatDate } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { ClearSmsModal } from "../components/ClearSmsModal.tsx";
 import { PublishSmsModal } from "../components/PublishSmsModal.tsx";
 import { useSmsInbox } from "../hooks/useSms.ts";
-import { SEARCH_PARAMS, smsCrumbs } from "../routes.ts";
-import { formatPhoneNumber, matchesSearch, sentAt, type Sms } from "../smsInbox.ts";
+import {
+  SEARCH_PARAMS,
+  formatPhoneNumber,
+  matchesSearch,
+  sentAt,
+  type Sms,
+} from "@localconsole/core/sns";
+import { smsCrumbs } from "../routes.ts";
 
 const ID_FIELD = "Id";
 const PHONE_NUMBER_STYLE = { whiteSpace: "nowrap" } as const;

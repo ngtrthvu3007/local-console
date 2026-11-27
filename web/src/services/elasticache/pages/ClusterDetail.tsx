@@ -8,8 +8,7 @@ import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { nounFor } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, nounFor } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { StackLink } from "@shared/StackLink.tsx";
 import { DeleteClustersModal } from "../components/DeleteClustersModal.tsx";
@@ -19,11 +18,13 @@ import {
   addressText,
   engineLabel,
   isTransitional,
-  useCluster,
   type Cluster,
-} from "../hooks/useClusters.ts";
+  CLUSTER_TABS,
+  elasticacheRoutes,
+} from "@localconsole/core/elasticache";
+import { useCluster } from "../hooks/useClusters.ts";
 import { useServerInfo } from "../hooks/useRedis.ts";
-import { CLUSTER_TABS, clusterCrumbs, elasticacheRoutes } from "../routes.ts";
+import { clusterCrumbs } from "../routes.ts";
 
 // "Valkey · localhost:6379 · 1,204 keys": thay cho khối overview, để mở tab là thấy danh sách key
 function clusterSummary(cluster: Cluster, keyCount?: number) {

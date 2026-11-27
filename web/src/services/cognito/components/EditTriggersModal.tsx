@@ -3,19 +3,19 @@ import Alert from "@cloudscape-design/components/alert";
 import type { SelectProps } from "@cloudscape-design/components/select";
 import { FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { errorMessage, notifySuccess } from "@shared/hooks/useNotify.ts";
+import { errorMessage, isArnOrQualified } from "@localconsole/core/shared";
+import { notifySuccess } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { isArnOrQualified } from "@shared/arn.ts";
-import { functionNameOfArn } from "../../lambda/helpers.ts";
+import { functionNameOfArn } from "@localconsole/core/lambda";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useUpdateUserPool } from "../hooks/usePools.ts";
-import { triggersSchema } from "../schemas.ts";
 import {
+  triggersSchema,
   LAMBDA_TRIGGERS,
   functionOptionArns,
   toLambdaConfig,
   triggerSelectionOf,
-} from "../triggers.ts";
+} from "@localconsole/core/cognito";
 
 const NONE_OPTION: SelectProps.Option = { value: "", label: "None" };
 const MISSING_SUFFIX = " (not found)";

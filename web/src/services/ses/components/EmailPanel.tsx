@@ -7,10 +7,10 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { downloadBlob } from "@shared/download.ts";
-import { formatBytes } from "@shared/format.ts";
+import { formatBytes } from "@localconsole/core/shared";
 import { HTML_PREVIEW_HEIGHT } from "../constants.ts";
 import { useEmailContent } from "../hooks/useMailbox.ts";
-import { rawText, type Email, type HeaderLine } from "../mailbox.ts";
+import { rawText, type Email, type HeaderLine } from "@localconsole/core/ses";
 import { HtmlPreview } from "./HtmlPreview.tsx";
 
 const previewFrameStyle = { maxHeight: HTML_PREVIEW_HEIGHT, overflow: "auto" } as const;

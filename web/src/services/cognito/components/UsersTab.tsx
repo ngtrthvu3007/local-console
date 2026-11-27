@@ -13,14 +13,22 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { ANY_STATUS, EMAIL_ATTRIBUTE, UNCONFIRMED_STATUS, USER_STATUSES } from "../constants.ts";
-import { useUsers, type UserAction } from "../hooks/useUsers.ts";
-import { cognitoRoutes } from "../routes.ts";
-import { attributeValue, truncateMiddle } from "../users.ts";
+import {
+  ANY_STATUS,
+  EMAIL_ATTRIBUTE,
+  UNCONFIRMED_STATUS,
+  attributeValue,
+  truncateMiddle,
+  type UserAction,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
+import { USER_STATUSES } from "../constants.ts";
+import { useUsers } from "../hooks/useUsers.ts";
 import { CreateUserModal } from "./CreateUserModal.tsx";
 import { UserActionModal } from "./UserActionModal.tsx";
 

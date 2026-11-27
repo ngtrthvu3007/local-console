@@ -1,6 +1,6 @@
 import Box from "@cloudscape-design/components/box";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { statusGroup } from "../status.ts";
+import { statusGroup } from "@localconsole/core/cloudformation";
 import "./StackStatus.css";
 
 // Chỉ dùng phần tử inline: Header của Cloudscape đặt description trong <p>

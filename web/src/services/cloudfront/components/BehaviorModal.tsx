@@ -4,10 +4,15 @@ import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_BEHAVIOR_LABEL, DEFAULT_BEHAVIOR_PATH } from "../constants.ts";
-import { behaviorsOf, originsOf, withBehavior } from "../distributions.ts";
+import {
+  DEFAULT_BEHAVIOR_LABEL,
+  DEFAULT_BEHAVIOR_PATH,
+  behaviorsOf,
+  originsOf,
+  withBehavior,
+  behaviorSchema,
+} from "@localconsole/core/cloudfront";
 import { useUpdateDistribution } from "../hooks/useDistributions.ts";
-import { behaviorSchema } from "../schemas.ts";
 
 interface Props {
   distributionId: string;

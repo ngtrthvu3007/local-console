@@ -1,12 +1,7 @@
 import { AuthFlowType, type UserPoolClientType } from "@aws-sdk/client-cognito-identity-provider";
-import {
-  lines,
-  literal,
-  NODE_AWS_NOTE,
-  PYTHON_AWS_NOTE,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
-import { USER_PASSWORD_AUTH_FLOW } from "./constants.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, NODE_AWS_NOTE, PYTHON_AWS_NOTE, type CodeSample } from "@shared/codeSamples.ts";
+import { USER_PASSWORD_AUTH_FLOW } from "@localconsole/core/cognito";
 
 // Chỗ trống để dev tự điền, như USER / PASSWORD trong URL của MQ
 const USERNAME = literal("USERNAME");

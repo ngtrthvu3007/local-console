@@ -6,8 +6,7 @@ import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { basicAuthorization } from "../credentials.ts";
-import { signInSchema } from "../schemas.ts";
+import { basicAuthorization, signInSchema } from "@localconsole/core/mq";
 
 interface Props {
   brokerName: string;

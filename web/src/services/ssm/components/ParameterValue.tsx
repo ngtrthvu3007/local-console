@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { BreakableText } from "@shared/components/BreakableText.tsx";
-import { SECURE_STRING } from "../constants.ts";
+import { SECURE_STRING } from "@localconsole/core/ssm";
 
 const MASK = "••••••••";
 

@@ -1,4 +1,5 @@
-import { lines, type CodeSample } from "@shared/codeSamples.ts";
+import { lines } from "@localconsole/core/shared";
+import { type CodeSample } from "@shared/codeSamples.ts";
 
 // App đọc connection string từ env DOCDB_URI (chuỗi ở tab Connectivity, điền password)
 export const clusterSample = (): CodeSample => ({

@@ -14,7 +14,7 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { LeaveModal } from "@shared/components/LeaveModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { formatDate } from "@shared/format.ts";
+import { formatDate } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { skipLeaveGuard, useLeaveGuard } from "@shared/hooks/useLeaveGuard.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -24,10 +24,9 @@ import { DeleteFunctionsModal } from "../components/FunctionModals.tsx";
 import { MonitorTab } from "../components/MonitorTab.tsx";
 import { TestTab } from "../components/TestTab.tsx";
 import { TriggersTab } from "../components/TriggersTab.tsx";
-import { logGroupOf } from "../helpers.ts";
+import { logGroupOf, type CodeEdits, FUNCTION_TABS, lambdaRoutes } from "@localconsole/core/lambda";
 import { useFunction } from "../hooks/useFunctions.ts";
-import type { CodeEdits } from "../zipArchive.ts";
-import { FUNCTION_TABS, functionCrumbs, lambdaRoutes } from "../routes.ts";
+import { functionCrumbs } from "../routes.ts";
 
 const OVERVIEW_COLUMNS = 3;
 

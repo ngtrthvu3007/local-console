@@ -1,11 +1,6 @@
-import {
-  lines,
-  literal,
-  NODE_AWS_NOTE,
-  PYTHON_AWS_NOTE,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
-import type { StateMachine } from "./stateMachines.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, NODE_AWS_NOTE, PYTHON_AWS_NOTE, type CodeSample } from "@shared/codeSamples.ts";
+import type { StateMachine } from "@localconsole/core/stepfunctions";
 
 // Chạy state machine từ app, rồi hỏi lại trạng thái
 export function stateMachineSample(machine: StateMachine): CodeSample {

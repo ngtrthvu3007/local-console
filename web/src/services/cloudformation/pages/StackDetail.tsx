@@ -10,8 +10,7 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { formatDate, pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatDate, pluralize } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { DeleteStackModal } from "../components/DeleteStackModal.tsx";
@@ -20,20 +19,24 @@ import { OutputsTab } from "../components/OutputsTab.tsx";
 import { PhysicalIdLink, ResourcesTab } from "../components/ResourcesTab.tsx";
 import { StackStatus } from "../components/StackStatus.tsx";
 import {
-  DELETE_FAILED_HINT,
   DELETE_FAILED_STATUS,
   REVIEW_IN_PROGRESS_STATUS,
-} from "../constants.ts";
+  isStackMissing,
+  editLockReason,
+  isRunning,
+  latestReasons,
+  stubbedResources,
+  STACK_TABS,
+  cloudformationRoutes,
+} from "@localconsole/core/cloudformation";
+import { DELETE_FAILED_HINT } from "../constants.ts";
 import {
   useStack,
   useStackDescription,
   useStackEvents,
   useStackResources,
 } from "../hooks/useStacks.ts";
-import { isStackMissing } from "../stacks.ts";
-import { STACK_TABS, cloudformationRoutes, stackCrumbs } from "../routes.ts";
-import { editLockReason, isRunning } from "../status.ts";
-import { latestReasons, stubbedResources } from "../stub.ts";
+import { stackCrumbs } from "../routes.ts";
 
 function StubAlert({ stack, running }: { stack: string; running: boolean }) {
   const events = useStackEvents(stack, running);

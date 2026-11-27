@@ -7,8 +7,8 @@ import {
   type Path,
 } from "react-hook-form";
 import { FormSelect } from "@shared/components/form/FormFields.tsx";
-import { revisionToSelect } from "../arns.ts";
-import { REVISION_STATUS_STYLES, STATUS } from "../constants.ts";
+import { revisionToSelect, STATUS } from "@localconsole/core/ecs";
+import { REVISION_STATUS_STYLES } from "../constants.ts";
 import { useFamilies, useRevisions } from "../hooks/useTaskDefinitions.ts";
 
 interface Props<TValues extends FieldValues> {

@@ -6,19 +6,20 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { USER_PASSWORD_AUTH_ALERT, USER_PASSWORD_AUTH_FLOW } from "../constants.ts";
-import { useClients } from "../hooks/useClients.ts";
-import type { SignInResult } from "../auth.ts";
-import { useRespondNewPassword, useSignIn } from "../hooks/useTestSignIn.ts";
-import { cognitoRoutes } from "../routes.ts";
 import {
+  USER_PASSWORD_AUTH_FLOW,
   newPasswordSchema,
   signInSchema,
   type NewPasswordForm,
   type SignInForm,
-} from "../schemas.ts";
+  type SignInResult,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
+import { USER_PASSWORD_AUTH_ALERT } from "../constants.ts";
+import { useClients } from "../hooks/useClients.ts";
+import { useRespondNewPassword, useSignIn } from "../hooks/useTestSignIn.ts";
 import { TokenView } from "./TokenView.tsx";
 
 const SIGN_IN_VALUES: SignInForm = { clientId: "", username: "", password: "" };

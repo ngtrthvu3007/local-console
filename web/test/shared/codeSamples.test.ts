@@ -3,15 +3,17 @@ import { apiSample } from "../../src/services/appsync/codeSamples.ts";
 import { distributionSample } from "../../src/services/cloudfront/codeSamples.ts";
 import { clientSample } from "../../src/services/cognito/codeSamples.ts";
 import { tableSample } from "../../src/services/dynamodb/codeSamples.ts";
+import { clusterSample } from "../../src/services/ecs/codeSamples.ts";
 import { streamSample } from "../../src/services/kinesis/codeSamples.ts";
 import { keySample } from "../../src/services/kms/codeSamples.ts";
 import { secretSample } from "../../src/services/secretsmanager/codeSamples.ts";
 import { parameterSample } from "../../src/services/ssm/codeSamples.ts";
 import { brokerUrl } from "../../src/services/mq/codeSamples.ts";
+import { connectionUrl, databaseSample } from "../../src/services/rds/codeSamples.ts";
 import { bucketSample } from "../../src/services/s3/codeSamples.ts";
 import { senderOf } from "../../src/services/ses/codeSamples.ts";
 import { queueSample } from "../../src/services/sqs/codeSamples.ts";
-import type { Queue } from "../../src/services/sqs/queues.ts";
+import type { Queue } from "@localconsole/core/sqs";
 
 const queue = (fifo: boolean, contentBasedDedup: boolean) =>
   ({
@@ -166,5 +168,46 @@ describe("code samples", () => {
 
   it("leaves user and password to fill in the AMQP URL", () => {
     expect(brokerUrl("amqp://172.28.0.4:5672")).toBe("amqp://USER:PASSWORD@172.28.0.4:5672");
+  });
+});
+
+describe("clusterSample", () => {
+  it("runs a task on the cluster with its subnet filled in", () => {
+    const sample = clusterSample("app", "subnet-default-ap-southeast-1-a");
+    for (const code of [sample.node, sample.python]) {
+      expect(code).toContain('"app"');
+      expect(code).toContain('"subnet-default-ap-southeast-1-a"');
+      expect(code).toContain("FARGATE");
+    }
+  });
+});
+
+describe("RDS connect", () => {
+  const machine = { host: "localhost", port: 7001 };
+  const endpoint = { host: "172.28.0.2", port: 7001 };
+
+  it("builds a URL without the password, with the database only when there is one", () => {
+    expect(
+      connectionUrl("postgres", { MasterUsername: "postgres", DBName: "appdb" }, machine),
+    ).toBe("postgresql://postgres@localhost:7001/appdb");
+    expect(connectionUrl("mysql", { MasterUsername: "admin" }, endpoint)).toBe(
+      "mysql://admin@172.28.0.2:7001",
+    );
+  });
+
+  it("reads the password from the environment and names the compose / Lambda endpoint", () => {
+    const sample = databaseSample("mysql", { MasterUsername: "admin" }, machine, endpoint);
+
+    expect(sample.node).toContain("password: process.env.DB_PASSWORD,");
+    expect(sample.node).toContain("DB_HOST=172.28.0.2 DB_PORT=7001");
+    expect(sample.node).not.toContain("database:");
+    expect(sample.python).toContain('password=os.environ["DB_PASSWORD"],');
+  });
+
+  it("uses the postgres database when none was set, with each driver's keyword", () => {
+    const sample = databaseSample("postgres", { MasterUsername: "postgres" }, machine, endpoint);
+
+    expect(sample.node).toContain('database: "postgres",');
+    expect(sample.python).toContain('dbname="postgres",');
   });
 });

@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconWaveSine } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { KINESIS_ROUTE_PATTERNS, KINESIS_SERVICE_ID, kinesisRoutes } from "./routes.ts";
+import {
+  KINESIS_ROUTE_PATTERNS,
+  KINESIS_SERVICE_ID,
+  kinesisRoutes,
+} from "@localconsole/core/kinesis";
 
 export const kinesisService: ServiceDefinition = {
   id: KINESIS_SERVICE_ID,

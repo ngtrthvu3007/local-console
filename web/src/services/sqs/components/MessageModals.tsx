@@ -15,11 +15,18 @@ import { ModalFooter } from "@shared/components/ModalFooter.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
-import { formatDuration, pluralize } from "@shared/format.ts";
+import { formatDuration, pluralize } from "@localconsole/core/shared";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { BODY_EDITOR_HEIGHT_PX } from "../constants.ts";
+import {
+  BODY_EDITOR_HEIGHT_PX,
+  bodyPreview,
+  messageIdPreview,
+  receiveCountOf,
+  sendMessageSchema,
+  type Queue,
+} from "@localconsole/core/sqs";
 import {
   useDeleteMessages,
   usePoll,
@@ -27,9 +34,6 @@ import {
   useSendMessage,
   useStartRedrive,
 } from "../hooks/useMessages.ts";
-import { bodyPreview, messageIdPreview, receiveCountOf } from "../messageText.ts";
-import type { Queue } from "../queues.ts";
-import { sendMessageSchema } from "../schemas.ts";
 
 // Các modal chỉ mount khi mở
 

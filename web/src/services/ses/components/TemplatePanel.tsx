@@ -2,7 +2,7 @@ import Alert from "@cloudscape-design/components/alert";
 import Spinner from "@cloudscape-design/components/spinner";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
 import { HTML_PREVIEW_HEIGHT } from "../constants.ts";
 import { useTemplate } from "../hooks/useTemplates.ts";
 import { HtmlPreview } from "./HtmlPreview.tsx";

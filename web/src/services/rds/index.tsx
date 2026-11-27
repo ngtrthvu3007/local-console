@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconServer } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { RDS_ROUTE_PATTERNS, RDS_SERVICE_ID, rdsRoutes } from "./routes.ts";
+import { RDS_ROUTE_PATTERNS, RDS_SERVICE_ID, rdsRoutes } from "@localconsole/core/rds";
 
 export const rdsService: ServiceDefinition = {
   id: RDS_SERVICE_ID,

@@ -14,8 +14,8 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -23,10 +23,18 @@ import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { DeleteEmailsModal } from "../components/DeleteEmailsModal.tsx";
 import { EmailPanel } from "../components/EmailPanel.tsx";
-import { ADDRESS_SEPARATOR, NO_SUBJECT } from "../constants.ts";
+import {
+  ADDRESS_SEPARATOR,
+  NO_SUBJECT,
+  matchesSearch,
+  recipientsOf,
+  sentAt,
+  type Email,
+  SEARCH_PARAMS,
+  sesRoutes,
+} from "@localconsole/core/ses";
 import { useEmailContent, useMailbox, useMimeFields } from "../hooks/useMailbox.ts";
-import { matchesSearch, recipientsOf, sentAt, type Email } from "../mailbox.ts";
-import { SEARCH_PARAMS, sesBaseCrumbs, sesRoutes } from "../routes.ts";
+import { sesBaseCrumbs } from "../routes.ts";
 
 const ID_FIELD = "Id";
 const ATTACHMENT_ICON = "📎";

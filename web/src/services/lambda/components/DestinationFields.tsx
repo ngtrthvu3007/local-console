@@ -5,7 +5,7 @@ import { FormSelect } from "@shared/components/form/FormFields.tsx";
 import { useBuses } from "../../eventbridge/hooks/useBuses.ts";
 import { useTopics } from "../../sns/hooks/useTopics.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
-import { DESTINATION_KINDS, type DestinationKind } from "../constants.ts";
+import { DESTINATION_KINDS, type DestinationKind } from "@localconsole/core/lambda";
 import { useFunctions } from "../hooks/useFunctions.ts";
 
 interface Props<TValues extends FieldValues> {

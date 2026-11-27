@@ -16,9 +16,9 @@ import {
   VERSIONING_DESCRIPTION,
   VERSIONING_STATUS,
   type VersioningStatus,
-} from "../../constants.ts";
+  versioningSchema,
+} from "@localconsole/core/s3";
 import { useSetVersioning, useVersioning } from "../../hooks/useBucketSettings.ts";
-import { versioningSchema } from "../../schemas.ts";
 
 const STATUS_TYPES: Record<VersioningStatus, StatusIndicatorProps.Type> = {
   Enabled: "success",

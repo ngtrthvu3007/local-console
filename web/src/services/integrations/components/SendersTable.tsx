@@ -1,7 +1,7 @@
 import Header from "@cloudscape-design/components/header";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
-import type { Sender } from "../senders.ts";
+import type { Sender } from "@localconsole/core/integrations";
 
 const COLUMNS: TableProps.ColumnDefinition<Sender>[] = [
   {

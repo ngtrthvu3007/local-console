@@ -13,8 +13,12 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { copyable } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
-import { DETAIL_SEPARATOR, LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import {
+  DETAIL_SEPARATOR,
+  LIST_SEPARATOR,
+  NOT_AVAILABLE,
+  formatDate,
+} from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -25,9 +29,10 @@ import { TasksTable } from "../components/TasksTable.tsx";
 import { UpdateServiceModal } from "../components/UpdateServiceModal.tsx";
 import { SERVICE_STATUS_STYLES } from "../constants.ts";
 import { useCluster } from "../hooks/useClusters.ts";
-import { clusterKey } from "../hooks/useEcs.ts";
+import { clusterKey } from "../hooks/useEcsService.ts";
 import { useService } from "../hooks/useServices.ts";
-import { SERVICE_TABS, clusterCrumbs, ecsRoutes } from "../routes.ts";
+import { SERVICE_TABS, ecsRoutes } from "@localconsole/core/ecs";
+import { clusterCrumbs } from "../routes.ts";
 
 const DETAILS_COLUMNS = 3;
 

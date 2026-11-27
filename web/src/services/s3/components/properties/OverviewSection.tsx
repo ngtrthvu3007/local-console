@@ -7,14 +7,25 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { DETAIL_SEPARATOR, LOADING_PLACEHOLDER } from "@shared/constants.ts";
-import { formatBytes, formatDate, formatTime, pluralize } from "@shared/format.ts";
+import {
+  DETAIL_SEPARATOR,
+  formatBytes,
+  formatDate,
+  formatTime,
+  pluralize,
+} from "@localconsole/core/shared";
+import { LOADING_PLACEHOLDER } from "@shared/constants.ts";
 import { notifyError } from "@shared/hooks/useNotify.ts";
-import { bucketArn, s3Uri } from "../../helpers.ts";
+import {
+  bucketArn,
+  s3Uri,
+  S3_KEY_SERVICE,
+  SSE_KMS_ALGORITHM,
+  SSE_LABELS,
+} from "@localconsole/core/s3";
 import { useBuckets } from "../../hooks/useBuckets.ts";
 import { KeyLink } from "../../../kms/components/KeyLink.tsx";
-import { defaultKeyLabel } from "../../../kms/keys.ts";
-import { S3_KEY_SERVICE, SSE_KMS_ALGORITHM, SSE_LABELS } from "../../constants.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
 import {
   useBucketEncryption,
   useBucketRegion,

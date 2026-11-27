@@ -7,7 +7,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { MultipartUpload } from "@aws-sdk/client-s3";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { formatDate, pluralize } from "@shared/format.ts";
+import { formatDate, pluralize } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useAbortMultipartUploads, useMultipartUploads } from "../../hooks/useBucketSettings.ts";
 

@@ -17,8 +17,14 @@ import Textarea from "@cloudscape-design/components/textarea";
 import type { ZodType } from "zod";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { KeyValueEditor, type KeyValue } from "@shared/components/KeyValueEditor.tsx";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
-import { KEY_USAGES, SYMMETRIC_SPEC } from "../constants.ts";
+import { errorMessage } from "@localconsole/core/shared";
+import {
+  KEY_USAGES,
+  SYMMETRIC_SPEC,
+  preferredRsaAlgorithm,
+  ciphertextSchema,
+  tryItInputSchema,
+} from "@localconsole/core/kms";
 import {
   useDecrypt,
   useEncrypt,
@@ -29,8 +35,6 @@ import {
   useVerify,
   useVerifyMac,
 } from "../hooks/useCrypto.ts";
-import { preferredRsaAlgorithm } from "../keys.ts";
-import { ciphertextSchema, tryItInputSchema } from "../schemas.ts";
 
 const TEXTAREA_ROWS = 3;
 const NOTE =

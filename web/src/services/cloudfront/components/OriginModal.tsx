@@ -14,7 +14,7 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { bucketOptions } from "../../s3/helpers.ts";
+import { bucketOptions } from "@localconsole/core/s3";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import {
   ORIGIN_PORTS,
@@ -22,8 +22,6 @@ import {
   ORIGIN_PROTOCOLS,
   ORIGIN_TYPES,
   type OriginProtocol,
-} from "../constants.ts";
-import {
   bucketOfOriginDomain,
   originFromForm,
   originTypeOf,
@@ -32,9 +30,10 @@ import {
   protocolOf,
   s3OriginDomain,
   withOrigin,
-} from "../distributions.ts";
+  originSchema,
+  type OriginForm,
+} from "@localconsole/core/cloudfront";
 import { useUpdateDistribution } from "../hooks/useDistributions.ts";
-import { originSchema, type OriginForm } from "../schemas.ts";
 
 const TYPE_ITEMS = [
   { value: ORIGIN_TYPES.s3, label: "S3 bucket", description: "A bucket in Floci." },

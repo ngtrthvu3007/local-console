@@ -6,10 +6,14 @@ import Input from "@cloudscape-design/components/input";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { PENDING_WINDOW_DAYS } from "../constants.ts";
+import {
+  PENDING_WINDOW_DAYS,
+  ACTION_ALLOWED,
+  KEY_ACTIONS,
+  type KeyAction,
+  scheduleDeletionSchema,
+} from "@localconsole/core/kms";
 import { useKeyAction, type KeyRow } from "../hooks/useKeys.ts";
-import { ACTION_ALLOWED, KEY_ACTIONS, type KeyAction } from "../keys.ts";
-import { scheduleDeletionSchema } from "../schemas.ts";
 
 // Floci bỏ qua trạng thái key ở service khác (spec 7 #3): nói trước khi tắt / xóa
 const OTHER_SERVICES_NOTE =

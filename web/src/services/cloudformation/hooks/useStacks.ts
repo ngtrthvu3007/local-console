@@ -1,17 +1,14 @@
-import {
-  CreateStackCommand,
-  GetTemplateCommand,
-  GetTemplateSummaryCommand,
-  TemplateStage,
-  UpdateStackCommand,
-} from "@aws-sdk/client-cloudformation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  isNoUpdatesError,
+  isRunning,
+  STACK_POLL_INTERVAL_MS,
+  type StackTemplateInput,
+} from "@localconsole/core/cloudformation";
 import { notifyError, notifyInfo, notifySuccess } from "@shared/hooks/useNotify.ts";
-import { deleteStack, describeStack, listEvents, listResources, listStacks } from "../stacks.ts";
-import { NO_CHANGES_NOTICE, STACK_POLL_INTERVAL_MS } from "../constants.ts";
-import { isNoUpdatesError, isRunning } from "../status.ts";
+import { NO_CHANGES_NOTICE } from "../constants.ts";
+import { useCloudFormationService } from "./useCloudFormationService.ts";
 import { CLOUDFORMATION_QUERY_ROOT, resourceIndexQueryKey } from "./useResourceIndex.ts";
-import { useCloudFormation } from "./useCloudFormation.ts";
 
 const stacksQueryKey = [CLOUDFORMATION_QUERY_ROOT, "stacks"];
 
@@ -24,71 +21,63 @@ const stackQueryKey = (name: string, part?: string) =>
 const pollWhen = (running: boolean) => (running ? STACK_POLL_INTERVAL_MS : false);
 
 export function useStacks() {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
 
   return useQuery({
     queryKey: stacksQueryKey,
-    queryFn: () => listStacks(client),
+    queryFn: cloudformation.listStacks,
     refetchInterval: ({ state }) =>
       pollWhen(Boolean(state.data?.some((stack) => isRunning(stack.StackStatus)))),
   });
 }
 
 export function useStack(name: string) {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
 
   return useQuery({
     queryKey: stackQueryKey(name),
-    queryFn: () => describeStack(client, name),
+    queryFn: () => cloudformation.getStack(name),
     retry: false,
     refetchInterval: ({ state }) => pollWhen(isRunning(state.data?.StackStatus)),
   });
 }
 
 export function useStackDescription(name: string) {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
 
   return useQuery({
     queryKey: stackQueryKey(name, "description"),
-    // Floci không trả Description trong DescribeStacks
-    queryFn: async () =>
-      (await client.send(new GetTemplateSummaryCommand({ StackName: name }))).Description ?? "",
+    queryFn: () => cloudformation.getStackDescription(name),
     retry: false,
   });
 }
 
 export function useStackEvents(name: string, running: boolean) {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
 
   return useQuery({
     queryKey: stackQueryKey(name, "events"),
-    queryFn: () => listEvents(client, name),
+    queryFn: () => cloudformation.listEvents(name),
     refetchInterval: pollWhen(running),
   });
 }
 
 export function useStackResources(name: string, running: boolean) {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
 
   return useQuery({
     queryKey: stackQueryKey(name, "resources"),
-    queryFn: () => listResources(client, name),
+    queryFn: () => cloudformation.listResources(name),
     refetchInterval: pollWhen(running),
   });
 }
 
 export function useStackTemplate(name: string) {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
 
   return useQuery({
     queryKey: stackQueryKey(name, "template"),
-    // Original: Floci trả nguyên văn template đã deploy, kể cả comment (spec 7 #11)
-    queryFn: async () =>
-      (
-        await client.send(
-          new GetTemplateCommand({ StackName: name, TemplateStage: TemplateStage.Original }),
-        )
-      ).TemplateBody ?? "",
+    queryFn: () => cloudformation.getTemplate(name),
     retry: false,
     // Không giữ cache: stack xóa rồi tạo lại cùng tên sẽ mở nhầm template cũ, Deploy ghi đè
     gcTime: 0,
@@ -98,18 +87,11 @@ export function useStackTemplate(name: string) {
 // Báo kết quả ở đây chứ không ở trang: callback của mutate() không chạy khi người dùng đã
 // rời trang. Lỗi thì trang tự hiện dưới editor nếu còn mở (pageOpen), không thì hiện flash
 export function useDeployStack(editing: boolean, pageOpen: () => boolean) {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    // Floci chạy CreateStack đồng bộ (spec 7 #1): xong thì stack đã ở trạng thái cuối
-    mutationFn: ({ name, template }: { name: string; template: string }) => {
-      const input = { StackName: name, TemplateBody: template };
-
-      return editing
-        ? client.send(new UpdateStackCommand(input))
-        : client.send(new CreateStackCommand(input));
-    },
+    mutationFn: (input: StackTemplateInput) => cloudformation.deployStack(input, editing),
     onSuccess: (_, { name }) => {
       notifySuccess(`Deployed stack ${name}`);
 
@@ -129,11 +111,11 @@ export function useDeployStack(editing: boolean, pageOpen: () => boolean) {
 }
 
 export function useDeleteStack() {
-  const client = useCloudFormation();
+  const cloudformation = useCloudFormationService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name: string) => deleteStack(client, name),
+    mutationFn: cloudformation.deleteStack,
     // Không làm mới query của stack vừa xóa: trang chi tiết sẽ nháy not found (400)
     onSuccess: () =>
       Promise.all([

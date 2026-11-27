@@ -6,17 +6,20 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { useWatch } from "react-hook-form";
 import { FormInput, FormSelect, FormTiles } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
+import { FLOCI_ACCOUNT_ID, errorMessage } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { errorMessage, notifySuccess } from "@shared/hooks/useNotify.ts";
+import { notifySuccess } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useIdentities } from "../../ses/hooks/useIdentities.ts";
-import { sesRoutes } from "../../ses/routes.ts";
-import { COGNITO_DEFAULT_SENDER } from "../constants.ts";
+import { sesRoutes } from "@localconsole/core/ses";
+import {
+  COGNITO_DEFAULT_SENDER,
+  toEmailConfiguration,
+  emailFormOf,
+  emailSchema,
+} from "@localconsole/core/cognito";
 import { useUpdateUserPool } from "../hooks/usePools.ts";
-import { toEmailConfiguration } from "../poolUpdate.ts";
-import { emailFormOf, emailSchema } from "../schemas.ts";
 
 interface Props {
   pool: UserPoolType;

@@ -6,9 +6,9 @@ import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
-import { poolTriggerRows } from "../triggers.ts";
+import { poolTriggerRows } from "@localconsole/core/cognito";
 import { EditTriggersModal } from "./EditTriggersModal.tsx";
 
 type TriggerRow = ReturnType<typeof poolTriggerRows>[number];

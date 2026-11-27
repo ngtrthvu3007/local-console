@@ -4,7 +4,7 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useSetUserPassword } from "../hooks/useUsers.ts";
-import { setPasswordSchema, type SetPasswordForm } from "../schemas.ts";
+import { setPasswordSchema, type SetPasswordForm } from "@localconsole/core/cognito";
 
 const INITIAL_VALUES: SetPasswordForm = { password: "", permanent: true };
 

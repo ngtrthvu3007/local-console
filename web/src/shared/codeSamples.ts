@@ -1,3 +1,5 @@
+import { lines } from "@localconsole/core/shared";
+
 // Code mẫu cho app trong thẻ Connect của từng resource: Node.js (AWS SDK v3)
 // và Python (boto3), điền sẵn tên / URL / ARN của resource đó
 export interface CodeSample {
@@ -7,8 +9,6 @@ export interface CodeSample {
 
 // Chuỗi JSON cũng là chuỗi hợp lệ của JS và Python: điền tên resource an toàn
 export const literal = (value: string) => JSON.stringify(value);
-
-export const lines = (...parts: string[]) => parts.join("\n");
 
 // SDK v3 và boto3 tự đọc AWS_ENDPOINT_URL, AWS_REGION từ env nên code mẫu không ghi địa chỉ Floci
 const AWS_ENV_NOTE = [

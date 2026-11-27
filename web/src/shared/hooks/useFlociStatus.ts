@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { FLOCI_SERVICE_RUNNING } from "../constants.ts";
-import { formatTime } from "../format.ts";
+import { FLOCI_SERVICE_RUNNING, formatTime } from "@localconsole/core/shared";
 import { useFlociInfo } from "./useFlociInfo.ts";
 import { useHealth } from "./useHealth.ts";
 

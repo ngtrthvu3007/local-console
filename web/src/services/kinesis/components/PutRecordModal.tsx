@@ -4,10 +4,9 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { KIBIBYTE } from "@shared/constants.ts";
-import { DEFAULT_MAX_RECORD_KIB } from "../constants.ts";
+import { KIBIBYTE } from "@localconsole/core/shared";
+import { DEFAULT_MAX_RECORD_KIB, putRecordSchema } from "@localconsole/core/kinesis";
 import { usePutRecord } from "../hooks/useStreams.ts";
-import { putRecordSchema } from "../schemas.ts";
 
 const DATA_EDITOR_HEIGHT_PX = 200;
 

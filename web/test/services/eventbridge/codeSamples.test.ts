@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ruleSample, scheduleSample } from "../../../src/services/eventbridge/codeSamples.ts";
-import type { Rule } from "../../../src/services/eventbridge/rules.ts";
-import type { Schedule } from "../../../src/services/eventbridge/schedules.ts";
+import type { Rule, Schedule } from "@localconsole/core/eventbridge";
 
 describe("ruleSample", () => {
   const rule: Rule = { name: "r", bus: "orders", arn: "arn", enabled: true };

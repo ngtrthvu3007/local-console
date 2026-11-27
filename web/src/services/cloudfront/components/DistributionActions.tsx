@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ButtonDropdownProps } from "@cloudscape-design/components/button-dropdown";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { withEnabled } from "../distributions.ts";
+import { withEnabled } from "@localconsole/core/cloudfront";
 import { useDeleteDistribution, useUpdateDistribution } from "../hooks/useDistributions.ts";
 
 const ACTIONS = { enable: "enable", disable: "disable", delete: "delete" } as const;

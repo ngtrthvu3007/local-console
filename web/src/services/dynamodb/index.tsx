@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconDatabase } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { DYNAMODB_ROUTE_PATTERNS, DYNAMODB_SERVICE_ID, dynamodbRoutes } from "./routes.ts";
+import {
+  DYNAMODB_ROUTE_PATTERNS,
+  DYNAMODB_SERVICE_ID,
+  dynamodbRoutes,
+} from "@localconsole/core/dynamodb";
 
 export const dynamodbService: ServiceDefinition = {
   id: DYNAMODB_SERVICE_ID,

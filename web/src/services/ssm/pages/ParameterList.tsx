@@ -11,8 +11,8 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatDate } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -20,7 +20,8 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { DeleteParametersModal } from "../components/DeleteParametersModal.tsx";
 import { useParameters } from "../hooks/useParameters.ts";
-import { ssmBaseCrumbs, ssmRoutes } from "../routes.ts";
+import { ssmRoutes } from "@localconsole/core/ssm";
+import { ssmBaseCrumbs } from "../routes.ts";
 
 const NAME_FIELD = "Name";
 

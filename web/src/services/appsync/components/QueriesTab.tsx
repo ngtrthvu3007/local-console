@@ -16,14 +16,12 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import { proxyEndpoint } from "@shared/aws.ts";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, errorMessage, reformatJson } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
-import { reformatJson } from "@shared/json.ts";
 import { useClients } from "../../cognito/hooks/useClients.ts";
 import { useSignIn } from "../../cognito/hooks/useTestSignIn.ts";
-import { cognitoRoutes } from "../../cognito/routes.ts";
+import { cognitoRoutes } from "@localconsole/core/cognito";
 import {
   authTypesOf,
   managedPoolOf,
@@ -31,17 +29,18 @@ import {
   parseVariables,
   queryAlert,
   tokenExpired,
-} from "../apis.ts";
-import {
   AUTH_DIRECTIVES,
   AUTH_LABELS,
   AUTH_TYPES,
   QUERY_ALERTS,
   type AuthType,
-} from "../constants.ts";
-import { graphqlRequest, type QueryAuth } from "../graphqlRequest.ts";
-import { isValidKey, useApiKeys } from "../hooks/useApiKeys.ts";
-import { API_TABS, appsyncRoutes } from "../routes.ts";
+  graphqlRequest,
+  type QueryAuth,
+  isValidKey,
+  API_TABS,
+  appsyncRoutes,
+} from "@localconsole/core/appsync";
+import { useApiKeys } from "../hooks/useApiKeys.ts";
 
 const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));
 const QUERY_EDITOR_HEIGHT_PX = 240;

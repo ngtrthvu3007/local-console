@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { fetchJson } from "@shared/api.ts";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { TerminalBlock } from "@shared/components/TerminalBlock.tsx";
-import { FLOCI_PATHS, FLOCI_RESTART_COMMAND } from "@shared/constants.ts";
+import { FLOCI_RESTART_COMMAND } from "@shared/constants.ts";
+import { useFlociService } from "@shared/hooks/useFlociService.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 
 const CONFIRM_RESET = "reset";
@@ -13,9 +13,10 @@ const CONFIRM_RESET = "reset";
 // Không resetQueries: nó xóa cả config, Layout tháo trang nên modal mất trước khi kịp báo thành công
 function useResetFloci() {
   const queryClient = useQueryClient();
+  const floci = useFlociService();
 
   return useMutation({
-    mutationFn: () => fetchJson(FLOCI_PATHS.reset, { method: "POST" }),
+    mutationFn: floci.resetData,
     onSuccess: () => queryClient.invalidateQueries(),
   });
 }

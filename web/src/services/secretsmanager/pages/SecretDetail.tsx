@@ -10,10 +10,8 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { isNotFoundError } from "@shared/aws.ts";
+import { isNotFoundError, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { pageState } from "@shared/components/PageState.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -24,9 +22,14 @@ import { RotationSection } from "../components/RotationSection.tsx";
 import { SecretValue } from "../components/SecretValue.tsx";
 import { useSecret } from "../hooks/useSecrets.ts";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import { SCHEDULED_FOR_DELETION, SECRETS_KEY_SERVICE } from "../constants.ts";
-import { SEARCH_PARAMS, secretCrumbs, secretsRoutes } from "../routes.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
+import {
+  SCHEDULED_FOR_DELETION,
+  SECRETS_KEY_SERVICE,
+  SEARCH_PARAMS,
+  secretsRoutes,
+} from "@localconsole/core/secretsmanager";
+import { secretCrumbs } from "../routes.ts";
 
 const MODALS = { description: "description", delete: "delete" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];

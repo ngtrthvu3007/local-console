@@ -6,13 +6,13 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { usedByText } from "@shared/format.ts";
+import { NOT_AVAILABLE, usedByText } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { BucketLink } from "../../s3/components/BucketLink.tsx";
-import { ORIGIN_TYPES, type OriginProtocol } from "../constants.ts";
 import {
+  ORIGIN_TYPES,
+  type OriginProtocol,
   behaviorsUsing,
   bucketOfOriginDomain,
   originTypeOf,
@@ -20,7 +20,7 @@ import {
   portOf,
   protocolOf,
   withoutOrigin,
-} from "../distributions.ts";
+} from "@localconsole/core/cloudfront";
 import { useUpdateDistribution } from "../hooks/useDistributions.ts";
 import { OriginModal } from "./OriginModal.tsx";
 

@@ -9,14 +9,17 @@ import jsonHighlight from "@cloudscape-design/code-view/highlight/json";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError, type FailableQuery } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import {
+  DETAIL_SEPARATOR,
+  NOT_AVAILABLE,
+  formatDate,
+  reformatJson,
+} from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
-import { reformatJson } from "@shared/json.ts";
+import { formatElapsed, type StepRow, SEARCH_PARAMS } from "@localconsole/core/stepfunctions";
 import { COLLAPSE_CHILDREN_LIMIT, STEP_STATUS_STYLES, TRUNCATED_NOTE } from "../constants.ts";
-import { SEARCH_PARAMS } from "../routes.ts";
-import { formatElapsed, type StepRow } from "../steps.ts";
 import { StepStatusIndicator } from "./ExecutionStatus.tsx";
 import { TaskResourceLink } from "./TaskResourceLink.tsx";
 

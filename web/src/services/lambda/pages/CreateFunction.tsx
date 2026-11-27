@@ -12,18 +12,20 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { CODE_TEMPLATES, inlineLanguageOf } from "../codeTemplates.ts";
 import {
+  CODE_TEMPLATES,
+  inlineLanguageOf,
   DEFAULT_RUNTIME,
   FUNCTION_NAME_MAX_LENGTH,
   MEMORY_LIMITS_MB,
   RUNTIME_OPTIONS,
   TIMEOUT_LIMITS_SECONDS,
-} from "../constants.ts";
+  createFunctionSchema,
+  zipPackage,
+  lambdaRoutes,
+} from "@localconsole/core/lambda";
 import { useCreateFunction } from "../hooks/useFunctions.ts";
-import { lambdaBaseCrumbs, lambdaRoutes } from "../routes.ts";
-import { createFunctionSchema } from "../schemas.ts";
-import { zipPackage } from "../zipArchive.ts";
+import { lambdaBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `1–${FUNCTION_NAME_MAX_LENGTH} characters: letters, numbers, hyphens and underscores.`;
 const MEMORY_CONSTRAINT = `${MEMORY_LIMITS_MB.min}–${MEMORY_LIMITS_MB.max} MB.`;

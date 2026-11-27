@@ -6,16 +6,19 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { cognitoRoutes } from "../../cognito/routes.ts";
+import { cognitoRoutes } from "@localconsole/core/cognito";
 import {
   AUTHORIZER_TYPES,
   INTEGRATION_TYPES,
   JWT_ISSUER_LABEL,
   LOCAL_ISSUER_POPOVER,
-} from "../constants.ts";
-import { authorizerTypeLabel, cognitoPoolIdOfProviderArn, isLocalIssuer } from "../authorizers.ts";
-import { useAuthorizers, type AuthorizerRow } from "../hooks/useApiDetail.ts";
-import type { ApiVersion } from "../routes.ts";
+  authorizerTypeLabel,
+  cognitoPoolIdOfProviderArn,
+  isLocalIssuer,
+  type AuthorizerRow,
+  type ApiVersion,
+} from "@localconsole/core/apigateway";
+import { useAuthorizers } from "../hooks/useApiDetail.ts";
 import { IntegrationValue } from "./IntegrationValue.tsx";
 
 export function AuthorizersTab({ version, apiId }: { version: ApiVersion; apiId: string }) {

@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconBucket } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { S3_ROUTE_PATTERNS, S3_SERVICE_ID, s3Routes } from "./routes.ts";
+import { S3_ROUTE_PATTERNS, S3_SERVICE_ID, s3Routes } from "@localconsole/core/s3";
 
 export const s3Service: ServiceDefinition = {
   id: S3_SERVICE_ID,

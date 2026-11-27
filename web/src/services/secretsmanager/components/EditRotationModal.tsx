@@ -11,9 +11,13 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import { ROTATION_DAYS, SCHEDULE_TYPES } from "../constants.ts";
+import {
+  ROTATION_DAYS,
+  SCHEDULE_TYPES,
+  rotationFormValues,
+  rotationSchema,
+} from "@localconsole/core/secretsmanager";
 import { useCancelRotation, useConfigureRotation } from "../hooks/useSecrets.ts";
-import { rotationFormValues, rotationSchema } from "../schemas.ts";
 
 const SCHEDULE_ITEMS = [
   { value: "days", label: SCHEDULE_TYPES.days, description: "Rotate every N days." },

@@ -1,5 +1,5 @@
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { BROKER_RUNNING, FAILED_STATES } from "../constants.ts";
+import { BROKER_RUNNING, FAILED_STATES } from "@localconsole/core/mq";
 
 // Chỉ hiện khi khác RUNNING: tô xanh mọi dòng chỉ gây nhiễu
 export function BrokerStatus({ state }: { state?: string }) {

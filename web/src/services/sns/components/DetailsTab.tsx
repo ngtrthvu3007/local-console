@@ -13,7 +13,7 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { topicSample } from "../codeSamples.ts";
-import { topicTypeLabel, type Topic } from "../topics.ts";
+import { topicTypeLabel, type Topic } from "@localconsole/core/sns";
 
 const DETAILS_COLUMNS = 3;
 const CONNECT_COLUMNS = 2;

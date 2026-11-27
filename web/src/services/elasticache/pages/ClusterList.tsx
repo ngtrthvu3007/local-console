@@ -13,16 +13,22 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { ClusterStatus } from "../components/ClusterStatus.tsx";
 import { DeleteClustersModal } from "../components/DeleteClustersModal.tsx";
-import { addressText, engineLabel, useClusters, type Cluster } from "../hooks/useClusters.ts";
-import { elasticacheBaseCrumbs, elasticacheRoutes } from "../routes.ts";
+import {
+  addressText,
+  engineLabel,
+  type Cluster,
+  elasticacheRoutes,
+} from "@localconsole/core/elasticache";
+import { useClusters } from "../hooks/useClusters.ts";
+import { elasticacheBaseCrumbs } from "../routes.ts";
 
 const ID_FIELD = "id";
 

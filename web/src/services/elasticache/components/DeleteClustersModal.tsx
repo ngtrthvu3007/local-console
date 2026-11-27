@@ -1,7 +1,8 @@
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { CONFIRM_DELETE } from "@shared/components/ConfirmModal.tsx";
 import Alert from "@cloudscape-design/components/alert";
-import { useDeleteClusters, type Cluster } from "../hooks/useClusters.ts";
+import type { Cluster } from "@localconsole/core/elasticache";
+import { useDeleteClusters } from "../hooks/useClusters.ts";
 
 interface Props {
   clusters: readonly Cluster[];

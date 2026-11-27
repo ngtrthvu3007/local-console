@@ -5,10 +5,8 @@ import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
-import { INSTANCE_STATES } from "../constants.ts";
-import { instanceId, stateOf } from "../instances.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { INSTANCE_STATES, instanceId, stateOf } from "@localconsole/core/ec2";
 import { InstanceStatus } from "./InstanceStatus.tsx";
 import { OsIcon } from "./OsIcon.tsx";
 

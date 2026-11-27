@@ -20,10 +20,11 @@ import {
   SORT_KEY_OPERATORS,
   VALUELESS_FILTER_OPERATORS,
   type FilterOperator,
-} from "../constants.ts";
-import type { ItemSearch } from "../expressions.ts";
-import { keySchemaOf } from "../hooks/useTables.ts";
-import { itemSearchSchema, type ItemSearchForm } from "../schemas.ts";
+  keySchemaOf,
+  itemSearchSchema,
+  type ItemSearchForm,
+  type ItemSearch,
+} from "@localconsole/core/dynamodb";
 import { KeyLabel } from "./KeyLabel.tsx";
 
 const MODE_OPTIONS = [

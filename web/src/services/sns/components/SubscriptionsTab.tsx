@@ -5,17 +5,20 @@ import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { truncate } from "@shared/format.ts";
+import { NOT_AVAILABLE, truncate, lastArnPart } from "@localconsole/core/shared";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { lastArnPart } from "@shared/arn.ts";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
-import { ENDPOINT_PREVIEW_LENGTH, RAW_DELIVERY_PROTOCOLS } from "../constants.ts";
-import { summarizeFilterPolicy } from "../filterPolicy.ts";
+import {
+  ENDPOINT_PREVIEW_LENGTH,
+  RAW_DELIVERY_PROTOCOLS,
+  summarizeFilterPolicy,
+  protocolLabel,
+  type Subscription,
+  type Topic,
+} from "@localconsole/core/sns";
 import { useSubscriptions } from "../hooks/useSubscriptions.ts";
-import { protocolLabel, type Subscription, type Topic } from "../topics.ts";
 import {
   CreateSubscriptionModal,
   DeleteSubscriptionsModal,

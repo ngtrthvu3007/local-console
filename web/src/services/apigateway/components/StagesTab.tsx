@@ -3,13 +3,18 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { STAGES_DESCRIPTION, URL_LABELS } from "../constants.ts";
-import { useStages, type StageRow } from "../hooks/useApiDetail.ts";
-import { connectionsUrl, restInvokeUrl, webSocketUrl } from "../invokeUrl.ts";
-import type { ApiVersion } from "../routes.ts";
+import {
+  STAGES_DESCRIPTION,
+  URL_LABELS,
+  connectionsUrl,
+  restInvokeUrl,
+  webSocketUrl,
+  type StageRow,
+  type ApiVersion,
+} from "@localconsole/core/apigateway";
+import { useStages } from "../hooks/useApiDetail.ts";
 
 interface Props {
   version: ApiVersion;

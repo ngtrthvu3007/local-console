@@ -9,7 +9,7 @@ import TreeView from "@cloudscape-design/components/tree-view";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { useResources } from "../hooks/useApiDetail.ts";
-import { resourceTree, type ResourceNode } from "../resources.ts";
+import { resourceTree, type ResourceNode } from "@localconsole/core/apigateway";
 import { MethodOverview } from "./MethodOverview.tsx";
 
 interface TreeItem {

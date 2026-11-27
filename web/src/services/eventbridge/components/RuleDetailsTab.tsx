@@ -8,14 +8,12 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, reformatJson } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { reformatJson } from "@shared/json.ts";
 import { ruleSample } from "../codeSamples.ts";
-import { RULE_TYPES } from "../constants.ts";
-import { ruleType, type Rule } from "../rules.ts";
-import { eventbridgeRoutes } from "../routes.ts";
+import { RULE_TYPES, ruleType, type Rule, eventbridgeRoutes } from "@localconsole/core/eventbridge";
 
 const DETAILS_COLUMNS = 3;
 

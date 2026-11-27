@@ -4,10 +4,15 @@ import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyError, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { GROUP_NAME_RULE, NEVER_EXPIRE, RETENTION_OPTIONS } from "../constants.ts";
+import {
+  GROUP_NAME_RULE,
+  NEVER_EXPIRE,
+  RETENTION_OPTIONS,
+  createLogGroupSchema,
+  retentionDays,
+  logsRoutes,
+} from "@localconsole/core/logs";
 import { useCreateLogGroup } from "../hooks/useLogGroups.ts";
-import { logsRoutes } from "../routes.ts";
-import { createLogGroupSchema, retentionDays } from "../schemas.ts";
 
 // Ô Retention dùng chung cho form tạo và Edit retention: chỉ có giá trị AWS cho phép
 export function RetentionSelect<TValues extends FieldValues>({

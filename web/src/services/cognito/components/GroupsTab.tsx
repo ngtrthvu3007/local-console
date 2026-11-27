@@ -14,14 +14,14 @@ import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useDeleteGroups, useGroups } from "../hooks/useGroups.ts";
-import { cognitoRoutes } from "../routes.ts";
+import { cognitoRoutes } from "@localconsole/core/cognito";
 import { CreateGroupModal } from "./CreateGroupModal.tsx";
 
 const NAME_FIELD = "GroupName";

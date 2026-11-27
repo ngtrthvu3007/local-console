@@ -10,8 +10,8 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { formatBytes, formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatBytes, formatDate } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -19,9 +19,9 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { CreateLogGroupModal } from "../components/CreateLogGroupModal.tsx";
 import { DeleteLogGroupsModal } from "../components/DeleteLogGroupsModal.tsx";
-import { retentionLabel } from "../constants.ts";
+import { retentionLabel, logsRoutes } from "@localconsole/core/logs";
 import { useLogGroups } from "../hooks/useLogGroups.ts";
-import { logsBaseCrumbs, logsRoutes } from "../routes.ts";
+import { logsBaseCrumbs } from "../routes.ts";
 
 const ID_FIELD = "logGroupName";
 

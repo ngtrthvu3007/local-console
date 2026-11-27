@@ -5,9 +5,13 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useStreams } from "../../kinesis/hooks/useStreams.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import { DESTINATION_TYPES, STREAM_NAME_RULE, TEXT } from "../constants.ts";
+import {
+  DESTINATION_TYPES,
+  STREAM_NAME_RULE,
+  TEXT,
+  subscriptionFilterSchema,
+} from "@localconsole/core/logs";
 import { usePutSubscriptionFilter } from "../hooks/useSubscriptionFilters.ts";
-import { subscriptionFilterSchema } from "../schemas.ts";
 
 const TYPE_ITEMS = Object.entries(DESTINATION_TYPES).map(([value, label]) => ({ value, label }));
 const DESCRIPTIONS = { lambda: TEXT.lambdaDestination, kinesis: TEXT.kinesisDestination };

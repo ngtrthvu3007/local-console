@@ -5,7 +5,7 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -16,7 +16,8 @@ import { GeneralTab } from "../components/GeneralTab.tsx";
 import { InvalidationsTab } from "../components/InvalidationsTab.tsx";
 import { OriginsTab } from "../components/OriginsTab.tsx";
 import { useDistribution } from "../hooks/useDistributions.ts";
-import { DISTRIBUTION_TABS, cloudfrontRoutes, distributionCrumbs } from "../routes.ts";
+import { DISTRIBUTION_TABS, cloudfrontRoutes } from "@localconsole/core/cloudfront";
+import { distributionCrumbs } from "../routes.ts";
 
 export function DistributionDetail() {
   const { distributionId: id = "" } = useParams();

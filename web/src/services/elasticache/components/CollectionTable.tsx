@@ -12,12 +12,12 @@ import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { PANEL_LIST_WIDTH_PX, VALUE_PREVIEW_MAX_LENGTH } from "../constants.ts";
 import { useUpdateKey, type KeyValueQuery } from "../hooks/useRedis.ts";
-import type { CollectionKind } from "../schemas.ts";
+import type { CollectionKind } from "../redisSchemas.ts";
 import { ElementModal, type ElementTarget } from "./ElementModal.tsx";
 
 type CollectionValue = Extract<KeyValue, { kind: CollectionKind }>;

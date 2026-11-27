@@ -8,13 +8,13 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { CONFIRM_PERMANENT_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes, formatDate } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatBytes, formatDate } from "@localconsole/core/shared";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { useObjectHistory, useRestoreVersion, type VersionEntry } from "../hooks/useObject.ts";
+import type { VersionEntry } from "@localconsole/core/s3";
+import { useObjectHistory, useRestoreVersion } from "../hooks/useObject.ts";
 import { useDeleteObjects } from "../hooks/useObjects.ts";
-import { useS3 } from "../hooks/useS3.ts";
-import { downloadObject } from "../presign.ts";
+import { useS3Service } from "../hooks/useS3Service.ts";
+import { downloadObject } from "../downloadObject.ts";
 
 // Version ID kèm nhãn "Latest" cho bản mới nhất; dùng ở cả bảng Objects
 export function VersionIdLabel({
@@ -57,7 +57,7 @@ const COLUMNS: TableProps.ColumnDefinition<VersionEntry>[] = [
 ];
 
 export function ObjectVersions({ bucket, objectKey }: { bucket: string; objectKey: string }) {
-  const { signer } = useS3();
+  const s3 = useS3Service();
   const { ref, compact } = useIsCompact();
   const history = useObjectHistory(bucket, objectKey);
   const restore = useRestoreVersion(bucket);
@@ -69,7 +69,7 @@ export function ObjectVersions({ bucket, objectKey }: { bucket: string; objectKe
   const refresh = () => history.refetch();
 
   const download = () =>
-    usableVersion && downloadObject(signer, bucket, objectKey, usableVersion.VersionId);
+    usableVersion && downloadObject(s3, bucket, objectKey, usableVersion.VersionId);
 
   const restoreSelected = () =>
     usableVersion &&

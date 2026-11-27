@@ -1,40 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { CORSRule, LifecycleRule, NotificationConfiguration } from "@aws-sdk/client-s3";
 import {
-  AbortMultipartUploadCommand,
-  DeleteBucketCorsCommand,
-  DeleteBucketLifecycleCommand,
-  DeleteBucketPolicyCommand,
-  DeleteBucketTaggingCommand,
-  GetBucketCorsCommand,
-  GetBucketEncryptionCommand,
-  GetBucketLifecycleConfigurationCommand,
-  GetBucketLocationCommand,
-  GetBucketNotificationConfigurationCommand,
-  GetBucketPolicyCommand,
-  GetBucketTaggingCommand,
-  GetBucketVersioningCommand,
-  ListMultipartUploadsCommand,
-  PutBucketCorsCommand,
-  PutBucketLifecycleConfigurationCommand,
-  PutBucketNotificationConfigurationCommand,
-  PutBucketPolicyCommand,
-  PutBucketTaggingCommand,
-  PutBucketVersioningCommand,
-  type CORSRule,
-  type LifecycleRule,
-  type NotificationConfiguration,
-} from "@aws-sdk/client-s3";
-import { orEmptyWhenNotFound } from "@shared/aws.ts";
-import type { Tag } from "@shared/components/TagsModal.tsx";
-import { bucketQueryKey } from "./useBuckets.ts";
-import { useS3 } from "./useS3.ts";
-import {
-  REGION_WITHOUT_LOCATION_CONSTRAINT,
   VERSIONING_STATUS,
+  type MultipartUploadReference,
   type VersioningStatus,
-} from "../constants.ts";
-import { fromS3TagSet, toS3TagSet } from "../helpers.ts";
-import { bucketTotals } from "../operations.ts";
+} from "@localconsole/core/s3";
+import type { KeyValue } from "@localconsole/core/shared";
+import { bucketQueryKey } from "./useBuckets.ts";
+import { useS3Service } from "./useS3Service.ts";
 
 const SETTINGS = {
   region: "region",
@@ -50,7 +23,6 @@ const SETTINGS = {
 } as const;
 type Setting = (typeof SETTINGS)[keyof typeof SETTINGS];
 
-// Đọc một cấu hình của bucket
 function useBucketSetting<T>(bucket: string, setting: Setting, read: () => Promise<T>) {
   return useQuery({ queryKey: bucketQueryKey(bucket, setting), queryFn: read });
 }
@@ -62,6 +34,7 @@ function useBucketSettingMutation<TInput>(
   write: (input: TInput) => Promise<unknown>,
 ) {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: write,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: bucketQueryKey(bucket, setting) }),
@@ -70,40 +43,31 @@ function useBucketSettingMutation<TInput>(
 
 // Duyệt cả bucket nên chỉ chạy khi người dùng bấm (refetch), không tự chạy khi mở tab
 export function useBucketTotalSize(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useQuery({
     queryKey: bucketQueryKey(bucket, SETTINGS.totalSize),
-    queryFn: () => bucketTotals(s3, bucket),
+    queryFn: () => s3.bucketTotals(bucket),
     enabled: false,
   });
 }
 
 export function useBucketRegion(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.region, async () => {
-    const response = await s3.send(new GetBucketLocationCommand({ Bucket: bucket }));
-    return response.LocationConstraint || REGION_WITHOUT_LOCATION_CONSTRAINT;
-  });
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.region, () => s3.getBucketRegion(bucket));
 }
 
-// Mã hóa mặc định: Floci trả AES256 khi bucket chưa đặt (không 404, spec KMS 7 #10)
 export function useBucketEncryption(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.encryption, async () => {
-    const { ServerSideEncryptionConfiguration } = await s3.send(
-      new GetBucketEncryptionCommand({ Bucket: bucket }),
-    );
-    const rule = ServerSideEncryptionConfiguration?.Rules?.[0]?.ApplyServerSideEncryptionByDefault;
-    return { algorithm: rule?.SSEAlgorithm ?? "", keyId: rule?.KMSMasterKeyID ?? "" };
-  });
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.encryption, () => s3.getBucketEncryption(bucket));
 }
 
 export function useVersioning(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.versioning, async (): Promise<VersioningStatus> => {
-    const response = await s3.send(new GetBucketVersioningCommand({ Bucket: bucket }));
-    return response.Status ?? VERSIONING_STATUS.disabled;
-  });
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.versioning, () => s3.getVersioning(bucket));
 }
 
 // Chưa tải xong thì coi như chưa bật
@@ -113,169 +77,99 @@ export function useIsVersioned(bucket: string) {
 }
 
 export function useSetVersioning(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useBucketSettingMutation(
     bucket,
     SETTINGS.versioning,
-    (status: Exclude<VersioningStatus, "Disabled">) =>
-      s3.send(
-        new PutBucketVersioningCommand({
-          Bucket: bucket,
-          VersioningConfiguration: { Status: status },
-        }),
-      ),
+    (status: Exclude<VersioningStatus, "Disabled">) => s3.setVersioning(bucket, status),
   );
 }
 
 export function useBucketTags(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.tags, () =>
-    orEmptyWhenNotFound(
-      async () =>
-        fromS3TagSet((await s3.send(new GetBucketTaggingCommand({ Bucket: bucket }))).TagSet),
-      [] as Tag[],
-    ),
-  );
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.tags, () => s3.getBucketTags(bucket));
 }
 
 export function useSaveBucketTags(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSettingMutation(bucket, SETTINGS.tags, (tags: Tag[]) =>
-    tags.length
-      ? s3.send(
-          new PutBucketTaggingCommand({ Bucket: bucket, Tagging: { TagSet: toS3TagSet(tags) } }),
-        )
-      : s3.send(new DeleteBucketTaggingCommand({ Bucket: bucket })),
+  const s3 = useS3Service();
+
+  return useBucketSettingMutation(bucket, SETTINGS.tags, (tags: KeyValue[]) =>
+    s3.saveBucketTags(bucket, tags),
   );
 }
 
 export function useBucketPolicy(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.policy, () =>
-    orEmptyWhenNotFound(
-      async () => (await s3.send(new GetBucketPolicyCommand({ Bucket: bucket }))).Policy ?? null,
-      null as string | null,
-    ),
-  );
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.policy, () => s3.getBucketPolicy(bucket));
 }
 
-// null = xóa policy
 export function useSaveBucketPolicy(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useBucketSettingMutation(bucket, SETTINGS.policy, (policy: string | null) =>
-    policy
-      ? s3.send(new PutBucketPolicyCommand({ Bucket: bucket, Policy: policy }))
-      : s3.send(new DeleteBucketPolicyCommand({ Bucket: bucket })),
+    s3.saveBucketPolicy(bucket, policy),
   );
 }
 
 export function useBucketCors(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.cors, () =>
-    orEmptyWhenNotFound(
-      async () => (await s3.send(new GetBucketCorsCommand({ Bucket: bucket }))).CORSRules ?? null,
-      null as CORSRule[] | null,
-    ),
-  );
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.cors, () => s3.getBucketCors(bucket));
 }
 
-// null hoặc mảng rỗng = xóa CORS
 export function useSaveBucketCors(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useBucketSettingMutation(bucket, SETTINGS.cors, (rules: CORSRule[] | null) =>
-    rules?.length
-      ? s3.send(
-          new PutBucketCorsCommand({ Bucket: bucket, CORSConfiguration: { CORSRules: rules } }),
-        )
-      : s3.send(new DeleteBucketCorsCommand({ Bucket: bucket })),
+    s3.saveBucketCors(bucket, rules),
   );
 }
 
 export function useLifecycleRules(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(bucket, SETTINGS.lifecycle, () =>
-    orEmptyWhenNotFound(
-      async () =>
-        (await s3.send(new GetBucketLifecycleConfigurationCommand({ Bucket: bucket }))).Rules ?? [],
-      [] as LifecycleRule[],
-    ),
-  );
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.lifecycle, () => s3.getLifecycleRules(bucket));
 }
 
-// S3 không có API sửa từng rule: ghi lại toàn bộ, hết rule thì xóa cấu hình
 export function useSaveLifecycleRules(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useBucketSettingMutation(bucket, SETTINGS.lifecycle, (rules: LifecycleRule[]) =>
-    rules.length
-      ? s3.send(
-          new PutBucketLifecycleConfigurationCommand({
-            Bucket: bucket,
-            LifecycleConfiguration: { Rules: rules },
-          }),
-        )
-      : s3.send(new DeleteBucketLifecycleCommand({ Bucket: bucket })),
+    s3.saveLifecycleRules(bucket, rules),
   );
 }
 
 export function useBucketNotifications(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(
-    bucket,
-    SETTINGS.notifications,
-    async (): Promise<NotificationConfiguration> => {
-      const { $metadata: _metadata, ...configuration } = await s3.send(
-        new GetBucketNotificationConfigurationCommand({ Bucket: bucket }),
-      );
-      return configuration;
-    },
-  );
+  const s3 = useS3Service();
+
+  return useBucketSetting(bucket, SETTINGS.notifications, () => s3.getBucketNotifications(bucket));
 }
 
 export function useSaveBucketNotifications(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useBucketSettingMutation(
     bucket,
     SETTINGS.notifications,
-    (configuration: NotificationConfiguration) =>
-      s3.send(
-        new PutBucketNotificationConfigurationCommand({
-          Bucket: bucket,
-          NotificationConfiguration: configuration,
-        }),
-      ),
+    (configuration: NotificationConfiguration) => s3.saveBucketNotifications(bucket, configuration),
   );
 }
 
 export function useMultipartUploads(bucket: string) {
-  const { s3 } = useS3();
-  return useBucketSetting(
-    bucket,
-    SETTINGS.multipartUploads,
-    async () => (await s3.send(new ListMultipartUploadsCommand({ Bucket: bucket }))).Uploads ?? [],
-  );
-}
+  const s3 = useS3Service();
 
-interface MultipartUploadReference {
-  key: string;
-  uploadId: string;
+  return useBucketSetting(bucket, SETTINGS.multipartUploads, () => s3.listMultipartUploads(bucket));
 }
 
 export function useAbortMultipartUploads(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useBucketSettingMutation(
     bucket,
     SETTINGS.multipartUploads,
-    (uploads: MultipartUploadReference[]) =>
-      Promise.all(
-        uploads.map((upload) =>
-          s3.send(
-            new AbortMultipartUploadCommand({
-              Bucket: bucket,
-              Key: upload.key,
-              UploadId: upload.uploadId,
-            }),
-          ),
-        ),
-      ),
+    (uploads: MultipartUploadReference[]) => s3.abortMultipartUploads(bucket, uploads),
   );
 }

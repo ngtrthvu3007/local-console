@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { asyncInvocationSchema, toInvokeParams } from "@localconsole/core/lambda";
 import {
   DEFAULT_ASYNC_INVOCATION,
   destinationKindOf,
   fromInvokeConfig,
-  toInvokeParams,
-} from "../../../src/services/lambda/asyncInvocation.ts";
-import { asyncInvocationSchema } from "../../../src/services/lambda/schemas.ts";
+} from "../../../src/services/lambda/asyncInvocationForm.ts";
 
 const QUEUE = "arn:aws:sqs:us-east-1:000000000000:done";
 const BUS = "arn:aws:events:us-east-1:000000000000:event-bus/default";

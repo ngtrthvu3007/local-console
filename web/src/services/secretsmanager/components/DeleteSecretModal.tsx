@@ -3,7 +3,7 @@ import FormField from "@cloudscape-design/components/form-field";
 import Select from "@cloudscape-design/components/select";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { RECOVERY_DAYS } from "../constants.ts";
+import { RECOVERY_DAYS } from "@localconsole/core/secretsmanager";
 import { useDeleteSecret } from "../hooks/useSecrets.ts";
 
 // Select thay ô nhập số: không có giá trị sai (7–30 ngày như AWS)

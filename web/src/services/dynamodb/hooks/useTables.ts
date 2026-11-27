@@ -1,119 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CreateTableCommand,
-  DeleteTableCommand,
-  DescribeTableCommand,
-  paginateListTables,
-  type KeySchemaElement,
-  type TableDescription,
-} from "@aws-sdk/client-dynamodb";
-import { existsUnlessMissing } from "@shared/aws.ts";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import {
-  SSE_TYPE_KMS,
-  TABLE_ENCRYPTION,
-  type TableEncryption,
-  BILLING_MODE_ON_DEMAND,
-  KEY_TYPE_HASH,
-  KEY_TYPE_RANGE,
-  PROJECTION_ALL,
-  type KeyType,
-} from "../constants.ts";
-import { useDynamoDB } from "./useDynamoDB.ts";
+import type { CreateTableInput } from "@localconsole/core/dynamodb";
+import { existsQuery } from "@shared/aws.ts";
+import { useDynamoDbService } from "./useDynamoDbService.ts";
 
 const tablesQueryKey = ["dynamodb", "tables"];
 // Mọi query về một bảng (chi tiết, item, TTL, stream…) nằm dưới key này
 export const tableQueryKey = (table: string, part: string) => ["dynamodb", "table", table, part];
 const DETAILS = "details";
 
-// Nơi khác tham chiếu tới bảng (bước Step Functions…) còn trỏ được không
 export function useTableExists(name: string) {
-  const client = useDynamoDB();
+  const dynamodb = useDynamoDbService();
 
-  return useQuery({
-    queryKey: tableQueryKey(name, "exists"),
-    queryFn: () =>
-      existsUnlessMissing(() => client.send(new DescribeTableCommand({ TableName: name }))),
-    retry: false,
-  });
+  return useQuery(existsQuery(tableQueryKey(name, "exists"), () => dynamodb.getTable(name)));
 }
-
-export interface KeyAttribute {
-  name: string;
-  type: KeyType;
-}
-
-export interface IndexKeys {
-  partitionKey: KeyAttribute;
-  sortKey?: KeyAttribute;
-}
-
-// Key của bảng, hoặc của GSI/LSI tên indexName; kiểu lấy từ AttributeDefinitions của bảng
-export function keySchemaOf(table: TableDescription, indexName?: string): IndexKeys {
-  const indexes = [...(table.GlobalSecondaryIndexes ?? []), ...(table.LocalSecondaryIndexes ?? [])];
-
-  const schema = indexName
-    ? indexes.find((index) => index.IndexName === indexName)?.KeySchema
-    : table.KeySchema;
-
-  const attributeOf = (element?: KeySchemaElement): KeyAttribute | undefined => {
-    if (!element?.AttributeName) return undefined;
-
-    const definition = table.AttributeDefinitions?.find(
-      (attribute) => attribute.AttributeName === element.AttributeName,
-    );
-
-    return { name: element.AttributeName, type: definition?.AttributeType as KeyType };
-  };
-
-  return {
-    partitionKey: attributeOf(schema?.find((element) => element.KeyType === KEY_TYPE_HASH))!,
-    sortKey: attributeOf(schema?.find((element) => element.KeyType === KEY_TYPE_RANGE)),
-  };
-}
-
-// Key của bảng/index theo thứ tự partition key rồi sort key (nếu có)
-export const keyAttributesOf = (keys: IndexKeys) =>
-  [keys.partitionKey, keys.sortKey].filter((key) => key !== undefined);
-
-export const indexCountOf = (table: TableDescription) =>
-  (table.GlobalSecondaryIndexes?.length ?? 0) + (table.LocalSecondaryIndexes?.length ?? 0);
 
 export function useTables() {
-  const client = useDynamoDB();
+  const dynamodb = useDynamoDbService();
 
-  return useQuery({
-    queryKey: tablesQueryKey,
-    queryFn: async () => {
-      const names: string[] = [];
-
-      for await (const page of paginateListTables({ client }, {})) {
-        names.push(...(page.TableNames ?? []));
-      }
-
-      // Local ít bảng nên đọc chi tiết từng bảng song song
-      const tables = await Promise.all(
-        names.map(
-          async (name) => (await client.send(new DescribeTableCommand({ TableName: name }))).Table!,
-        ),
-      );
-
-      return tables;
-    },
-  });
+  return useQuery({ queryKey: tablesQueryKey, queryFn: dynamodb.listTables });
 }
 
 export function useTable(table: string) {
-  const client = useDynamoDB();
+  const dynamodb = useDynamoDbService();
 
   return useQuery({
     queryKey: tableQueryKey(table, DETAILS),
-    queryFn: async () => (await client.send(new DescribeTableCommand({ TableName: table }))).Table!,
+    queryFn: () => dynamodb.getTable(table),
     retry: false,
   });
 }
 
-// Làm mới chi tiết và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
+// Trả promise để nút giữ loading tới khi dữ liệu mới về
 export function useInvalidateTable() {
   const queryClient = useQueryClient();
 
@@ -124,72 +41,22 @@ export function useInvalidateTable() {
     ]);
 }
 
-interface CreateTableInput {
-  name: string;
-  keys: IndexKeys;
-  indexes: { name: string; keys: IndexKeys }[];
-  encryption: TableEncryption;
-  kmsKeyId: string;
-}
-
-const keySchemaElements = ({ partitionKey, sortKey }: IndexKeys): KeySchemaElement[] => [
-  { AttributeName: partitionKey.name, KeyType: KEY_TYPE_HASH },
-  ...(sortKey ? [{ AttributeName: sortKey.name, KeyType: KEY_TYPE_RANGE }] : []),
-];
-
 export function useCreateTable() {
-  const client = useDynamoDB();
+  const dynamodb = useDynamoDbService();
   const invalidate = useInvalidateTable();
 
   return useMutation({
-    mutationFn: ({ name, keys, indexes, encryption, kmsKeyId }: CreateTableInput) => {
-      // Mỗi attribute dùng làm key chỉ khai báo một lần, dù xuất hiện ở bảng và nhiều index
-      const attributes = new Map<string, KeyType>();
-
-      for (const { partitionKey, sortKey } of [keys, ...indexes.map((index) => index.keys)]) {
-        attributes.set(partitionKey.name, partitionKey.type);
-        if (sortKey) attributes.set(sortKey.name, sortKey.type);
-      }
-
-      return client.send(
-        new CreateTableCommand({
-          TableName: name,
-          BillingMode: BILLING_MODE_ON_DEMAND,
-          // Key AWS sở hữu là mặc định: không gửi SSESpecification
-          SSESpecification:
-            encryption === TABLE_ENCRYPTION.awsOwned
-              ? undefined
-              : { Enabled: true, SSEType: SSE_TYPE_KMS, KMSMasterKeyId: kmsKeyId || undefined },
-          AttributeDefinitions: [...attributes].map(([attributeName, type]) => ({
-            AttributeName: attributeName,
-            AttributeType: type,
-          })),
-          KeySchema: keySchemaElements(keys),
-          GlobalSecondaryIndexes: indexes.length
-            ? indexes.map((index) => ({
-                IndexName: index.name,
-                KeySchema: keySchemaElements(index.keys),
-                Projection: { ProjectionType: PROJECTION_ALL },
-              }))
-            : undefined,
-        }),
-      );
-    },
+    mutationFn: (input: CreateTableInput) => dynamodb.createTable(input),
     onSuccess: (_result, input) => invalidate(input.name),
   });
 }
 
 export function useDeleteTables() {
-  const client = useDynamoDB();
+  const dynamodb = useDynamoDbService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (tables: string[]) =>
-      runEach(
-        tables,
-        (table) => table,
-        (table) => client.send(new DeleteTableCommand({ TableName: table })),
-      ),
+    mutationFn: dynamodb.deleteTables,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tablesQueryKey }),
   });
 }

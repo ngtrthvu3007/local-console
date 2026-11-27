@@ -1,17 +1,14 @@
 import type { StatusIndicatorProps } from "@cloudscape-design/components/status-indicator";
+import type { StepStatus } from "@localconsole/core/stepfunctions";
 
 // Tải lại khi còn execution RUNNING
 export const EXECUTION_POLL_INTERVAL_MS = 2000;
 export const EDITOR_HEIGHT_PX = 200;
-export const DEFAULT_EXECUTION_INPUT = "{}";
-// Luật của AWS: tên execution 1–80 ký tự
-export const EXECUTION_NAME_MAX_LENGTH = 80;
 // Map / Parallel có nhiều con hơn mức này thì gập sẵn, khỏi vẽ hàng trăm dòng khi mở trang
 export const COLLAPSE_CHILDREN_LIMIT = 20;
 export const TRUNCATED_NOTE =
   "Step Functions cut this payload because it is too large (over 256 KB).";
 export const STATUS_FILTER_ALL = "ALL";
-export const RUNNING_STATUS = "RUNNING";
 export const STATE_MACHINE_TYPE_LABELS = { STANDARD: "Standard", EXPRESS: "Express" } as const;
 
 interface StatusStyle {
@@ -38,14 +35,4 @@ export const STEP_STATUS_STYLES = {
   failed: EXECUTION_STATUS_STYLES.FAILED,
   aborted: EXECUTION_STATUS_STYLES.ABORTED,
   timedOut: EXECUTION_STATUS_STYLES.TIMED_OUT,
-} as const satisfies Record<string, StatusStyle>;
-export type StepStatus = keyof typeof STEP_STATUS_STYLES;
-
-// Bước chưa kết thúc khi execution đã dừng thì theo status của execution
-export const STEP_STATUS_OF_EXECUTION: Record<string, StepStatus> = {
-  RUNNING: "running",
-  SUCCEEDED: "succeeded",
-  FAILED: "failed",
-  TIMED_OUT: "timedOut",
-  ABORTED: "aborted",
-};
+} as const satisfies Record<StepStatus, StatusStyle>;

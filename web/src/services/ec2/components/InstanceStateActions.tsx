@@ -11,7 +11,7 @@ import {
   instanceId,
   stateOf,
   type InstanceAction,
-} from "../instances.ts";
+} from "@localconsole/core/ec2";
 
 interface ActionConfig {
   text: string;

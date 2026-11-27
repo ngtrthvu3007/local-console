@@ -12,12 +12,16 @@ import { EmptyState } from "@shared/components/TableStates.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { KEY_MANAGERS } from "../constants.ts";
+import {
+  KEY_MANAGERS,
+  aliasesOf,
+  keyLabel,
+  aliasSchema,
+  KEY_TABS,
+  SEARCH_PARAMS,
+} from "@localconsole/core/kms";
 import { useAllAliases, useDeleteAlias, useSaveAlias } from "../hooks/useAliases.ts";
 import type { KeyRow } from "../hooks/useKeys.ts";
-import { aliasesOf, keyLabel } from "../keys.ts";
-import { KEY_TABS, SEARCH_PARAMS } from "../routes.ts";
-import { aliasSchema } from "../schemas.ts";
 
 interface AliasRow {
   name: string;

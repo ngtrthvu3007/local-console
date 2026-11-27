@@ -4,10 +4,9 @@ import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { taskDefinitionRefOf } from "../arns.ts";
+import { taskDefinitionRefOf, updateServiceSchema } from "@localconsole/core/ecs";
 import { ROLLING_UPDATE_NOTE } from "../constants.ts";
 import { useUpdateService } from "../hooks/useServices.ts";
-import { updateServiceSchema } from "../schemas.ts";
 import { TaskDefinitionFields } from "./TaskDefinitionFields.tsx";
 
 interface Props {

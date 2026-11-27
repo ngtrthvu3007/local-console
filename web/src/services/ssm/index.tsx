@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconAdjustments } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { SSM_ROUTE_PATTERNS, SSM_SERVICE_ID, ssmRoutes } from "./routes.ts";
+import { SSM_ROUTE_PATTERNS, SSM_SERVICE_ID, ssmRoutes } from "@localconsole/core/ssm";
 
 export const ssmService: ServiceDefinition = {
   id: SSM_SERVICE_ID,

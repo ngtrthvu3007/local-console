@@ -4,10 +4,13 @@ import { FormCheckbox, FormInput } from "@shared/components/form/FormFields.tsx"
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_ROOT_OBJECT } from "../constants.ts";
-import { isSpa, withSettings } from "../distributions.ts";
+import {
+  DEFAULT_ROOT_OBJECT,
+  isSpa,
+  withSettings,
+  settingsSchema,
+} from "@localconsole/core/cloudfront";
 import { useUpdateDistribution } from "../hooks/useDistributions.ts";
-import { settingsSchema } from "../schemas.ts";
 
 export const SPA_TEXT = "Single-page app";
 export const SPA_DESCRIPTION =

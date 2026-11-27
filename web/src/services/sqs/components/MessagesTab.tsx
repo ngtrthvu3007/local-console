@@ -13,7 +13,8 @@ import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { usePeek } from "../hooks/useMessages.ts";
@@ -25,9 +26,10 @@ import {
   receiveCountOf,
   sentText,
   systemAttributeText,
-} from "../messageText.ts";
-import { messageCountsText, type Queue } from "../queues.ts";
-import { SEARCH_PARAMS } from "../routes.ts";
+  messageCountsText,
+  type Queue,
+  SEARCH_PARAMS,
+} from "@localconsole/core/sqs";
 import { PollModal } from "./MessageModals.tsx";
 
 // Panel chi tiết: body đầy đủ, system attribute (FIFO có group ID, dedup ID, sequence number)

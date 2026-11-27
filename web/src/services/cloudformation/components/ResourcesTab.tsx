@@ -13,14 +13,17 @@ import { BreakableText } from "@shared/components/BreakableText.tsx";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { CDK_METADATA_TYPE } from "../constants.ts";
+import {
+  CDK_METADATA_TYPE,
+  resourceHref,
+  statusGroup,
+  isStubReason,
+  latestReasons,
+} from "@localconsole/core/cloudformation";
 import { useStackEvents, useStackResources } from "../hooks/useStacks.ts";
-import { resourceHref } from "../resourceLinks.ts";
-import { statusGroup } from "../status.ts";
-import { isStubReason, latestReasons } from "../stub.ts";
 import "./StackStatus.css";
 
 const PAGE_SIZE = 100;

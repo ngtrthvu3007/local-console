@@ -1,4 +1,4 @@
-import { taskIdOf } from "../arns.ts";
+import { taskIdOf } from "@localconsole/core/ecs";
 import { useStopTasks } from "../hooks/useTasks.ts";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 

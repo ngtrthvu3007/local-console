@@ -1,35 +1,4 @@
-import { generatePath } from "react-router";
-import { withTab } from "@shared/routes.ts";
-
-export const ELASTICACHE_SERVICE_ID = "elasticache";
-const ELASTICACHE_ROOT = `/${ELASTICACHE_SERVICE_ID}`;
-
-export const CLUSTER_TABS = { keys: "keys", details: "details" } as const;
-export type ClusterTab = (typeof CLUSTER_TABS)[keyof typeof CLUSTER_TABS];
-
-// key: key đang mở trong panel
-export const SEARCH_PARAMS = { key: "key" } as const;
-
-// Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
-export const ELASTICACHE_ROUTE_PATTERNS = {
-  clusters: "clusters",
-  createCluster: "clusters/create",
-  cluster: "clusters/:cluster",
-} as const;
-
-const fullPath = (pattern: string) => `${ELASTICACHE_ROOT}/${pattern}`;
-
-export const elasticacheRoutes = {
-  clusters: fullPath(ELASTICACHE_ROUTE_PATTERNS.clusters),
-  createCluster: fullPath(ELASTICACHE_ROUTE_PATTERNS.createCluster),
-  // Tab mặc định (Keys) không ghi lên URL
-  cluster: (cluster: string, tab?: ClusterTab) =>
-    withTab(
-      generatePath(fullPath(ELASTICACHE_ROUTE_PATTERNS.cluster), { cluster }),
-      tab,
-      CLUSTER_TABS.keys,
-    ),
-};
+import { elasticacheRoutes } from "@localconsole/core/elasticache";
 
 export const elasticacheBaseCrumbs = [
   { text: "Amazon ElastiCache", href: elasticacheRoutes.clusters },

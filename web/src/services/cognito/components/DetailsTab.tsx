@@ -13,20 +13,21 @@ import KeyValuePairs, {
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { copyable } from "@shared/components/CopyButton.tsx";
-import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate, pluralize } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDate, pluralize } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { sesRoutes } from "../../ses/routes.ts";
-import { issuerUrl, wellKnownUrl } from "../auth.ts";
+import { sesRoutes } from "@localconsole/core/ses";
 import {
+  issuerUrl,
+  wellKnownUrl,
   COGNITO_DEFAULT_SENDER,
   DEFAULT_SIGN_IN_LABEL,
   MFA_LABELS,
   SES_IDENTITY_PREFIX,
   WELL_KNOWN_PATHS,
-} from "../constants.ts";
+} from "@localconsole/core/cognito";
 import { EditEmailModal } from "./EditEmailModal.tsx";
 
 const GENERAL_COLUMNS = 3;

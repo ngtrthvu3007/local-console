@@ -1,123 +1,62 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  GetQueueUrlCommand,
-  paginateListDeadLetterSourceQueues,
-  paginateListQueues,
-  QueueDoesNotExist,
-  SetQueueAttributesCommand,
-  type SQSClient,
-} from "@aws-sdk/client-sqs";
-import { existsUnlessMissing } from "@shared/aws.ts";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import {
-  QUEUE_ENCRYPTION,
-  SQS_KEY_SERVICE,
-  type QueueEncryption,
-  ALL_ATTRIBUTES,
-  ATTRIBUTE_TRUE,
-  AUTO_REFRESH_INTERVAL_MS,
-  type QueueType,
-} from "../constants.ts";
-import {
-  queueNameOfUrl,
-  redrivePolicyAttribute,
-  settingsToAttributes,
-  toQueue,
+  isQueueMissing,
+  type CreateQueueInput,
   type Queue,
   type QueueSettings,
   type RedrivePolicy,
-} from "../queues.ts";
-import { awsManagedAlias } from "../../kms/keys.ts";
-import { useSQS } from "./useSQS.ts";
+  type SqsService,
+  AUTO_REFRESH_INTERVAL_MS,
+} from "@localconsole/core/sqs";
+import { existsQuery } from "@shared/aws.ts";
+import { useSqsService } from "./useSqsService.ts";
 
-// Mọi query của SQS nằm dưới key gốc này
 const SQS_QUERY_ROOT = "sqs";
 const queuesQueryKey = [SQS_QUERY_ROOT, "queues"];
-// Mọi query về một queue (chi tiết, message, trigger…) nằm dưới key này
 const anyQueueQueryKey = [SQS_QUERY_ROOT, "queue"];
 export const queueQueryKey = (queue: string, part?: string) =>
   part ? [...anyQueueQueryKey, queue, part] : [...anyQueueQueryKey, queue];
 const DETAILS = "details";
 const DLQ_SOURCES = "dlq-sources";
 
-// JSON protocol trả lỗi này với mã 400, isNotFoundError dùng chung không nhận ra
-export const isQueueMissing = (error: unknown) => error instanceof QueueDoesNotExist;
-
-// Nơi khác tham chiếu tới queue (S3 rule, SNS subscription, DLQ…) còn trỏ được không
-export const queueExistsQuery = (client: SQSClient, name: string) => ({
-  queryKey: queueQueryKey(name, "exists"),
-  queryFn: () =>
-    existsUnlessMissing(
-      () => client.send(new GetQueueUrlCommand({ QueueName: name })),
-      isQueueMissing,
-    ),
-  retry: false,
-});
+// Nơi khác tham chiếu tới queue (S3 rule, SNS subscription, DLQ…) còn trỏ được không.
+// Query option dùng chung: trang service khác truyền facade SQS của nó
+export const queueExistsQuery = (sqs: Pick<SqsService, "getQueue">, name: string) =>
+  existsQuery(queueQueryKey(name, "exists"), () => sqs.getQueue(name), isQueueMissing);
 
 export function useQueueExists(name: string) {
-  const client = useSQS();
-  return useQuery(queueExistsQuery(client, name));
+  const sqs = useSqsService();
+  return useQuery(queueExistsQuery(sqs, name));
 }
 
 const refreshEvery = (autoRefresh: boolean) => (autoRefresh ? AUTO_REFRESH_INTERVAL_MS : false);
 
-async function describeQueue(client: SQSClient, url: string) {
-  const { Attributes = {} } = await client.send(
-    new GetQueueAttributesCommand({ QueueUrl: url, AttributeNames: [ALL_ATTRIBUTES] }),
-  );
-
-  return toQueue(url, Attributes);
-}
-
 export function useQueues() {
-  const client = useSQS();
+  const sqs = useSqsService();
 
-  return useQuery({
-    queryKey: queuesQueryKey,
-    queryFn: async () => {
-      const urls: string[] = [];
-      for await (const page of paginateListQueues({ client }, {}))
-        urls.push(...(page.QueueUrls ?? []));
-      // Local ít queue nên đọc attribute từng queue song song
-      return Promise.all(urls.map((url) => describeQueue(client, url)));
-    },
-  });
+  return useQuery({ queryKey: queuesQueryKey, queryFn: sqs.listQueues });
 }
 
-// Đường dẫn dùng tên queue; URL lấy bằng GetQueueUrl, không tự ghép host
 export function useQueue(name: string, autoRefresh = false) {
-  const client = useSQS();
+  const sqs = useSqsService();
 
   return useQuery({
     queryKey: queueQueryKey(name, DETAILS),
-    queryFn: async () => {
-      const { QueueUrl } = await client.send(new GetQueueUrlCommand({ QueueName: name }));
-      return describeQueue(client, QueueUrl!);
-    },
+    queryFn: () => sqs.getQueue(name),
     retry: false,
     refetchInterval: refreshEvery(autoRefresh),
   });
 }
 
-// Các queue đang dùng queue này làm DLQ
 export function useDeadLetterSources(queue: Queue) {
-  const client = useSQS();
+  const sqs = useSqsService();
 
   return useQuery({
     queryKey: queueQueryKey(queue.name, DLQ_SOURCES),
-    queryFn: async () => {
-      const names: string[] = [];
-      const paginator = paginateListDeadLetterSourceQueues({ client }, { QueueUrl: queue.url });
-      for await (const page of paginator) names.push(...(page.queueUrls ?? []).map(queueNameOfUrl));
-      return names;
-    },
+    queryFn: () => sqs.listDeadLetterSources(queue),
   });
 }
 
-// Làm mới mọi query của queue và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
 export function useInvalidateQueue() {
   const queryClient = useQueryClient();
 
@@ -128,82 +67,42 @@ export function useInvalidateQueue() {
     ]);
 }
 
-export interface CreateQueueInput {
-  name: string;
-  type: QueueType;
-  contentBasedDedup: boolean;
-  encryption: QueueEncryption;
-  kmsKeyId: string;
-}
-
-// Thông số còn lại để mặc định của SQS, sửa sau ở tab Settings
 export function useCreateQueue() {
-  const client = useSQS();
+  const sqs = useSqsService();
   const invalidate = useInvalidateQueue();
 
   return useMutation({
-    mutationFn: ({ name, type, contentBasedDedup, encryption, kmsKeyId }: CreateQueueInput) =>
-      client.send(
-        new CreateQueueCommand({
-          QueueName: name,
-          Attributes: {
-            ...(type === "fifo"
-              ? { FifoQueue: ATTRIBUTE_TRUE, ContentBasedDeduplication: String(contentBasedDedup) }
-              : {}),
-            ...(encryption === QUEUE_ENCRYPTION.sseKms
-              ? { KmsMasterKeyId: kmsKeyId || awsManagedAlias(SQS_KEY_SERVICE) }
-              : { SqsManagedSseEnabled: ATTRIBUTE_TRUE }),
-          },
-        }),
-      ),
+    mutationFn: (input: CreateQueueInput) => sqs.createQueue(input),
     onSuccess: (_result, input) => invalidate(input.name),
   });
 }
 
 export function useDeleteQueues() {
-  const client = useSQS();
+  const sqs = useSqsService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (queues: readonly Queue[]) =>
-      runEach(
-        queues,
-        (queue) => queue.name,
-        (queue) => client.send(new DeleteQueueCommand({ QueueUrl: queue.url })),
-      ),
+    mutationFn: (queues: readonly Queue[]) => sqs.deleteQueues(queues),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queuesQueryKey }),
   });
 }
 
 export function useUpdateSettings(queue: Queue) {
-  const client = useSQS();
+  const sqs = useSqsService();
   const invalidate = useInvalidateQueue();
 
   return useMutation({
-    mutationFn: (settings: QueueSettings) =>
-      client.send(
-        new SetQueueAttributesCommand({
-          QueueUrl: queue.url,
-          Attributes: settingsToAttributes(settings, queue.fifo),
-        }),
-      ),
+    mutationFn: (settings: QueueSettings) => sqs.updateSettings(queue, settings),
     onSuccess: () => invalidate(queue.name),
   });
 }
 
-// undefined = tắt DLQ
 export function useUpdateRedrivePolicy(queue: Queue) {
-  const client = useSQS();
+  const sqs = useSqsService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (policy?: RedrivePolicy) =>
-      client.send(
-        new SetQueueAttributesCommand({
-          QueueUrl: queue.url,
-          Attributes: { RedrivePolicy: redrivePolicyAttribute(policy) },
-        }),
-      ),
+    mutationFn: (policy?: RedrivePolicy) => sqs.updateRedrivePolicy(queue, policy),
     // Khối "DLQ of" của queue đích cũng đổi, nên làm mới mọi query của SQS
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [SQS_QUERY_ROOT] }),
   });

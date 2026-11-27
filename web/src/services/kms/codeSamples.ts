@@ -1,14 +1,13 @@
 import type { KeyMetadata } from "@aws-sdk/client-kms";
+import { lines } from "@localconsole/core/shared";
 import {
-  lines,
   literal,
   NODE_AWS_NOTE,
   PYTHON_AWS_NOTE,
   SAMPLE_TEXT,
   type CodeSample,
 } from "@shared/codeSamples.ts";
-import { KEY_USAGES, SYMMETRIC_SPEC } from "./constants.ts";
-import { preferredRsaAlgorithm } from "./keys.ts";
+import { KEY_USAGES, SYMMETRIC_SPEC, preferredRsaAlgorithm } from "@localconsole/core/kms";
 
 type KeyInfo = Pick<
   KeyMetadata,

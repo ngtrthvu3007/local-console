@@ -9,12 +9,12 @@ import Toggle from "@cloudscape-design/components/toggle";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { ViewInLogsLink } from "../../logs/components/LogGroupLink.tsx";
-import { logsRoutes } from "../../logs/routes.ts";
+import { logsRoutes } from "@localconsole/core/logs";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { logEventColumns } from "@shared/logs/columns.tsx";
+import { awslogsTarget } from "@localconsole/core/ecs";
 import { NO_AWSLOGS_TEXT } from "../constants.ts";
 import { useTaskLogs } from "../hooks/useTaskLogs.ts";
-import { awslogsTarget } from "../taskDefinitionJson.ts";
 
 interface Props {
   taskId: string;

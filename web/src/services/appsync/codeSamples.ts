@@ -1,5 +1,6 @@
-import { lines, literal, type CodeSample } from "@shared/codeSamples.ts";
-import { AUTH_TYPES, type AuthType } from "./constants.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, type CodeSample } from "@shared/codeSamples.ts";
+import { AUTH_TYPES, type AuthType } from "@localconsole/core/appsync";
 
 const SAMPLE_QUERY = "query { __typename }";
 const API_KEY_PLACEHOLDER = "YOUR_API_KEY";

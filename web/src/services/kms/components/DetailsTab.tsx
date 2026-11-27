@@ -9,15 +9,17 @@ import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { LIST_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { keySample } from "../codeSamples.ts";
-import { KEY_MANAGERS } from "../constants.ts";
+import {
+  KEY_MANAGERS,
+  keyTypeLabel,
+  keyUsageLabel,
+  descriptionSchema,
+} from "@localconsole/core/kms";
 import { useUpdateDescription, type KeyRow } from "../hooks/useKeys.ts";
-import { keyTypeLabel, keyUsageLabel } from "../keys.ts";
-import { descriptionSchema } from "../schemas.ts";
 import { KeyStatus } from "./KeyStatus.tsx";
 
 const DETAILS_COLUMNS = 3;

@@ -1,12 +1,12 @@
+import { lines } from "@localconsole/core/shared";
 import {
-  lines,
   literal,
   NODE_AWS_NOTE,
   PYTHON_AWS_NOTE,
   fifoFields,
   type CodeSample,
 } from "@shared/codeSamples.ts";
-import type { Queue } from "./queues.ts";
+import type { Queue } from "@localconsole/core/sqs";
 
 const WAIT_SECONDS = 10;
 // SDK v3 mặc định gửi tới host trong queue URL và cảnh báo khi nó khác

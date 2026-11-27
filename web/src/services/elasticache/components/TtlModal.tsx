@@ -1,11 +1,10 @@
 import { FormInput, FormRadioGroup } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { formatDuration } from "@shared/format.ts";
+import { formatDuration, isWholeNumberIn } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { isWholeNumberIn } from "@shared/schemas.ts";
 import { useSetTtl } from "../hooks/useRedis.ts";
-import { TTL_MODES, TTL_SECONDS, ttlSchema } from "../schemas.ts";
+import { TTL_MODES, TTL_SECONDS, ttlSchema } from "../redisSchemas.ts";
 
 interface Props {
   cluster: string;

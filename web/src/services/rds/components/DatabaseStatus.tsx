@@ -2,9 +2,8 @@ import type { DBInstance } from "@aws-sdk/client-rds";
 import StatusIndicator, {
   type StatusIndicatorProps,
 } from "@cloudscape-design/components/status-indicator";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { DB_STATUSES, FAILED_STATUSES } from "../constants.ts";
-import { statusLabel } from "../databases.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
+import { DB_STATUSES, FAILED_STATUSES, statusLabel } from "@localconsole/core/rds";
 
 function indicatorType(status: string): StatusIndicatorProps.Type {
   if (status === DB_STATUSES.available) return "success";

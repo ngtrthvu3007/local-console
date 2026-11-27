@@ -1,22 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreateAliasCommand, DeleteAliasCommand, UpdateAliasCommand } from "@aws-sdk/client-kms";
-import { KMS_QUERY_ROOT, listAliasEntries } from "./useKeys.ts";
-import { useKMS } from "./useKMS.ts";
+import type { AliasInput } from "@localconsole/core/kms";
+import { KMS_QUERY_ROOT } from "./useKeys.ts";
+import { useKmsService } from "./useKmsService.ts";
 
-// Mọi alias (của mọi key): tab Aliases cần biết tên đã thuộc key khác để hỏi trỏ lại
 export function useAllAliases() {
-  const client = useKMS();
+  const kms = useKmsService();
 
-  return useQuery({
-    queryKey: [KMS_QUERY_ROOT, "aliases"],
-    queryFn: () => listAliasEntries(client),
-  });
-}
-
-interface AliasInput {
-  name: string;
-  keyId: string;
-  replace: boolean; // tên đã thuộc key khác → UpdateAlias trỏ sang key này
+  return useQuery({ queryKey: [KMS_QUERY_ROOT, "aliases"], queryFn: kms.listAliases });
 }
 
 function useAliasMutation<T>(run: (input: T) => Promise<unknown>) {
@@ -29,21 +19,13 @@ function useAliasMutation<T>(run: (input: T) => Promise<unknown>) {
 }
 
 export function useSaveAlias() {
-  const client = useKMS();
+  const kms = useKmsService();
 
-  return useAliasMutation(({ name, keyId, replace }: AliasInput) =>
-    client.send(
-      replace
-        ? new UpdateAliasCommand({ AliasName: name, TargetKeyId: keyId })
-        : new CreateAliasCommand({ AliasName: name, TargetKeyId: keyId }),
-    ),
-  );
+  return useAliasMutation((input: AliasInput) => kms.saveAlias(input));
 }
 
 export function useDeleteAlias() {
-  const client = useKMS();
+  const kms = useKmsService();
 
-  return useAliasMutation((name: string) =>
-    client.send(new DeleteAliasCommand({ AliasName: name })),
-  );
+  return useAliasMutation((name: string) => kms.deleteAlias(name));
 }

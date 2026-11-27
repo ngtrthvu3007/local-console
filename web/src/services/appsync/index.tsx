@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconGraph } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { APPSYNC_ROUTE_PATTERNS, APPSYNC_SERVICE_ID, appsyncRoutes } from "./routes.ts";
+import {
+  APPSYNC_ROUTE_PATTERNS,
+  APPSYNC_SERVICE_ID,
+  appsyncRoutes,
+} from "@localconsole/core/appsync";
 
 export const appsyncService: ServiceDefinition = {
   id: APPSYNC_SERVICE_ID,

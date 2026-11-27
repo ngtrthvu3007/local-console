@@ -1,24 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  CreateBrokerCommand,
-  DeleteBrokerCommand,
-  DescribeBrokerCommand,
-  RebootBrokerCommand,
-  paginateListBrokers,
-  type BrokerSummary,
-  type DescribeBrokerResponse,
-} from "@aws-sdk/client-mq";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import {
   BROKER_REFRESH_INTERVAL_MS,
   BROKER_RUNNING,
-  DEPLOYMENT_MODE,
-  ENGINE_TYPE,
-  ENGINE_VERSION,
   FAILED_STATES,
-  HOST_INSTANCE_TYPE,
-} from "../constants.ts";
-import { useMQ } from "./useMQ.ts";
+  type BrokerRef,
+  type CreateBrokerInput,
+} from "@localconsole/core/mq";
+import { useMqService } from "./useMqService.ts";
+
+export type { BrokerRef };
 
 const brokersQueryKey = ["mq", "brokers"];
 const brokerQueryKey = (broker: string) => ["mq", "broker", broker];
@@ -30,90 +20,53 @@ const refreshWhileTransitional = (states: (string | undefined)[]) =>
   states.some(isTransitional) ? BROKER_REFRESH_INTERVAL_MS : false;
 
 export function useBrokers() {
-  const client = useMQ();
+  const mq = useMqService();
 
   return useQuery({
     queryKey: brokersQueryKey,
-    queryFn: async () => {
-      const brokers: BrokerSummary[] = [];
-
-      for await (const page of paginateListBrokers({ client }, {})) {
-        brokers.push(...(page.BrokerSummaries ?? []));
-      }
-
-      return brokers;
-    },
+    queryFn: mq.listBrokers,
     refetchInterval: (query) =>
       refreshWhileTransitional((query.state.data ?? []).map((broker) => broker.BrokerState)),
   });
 }
 
 export function useBroker(broker: string) {
-  const client = useMQ();
+  const mq = useMqService();
 
   return useQuery({
     queryKey: brokerQueryKey(broker),
-    queryFn: (): Promise<DescribeBrokerResponse> =>
-      client.send(new DescribeBrokerCommand({ BrokerId: broker })),
+    queryFn: () => mq.getBroker(broker),
     retry: false,
     refetchInterval: (query) => refreshWhileTransitional([query.state.data?.BrokerState]),
   });
 }
 
-interface CreateBrokerInput {
-  name: string;
-  username: string;
-  password: string;
-}
-
 export function useCreateBroker() {
-  const client = useMQ();
+  const mq = useMqService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, username, password }: CreateBrokerInput) =>
-      client.send(
-        new CreateBrokerCommand({
-          BrokerName: name,
-          EngineType: ENGINE_TYPE,
-          EngineVersion: ENGINE_VERSION,
-          HostInstanceType: HOST_INSTANCE_TYPE,
-          DeploymentMode: DEPLOYMENT_MODE,
-          PubliclyAccessible: false,
-          AutoMinorVersionUpgrade: true,
-          Users: [{ Username: username, Password: password }],
-        }),
-      ),
+    mutationFn: (input: CreateBrokerInput) => mq.createBroker(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: brokersQueryKey }),
   });
 }
 
-export interface BrokerRef {
-  id: string;
-  name: string;
-}
-
 export function useDeleteBrokers() {
-  const client = useMQ();
+  const mq = useMqService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (brokers: BrokerRef[]) =>
-      runEach(
-        brokers,
-        (broker) => broker.name,
-        (broker) => client.send(new DeleteBrokerCommand({ BrokerId: broker.id })),
-      ),
+    mutationFn: (brokers: BrokerRef[]) => mq.deleteBrokers(brokers),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: brokersQueryKey }),
   });
 }
 
 export function useRebootBroker(broker: string) {
-  const client = useMQ();
+  const mq = useMqService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => client.send(new RebootBrokerCommand({ BrokerId: broker })),
+    mutationFn: () => mq.rebootBroker(broker),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: brokerQueryKey(broker) }),

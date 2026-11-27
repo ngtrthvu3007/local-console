@@ -1,18 +1,10 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  DescribeExecutionCommand,
-  ExecutionDoesNotExist,
-  GetExecutionHistoryCommand,
-  ListExecutionsCommand,
-  StartExecutionCommand,
-  StopExecutionCommand,
-  type ExecutionStatus,
-} from "@aws-sdk/client-sfn";
-import { allPages, isNotFoundError } from "@shared/aws.ts";
-import { EXECUTION_POLL_INTERVAL_MS, RUNNING_STATUS } from "../constants.ts";
+import type { ExecutionStatus } from "@aws-sdk/client-sfn";
+import { type StartExecutionInput, RUNNING_STATUS } from "@localconsole/core/stepfunctions";
+import { EXECUTION_POLL_INTERVAL_MS } from "../constants.ts";
 import { STEPFUNCTIONS_QUERY_ROOT } from "./useStateMachines.ts";
-import { useSFN } from "./useSFN.ts";
+import { useStepFunctionsService } from "./useStepFunctionsService.ts";
 
 const executionsQueryKey = (machineArn: string, status: string) => [
   STEPFUNCTIONS_QUERY_ROOT,
@@ -28,58 +20,37 @@ const executionQueryKey = (arn: string, part: string) => [
   part,
 ];
 
-export const isExecutionMissing = (error: unknown) =>
-  error instanceof ExecutionDoesNotExist || isNotFoundError(error);
-
 // Còn execution chạy dở thì hỏi lại đều, hết thì thôi
 const pollWhile = (running: boolean | undefined) => (running ? EXECUTION_POLL_INTERVAL_MS : false);
 
 export function useExecutionList(machineArn: string, statusFilter: ExecutionStatus | "") {
-  const client = useSFN();
+  const sfn = useStepFunctionsService();
 
   return useQuery({
     queryKey: executionsQueryKey(machineArn, statusFilter),
-    queryFn: () =>
-      allPages(async (nextToken) => {
-        const page = await client.send(
-          new ListExecutionsCommand({
-            stateMachineArn: machineArn,
-            statusFilter: statusFilter || undefined,
-            nextToken,
-          }),
-        );
-
-        return { items: page.executions ?? [], nextToken: page.nextToken };
-      }),
+    queryFn: () => sfn.listExecutions(machineArn, statusFilter),
     refetchInterval: (query) =>
       pollWhile(query.state.data?.some((execution) => execution.status === RUNNING_STATUS)),
   });
 }
 
 export function useExecution(arn: string) {
-  const client = useSFN();
+  const sfn = useStepFunctionsService();
 
   return useQuery({
     queryKey: executionQueryKey(arn, "details"),
-    queryFn: () => client.send(new DescribeExecutionCommand({ executionArn: arn })),
+    queryFn: () => sfn.getExecution(arn),
     retry: false,
     refetchInterval: (query) => pollWhile(query.state.data?.status === RUNNING_STATUS),
   });
 }
 
 export function useExecutionHistory(arn: string, running: boolean) {
-  const client = useSFN();
+  const sfn = useStepFunctionsService();
 
   const query = useQuery({
     queryKey: executionQueryKey(arn, "history"),
-    queryFn: () =>
-      allPages(async (nextToken) => {
-        const page = await client.send(
-          new GetExecutionHistoryCommand({ executionArn: arn, nextToken }),
-        );
-
-        return { items: page.events ?? [], nextToken: page.nextToken };
-      }),
+    queryFn: () => sfn.getExecutionHistory(arn),
     refetchInterval: pollWhile(running),
   });
 
@@ -93,37 +64,23 @@ export function useExecutionHistory(arn: string, running: boolean) {
   return query;
 }
 
-interface StartInput {
-  name: string;
-  input: string;
-}
-
 export function useStartExecution(machineArn: string) {
-  const client = useSFN();
+  const sfn = useStepFunctionsService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ name, input }: StartInput) =>
-      (
-        await client.send(
-          new StartExecutionCommand({
-            stateMachineArn: machineArn,
-            name: name || undefined,
-            input,
-          }),
-        )
-      ).executionArn ?? "",
+    mutationFn: (input: StartExecutionInput) => sfn.startExecution(machineArn, input),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: [STEPFUNCTIONS_QUERY_ROOT, "executions"] }),
   });
 }
 
 export function useStopExecution(arn: string) {
-  const client = useSFN();
+  const sfn = useStepFunctionsService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => client.send(new StopExecutionCommand({ executionArn: arn })),
+    mutationFn: () => sfn.stopExecution(arn),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [STEPFUNCTIONS_QUERY_ROOT] }),
   });
 }
