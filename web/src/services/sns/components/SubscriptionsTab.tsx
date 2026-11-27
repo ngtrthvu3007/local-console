@@ -6,11 +6,12 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { truncate } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
-import { queueNameOfArn } from "../../sqs/queues.ts";
 import { ENDPOINT_PREVIEW_LENGTH, RAW_DELIVERY_PROTOCOLS } from "../constants.ts";
 import { summarizeFilterPolicy } from "../filterPolicy.ts";
 import { useSubscriptions } from "../hooks/useSubscriptions.ts";
@@ -31,20 +32,18 @@ const MODALS = {
 
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
-const ELLIPSIS = "…";
 const PENDING_HELP =
   "Floci sent a SubscriptionConfirmation to this URL. Your app must call the SubscribeURL in it before it receives messages.";
 
-const shorten = (text: string) =>
-  text.length > ENDPOINT_PREVIEW_LENGTH
-    ? `${text.slice(0, ENDPOINT_PREVIEW_LENGTH)}${ELLIPSIS}`
-    : text;
-
 function EndpointCell({ subscription }: { subscription: Subscription }) {
   if (subscription.protocol === "sqs")
-    return <QueueLink name={queueNameOfArn(subscription.endpoint)} />;
+    return <QueueLink name={lastArnPart(subscription.endpoint)} />;
   if (subscription.protocol === "lambda") return <FunctionLink arn={subscription.endpoint} />;
-  return <span title={subscription.endpoint}>{shorten(subscription.endpoint)}</span>;
+  return (
+    <span title={subscription.endpoint}>
+      {truncate(subscription.endpoint, ENDPOINT_PREVIEW_LENGTH)}
+    </span>
+  );
 }
 
 function StatusCell({ subscription }: { subscription: Subscription }) {

@@ -4,8 +4,6 @@ import { listBuses } from "./buses.ts";
 import { listRules, listTargets } from "./rules.ts";
 import { listSchedules } from "./schedules.ts";
 
-const ARN_SEPARATOR = ":";
-
 // Rule hoặc schedule đẩy vào một resource; bus / group để dựng link
 interface RuleSource {
   bus: string;
@@ -21,10 +19,6 @@ export interface EventSources {
   rules: RuleSource[];
   schedules: ScheduleSource[];
 }
-
-// ARN function có thể kèm version / alias (my-function:prod); queue, topic thì khớp đúng ARN
-export const targetsArn = (target: string, arn: string, qualified = false) =>
-  target === arn || (qualified && target.startsWith(`${arn}${ARN_SEPARATOR}`));
 
 // Floci 2.4.0 không có ListRuleNamesByTarget nên quét bus → rule → target (local ít, quét song song)
 export async function listRuleTargets(client: EventBridgeClient) {

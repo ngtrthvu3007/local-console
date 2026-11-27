@@ -16,7 +16,7 @@ const ROLLBACK_COMPLETE_SUFFIX = "ROLLBACK_COMPLETE";
 const COMPLETE_SUFFIX = "_COMPLETE";
 const DELETE_SKIPPED_STATUS = "DELETE_SKIPPED";
 
-export const isInProgress = (status = "") => status.endsWith(IN_PROGRESS_STATUS_SUFFIX);
+const isInProgress = (status = "") => status.endsWith(IN_PROGRESS_STATUS_SUFFIX);
 // Đang chạy thật: REVIEW_IN_PROGRESS chờ người execute change set nên không cần poll
 export const isRunning = (status = "") =>
   isInProgress(status) && status !== REVIEW_IN_PROGRESS_STATUS;

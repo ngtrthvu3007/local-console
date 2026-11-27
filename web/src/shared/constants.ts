@@ -39,6 +39,12 @@ export const SECONDS_PER_MINUTE = 60;
 export const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
 export const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 
+// Số dòng mỗi trang của bảng danh sách (Cloudscape Pagination)
+export const TABLE_PAGE_SIZE = 50;
+
+export const KIBIBYTE = 1024;
+export const MEBIBYTE = 1024 * KIBIBYTE;
+
 export const HEALTH_REFRESH_INTERVAL_MS = 10 * MILLISECONDS_PER_SECOND;
 export const SUCCESS_MESSAGE_LIFETIME_MS = 5 * MILLISECONDS_PER_SECOND;
 export const FLASHBAR_STACK_THRESHOLD = 3;
@@ -68,6 +74,7 @@ export const SERVICE_CATEGORIES = {
   compute: { label: "Compute", color: "#ED7100" },
   storage: { label: "Storage", color: "#3F8624" },
   database: { label: "Database", color: "#2E27AD" },
+  networking: { label: "Networking & content delivery", color: "#8C4FFF" },
   integration: { label: "Application integration", color: "#E7157B" },
   security: { label: "Security, identity, & compliance", color: "#DD344C" },
   business: { label: "Business applications", color: "#DD344C" },
@@ -83,6 +90,8 @@ export const NOT_AVAILABLE = "—";
 
 // Ngăn các phần trong một dòng mô tả: "pk String · sk String · 68 items"
 export const DETAIL_SEPARATOR = " · ";
+// Nối tên trong câu thông báo: "a, b, c"
+export const LIST_SEPARATOR = ", ";
 // Dưới độ rộng này bảng thành danh sách hai tầng (điện thoại), tablet vẫn là
 // bảng nhiều cột. Cùng mốc phone với Cloudscape; ResizeObserver so sánh bằng <
 export const ITEM_LIST_WIDTH_PX = PHONE_MAX_WIDTH_PX + 1;

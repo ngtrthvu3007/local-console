@@ -1,6 +1,6 @@
 # SNS — Thiết kế
 
-> Ngày: 2026-11-18 · Trạng thái: chờ duyệt · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2, làm sau [SQS](2026-11-17-sqs-design.md)
+> Ngày: 2026-11-18 · Trạng thái: đã làm (2026-11-20) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2, làm sau [SQS](2026-11-17-sqs-design.md)
 
 ## 1. Mục tiêu
 

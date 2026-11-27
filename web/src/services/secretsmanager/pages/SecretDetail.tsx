@@ -8,6 +8,7 @@ import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
+import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { isNotFoundError } from "@shared/aws.ts";
 import { pageState } from "@shared/components/PageState.tsx";
@@ -16,12 +17,15 @@ import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
+import { secretSample } from "../codeSamples.ts";
 import { DeleteSecretModal } from "../components/DeleteSecretModal.tsx";
 import { EditDescriptionModal } from "../components/EditDescriptionModal.tsx";
 import { RotationSection } from "../components/RotationSection.tsx";
 import { SecretValue } from "../components/SecretValue.tsx";
 import { useSecret } from "../hooks/useSecrets.ts";
-import { SCHEDULED_FOR_DELETION } from "../constants.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import { SCHEDULED_FOR_DELETION, SECRETS_KEY_SERVICE } from "../constants.ts";
 import { SEARCH_PARAMS, secretCrumbs, secretsRoutes } from "../routes.ts";
 
 const MODALS = { description: "description", delete: "delete" } as const;
@@ -78,11 +82,20 @@ function SecretView({ name, secret, query }: ViewProps) {
                 { label: "ARN", value: <CopyButton variant='inline' text={arn} label={arn} /> },
                 { label: "Description", value: secret.Description || NOT_AVAILABLE },
                 { label: "Last changed", value: formatDate(secret.LastChangedDate) },
+                {
+                  label: "Encryption",
+                  value: secret.KmsKeyId ? (
+                    <KeyLink value={secret.KmsKeyId} />
+                  ) : (
+                    defaultKeyLabel(SECRETS_KEY_SERVICE)
+                  ),
+                },
               ]}
             />
           </Container>
           <SecretValue name={name} />
           <RotationSection name={name} secret={secret} />
+          <ConnectCard sample={secretSample(name)} />
         </SpaceBetween>
         {modal === MODALS.description && (
           <EditDescriptionModal

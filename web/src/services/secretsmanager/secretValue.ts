@@ -1,10 +1,8 @@
 import { z } from "zod";
+import type { KeyValue } from "@shared/components/KeyValueEditor.tsx";
 import { prettyJson } from "@shared/json.ts";
 
-export interface KeyValue {
-  key: string;
-  value: string;
-}
+export type { KeyValue };
 
 // Chỉ object phẳng toàn string mới sửa dạng bảng: kiểu khác lưu lại sẽ đổi kiểu dữ liệu app đang đọc
 const flatStringObject = z.record(z.string(), z.string());

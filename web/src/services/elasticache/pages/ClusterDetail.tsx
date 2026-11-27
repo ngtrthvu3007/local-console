@@ -1,7 +1,8 @@
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
@@ -22,16 +23,7 @@ import {
   type Cluster,
 } from "../hooks/useClusters.ts";
 import { useServerInfo } from "../hooks/useRedis.ts";
-import {
-  CLUSTER_TABS,
-  SEARCH_PARAMS,
-  clusterCrumbs,
-  elasticacheRoutes,
-  type ClusterTab,
-} from "../routes.ts";
-
-const isClusterTab = (value: string | null): value is ClusterTab =>
-  Object.values<string | null>(CLUSTER_TABS).includes(value);
+import { CLUSTER_TABS, clusterCrumbs, elasticacheRoutes } from "../routes.ts";
 
 // "Valkey · localhost:6379 · 1,204 keys": thay cho khối overview, để mở tab là thấy danh sách key
 function clusterSummary(cluster: Cluster, keyCount?: number) {
@@ -47,9 +39,7 @@ function clusterSummary(cluster: Cluster, keyCount?: number) {
 export function ClusterDetail() {
   const { cluster: clusterId = "" } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isClusterTab(requestedTab) ? requestedTab : CLUSTER_TABS.keys;
+  const [tab, setTab] = useTabParam(CLUSTER_TABS, CLUSTER_TABS.keys);
   const details = useCluster(clusterId);
   const cluster = details.data;
   // Số key cho dòng mô tả; cluster chưa hỗ trợ xem key thì bỏ qua
@@ -59,9 +49,6 @@ export function ClusterDetail() {
   useBreadcrumbs(clusterCrumbs(clusterId));
 
   // Đổi tab thì đóng panel (bỏ key khỏi URL)
-  const selectTab = (nextTab: string) =>
-    setSearchParams(nextTab === CLUSTER_TABS.keys ? {} : { [SEARCH_PARAMS.tab]: nextTab });
-
   // Floci trả danh sách: cluster không có trong danh sách (mà không lỗi) là không tồn tại
   const state = pageState(details, {
     ready: Boolean(cluster),
@@ -111,11 +98,7 @@ export function ClusterDetail() {
 
   return (
     <ContentLayout header={header}>
-      <Tabs
-        activeTabId={tab}
-        tabs={tabs}
-        onChange={({ detail }) => selectTab(detail.activeTabId)}
-      />
+      <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       {deleting && (
         <DeleteClustersModal
           clusters={[cluster]}

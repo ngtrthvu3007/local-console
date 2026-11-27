@@ -8,7 +8,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -20,7 +20,6 @@ import type { StateMachine } from "../stateMachines.ts";
 import { STATE_MACHINE_TYPE_LABELS } from "../constants.ts";
 
 const NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 export function StateMachineList() {
   useBreadcrumbs(stateMachinesCrumbs);
@@ -47,7 +46,7 @@ export function StateMachineList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
     });
 
   const nameLink = (machine: StateMachine) => (

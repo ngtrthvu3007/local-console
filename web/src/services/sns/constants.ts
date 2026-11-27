@@ -73,3 +73,6 @@ export function isLocalUrl(text: string): boolean {
     return false;
   }
 }
+
+// Tên service trong alias key AWS managed: alias/aws/sns
+export const SNS_KEY_SERVICE = "sns";

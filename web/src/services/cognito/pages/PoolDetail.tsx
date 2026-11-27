@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import type { UserPoolType } from "@aws-sdk/client-cognito-identity-provider";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Tabs from "@cloudscape-design/components/tabs";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -21,10 +22,7 @@ import { TestSignInModal } from "../components/TestSignInModal.tsx";
 import { EMAIL_ATTRIBUTE, SIGN_IN_WITH } from "../constants.ts";
 import { isCognitoMissing } from "../hooks/useCognito.ts";
 import { useUserPool } from "../hooks/usePools.ts";
-import { POOL_TABS, SEARCH_PARAMS, cognitoRoutes, poolCrumbs, type PoolTab } from "../routes.ts";
-
-const isPoolTab = (value: string | null): value is PoolTab =>
-  Object.values<string | null>(POOL_TABS).includes(value);
+import { POOL_TABS, cognitoRoutes, poolCrumbs, type PoolTab } from "../routes.ts";
 
 const TAB_LABELS: Record<PoolTab, string> = {
   users: "Users",
@@ -43,9 +41,7 @@ const SIGN_IN_LABELS = {
 function PoolView({ pool, poolId }: { pool: UserPoolType; poolId: string }) {
   const navigate = useNavigate();
   const { ref, compact } = useIsCompact();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isPoolTab(requestedTab) ? requestedTab : POOL_TABS.users;
+  const [tab, setTab] = useTabParam(POOL_TABS, POOL_TABS.users);
   const [deleting, setDeleting] = useState(false);
   const [testingSignIn, setTestingSignIn] = useState(false);
 
@@ -100,13 +96,7 @@ function PoolView({ pool, poolId }: { pool: UserPoolType; poolId: string }) {
             label: TAB_LABELS[id],
             content: content[id],
           }))}
-          onChange={({ detail }) =>
-            setSearchParams(
-              detail.activeTabId === POOL_TABS.users
-                ? {}
-                : { [SEARCH_PARAMS.tab]: detail.activeTabId },
-            )
-          }
+          onChange={({ detail }) => setTab(detail.activeTabId)}
         />
       </ContentLayout>
       {deleting && (

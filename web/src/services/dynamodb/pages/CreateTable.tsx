@@ -1,5 +1,5 @@
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
-import { useFieldArray } from "react-hook-form";
+import { useWatch, useFieldArray } from "react-hook-form";
 import { useNavigate } from "react-router";
 import AttributeEditor from "@cloudscape-design/components/attribute-editor";
 import Button from "@cloudscape-design/components/button";
@@ -7,13 +7,15 @@ import Container from "@cloudscape-design/components/container";
 import Form from "@cloudscape-design/components/form";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { FormInput } from "@shared/components/form/FormFields.tsx";
+import { FormRadioGroup, FormInput } from "@shared/components/form/FormFields.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { KeyFields } from "../components/KeyFields.tsx";
-import { TABLE_NAME_LENGTH } from "../constants.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
+import { DYNAMODB_KEY_SERVICE, TABLE_ENCRYPTION, TABLE_NAME_LENGTH } from "../constants.ts";
 import { useCreateTable, type IndexKeys, type KeyAttribute } from "../hooks/useTables.ts";
 import { dynamodbBaseCrumbs, dynamodbRoutes } from "../routes.ts";
 import { createTableSchema, type CreateTableForm } from "../schemas.ts";
@@ -27,7 +29,27 @@ const INITIAL_VALUES: CreateTableForm = {
   partitionKey: EMPTY_KEY,
   sortKey: EMPTY_KEY,
   indexes: [],
+  encryption: TABLE_ENCRYPTION.awsOwned,
+  kmsKeyId: "",
 };
+
+const ENCRYPTION_ITEMS = [
+  {
+    value: TABLE_ENCRYPTION.awsOwned,
+    label: "Owned by Amazon DynamoDB",
+    description: "Default. No KMS key.",
+  },
+  {
+    value: TABLE_ENCRYPTION.awsManaged,
+    label: "AWS managed key",
+    description: "The aws/dynamodb key.",
+  },
+  {
+    value: TABLE_ENCRYPTION.customer,
+    label: "Customer managed key",
+    description: "A KMS key you choose.",
+  },
+];
 
 // Sort key để trống tên thì bỏ qua
 const toIndexKeys = (partitionKey: KeyAttribute, sortKey: KeyAttribute): IndexKeys => ({
@@ -45,6 +67,7 @@ export function CreateTable() {
   const createTable = useCreateTable();
   const form = useZodForm(createTableSchema, INITIAL_VALUES);
   const indexes = useFieldArray({ control: form.control, name: "indexes" });
+  const encryption = useWatch({ control: form.control, name: "encryption" });
   const indexErrors = form.formState.errors.indexes;
 
   const submit = form.handleSubmit((values) =>
@@ -56,6 +79,9 @@ export function CreateTable() {
           name: index.name,
           keys: toIndexKeys(index.partitionKey, index.sortKey),
         })),
+        // Customer chưa chọn key thì như AWS managed
+        encryption: values.encryption,
+        kmsKeyId: values.encryption === TABLE_ENCRYPTION.customer ? values.kmsKeyId : "",
       },
       notifyOutcome({
         success: `Created table ${values.name}`,
@@ -142,6 +168,22 @@ export function CreateTable() {
     },
   ];
 
+  const encryptionSection = (
+    <Container header={<Header variant='h2'>Encryption at rest</Header>}>
+      <SpaceBetween size='l'>
+        <FormRadioGroup control={form.control} name='encryption' items={ENCRYPTION_ITEMS} />
+        {encryption === TABLE_ENCRYPTION.customer && (
+          <FormKeySelect
+            control={form.control}
+            name='kmsKeyId'
+            label='Encryption key'
+            defaultLabel={defaultKeyLabel(DYNAMODB_KEY_SERVICE)}
+          />
+        )}
+      </SpaceBetween>
+    </Container>
+  );
+
   const globalIndexes = (
     <Container
       header={
@@ -178,6 +220,7 @@ export function CreateTable() {
         <SpaceBetween size='l'>
           {tableDetails}
           {globalIndexes}
+          {encryptionSection}
         </SpaceBetween>
       </Form>
     </form>

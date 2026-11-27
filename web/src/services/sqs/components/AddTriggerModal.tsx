@@ -1,28 +1,16 @@
-import Button from "@cloudscape-design/components/button";
 import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { ALREADY_TRIGGERED, SQS_BATCH_SIZE } from "../../lambda/constants.ts";
 import { MappingOptionsFields } from "../../lambda/components/MappingOptionsFields.tsx";
+import { ViewFunctionButton } from "../../lambda/components/StreamTriggers.tsx";
 import { functionNameOfMapping } from "../../lambda/helpers.ts";
 import { DEFAULT_MAPPING_OPTIONS } from "../../lambda/mappingOptions.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
 import { useAddQueueTrigger, useQueueTriggers } from "../hooks/useQueueTriggers.ts";
 import type { Queue } from "../queues.ts";
 import { queueTriggerSchema } from "../schemas.ts";
-
-// Nút trong thông báo: mở tab Triggers của function vừa gắn
-function ViewFunctionButton({ functionName }: { functionName: string }) {
-  const follow = useFollow();
-  return (
-    <Button href={lambdaRoutes.function(functionName, FUNCTION_TABS.triggers)} onFollow={follow}>
-      View function
-    </Button>
-  );
-}
 
 // Chỉ mount khi mở. Cùng giới hạn và mặc định với modal Add trigger của Lambda
 export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss: () => void }) {

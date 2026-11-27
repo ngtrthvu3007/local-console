@@ -88,6 +88,14 @@ test("creates a self-managed MySQL database with Easy create", async ({ page }) 
   await expect(page).toHaveURL(/\?tab=configuration$/);
   await expect(page.getByText("Self managed")).toBeVisible();
   await expect(page.getByText("appdb")).toBeVisible();
+
+  // Tên group ở tab Logs là link sang trang CloudWatch Logs (spec Logs 3.8)
+  const errorGroup = `/aws/rds/instance/${createdId}/error`;
+  await page.getByRole("tab", { name: "Logs" }).click();
+  await expect(page.getByRole("link", { name: errorGroup })).toHaveAttribute(
+    "href",
+    `/logs/groups/detail?${new URLSearchParams({ group: errorGroup })}`,
+  );
 });
 
 test("stops, starts and reboots from Actions", async ({ page }) => {

@@ -6,13 +6,16 @@ import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { BreakableText } from "@shared/components/BreakableText.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable, CopyButton } from "@shared/components/CopyButton.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { secretsRoutes } from "../../secretsmanager/routes.ts";
 import { connectionUrl, databaseSample } from "../codeSamples.ts";
-import { CREDENTIAL_TYPES, errorLogGroup } from "../constants.ts";
+import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
+import { RDS_KEY_SERVICE, CREDENTIAL_TYPES, errorLogGroup } from "../constants.ts";
 import {
   addressText,
   endpointOf,
@@ -21,9 +24,6 @@ import {
   machineAddress,
   type Address,
 } from "../databases.ts";
-
-const copyable = (text?: string) =>
-  text ? <CopyButton variant='inline' text={text} label={text} /> : NOT_AVAILABLE;
 
 export function ConnectivityTab({ database }: { database: DBInstance }) {
   const follow = useFollow();
@@ -126,13 +126,31 @@ export function ConfigurationTab({ database }: { database: DBInstance }) {
             label: "Master credentials",
             value: <MasterCredentials secretArn={database.MasterUserSecret?.SecretArn} />,
           },
+          {
+            label: "Storage encryption",
+            value: !database.StorageEncrypted ? (
+              "Not encrypted"
+            ) : database.KmsKeyId ? (
+              <KeyLink value={database.KmsKeyId} />
+            ) : (
+              defaultKeyLabel(RDS_KEY_SERVICE)
+            ),
+          },
+          ...(database.MasterUserSecret?.KmsKeyId
+            ? [
+                {
+                  label: "Secret encryption key",
+                  value: <KeyLink value={database.MasterUserSecret.KmsKeyId} />,
+                },
+              ]
+            : []),
         ]}
       />
     </Container>
   );
 }
 
-// CloudWatch Logs chưa có trang trong console nên chỉ hiện tên group để copy
+// Tên group là link sang trang CloudWatch Logs, kèm nút copy để dán vào code / CLI
 export function LogsTab({ id }: { id: string }) {
   return (
     <Container
@@ -142,7 +160,19 @@ export function LogsTab({ id }: { id: string }) {
         </Header>
       }
     >
-      <KeyValuePairs items={[{ label: "Log group", value: copyable(errorLogGroup(id)) }]} />
+      <KeyValuePairs
+        items={[
+          {
+            label: "Log group",
+            value: (
+              <>
+                <LogGroupLink name={errorLogGroup(id)} />{" "}
+                <CopyButton variant='icon' text={errorLogGroup(id)} label={errorLogGroup(id)} />
+              </>
+            ),
+          },
+        ]}
+      />
     </Container>
   );
 }

@@ -146,13 +146,13 @@ export async function runEach<T>(
 export function notifyBulkOutcome<TResult extends { failures: string[] }>(options: {
   success: (result: TResult) => string;
   errorHeader: string;
-  then?: () => void;
+  then?: (result: TResult) => void;
 }) {
   return {
     onSuccess: (result: TResult) => {
       dismissErrors(options.errorHeader);
       notifyBulkResult(options.success(result), result.failures);
-      options.then?.();
+      options.then?.(result);
     },
     onError: (error: unknown) => notifyError(error, options.errorHeader),
   };

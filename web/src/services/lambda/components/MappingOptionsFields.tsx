@@ -22,8 +22,15 @@ import {
 import type { MappingOptions, MappingSource } from "../mappingOptions.ts";
 
 const PATTERN_EDITOR_HEIGHT_PX = 120;
-const FILTER_HINT =
-  'Run the function only for matching items, e.g. {"body": {"type": ["order"]}}. One match is enough.';
+// Pattern lọc theo khóa gốc của từng nguồn (luật AWS): SQS là body, DynamoDB Stream là dynamodb
+// (giá trị kèm kiểu S / N…), Kinesis là data đã giải mã
+const FILTER_EXAMPLES: Record<MappingSource, string> = {
+  sqs: '{"body": {"type": ["order"]}}',
+  dynamodb: '{"dynamodb": {"NewImage": {"type": {"S": ["order"]}}}}',
+  kinesis: '{"data": {"type": ["order"]}}',
+};
+const filterHint = (source: MappingSource) =>
+  `Run the function only for matching ${source === "sqs" ? "messages" : "records"}, e.g. ${FILTER_EXAMPLES[source]}. One match is enough.`;
 const SQS_FILTER_WARNING =
   "Messages that don't match any pattern are deleted from the queue without running the function.";
 const PARTIAL_BATCH_HINT =
@@ -54,7 +61,7 @@ export function MappingOptionsFields<TValues extends FieldValues>({
   });
   return (
     <SpaceBetween size='m'>
-      <FormField label='Filter patterns - optional' description={FILTER_HINT} stretch>
+      <FormField label='Filter patterns - optional' description={filterHint(source)} stretch>
         <SpaceBetween size='s'>
           {patterns.fields.map((entry, index) => (
             <SpaceBetween key={entry.id} size='xs'>

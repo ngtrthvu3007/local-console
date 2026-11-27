@@ -18,13 +18,12 @@ import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
+import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import { useTopics } from "../../sns/hooks/useTopics.ts";
-import { useQueues } from "../../sqs/hooks/useQueues.ts";
-import { useStateMachines } from "../../stepfunctions/hooks/useStateMachines.ts";
+import { isNotFoundError } from "@shared/aws.ts";
+import { ECS_TARGET_NAMES, EcsTargetFields, ecsTargetOf } from "../components/EcsTargetFields.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
 import {
   AFTER_COMPLETION,
@@ -38,18 +37,14 @@ import {
   nameConstraint,
   SCHEDULE_STATES,
 } from "../constants.ts";
-import { useBuses } from "../hooks/useBuses.ts";
-import {
-  isScheduleMissing,
-  useSaveSchedule,
-  useSchedule,
-  useScheduleGroups,
-} from "../hooks/useSchedules.ts";
+import { useSaveSchedule, useSchedule, useScheduleGroups } from "../hooks/useSchedules.ts";
+import { TARGET_KIND_OPTIONS, useTargetOptions } from "../hooks/useTargets.ts";
 import { SEARCH_PARAMS, eventbridgeRoutes, schedulesCrumbs } from "../routes.ts";
 import { buildExpression, parseExpression } from "../scheduleExpression.ts";
 import { scheduleSchema, type ScheduleForm as ScheduleFormValues } from "../schemas.ts";
 import { buildTarget, editableTargetKind, toUpdateInput, type Schedule } from "../schedules.ts";
-import { SCHEDULE_TARGET_KINDS, TARGET_KINDS, type ScheduleTargetKind } from "../targets.ts";
+import { TARGET_KINDS } from "../targets.ts";
+import { taskDefinitionRefOf } from "../../ecs/arns.ts";
 
 const CRON_DESCRIPTION = "Example: 0 9 ? * MON-FRI * runs at 9:00 on weekdays.";
 // Floci chạy ngay schedule `at` có giờ đã qua (AWS thì từ chối), và xóa nó luôn nếu bật Delete after completion
@@ -79,22 +74,13 @@ const FLEXIBLE_ITEMS = [
 
 const RATE_UNIT_OPTIONS = RATE_UNITS.map((unit) => ({ value: unit, label: unit }));
 
-const TARGET_KIND_OPTIONS = SCHEDULE_TARGET_KINDS.map((kind) => ({
-  value: kind,
-  label: TARGET_KINDS[kind],
-}));
-
-const EMPTY_TEXT: Record<ScheduleTargetKind, string> = {
-  lambda: "No functions",
-  sqs: "No queues",
-  sns: "No topics",
-  eventbus: "No event buses",
-  stepfunctions: "No state machines",
-};
-
 function initialValues(group: string, existing?: Schedule): ScheduleFormValues {
   const timing = parseExpression(existing?.ScheduleExpression ?? "");
   const target = existing?.Target;
+  const ecs = target?.EcsParameters;
+  const taskDefinition = ecs?.TaskDefinitionArn
+    ? taskDefinitionRefOf(ecs.TaskDefinitionArn)
+    : undefined;
 
   return {
     name: existing?.Name ?? "",
@@ -118,6 +104,10 @@ function initialValues(group: string, existing?: Schedule): ScheduleFormValues {
     detailType: target?.EventBridgeParameters?.DetailType ?? "",
     input: target?.Input ?? "",
     enabled: existing ? existing.State === SCHEDULE_STATES.enabled : true,
+    taskFamily: taskDefinition?.family ?? "",
+    taskRevision: taskDefinition ? String(taskDefinition.revision) : "",
+    subnets: ecs?.NetworkConfiguration?.awsvpcConfiguration?.Subnets ?? [],
+    securityGroups: ecs?.NetworkConfiguration?.awsvpcConfiguration?.SecurityGroups ?? [],
   };
 }
 
@@ -130,14 +120,10 @@ function ScheduleFormView({ group, existing }: FormProps) {
   const follow = useFollow();
   const navigate = useNavigate();
   const groups = useScheduleGroups();
-  const functions = useFunctions();
-  const queues = useQueues();
-  const topics = useTopics();
-  const buses = useBuses();
-  const stateMachines = useStateMachines();
+  const { optionsByKind, emptyText, fifoArns } = useTargetOptions();
   const save = useSaveSchedule(Boolean(existing));
+  const { region } = useLoadedConfig();
 
-  const fifoArns = new Set((queues.data ?? []).filter((queue) => queue.fifo).map((q) => q.arn));
   const form = useZodForm(scheduleSchema(fifoArns), initialValues(group, existing));
 
   const [kind, flexMode, targetKind, targetArn] = useWatch({
@@ -181,6 +167,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
                   values.targetKind === "eventbus"
                     ? { source: values.source, detailType: values.detailType }
                     : undefined,
+                ecs: values.targetKind === "ecs" ? ecsTargetOf(values, region) : undefined,
               },
               existing?.Target,
             ),
@@ -207,20 +194,6 @@ function ScheduleFormView({ group, existing }: FormProps) {
       }),
     );
   });
-
-  const optionsByKind: Record<ScheduleTargetKind, { value: string; label: string }[]> = {
-    lambda: (functions.data ?? []).map((fn) => ({
-      value: fn.FunctionArn ?? "",
-      label: fn.FunctionName ?? "",
-    })),
-    sqs: (queues.data ?? []).map((queue) => ({ value: queue.arn, label: queue.name })),
-    sns: (topics.data ?? []).map((topic) => ({ value: topic.arn, label: topic.name })),
-    eventbus: (buses.data ?? []).map((bus) => ({ value: bus.arn, label: bus.name })),
-    stepfunctions: (stateMachines.data ?? []).map((machine) => ({
-      value: machine.arn,
-      label: machine.name,
-    })),
-  };
 
   const groupOptions = (groups.data ?? [DEFAULT_SCHEDULE_GROUP]).map((name) => ({
     value: name,
@@ -361,7 +334,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
             name='targetArn'
             label={TARGET_KINDS[targetKind]}
             placeholder='Choose a resource'
-            empty={EMPTY_TEXT[targetKind]}
+            empty={emptyText[targetKind]}
             options={optionsByKind[targetKind]}
           />
           {fifoArns.has(targetArn) && (
@@ -371,6 +344,11 @@ function ScheduleFormView({ group, existing }: FormProps) {
             <SpaceBetween size='l'>
               <FormInput control={form.control} name='source' label='Source' />
               <FormInput control={form.control} name='detailType' label='Detail type' />
+            </SpaceBetween>
+          )}
+          {targetKind === "ecs" && (
+            <SpaceBetween size='l'>
+              <EcsTargetFields control={form.control} names={ECS_TARGET_NAMES} />
             </SpaceBetween>
           )}
           <SpaceBetween size='xs'>
@@ -429,7 +407,7 @@ export function ScheduleForm() {
 
   const state = pageState(existing, {
     ready: Boolean(existing.data),
-    notFound: existing.isError && isScheduleMissing(existing.error),
+    notFound: existing.isError && isNotFoundError(existing.error),
     title: `Schedule ${name} not found`,
     backHref: eventbridgeRoutes.schedules(group),
     backText: "View schedules",

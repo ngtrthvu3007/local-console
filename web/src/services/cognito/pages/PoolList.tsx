@@ -10,7 +10,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -23,7 +23,6 @@ import { cognitoBaseCrumbs, cognitoRoutes } from "../routes.ts";
 
 const POOL_ID_FIELD = "Id";
 const POOL_NAME_FIELD = "Name";
-const PAGE_SIZE = 50;
 
 export function PoolList() {
   useBreadcrumbs(cognitoBaseCrumbs);
@@ -55,7 +54,7 @@ export function PoolList() {
         fields: [POOL_NAME_FIELD],
       },
       sorting: { defaultState: { sortingColumn: { sortingField: POOL_NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: POOL_ID_FIELD },
     });
 

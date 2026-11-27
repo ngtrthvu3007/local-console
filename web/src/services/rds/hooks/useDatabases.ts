@@ -71,8 +71,15 @@ export function useCreateDatabase() {
           AllocatedStorage: ALLOCATED_STORAGE_GB,
           MasterUsername: database.username,
           ...(database.credentials === "secretsManager"
-            ? { ManageMasterUserPassword: true }
+            ? {
+                ManageMasterUserPassword: true,
+                MasterUserSecretKmsKeyId: database.secretKmsKeyId || undefined,
+              }
             : { MasterUserPassword: database.password }),
+          // Mặc định không mã hóa (như trước); bật thì key trống = aws/rds
+          ...(database.storageEncrypted
+            ? { StorageEncrypted: true, KmsKeyId: database.kmsKeyId || undefined }
+            : {}),
           DBName: database.databaseName || undefined,
         }),
       ),

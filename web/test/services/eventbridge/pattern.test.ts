@@ -8,7 +8,6 @@ import { ruleSchema, addTargetSchema } from "../../../src/services/eventbridge/s
 import {
   busNameOfArn,
   qualifierOfArn,
-  resourceNameOfArn,
   targetId,
   targetKindOfArn,
 } from "../../../src/services/eventbridge/targets.ts";
@@ -98,6 +97,22 @@ describe("addTargetSchema", () => {
   it("needs a resource", () => {
     expect(addTargetSchema(fifo).safeParse({ ...input, arn: "" }).success).toBe(false);
   });
+
+  // Thiếu network config thì Floci chỉ ghi lỗi vào log của nó, rule vẫn báo thành công (spec ECS 7 #5)
+  it("needs a task definition and a subnet for an ECS task", () => {
+    const ecs = {
+      kind: "ecs" as const,
+      arn: "arn:aws:ecs:r:0:cluster/app",
+      groupId: "",
+      taskFamily: "migrate",
+      taskRevision: "2",
+      subnets: ["subnet-a"],
+      securityGroups: [],
+    };
+    expect(addTargetSchema(fifo).safeParse(ecs).success).toBe(true);
+    expect(addTargetSchema(fifo).safeParse({ ...ecs, taskFamily: "" }).success).toBe(false);
+    expect(addTargetSchema(fifo).safeParse({ ...ecs, subnets: [] }).success).toBe(false);
+  });
 });
 
 describe("targets", () => {
@@ -106,15 +121,19 @@ describe("targets", () => {
     expect(targetKindOfArn("arn:aws:sqs:r:0:orders")).toBe("sqs");
     expect(targetKindOfArn("arn:aws:sns:r:0:topic")).toBe("sns");
     expect(targetKindOfArn("arn:aws:states:r:0:stateMachine:flow")).toBe("stepfunctions");
-    expect(targetKindOfArn("arn:aws:kinesis:r:0:stream/s")).toBe("other");
+    expect(targetKindOfArn("arn:aws:kinesis:r:0:stream/s")).toBe("kinesis");
+    expect(targetKindOfArn("arn:aws:ecs:r:0:cluster/c")).toBe("ecs");
+    expect(targetKindOfArn("arn:aws:iam::0:role/r")).toBe("other");
   });
 
-  it("takes the resource name and builds an id of at most 64 characters", () => {
-    expect(resourceNameOfArn("arn:aws:lambda:r:0:function:fn")).toBe("fn");
+  it("builds an id of at most 64 characters", () => {
     expect(targetId("lambda", "arn:aws:lambda:r:0:function:fn")).toBe("lambda-fn");
     expect(targetId("sqs", `arn:aws:sqs:r:0:${"a".repeat(80)}`)).toHaveLength(64);
     // Bus: lấy tên sau "event-bus/", id target không cho phép dấu /
     expect(targetId("eventbus", "arn:aws:events:r:0:event-bus/orders")).toBe("eventbus-orders");
+    expect(targetId("ecs", "arn:aws:ecs:r:0:cluster/app")).toBe("ecs-app");
+    // Finding #4: hai target ECS cùng cluster (khác task definition) không được trùng id
+    expect(targetId("ecs", "arn:aws:ecs:r:0:cluster/app", "migrate")).toBe("ecs-app-migrate");
   });
 });
 

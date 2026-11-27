@@ -1,14 +1,10 @@
 import type { Runtime } from "@aws-sdk/client-lambda";
 import {
   FLOCI_ACCOUNT_ID,
+  KIBIBYTE,
+  MEBIBYTE,
   MILLISECONDS_PER_SECOND,
-  SECONDS_PER_DAY,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_MINUTE,
 } from "@shared/constants.ts";
-
-const KIBIBYTE = 1024;
-const MEBIBYTE = 1024 * KIBIBYTE;
 
 // Chỉ hỗ trợ Node.js và Python (sửa code ngay trên trang được), mới trước cũ.
 // Function runtime khác (deploy bằng tool khác) vẫn xem, test, cấu hình được
@@ -72,41 +68,37 @@ export type InvocationType = (typeof INVOCATION_TYPES)[keyof typeof INVOCATION_T
 // Đồng hồ của container Floci và của trình duyệt có thể lệch nhau chút ít
 export const LOG_CLOCK_SKEW_MS = MILLISECONDS_PER_SECOND;
 
-// Tab Monitor
-export const LOG_RANGES = [
-  { id: "15m", text: "15m", milliseconds: 15 * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND },
-  { id: "1h", text: "1h", milliseconds: SECONDS_PER_HOUR * MILLISECONDS_PER_SECOND },
-  { id: "1d", text: "1d", milliseconds: SECONDS_PER_DAY * MILLISECONDS_PER_SECOND },
-  { id: "7d", text: "7d", milliseconds: 7 * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND },
-] as const;
-
-export type LogRangeId = (typeof LOG_RANGES)[number]["id"];
-export const DEFAULT_LOG_RANGE: LogRangeId = "1h";
-export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
-
 // Trigger
-export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
+export const TRIGGER_SOURCES = {
+  s3: "S3",
+  sqs: "SQS",
+  dynamodb: "DynamoDB",
+  kinesis: "Kinesis",
+} as const;
 export type TriggerSource = keyof typeof TRIGGER_SOURCES;
 
-// Nguồn chỉ xem ở đây; tạo từ trang của nó (SNS: topic, rule/schedule: EventBridge, Cognito: user pool)
+// Nguồn chỉ xem ở đây; tạo từ trang của nó (SNS: topic, rule/schedule: EventBridge, Cognito: user pool,
+// Secrets Manager: rotation của secret)
 const DISPLAY_ONLY_SOURCES = {
-  kinesis: "Kinesis",
   sns: "SNS",
   eventbridge: "EventBridge",
   scheduler: "Scheduler",
   cognito: "Cognito",
   apigateway: "API Gateway",
+  secretsmanager: "Secrets Manager",
 } as const;
 
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
 
-// Rule / schedule của EventBridge, trigger của user pool, nguồn API Gateway: chỉ xem ở đây, sửa / xóa ở trang của nguồn
+// Rule / schedule của EventBridge, trigger của user pool, rotation của secret, nguồn API Gateway:
+// chỉ xem ở đây, sửa / xóa ở trang của nguồn
 export const VIEW_ONLY_SOURCES: readonly TriggerRowSource[] = [
   "eventbridge",
   "scheduler",
   "cognito",
   "apigateway",
+  "secretsmanager",
 ];
 
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;
@@ -223,3 +215,6 @@ export const ON_FAILURE_KIND_IDS = [
 ] as const satisfies readonly DestinationKind[];
 
 export type OnFailureKind = (typeof ON_FAILURE_KIND_IDS)[number];
+
+// Tên service trong alias key AWS managed mã hóa biến môi trường: alias/aws/lambda
+export const LAMBDA_KEY_SERVICE = "lambda";

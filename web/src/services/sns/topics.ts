@@ -1,4 +1,5 @@
 import type { Subscription as SnsSubscription } from "@aws-sdk/client-sns";
+import { lastArnPart } from "@shared/arn.ts";
 import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
 import { ATTRIBUTE_TRUE } from "../sqs/constants.ts";
 import {
@@ -10,8 +11,6 @@ import {
   type Protocol,
 } from "./constants.ts";
 
-const ARN_SEPARATOR = ":";
-
 export type Attributes = Record<string, string | undefined>;
 
 export interface Topic {
@@ -20,6 +19,7 @@ export interface Topic {
   fifo: boolean;
   contentBasedDedup: boolean;
   subscriptions: number; // đã xác nhận + đang chờ
+  kmsKeyId?: string; // không có = không mã hóa
 }
 
 export interface Subscription {
@@ -37,19 +37,17 @@ export interface Subscription {
 export const topicArn = (region: string, name: string) =>
   `arn:aws:sns:${region}:${FLOCI_ACCOUNT_ID}:${name}`;
 
-// "arn:aws:sns:ap-southeast-1:000000000000:orders" → "orders"
-export const topicNameOfArn = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
-
 const numberOf = (value?: string) => Number(value ?? 0);
 
 export function toTopic(arn: string, attributes: Attributes): Topic {
   return {
-    name: topicNameOfArn(arn),
+    name: lastArnPart(arn),
     arn,
     fifo: attributes.FifoTopic === ATTRIBUTE_TRUE,
     contentBasedDedup: attributes.ContentBasedDeduplication === ATTRIBUTE_TRUE,
     subscriptions:
       numberOf(attributes.SubscriptionsConfirmed) + numberOf(attributes.SubscriptionsPending),
+    kmsKeyId: attributes.KmsMasterKeyId,
   };
 }
 

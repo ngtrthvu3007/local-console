@@ -13,7 +13,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -34,7 +34,6 @@ const UNVERIFIED_WARNING =
   "This identity isn't verified, so SES rejects mail from it. " +
   "Send from an email identity instead: Floci verifies those right away.";
 
-const PAGE_SIZE = 50;
 const crumbs = [...sesBaseCrumbs, { text: "Identities", href: sesRoutes.identities }];
 
 const typeLabel = (identity: IdentityInfo) =>
@@ -75,7 +74,7 @@ export function Identities() {
     {
       filtering: { empty: emptyState },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     },
   );

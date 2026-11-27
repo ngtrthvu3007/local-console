@@ -22,6 +22,7 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { isNotFoundError } from "@shared/aws.ts";
 import { TestPatternSection } from "../components/TestPatternSection.tsx";
 import {
   DEFAULT_BUS_NAME,
@@ -33,7 +34,7 @@ import {
   SCHEDULE_PLACEHOLDER,
 } from "../constants.ts";
 import { useBuses } from "../hooks/useBuses.ts";
-import { isRuleMissing, usePutRule, useRule } from "../hooks/useRules.ts";
+import { usePutRule, useRule } from "../hooks/useRules.ts";
 import { ruleType, type Rule } from "../rules.ts";
 import { SEARCH_PARAMS, eventbridgeRoutes, rulesCrumbs } from "../routes.ts";
 import { ruleSchema, type RuleForm as RuleFormValues } from "../schemas.ts";
@@ -211,7 +212,7 @@ export function RuleForm() {
   if (!editing) return <RuleFormView bus={bus} />;
   const state = pageState(existing, {
     ready: Boolean(existing.data),
-    notFound: existing.isError && isRuleMissing(existing.error),
+    notFound: existing.isError && isNotFoundError(existing.error),
     title: `Rule ${ruleName} not found`,
     backHref: eventbridgeRoutes.rules(bus),
     backText: "View rules",

@@ -8,7 +8,7 @@ export const RULE_TABS = { targets: "targets", details: "details" } as const;
 export type RuleTab = (typeof RULE_TABS)[keyof typeof RULE_TABS];
 
 // bus: bus đang xem ở trang Rules; tab: tab của chi tiết rule
-export const SEARCH_PARAMS = { bus: "bus", tab: "tab", group: "group" } as const;
+export const SEARCH_PARAMS = { bus: "bus", group: "group" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const EVENTBRIDGE_ROUTE_PATTERNS = {

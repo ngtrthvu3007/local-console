@@ -10,7 +10,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { REDIS_ERROR_CODES } from "@server/routes/redis/contract.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
 import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes, formatDate, formatDuration } from "@shared/format.ts";
@@ -18,7 +18,13 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { errorMessage } from "@shared/hooks/useNotify.ts";
 import { cacheSample } from "../codeSamples.ts";
-import { CLUSTER_STATUS_AVAILABLE, NODE_ROLE_LABELS, REDIS_URL_SCHEME } from "../constants.ts";
+import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
+import {
+  CLUSTER_STATUS_AVAILABLE,
+  NODE_ROLE_LABELS,
+  REDIS_URL_SCHEME,
+  engineLogGroup,
+} from "../constants.ts";
 import {
   addressText,
   engineLabel,
@@ -33,9 +39,6 @@ import { ClusterStatus } from "./ClusterStatus.tsx";
 const CONNECT_COLUMNS = 3;
 const SERVER_COLUMNS = 4;
 const GENERAL_COLUMNS = 4;
-
-const copyable = (text?: string) =>
-  text ? <CopyButton variant='inline' text={text} label={text} /> : NOT_AVAILABLE;
 
 const connectionString = (host: string, port: number) => `${REDIS_URL_SCHEME}${host}:${port}`;
 
@@ -151,6 +154,7 @@ export function DetailsTab({ cluster }: { cluster: Cluster }) {
     { label: "Node type", value: cluster.nodeType ?? NOT_AVAILABLE },
     { label: "Created", value: formatDate(cluster.createdAt) },
     { label: "ARN", value: copyable(cluster.arn) },
+    { label: "Log group", value: <LogGroupLink name={engineLogGroup(cluster.id)} /> },
   ];
 
   const roleText = (node: ClusterNode) =>

@@ -76,6 +76,13 @@ describe("resourceHref", () => {
 
   it("links resources whose physical ID matches a route", () => {
     expect(resourceHref("AWS::S3::Bucket", "photos")).toBe("/s3/buckets/photos");
+    // Mọi log group mở trang CloudWatch Logs, không chỉ group của Lambda
+    expect(resourceHref("AWS::Logs::LogGroup", "/aws/lambda/fn")).toBe(
+      "/logs/groups/detail?group=%2Faws%2Flambda%2Ffn",
+    );
+    expect(resourceHref("AWS::Logs::LogGroup", "/my-app/api")).toBe(
+      "/logs/groups/detail?group=%2Fmy-app%2Fapi",
+    );
 
     expect(resourceHref("AWS::SQS::Queue", "http://localhost:4566/000000000000/orders")).toBe(
       "/sqs/queues/orders",
@@ -88,6 +95,35 @@ describe("resourceHref", () => {
     expect(
       resourceHref("AWS::CloudFormation::Stack", "arn:aws:cloudformation:r:0:stack/Child/uuid"),
     ).toBe("/cloudformation/stacks/Child");
+  });
+
+  it("links ECS task definitions by ARN", () => {
+    expect(
+      resourceHref(
+        "AWS::ECS::TaskDefinition",
+        "arn:aws:ecs:ap-southeast-1:000000000000:task-definition/migrate:2",
+      ),
+    ).toBe("/ecs/task-definitions/migrate/2");
+    expect(resourceHref("AWS::ECS::Cluster", "app")).toBe("/ecs/clusters/app");
+    expect(resourceHref("AWS::ECS::Service", "arn:aws:ecs:r:0:service/app/api")).toBe(
+      "/ecs/clusters/app/services/api",
+    );
+  });
+
+  it("links AppSync resources by API ID and ARN", () => {
+    const arn = "arn:aws:appsync:ap-southeast-1:000000000000:apis/a1";
+    expect(resourceHref("AWS::AppSync::GraphQLApi", "a1")).toBe("/appsync/apis/a1");
+    expect(resourceHref("AWS::AppSync::GraphQLSchema", "a1GraphQLSchema")).toBe("/appsync/apis/a1");
+    expect(resourceHref("AWS::AppSync::DataSource", `${arn}/datasources/todos`)).toBe(
+      "/appsync/apis/a1?tab=data-sources",
+    );
+    expect(resourceHref("AWS::AppSync::Resolver", `${arn}/types/Query/resolvers/getTodo`)).toBe(
+      "/appsync/apis/a1/resolvers/Query/getTodo",
+    );
+    expect(resourceHref("AWS::AppSync::FunctionConfiguration", `${arn}/functions/f1`)).toBe(
+      "/appsync/apis/a1/functions/f1",
+    );
+    expect(resourceHref("AWS::AppSync::ApiKey", "da2-x")).toBeUndefined();
   });
 
   it("links the other services", () => {
@@ -107,6 +143,7 @@ describe("resourceHref", () => {
     expect(resourceHref("AWS::Lambda::Url", "arn:aws:lambda:r:000000000000:function:my-fn")).toBe(
       "/lambda/functions/my-fn",
     );
+    expect(resourceHref("AWS::Kinesis::Stream", "clicks")).toBe("/kinesis/streams/clicks");
 
     expect(
       resourceHref(
@@ -121,12 +158,7 @@ describe("resourceHref", () => {
     expect(resourceHref("AWS::ApiGatewayV2::Api", "b2")).toBe("/apigateway/v2/b2");
   });
 
-  it("links a Lambda log group to the function's Monitor tab, others stay text", () => {
-    expect(resourceHref("AWS::Logs::LogGroup", "/aws/lambda/fn")).toBe(
-      "/lambda/functions/fn?tab=monitor",
-    );
-
-    expect(resourceHref("AWS::Logs::LogGroup", "/other/group")).toBeUndefined();
+  it("leaves types without a console page as text", () => {
     expect(resourceHref("AWS::IAM::Role", "role")).toBeUndefined();
   });
 });

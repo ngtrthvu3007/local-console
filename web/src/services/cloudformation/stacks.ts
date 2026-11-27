@@ -1,12 +1,7 @@
 import {
   CloudFormationClient,
-  CreateStackCommand,
   DeleteStackCommand,
   DescribeStacksCommand,
-  GetTemplateCommand,
-  GetTemplateSummaryCommand,
-  TemplateStage,
-  UpdateStackCommand,
   paginateDescribeStackEvents,
   paginateDescribeStacks,
   paginateListStackResources,
@@ -49,30 +44,6 @@ export async function describeStack(client: CloudFormationClient, name: string):
   const stack = Stacks?.[0];
   if (!stack) throw new Error(`Stack ${name} ${MISSING_STACK_MESSAGE}`);
   return stack;
-}
-
-// Floci chạy CreateStack đồng bộ (spec 7 #1): xong thì stack đã ở trạng thái cuối
-export async function createStack(client: CloudFormationClient, name: string, template: string) {
-  await client.send(new CreateStackCommand({ StackName: name, TemplateBody: template }));
-}
-
-export async function updateStack(client: CloudFormationClient, name: string, template: string) {
-  await client.send(new UpdateStackCommand({ StackName: name, TemplateBody: template }));
-}
-
-// Original: Floci trả nguyên văn template đã deploy, kể cả comment (spec 7 #11)
-export async function getTemplate(client: CloudFormationClient, name: string) {
-  const { TemplateBody } = await client.send(
-    new GetTemplateCommand({ StackName: name, TemplateStage: TemplateStage.Original }),
-  );
-
-  return TemplateBody ?? "";
-}
-
-// Floci không trả Description trong DescribeStacks
-export async function stackDescription(client: CloudFormationClient, name: string) {
-  const { Description } = await client.send(new GetTemplateSummaryCommand({ StackName: name }));
-  return Description ?? "";
 }
 
 // Giữ thứ tự API: nhiều event cùng mili giây

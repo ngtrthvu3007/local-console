@@ -15,6 +15,9 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useTables } from "../../dynamodb/hooks/useTables.ts";
 import { dynamodbRoutes } from "../../dynamodb/routes.ts";
+import { useStreams } from "../../kinesis/hooks/useStreams.ts";
+import { kinesisRoutes } from "../../kinesis/routes.ts";
+import { bucketOptions } from "../../s3/helpers.ts";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import { sqsRoutes } from "../../sqs/routes.ts";
@@ -39,6 +42,7 @@ const EVENT_OPTIONS = S3_TRIGGER_EVENTS.map((event) => ({ value: event, label: e
 const DEFAULT_BATCH_SIZES: Partial<Record<TriggerSource, number>> = {
   sqs: SQS_BATCH_SIZE.default,
   dynamodb: STREAM_BATCH_SIZE.default,
+  kinesis: STREAM_BATCH_SIZE.default,
 };
 const STREAM_OFF = "Stream is off";
 
@@ -50,6 +54,7 @@ const INITIAL_VALUES = {
   suffix: "",
   queueArn: "",
   table: "",
+  stream: "",
   startingPosition: DEFAULT_STARTING_POSITION,
   batchSize: String(SQS_BATCH_SIZE.default),
   enabled: true,
@@ -69,6 +74,7 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
   const buckets = useBuckets();
   const queues = useQueues();
   const tables = useTables();
+  const streams = useStreams();
   const form = useZodForm(triggerSchema, INITIAL_VALUES);
   const source = useWatch({ control: form.control, name: "source" });
   // Bảng chưa bật stream thì khóa trong dropdown, không tự bật stream thay người dùng
@@ -91,16 +97,21 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
     if (batchSize) form.setValue("batchSize", String(batchSize));
   };
   const save = (values: TriggerFormOutput) =>
-    onSave({ ...values, streamArn: streamArnOf(values.table) });
+    onSave({
+      ...values,
+      streamArn: values.source === "kinesis" ? values.stream : streamArnOf(values.table),
+    });
+  const kinesisOptions = (streams.data ?? []).map((stream) => ({
+    value: stream.arn,
+    label: stream.name,
+    disabled: linked(stream.arn),
+    description: linked(stream.arn) ? ALREADY_TRIGGERED : undefined,
+  }));
   const queueOptions = (queues.data ?? []).map((queue) => ({
     value: queue.arn,
     label: queue.name,
     disabled: linked(queue.arn),
     description: linked(queue.arn) ? ALREADY_TRIGGERED : queue.arn,
-  }));
-  const bucketOptions = (buckets.data ?? []).map((bucket) => ({
-    value: bucket.Name!,
-    label: bucket.Name!,
   }));
 
   // Mỗi nguồn là một cụm field: bọc SpaceBetween vì fragment làm FormModal mất khoảng cách giữa các field
@@ -112,7 +123,7 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
         label='Bucket'
         placeholder='Choose a bucket'
         empty='No buckets'
-        options={bucketOptions}
+        options={bucketOptions(buckets.data)}
       />
       <FormMultiselect
         control={form.control}
@@ -172,15 +183,9 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
     </>
   );
 
-  const dynamodbFields = (
+  // DynamoDB Stream và Kinesis cùng là stream: chung starting position, batch size, tùy chọn
+  const streamOptionFields = (
     <SpaceBetween size='m'>
-      <FormSelect
-        control={form.control}
-        name='table'
-        label='Table'
-        description={streamHint}
-        options={tableOptions}
-      />
       <ColumnLayout columns={2}>
         <FormSelect
           control={form.control}
@@ -195,8 +200,40 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
           constraintText={`${STREAM_BATCH_SIZE.min}–${STREAM_BATCH_SIZE.max} records per invocation.`}
         />
       </ColumnLayout>
-      <MappingOptionsFields form={form} source='dynamodb' />
+      <MappingOptionsFields form={form} source={source === "kinesis" ? "kinesis" : "dynamodb"} />
       <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
+    </SpaceBetween>
+  );
+
+  const dynamodbFields = (
+    <SpaceBetween size='m'>
+      <FormSelect
+        control={form.control}
+        name='table'
+        label='Table'
+        description={streamHint}
+        options={tableOptions}
+      />
+      {streamOptionFields}
+    </SpaceBetween>
+  );
+
+  const kinesisFields = (
+    <SpaceBetween size='m'>
+      <FormSelect
+        control={form.control}
+        name='stream'
+        label='Data stream'
+        description={
+          <Link href={kinesisRoutes.createStream} onFollow={follow}>
+            Create a data stream
+          </Link>
+        }
+        placeholder='Choose a data stream'
+        empty='No data streams'
+        options={kinesisOptions}
+      />
+      {streamOptionFields}
     </SpaceBetween>
   );
 
@@ -204,6 +241,7 @@ export function AddTriggerModal({ linkedSourceArns, saving, onSave, onDismiss }:
     s3: s3Fields,
     sqs: sqsFields,
     dynamodb: dynamodbFields,
+    kinesis: kinesisFields,
   };
 
   return (

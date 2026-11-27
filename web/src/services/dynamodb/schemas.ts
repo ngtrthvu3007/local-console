@@ -1,14 +1,10 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
+import { issueAdder } from "../lambda/schemas.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import { formatBytes } from "@shared/format.ts";
 import {
-  issueAdder,
-  mappingOptionsIssues,
-  mappingOptionsShape,
-  startingPositionSchema,
-  streamBatchSizeSchema,
-} from "../lambda/schemas.ts";
-import {
+  TABLE_ENCRYPTION,
   BOOLEAN_TEXTS,
   IMPORT_FILE_EXTENSION,
   IMPORT_MAX_BYTES,
@@ -55,12 +51,20 @@ export const createTableSchema = z
     indexes: z.array(
       z.object({ name: z.string().trim(), partitionKey: keyField, sortKey: keyField }),
     ),
+    encryption: z.enum([
+      TABLE_ENCRYPTION.awsOwned,
+      TABLE_ENCRYPTION.awsManaged,
+      TABLE_ENCRYPTION.customer,
+    ]),
+    kmsKeyId: kmsKeyIdSchema,
   })
   .superRefine((values, context) => {
-    const addIssue = (path: (string | number)[], message: string) =>
-      context.addIssue({ code: "custom", path, message });
+    const addIssue = issueAdder(context);
     if (!values.partitionKey.name)
       addIssue(["partitionKey", "name"], "Enter a partition key name.");
+    // "Customer managed key" mà để mặc định thì thành key AWS managed: bắt chọn key
+    if (values.encryption === TABLE_ENCRYPTION.customer && !values.kmsKeyId)
+      addIssue(["kmsKeyId"], "Choose a KMS key.");
 
     // DynamoDB bắt buộc: cùng một tên attribute thì cùng kiểu, ở bảng và mọi index
     const typeByName = new Map<string, KeyType>();
@@ -135,8 +139,7 @@ export const itemSearchSchema = (keysFor: (indexName: string) => IndexKeys) =>
       descending: z.boolean(),
     })
     .superRefine((values, context) => {
-      const addIssue = (path: (string | number)[], message: string) =>
-        context.addIssue({ code: "custom", path, message });
+      const addIssue = issueAdder(context);
       const keys = keysFor(values.indexName);
 
       if (values.mode === SEARCH_MODES.query) {
@@ -216,13 +219,3 @@ export const streamSchema = z.object({
   enabled: z.boolean(),
   viewType: enumOfKeys(STREAM_VIEW_TYPES),
 });
-
-export const streamTriggerSchema = z
-  .object({
-    functionName: z.string().min(1, "Choose a function."),
-    startingPosition: startingPositionSchema,
-    batchSize: streamBatchSizeSchema,
-    enabled: z.boolean(),
-    ...mappingOptionsShape,
-  })
-  .superRefine((values, context) => mappingOptionsIssues("dynamodb", values, issueAdder(context)));

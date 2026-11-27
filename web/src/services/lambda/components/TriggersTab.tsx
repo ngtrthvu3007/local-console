@@ -18,6 +18,7 @@ import { dynamodbRoutes } from "../../dynamodb/routes.ts";
 import { s3Routes } from "../../s3/routes.ts";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
+import { StreamLink } from "../../kinesis/components/StreamLink.tsx";
 import {
   EVENT_SOURCE_STATES,
   SOURCE_LABELS,
@@ -42,9 +43,10 @@ const MODALS = { add: "add", edit: "edit", delete: "delete" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
 function StateCell({ row }: { row: TriggerRow }) {
-  if (!row.state) return <>{NOT_AVAILABLE}</>;
-  const enabled = row.state === EVENT_SOURCE_STATES.enabled;
-  return <StatusIndicator type={enabled ? "success" : "stopped"}>{row.state}</StatusIndicator>;
+  const state = row.mapping?.State;
+  if (!state) return <>{NOT_AVAILABLE}</>;
+  const enabled = state === EVENT_SOURCE_STATES.enabled;
+  return <StatusIndicator type={enabled ? "success" : "stopped"}>{state}</StatusIndicator>;
 }
 
 const sourceColumn: TableProps.ColumnDefinition<TriggerRow> = {
@@ -63,9 +65,10 @@ const RESOURCE_NOUNS: Record<TriggerRowSource, string> = {
   scheduler: "schedule",
   cognito: "user pool",
   apigateway: "API",
+  secretsmanager: "secret",
 };
 
-// Nguồn có trang trên console thì tên là link; nguồn chưa có trang (Kinesis) để chữ
+// Nguồn có trang trên console thì tên là link
 const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>> = {
   s3: (bucket) => s3Routes.bucket(bucket),
   dynamodb: (table) => dynamodbRoutes.table(table),
@@ -74,16 +77,10 @@ const RESOURCE_HREFS: Partial<Record<TriggerRowSource, (name: string) => string>
 function ResourceCell({ row }: { row: TriggerRow }) {
   const follow = useFollow();
 
-  if (row.href)
-    return (
-      <Link href={row.href} onFollow={follow}>
-        {row.resource}
-      </Link>
-    );
-
   if (row.source === "sqs") return <QueueLink name={row.resource} />;
   if (row.source === "sns") return <TopicLink name={row.resource} />;
-  const href = RESOURCE_HREFS[row.source]?.(row.resource);
+  if (row.source === "kinesis") return <StreamLink name={row.resource} />;
+  const href = row.href ?? RESOURCE_HREFS[row.source]?.(row.resource);
   if (!href) return <>{row.resource}</>;
 
   return (
@@ -114,11 +111,10 @@ const stateColumn: TableProps.ColumnDefinition<TriggerRow> = {
 
 // Function nhận đích async của function khác; S3, SNS, EventBridge đã có dòng trong bảng trên
 const FUNCTION_SENDER_KINDS = ["lambda"] as const;
-const EDITABLE_SOURCES: TriggerRowSource[] = ["sqs", "dynamodb"];
+const EDITABLE_SOURCES: TriggerRowSource[] = ["sqs", "dynamodb", "kinesis"];
 
-const WIDE_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
 // Details cũng hiện ở khung hẹp (bảng xếp dọc): filter, partial batch, đích lỗi không được ẩn
-const COMPACT_COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
+const COLUMNS = [sourceColumn, resourceColumn, detailsColumn, stateColumn];
 
 // Nút "Upload a file" trong thông báo, để thử luồng S3 → Lambda ngay
 function UploadButton({ bucket }: { bucket: string }) {
@@ -148,7 +144,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const rows = triggers.data ?? [];
   const single = selected[0];
   // Bật/tắt được mọi trigger dạng event source mapping (SQS, DynamoDB)
-  const mappingSelected = single?.uuid ? single : undefined;
+  const mapping = single?.mapping;
   const closeModal = () => setOpenModal(null);
 
   const finish = () => {
@@ -188,38 +184,38 @@ export function TriggersTab({ functionName, functionArn }: Props) {
     );
 
   const toggle = (enabled: boolean) =>
-    mappingSelected &&
+    mapping &&
     setEnabled.mutate(
-      { uuid: mappingSelected.uuid!, enabled },
+      { uuid: mapping.UUID!, enabled },
       notifyOutcome({
-        success: `${enabled ? "Enabled" : "Disabled"} trigger ${mappingSelected.resource}`,
+        success: `${enabled ? "Enabled" : "Disabled"} trigger ${single.resource}`,
         errorHeader: "Couldn't change the trigger",
         then: () => setSelected([]),
       }),
     );
 
-  const isEnabled = mappingSelected?.state === EVENT_SOURCE_STATES.enabled;
+  const isEnabled = mapping?.State === EVENT_SOURCE_STATES.enabled;
 
   const actions: BarAction[] = [
     refreshAction(triggers),
     {
       id: "enable",
       text: "Enable",
-      disabled: !mappingSelected || isEnabled,
+      disabled: !mapping || isEnabled,
       loading: setEnabled.isPending && !isEnabled,
       onClick: () => toggle(true),
     },
     {
       id: "disable",
       text: "Disable",
-      disabled: !mappingSelected || !isEnabled,
+      disabled: !mapping || !isEnabled,
       loading: setEnabled.isPending && isEnabled,
       onClick: () => toggle(false),
     },
     {
       id: "edit",
       text: "Edit",
-      // Chỉ SQS và DynamoDB có tùy chọn để sửa; Kinesis chưa có form
+      // Chỉ trigger dạng event source mapping (SQS, DynamoDB, Kinesis) có tùy chọn để sửa
       disabled: !single?.mapping || !EDITABLE_SOURCES.includes(single.source),
       onClick: () => setOpenModal(MODALS.edit),
     },
@@ -230,7 +226,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
   const header = (
     <Header
       counter={triggers.data ? `(${rows.length})` : undefined}
-      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, a topic publishes in SNS, an EventBridge rule or schedule fires, or an API Gateway route is called.'
+      description='Run the function when objects change in S3, messages arrive in SQS, items change in DynamoDB, records arrive in Kinesis, a topic publishes in SNS, an EventBridge rule or schedule fires, or an API Gateway route is called.'
       actions={<ActionBar compact={compact} actions={actions} />}
     >
       Triggers
@@ -280,7 +276,7 @@ export function TriggersTab({ functionName, functionArn }: Props) {
           loadingText='Loading triggers'
           // Nguồn chỉ xem ở đây nên không chọn được (không có gì để xóa hay bật / tắt)
           isItemDisabled={(row) => VIEW_ONLY_SOURCES.includes(row.source)}
-          columnDefinitions={compact ? COMPACT_COLUMNS : WIDE_COLUMNS}
+          columnDefinitions={COLUMNS}
           wrapLines
           empty={empty}
           header={header}
@@ -289,7 +285,9 @@ export function TriggersTab({ functionName, functionArn }: Props) {
       </SpaceBetween>
       {openModal === MODALS.add && (
         <AddTriggerModal
-          linkedSourceArns={(triggers.data ?? []).flatMap((row) => row.sourceArn ?? [])}
+          linkedSourceArns={(triggers.data ?? []).flatMap(
+            (row) => row.mapping?.EventSourceArn ?? [],
+          )}
           saving={addTrigger.isPending}
           onSave={add}
           onDismiss={closeModal}

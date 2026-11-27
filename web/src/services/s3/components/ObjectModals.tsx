@@ -9,14 +9,20 @@ import {
   CONFIRM_PERMANENT_DELETE,
   ConfirmModal,
 } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { TagsModal } from "@shared/components/TagsModal.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { asFolderKey, fileNameOf, s3Uri, withoutTrailingDelimiter } from "../helpers.ts";
+import {
+  asFolderKey,
+  bucketOptions,
+  fileNameOf,
+  s3Uri,
+  withoutTrailingDelimiter,
+} from "../helpers.ts";
 import { useBuckets } from "../hooks/useBuckets.ts";
 import {
   useEditMetadata,
@@ -86,7 +92,6 @@ export function DeleteObjectsModal({
   const deleteRows = useDeleteObjects(bucket);
   // Xóa version cụ thể, hoặc bucket không có versioning, thì không khôi phục được
   const permanent = rows.some((row) => row.versionId) || !versioned;
-  const hiddenCount = rows.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteRows.mutate(
@@ -97,18 +102,6 @@ export function DeleteObjectsModal({
         then: onDone,
       }),
     );
-
-  const preview = (
-    <Box>
-      {rows.slice(0, DELETE_PREVIEW_COUNT).map((row) => (
-        <div key={row.key + (row.versionId ?? "")}>
-          {row.key}
-          {row.versionId && <Box variant='small'> version {row.versionId}</Box>}
-        </div>
-      ))}
-      {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-    </Box>
-  );
 
   const consequence = permanent ? (
     <Alert type='warning'>This can't be undone.</Alert>
@@ -129,7 +122,14 @@ export function DeleteObjectsModal({
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      {preview}
+      <DeletePreview
+        lines={rows.map((row) => (
+          <>
+            {row.key}
+            {row.versionId && <Box variant='small'> version {row.versionId}</Box>}
+          </>
+        ))}
+      />
       {rows.some((row) => row.isFolder) && (
         <Alert>Folders are deleted together with everything inside them.</Alert>
       )}
@@ -155,10 +155,6 @@ export function TransferModal({
 
   const verb = move ? "Move" : "Copy";
   const pastTense = move ? "Moved" : "Copied";
-  const bucketOptions = (buckets.data ?? []).map((item) => ({
-    value: item.Name!,
-    label: item.Name!,
-  }));
 
   const submit = form.handleSubmit(({ destinationBucket, destinationFolder }) => {
     const destinationPrefix = destinationFolder ? asFolderKey(destinationFolder) : "";
@@ -185,7 +181,7 @@ export function TransferModal({
         control={form.control}
         name='destinationBucket'
         label='Destination bucket'
-        options={bucketOptions}
+        options={bucketOptions(buckets.data)}
       />
       <FormInput
         control={form.control}

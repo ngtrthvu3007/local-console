@@ -1,23 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
 import type { SchedulerClient } from "@aws-sdk/client-scheduler";
-import { listEventSources, targetsArn } from "../../../src/services/eventbridge/eventSources.ts";
+import { isArnOrQualified } from "../../../src/shared/arn.ts";
+import { listEventSources } from "../../../src/services/eventbridge/eventSources.ts";
 
 const QUEUE = "arn:aws:sqs:r:0:orders";
 const FUNCTION = "arn:aws:lambda:r:0:function:fn";
-
-describe("targetsArn", () => {
-  it("matches the exact ARN", () => {
-    expect(targetsArn(QUEUE, QUEUE)).toBe(true);
-    expect(targetsArn(`${QUEUE}-other`, QUEUE)).toBe(false);
-  });
-
-  it("matches a function ARN with a version or alias only when qualified", () => {
-    expect(targetsArn(`${FUNCTION}:prod`, FUNCTION)).toBe(false);
-    expect(targetsArn(`${FUNCTION}:prod`, FUNCTION, true)).toBe(true);
-    expect(targetsArn(`${FUNCTION}-2`, FUNCTION, true)).toBe(false);
-  });
-});
 
 // Client giả: trả lời theo tên lệnh
 const fakeEvents = (targetsByRule: Record<string, string[]>) =>
@@ -66,7 +54,7 @@ describe("listEventSources", () => {
   ]);
 
   it("finds the rules and schedules that target a resource, across buses and groups", async () => {
-    const sources = await listEventSources(events, scheduler, (arn) => targetsArn(arn, QUEUE));
+    const sources = await listEventSources(events, scheduler, (arn) => arn === QUEUE);
     expect(sources.rules).toEqual([
       { bus: "default", rule: "to-queue" },
       { bus: "default", rule: "to-both" },
@@ -78,13 +66,13 @@ describe("listEventSources", () => {
   it("returns a rule once even if it has two targets that match", async () => {
     const twice = fakeEvents({ "default/twice": [FUNCTION, `${FUNCTION}:prod`] });
     const sources = await listEventSources(twice, fakeScheduler([]), (arn) =>
-      targetsArn(arn, FUNCTION, true),
+      isArnOrQualified(arn, FUNCTION),
     );
     expect(sources.rules).toEqual([{ bus: "default", rule: "twice" }]);
   });
 
   it("finds nothing when no rule or schedule points at the resource", async () => {
-    const sources = await listEventSources(events, scheduler, (arn) => targetsArn(arn, "arn:none"));
+    const sources = await listEventSources(events, scheduler, (arn) => arn === "arn:none");
     expect(sources).toEqual({ rules: [], schedules: [] });
   });
 });

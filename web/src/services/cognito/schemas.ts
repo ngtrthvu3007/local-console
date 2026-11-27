@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { wholeNumberIn } from "@shared/schemas.ts";
+import { isWholeNumberIn } from "@shared/schemas.ts";
 import {
   DeliveryMediumType,
   ExplicitAuthFlowsType,
@@ -148,8 +148,6 @@ export const attributeSchema = z.object({
 
 export type AttributeForm = z.input<typeof attributeSchema>;
 
-const precedenceSchema = wholeNumberIn(GROUP_PRECEDENCE_LIMITS, "");
-
 export const createGroupSchema = z.object({
   name: z
     .string()
@@ -166,7 +164,7 @@ export const createGroupSchema = z.object({
     .string()
     .trim()
     .refine(
-      (text) => text === "" || precedenceSchema.safeParse(text).success,
+      (text) => !text || isWholeNumberIn(text, GROUP_PRECEDENCE_LIMITS),
       `Enter a whole number from ${GROUP_PRECEDENCE_LIMITS.min} to ${GROUP_PRECEDENCE_LIMITS.max}.`,
     ),
 });

@@ -5,6 +5,7 @@ import { FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { errorMessage, notifySuccess } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { isArnOrQualified } from "@shared/arn.ts";
 import { functionNameOfArn } from "../../lambda/helpers.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useUpdateUserPool } from "../hooks/usePools.ts";
@@ -12,7 +13,6 @@ import { triggersSchema } from "../schemas.ts";
 import {
   LAMBDA_TRIGGERS,
   functionOptionArns,
-  matchesFunction,
   toLambdaConfig,
   triggerSelectionOf,
 } from "../triggers.ts";
@@ -41,7 +41,8 @@ export function EditTriggersModal({ pool, poolId, onDismiss }: Props) {
   const optionOf = (arn: string): SelectProps.Option => {
     const isListed = functionArns.includes(arn);
     const isMissing =
-      functions.isSuccess && !functionArns.some((functionArn) => matchesFunction(arn, functionArn));
+      functions.isSuccess &&
+      !functionArns.some((functionArn) => isArnOrQualified(arn, functionArn));
 
     return {
       value: arn,

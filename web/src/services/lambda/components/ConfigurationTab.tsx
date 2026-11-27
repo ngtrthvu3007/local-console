@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Controller, useFieldArray } from "react-hook-form";
-import AttributeEditor from "@cloudscape-design/components/attribute-editor";
+import { Controller } from "react-hook-form";
 import Button from "@cloudscape-design/components/button";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
 import Container from "@cloudscape-design/components/container";
 import FormField from "@cloudscape-design/components/form-field";
 import Header from "@cloudscape-design/components/header";
-import Input from "@cloudscape-design/components/input";
 import KeyValuePairs, {
   type KeyValuePairsProps,
 } from "@cloudscape-design/components/key-value-pairs";
@@ -15,13 +13,15 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import type { FunctionConfiguration } from "@aws-sdk/client-lambda";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
+import { KeyValueEditor, type KeyValue } from "@shared/components/KeyValueEditor.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatBytes } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
+  LAMBDA_KEY_SERVICE,
   DESCRIPTION_MAX_LENGTH,
   ENVIRONMENT_MAX_BYTES,
   MEGABYTE_UNIT,
@@ -30,26 +30,22 @@ import {
   TIMEOUT_LIMITS_SECONDS,
 } from "../constants.ts";
 import { useUpdateConfiguration } from "../hooks/useFunctions.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { functionSample } from "../codeSamples.ts";
 import { AsyncInvocationBlock } from "./AsyncInvocationBlock.tsx";
 import { environmentSchema, generalConfigurationSchema } from "../schemas.ts";
 
 const GENERAL_COLUMNS = 4;
 const BYTES_PER_MEGABYTE = 1024 * 1024;
-const EMPTY_VARIABLE = { key: "", value: "" };
-const LIST_SEPARATOR = ", ";
 
-interface Variable {
-  key: string;
-  value: string;
-}
-
-const VARIABLE_COLUMNS: TableProps.ColumnDefinition<Variable>[] = [
+const VARIABLE_COLUMNS: TableProps.ColumnDefinition<KeyValue>[] = [
   { id: "key", header: "Key", isRowHeader: true, cell: (variable) => variable.key },
   { id: "value", header: "Value", cell: (variable) => variable.value },
 ];
 
-const variablesOf = (configuration: FunctionConfiguration): Variable[] =>
+const variablesOf = (configuration: FunctionConfiguration): KeyValue[] =>
   Object.entries(configuration.Environment?.Variables ?? {}).map(([key, value]) => ({
     key,
     value,
@@ -139,17 +135,21 @@ function GeneralConfigurationModal({ configuration, onDismiss }: ModalProps) {
 function EnvironmentModal({ configuration, onDismiss }: ModalProps) {
   const name = configuration.FunctionName ?? "";
   const update = useUpdateConfiguration(name);
-  const form = useZodForm(environmentSchema, { entries: variablesOf(configuration) });
-  const entries = useFieldArray({ control: form.control, name: "entries" });
+  const form = useZodForm(environmentSchema, {
+    entries: variablesOf(configuration),
+    kmsKeyArn: configuration.KMSKeyArn ?? "",
+  });
   const listError =
     form.formState.errors.entries?.root?.message ?? form.formState.errors.entries?.message;
 
-  const submit = form.handleSubmit(({ entries: values }) =>
+  const submit = form.handleSubmit(({ entries: values, kmsKeyArn }) =>
     update.mutate(
       {
         Environment: {
           Variables: Object.fromEntries(values.map((entry) => [entry.key, entry.value])),
         },
+        // Chỉ gửi khi đổi key; chuỗi rỗng = gỡ key, về key mặc định aws/lambda (Floci nhận, IT kms)
+        ...(kmsKeyArn === (configuration.KMSKeyArn ?? "") ? {} : { KMSKeyArn: kmsKeyArn }),
       },
       notifyOutcome({
         success: `Updated environment variables of ${name}`,
@@ -158,26 +158,6 @@ function EnvironmentModal({ configuration, onDismiss }: ModalProps) {
       }),
     ),
   );
-
-  const entryInput = (part: "key" | "value") => (_entry: unknown, index: number) => (
-    <Controller
-      control={form.control}
-      name={`entries.${index}.${part}`}
-      render={({ field }) => (
-        <Input value={field.value} onChange={({ detail }) => field.onChange(detail.value)} />
-      )}
-    />
-  );
-
-  const definition = [
-    {
-      label: "Key",
-      control: entryInput("key"),
-      errorText: (_entry: unknown, index: number) =>
-        form.formState.errors.entries?.[index]?.key?.message,
-    },
-    { label: "Value", control: entryInput("value") },
-  ];
 
   return (
     <FormModal
@@ -192,16 +172,25 @@ function EnvironmentModal({ configuration, onDismiss }: ModalProps) {
         errorText={listError}
         constraintText={`Up to ${formatBytes(ENVIRONMENT_MAX_BYTES)} in total. Keys reserved by Lambda, like AWS_REGION, aren't allowed.`}
       >
-        <AttributeEditor
-          items={entries.fields}
-          definition={definition}
-          addButtonText='Add environment variable'
-          removeButtonText='Remove'
-          empty='No environment variables.'
-          onAddButtonClick={() => entries.append(EMPTY_VARIABLE)}
-          onRemoveButtonClick={({ detail }) => entries.remove(detail.itemIndex)}
+        <Controller
+          control={form.control}
+          name='entries'
+          render={({ field, formState }) => (
+            <KeyValueEditor
+              items={field.value}
+              onChange={field.onChange}
+              keyError={(index) => formState.errors.entries?.[index]?.key?.message}
+              itemLabel='environment variable'
+            />
+          )}
         />
       </FormField>
+      <FormKeySelect
+        control={form.control}
+        name='kmsKeyArn'
+        label='Encryption key'
+        defaultLabel={defaultKeyLabel(LAMBDA_KEY_SERVICE)}
+      />
     </FormModal>
   );
 }
@@ -230,6 +219,14 @@ export function ConfigurationTab({ configuration }: { configuration: FunctionCon
     {
       label: "Architecture",
       value: configuration.Architectures?.join(LIST_SEPARATOR) || NOT_AVAILABLE,
+    },
+    {
+      label: "Environment encryption",
+      value: configuration.KMSKeyArn ? (
+        <KeyLink value={configuration.KMSKeyArn} />
+      ) : (
+        defaultKeyLabel(LAMBDA_KEY_SERVICE)
+      ),
     },
   ];
 

@@ -11,7 +11,7 @@ import Toggle from "@cloudscape-design/components/toggle";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -23,7 +23,6 @@ import { SEARCH_PARAMS, smsCrumbs } from "../routes.ts";
 import { formatPhoneNumber, matchesSearch, sentAt, type Sms } from "../smsInbox.ts";
 
 const ID_FIELD = "Id";
-const PAGE_SIZE = 50;
 const PHONE_NUMBER_STYLE = { whiteSpace: "nowrap" } as const;
 
 function PhoneNumber({ phoneNumber }: { phoneNumber: string }) {
@@ -74,7 +73,7 @@ export function SmsInbox() {
         ),
         filteringFunction: matchesSearch,
       },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
     });
 
   const messages = inbox.data ?? [];

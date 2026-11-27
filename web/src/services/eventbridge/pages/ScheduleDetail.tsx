@@ -19,11 +19,12 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { reformatJson } from "@shared/json.ts";
 import { StackLink } from "@shared/StackLink.tsx";
+import { isNotFoundError } from "@shared/aws.ts";
 import { scheduleSample } from "../codeSamples.ts";
 import { DeleteSchedulesModal } from "../components/DeleteSchedulesModal.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
 import { AFTER_COMPLETION, FLEXIBLE_MODES, SCHEDULE_STATES } from "../constants.ts";
-import { isScheduleMissing, useSchedule, useSetSchedulesEnabled } from "../hooks/useSchedules.ts";
+import { useSchedule, useSetSchedulesEnabled } from "../hooks/useSchedules.ts";
 import { eventbridgeRoutes, scheduleCrumbs } from "../routes.ts";
 import { parseExpression } from "../scheduleExpression.ts";
 import { toScheduleRow, type Schedule } from "../schedules.ts";
@@ -127,7 +128,15 @@ function ScheduleView({ schedule }: { schedule: Schedule }) {
   ];
   const targetItems: KeyValuePairsProps.Item[] = [
     { label: "Type", value: TARGET_KINDS[targetKindOfArn(target?.Arn ?? "")] },
-    { label: "Resource", value: <TargetResource arn={target?.Arn ?? ""} /> },
+    {
+      label: "Resource",
+      value: (
+        <TargetResource
+          arn={target?.Arn ?? ""}
+          ecsTaskDefinition={target?.EcsParameters?.TaskDefinitionArn}
+        />
+      ),
+    },
     ...(target?.Input
       ? [{ label: "Input", value: <CodeSnippet code={reformatJson(target.Input)} /> }]
       : []),
@@ -167,7 +176,7 @@ export function ScheduleDetail() {
 
   const state = pageState(details, {
     ready: Boolean(details.data),
-    notFound: details.isError && isScheduleMissing(details.error),
+    notFound: details.isError && isNotFoundError(details.error),
     title: `Schedule ${name} not found`,
     backHref: eventbridgeRoutes.schedules(group),
     backText: "View schedules",

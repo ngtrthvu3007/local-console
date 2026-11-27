@@ -16,7 +16,7 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { pluralize } from "@shared/format.ts";
-import { prettyJson } from "@shared/json.ts";
+import { reformatJson } from "@shared/json.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
@@ -130,15 +130,6 @@ export function PublishModal({
   );
 }
 
-// Payload JSON thì format để dễ đọc (chỉ xem, không lưu lại nên không đổi dữ liệu)
-function payloadText(message: PeekedMessage) {
-  try {
-    return prettyJson(JSON.parse(message.payload));
-  } catch {
-    return message.payload;
-  }
-}
-
 const preStyle = { whiteSpace: "pre-wrap", overflowWrap: "anywhere", margin: 0 } as const;
 
 function MessageCard({ message, position }: { message: PeekedMessage; position: number }) {
@@ -161,7 +152,8 @@ function MessageCard({ message, position }: { message: PeekedMessage; position: 
     >
       <ColumnLayout columns={1}>
         <Box variant='code'>
-          <pre style={preStyle}>{payloadText(message)}</pre>
+          {/* Payload JSON thì format để dễ đọc (chỉ xem, không lưu lại nên không đổi dữ liệu) */}
+          <pre style={preStyle}>{reformatJson(message.payload)}</pre>
         </Box>
         {Object.keys(message.properties).length > 0 && (
           <KeyValuePairs

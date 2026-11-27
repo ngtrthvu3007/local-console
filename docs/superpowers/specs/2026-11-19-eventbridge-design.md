@@ -1,6 +1,6 @@
 # EventBridge + Scheduler — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2, làm sau [SQS](2026-11-17-sqs-design.md) và [SNS](2026-11-18-sns-design.md)
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-21) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2, làm sau [SQS](2026-11-17-sqs-design.md) và [SNS](2026-11-18-sns-design.md)
 
 ## 1. Mục tiêu
 

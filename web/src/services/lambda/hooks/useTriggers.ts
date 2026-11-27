@@ -21,6 +21,8 @@ import type { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-iden
 import type { APIGatewayClient } from "@aws-sdk/client-api-gateway";
 import type { ApiGatewayV2Client } from "@aws-sdk/client-apigatewayv2";
 import { orEmptyWhenNotFound } from "@shared/aws.ts";
+import type { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { isArnOrQualified, lastArnPart } from "@shared/arn.ts";
 import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
 import { listApis, type ApiRow } from "../../apigateway/apis.ts";
 import { AUTHORIZERS_ARN_SEGMENT } from "../../apigateway/constants.ts";
@@ -33,7 +35,7 @@ import { apigatewayRoutes } from "../../apigateway/routes.ts";
 import { useCognito } from "../../cognito/hooks/useCognito.ts";
 import { listPoolTriggers } from "../../cognito/hooks/usePools.ts";
 import { cognitoRoutes, POOL_TABS } from "../../cognito/routes.ts";
-import { listEventSources, targetsArn } from "../../eventbridge/eventSources.ts";
+import { listEventSources } from "../../eventbridge/eventSources.ts";
 import { useEventBridge } from "../../eventbridge/hooks/useEventBridge.ts";
 import { useScheduler } from "../../eventbridge/hooks/useScheduler.ts";
 import { eventbridgeRoutes } from "../../eventbridge/routes.ts";
@@ -41,8 +43,10 @@ import { summarizeFilterPolicy } from "../../sns/filterPolicy.ts";
 import { useSNS } from "../../sns/hooks/useSNS.ts";
 import { listSubscriptionsOfEndpoint } from "../../sns/hooks/useSubscriptions.ts";
 import { SNS_QUERY_ROOT } from "../../sns/hooks/useTopics.ts";
-import { topicNameOfArn } from "../../sns/topics.ts";
 import { useS3 } from "../../s3/hooks/useS3.ts";
+import { listRotatedSecrets } from "../../secretsmanager/hooks/useSecrets.ts";
+import { useSecretsManager } from "../../secretsmanager/hooks/useSecretsManager.ts";
+import { secretsRoutes } from "../../secretsmanager/routes.ts";
 import {
   overlapMessage,
   overlappingRule,
@@ -56,36 +60,27 @@ import {
   type StartingPosition,
   type TriggerRowSource,
 } from "../constants.ts";
-import {
-  mappingDetails,
-  pickMappingOptions,
-  toMappingParams,
-  type MappingOptions,
-} from "../mappingOptions.ts";
+import { mappingDetails, toMappingParams, type MappingOptions } from "../mappingOptions.ts";
 import type { TriggerFormOutput } from "../schemas.ts";
-import { functionQueryKey } from "./useFunctions.ts";
+import { functionQueryKey, LAMBDA_QUERY_ROOT } from "./useFunctions.ts";
 import { useLambda } from "./useLambda.ts";
 
-const ARN_SEPARATOR = ":";
+const ROTATION_DETAILS = "Rotation";
 
 export interface TriggerRow {
   id: string;
   source: TriggerRowSource;
   resource: string; // tên bucket, queue, bảng, stream, topic SNS, rule, schedule hoặc user pool
   details: string;
-  state?: string; // chỉ event source mapping (SQS, DynamoDB) có trạng thái bật/tắt
   rule?: NotificationRule; // S3: rule notification trỏ tới function
-  uuid?: string; // SQS, DynamoDB: id của event source mapping
-  sourceArn?: string; // SQS, DynamoDB: ARN của queue / stream mà mapping đọc
   subscriptionArn?: string; // SNS: subscription của topic tới function
-  mapping?: EventSourceMappingConfiguration; // SQS, DynamoDB: cấu hình đầy đủ, để sửa
-  href?: string; // EventBridge, Scheduler, Cognito, API Gateway: link sang rule / schedule / tab Triggers của pool / trang API
+  mapping?: EventSourceMappingConfiguration; // SQS, DynamoDB: cấu hình đầy đủ (UUID, State, ARN nguồn), để sửa và bật/tắt
+  href?: string; // EventBridge, Scheduler, Cognito, Secrets Manager, API Gateway: link sang trang của nguồn
 }
 
 // Rule trỏ tới function, kể cả ARN có version/alias (my-function:prod)
 const targetsFunction = (rule: NotificationRule, functionArn: string) =>
-  rule.destination === "lambda" &&
-  (rule.arn === functionArn || rule.arn.startsWith(`${functionArn}${ARN_SEPARATOR}`));
+  rule.destination === "lambda" && isArnOrQualified(rule.arn, functionArn);
 
 // S3 không có API sửa từng rule: đọc cả cấu hình của bucket, sửa danh sách rồi ghi lại
 async function updateBucketRules(
@@ -136,7 +131,7 @@ const streamNameOf = (streamArn: string) =>
 export function mappingSourceOf(arn: string): Pick<TriggerRow, "source" | "resource"> {
   if (DYNAMODB_ARN_PATTERN.test(arn)) return { source: "dynamodb", resource: tableNameOf(arn) };
   if (KINESIS_ARN_PATTERN.test(arn)) return { source: "kinesis", resource: streamNameOf(arn) };
-  return { source: "sqs", resource: arn.split(ARN_SEPARATOR).pop() ?? NOT_AVAILABLE };
+  return { source: "sqs", resource: lastArnPart(arn) };
 }
 
 function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
@@ -147,9 +142,6 @@ function mappingRow(mapping: EventSourceMappingConfiguration): TriggerRow {
     source,
     resource,
     details: mappingDetails(source, mapping),
-    state: mapping.State,
-    uuid: mapping.UUID,
-    sourceArn: mapping.EventSourceArn,
     mapping,
   };
 }
@@ -175,15 +167,14 @@ async function listS3Triggers(s3: S3Client, functionArn: string) {
 
 // Subscription trỏ tới function, kể cả ARN có version/alias
 async function listSnsTriggers(sns: SNSClient, functionArn: string) {
-  const subscriptions = await listSubscriptionsOfEndpoint(
-    sns,
-    (endpoint) => endpoint === functionArn || endpoint.startsWith(`${functionArn}${ARN_SEPARATOR}`),
+  const subscriptions = await listSubscriptionsOfEndpoint(sns, (endpoint) =>
+    isArnOrQualified(endpoint, functionArn),
   );
 
   return subscriptions.map((subscription): TriggerRow => ({
     id: `sns:${subscription.arn}`,
     source: "sns",
-    resource: topicNameOfArn(subscription.topicArn),
+    resource: lastArnPart(subscription.topicArn),
     details: summarizeFilterPolicy(subscription.filterPolicy),
     subscriptionArn: subscription.arn,
   }));
@@ -196,7 +187,7 @@ async function listEventBridgeTriggers(
   functionArn: string,
 ) {
   const { rules, schedules } = await listEventSources(events, scheduler, (target) =>
-    targetsArn(target, functionArn, true),
+    isArnOrQualified(target, functionArn),
   );
 
   return [
@@ -279,6 +270,19 @@ async function listApiGatewayTriggers(
   return apigatewayTriggerRows(sources, rows);
 }
 
+// Secret xoay vòng bằng function: sửa ở khối Rotation của secret
+async function listRotationTriggers(secrets: SecretsManagerClient, functionArn: string) {
+  const names = await listRotatedSecrets(secrets, functionArn);
+
+  return names.map((name): TriggerRow => ({
+    id: `secretsmanager:${name}`,
+    source: "secretsmanager",
+    resource: name,
+    details: ROTATION_DETAILS,
+    href: secretsRoutes.secret(name),
+  }));
+}
+
 async function listMappingTriggers(lambda: LambdaClient, functionName: string) {
   const rows: TriggerRow[] = [];
 
@@ -304,28 +308,22 @@ export function useTriggers(functionName: string, functionArn: string) {
   const scheduler = useScheduler();
   const cognito = useCognito();
   const { v1, v2 } = useApiGateway();
+  const secrets = useSecretsManager();
 
   return useQuery({
     queryKey: triggersQueryKey(functionName),
     queryFn: async () => {
-      const [s3Rows, mappingRows, snsRows, eventBridgeRows, cognitoRows, apiGatewayRows] =
-        await Promise.all([
-          listS3Triggers(s3, functionArn),
-          listMappingTriggers(lambda, functionName),
-          listSnsTriggers(sns, functionArn),
-          listEventBridgeTriggers(events, scheduler, functionArn),
-          listCognitoTriggers(cognito, functionArn),
-          listApiGatewayTriggers(lambda, v1, v2, functionName),
-        ]);
+      const rows = await Promise.all([
+        listS3Triggers(s3, functionArn),
+        listMappingTriggers(lambda, functionName),
+        listSnsTriggers(sns, functionArn),
+        listEventBridgeTriggers(events, scheduler, functionArn),
+        listCognitoTriggers(cognito, functionArn),
+        listRotationTriggers(secrets, functionArn),
+        listApiGatewayTriggers(lambda, v1, v2, functionName),
+      ]);
 
-      return [
-        ...s3Rows,
-        ...mappingRows,
-        ...snsRows,
-        ...eventBridgeRows,
-        ...cognitoRows,
-        ...apiGatewayRows,
-      ];
+      return rows.flat();
     },
   });
 }
@@ -347,7 +345,7 @@ function useTriggerMutation<TInput>(
   });
 }
 
-export interface StreamTriggerInput extends MappingOptions {
+interface StreamTriggerInput extends MappingOptions {
   functionName: string;
   streamArn: string;
   startingPosition: StartingPosition;
@@ -355,8 +353,8 @@ export interface StreamTriggerInput extends MappingOptions {
   enabled: boolean;
 }
 
-// Dùng chung cho tab Triggers của Lambda và nút Add trigger ở trang bảng DynamoDB
-export const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerInput) =>
+// Dùng chung cho tab Triggers của Lambda và nút Add trigger ở trang của stream (DynamoDB, Kinesis)
+const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerInput) =>
   lambda.send(
     new CreateEventSourceMappingCommand({
       FunctionName: input.functionName,
@@ -367,6 +365,42 @@ export const createStreamTrigger = (lambda: LambdaClient, input: StreamTriggerIn
       ...toMappingParams("dynamodb", input),
     }),
   );
+
+// Trigger của một stream (DynamoDB Stream, Kinesis), xem từ trang của nguồn
+const streamTriggersQueryKey = (streamArn?: string) => [
+  LAMBDA_QUERY_ROOT,
+  "stream-triggers",
+  streamArn,
+];
+
+export function useStreamTriggers(streamArn?: string) {
+  const { lambda } = useLambda();
+
+  return useQuery({
+    queryKey: streamTriggersQueryKey(streamArn),
+    enabled: Boolean(streamArn),
+    queryFn: async () => {
+      const mappings: EventSourceMappingConfiguration[] = [];
+      const paginator = paginateListEventSourceMappings(
+        { client: lambda },
+        { EventSourceArn: streamArn },
+      );
+      for await (const page of paginator) mappings.push(...(page.EventSourceMappings ?? []));
+      return mappings;
+    },
+  });
+}
+
+export function useAddStreamTrigger(streamArn: string) {
+  const { lambda } = useLambda();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: Omit<StreamTriggerInput, "streamArn">) =>
+      createStreamTrigger(lambda, { ...input, streamArn }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: streamTriggersQueryKey(streamArn) }),
+  });
+}
 
 export interface QueueTriggerInput extends MappingOptions {
   functionName: string;
@@ -387,7 +421,7 @@ export const createQueueTrigger = (lambda: LambdaClient, input: QueueTriggerInpu
     }),
   );
 
-// streamArn: Stream ARN của bảng đã chọn (chỉ với nguồn DynamoDB)
+// streamArn: ARN stream của bảng (DynamoDB) hoặc của Kinesis stream đã chọn
 export type AddTriggerInput = TriggerFormOutput & { streamArn?: string };
 
 // Floci không cần AddPermission như AWS: S3, SQS, DynamoDB gọi được function mà không cần policy
@@ -413,23 +447,19 @@ export function useAddTrigger(functionName: string, functionArn: string) {
       });
     }
 
-    if (values.source === "dynamodb") {
+    if (values.source === "dynamodb" || values.source === "kinesis") {
       return createStreamTrigger(lambda, {
+        ...values,
         functionName,
         streamArn: values.streamArn ?? "",
-        startingPosition: values.startingPosition,
         batchSize: Number(values.batchSize),
-        enabled: values.enabled,
-        ...pickMappingOptions(values),
       });
     }
 
     return createQueueTrigger(lambda, {
+      ...values,
       functionName,
-      queueArn: values.queueArn,
       batchSize: Number(values.batchSize),
-      enabled: values.enabled,
-      ...pickMappingOptions(values),
     });
   });
 }
@@ -447,7 +477,7 @@ export function useDeleteTrigger(functionName: string) {
 
     if (row.source === "sns")
       return sns.send(new UnsubscribeCommand({ SubscriptionArn: row.subscriptionArn }));
-    return lambda.send(new DeleteEventSourceMappingCommand({ UUID: row.uuid }));
+    return lambda.send(new DeleteEventSourceMappingCommand({ UUID: row.mapping?.UUID }));
   });
 }
 
@@ -464,7 +494,7 @@ export function useEditTrigger(functionName: string) {
   return useTriggerMutation(functionName, ({ row, batchSize, options }: EditTriggerInput) =>
     lambda.send(
       new UpdateEventSourceMappingCommand({
-        UUID: row.uuid,
+        UUID: row.mapping?.UUID,
         BatchSize: batchSize,
         ...toMappingParams(row.source === "sqs" ? "sqs" : "dynamodb", options),
       }),

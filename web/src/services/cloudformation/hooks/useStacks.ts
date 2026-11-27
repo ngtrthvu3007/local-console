@@ -1,16 +1,13 @@
+import {
+  CreateStackCommand,
+  GetTemplateCommand,
+  GetTemplateSummaryCommand,
+  TemplateStage,
+  UpdateStackCommand,
+} from "@aws-sdk/client-cloudformation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifyError, notifyInfo, notifySuccess } from "@shared/hooks/useNotify.ts";
-import {
-  createStack,
-  deleteStack,
-  describeStack,
-  getTemplate,
-  listEvents,
-  listResources,
-  listStacks,
-  stackDescription,
-  updateStack,
-} from "../stacks.ts";
+import { deleteStack, describeStack, listEvents, listResources, listStacks } from "../stacks.ts";
 import { NO_CHANGES_NOTICE, STACK_POLL_INTERVAL_MS } from "../constants.ts";
 import { isNoUpdatesError, isRunning } from "../status.ts";
 import { CLOUDFORMATION_QUERY_ROOT, resourceIndexQueryKey } from "./useResourceIndex.ts";
@@ -53,7 +50,9 @@ export function useStackDescription(name: string) {
 
   return useQuery({
     queryKey: stackQueryKey(name, "description"),
-    queryFn: () => stackDescription(client, name),
+    // Floci không trả Description trong DescribeStacks
+    queryFn: async () =>
+      (await client.send(new GetTemplateSummaryCommand({ StackName: name }))).Description ?? "",
     retry: false,
   });
 }
@@ -83,7 +82,13 @@ export function useStackTemplate(name: string) {
 
   return useQuery({
     queryKey: stackQueryKey(name, "template"),
-    queryFn: () => getTemplate(client, name),
+    // Original: Floci trả nguyên văn template đã deploy, kể cả comment (spec 7 #11)
+    queryFn: async () =>
+      (
+        await client.send(
+          new GetTemplateCommand({ StackName: name, TemplateStage: TemplateStage.Original }),
+        )
+      ).TemplateBody ?? "",
     retry: false,
     // Không giữ cache: stack xóa rồi tạo lại cùng tên sẽ mở nhầm template cũ, Deploy ghi đè
     gcTime: 0,
@@ -97,8 +102,14 @@ export function useDeployStack(editing: boolean, pageOpen: () => boolean) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, template }: { name: string; template: string }) =>
-      editing ? updateStack(client, name, template) : createStack(client, name, template),
+    // Floci chạy CreateStack đồng bộ (spec 7 #1): xong thì stack đã ở trạng thái cuối
+    mutationFn: ({ name, template }: { name: string; template: string }) => {
+      const input = { StackName: name, TemplateBody: template };
+
+      return editing
+        ? client.send(new UpdateStackCommand(input))
+        : client.send(new CreateStackCommand(input));
+    },
     onSuccess: (_, { name }) => {
       notifySuccess(`Deployed stack ${name}`);
 

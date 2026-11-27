@@ -1,38 +1,19 @@
 import { useWatch } from "react-hook-form";
 import Alert from "@cloudscape-design/components/alert";
-import Button from "@cloudscape-design/components/button";
-import ColumnLayout from "@cloudscape-design/components/column-layout";
 import type { StreamSpecification, TimeToLiveDescription } from "@aws-sdk/client-dynamodb";
 import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { pluralize } from "@shared/format.ts";
-import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { MappingOptionsFields } from "../../lambda/components/MappingOptionsFields.tsx";
-import { functionNameOfMapping } from "../../lambda/helpers.ts";
-import { DEFAULT_MAPPING_OPTIONS } from "../../lambda/mappingOptions.ts";
-import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import {
-  DEFAULT_STARTING_POSITION,
-  STARTING_POSITION_OPTIONS,
-  STREAM_BATCH_SIZE,
-  ALREADY_TRIGGERED,
-} from "../../lambda/constants.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
 import {
   DEFAULT_STREAM_VIEW_TYPE,
   STREAM_VIEW_TYPES,
   TTL_STATUS_ENABLED,
   type StreamViewTypeId,
 } from "../constants.ts";
-import {
-  useAddStreamTrigger,
-  useStreamTriggers,
-  useUpdateStream,
-  useUpdateTimeToLive,
-} from "../hooks/useTableSettings.ts";
-import { streamSchema, streamTriggerSchema, ttlSchema } from "../schemas.ts";
+import { useUpdateStream, useUpdateTimeToLive } from "../hooks/useTableSettings.ts";
+import { streamSchema, ttlSchema } from "../schemas.ts";
 
 const STREAM_VIEW_OPTIONS = Object.entries(STREAM_VIEW_TYPES).map(([value, label]) => ({
   value,
@@ -154,88 +135,6 @@ export function StreamModal({ table, current, triggerCount, onDismiss }: StreamP
           {triggerCount > 0 && ` ${triggersText} on the old stream must be added again.`}
         </Alert>
       )}
-    </FormModal>
-  );
-}
-
-// Nút trong thông báo: mở tab Triggers của function vừa gắn
-function ViewFunctionButton({ functionName }: { functionName: string }) {
-  const follow = useFollow();
-  return (
-    <Button href={lambdaRoutes.function(functionName, FUNCTION_TABS.triggers)} onFollow={follow}>
-      View function
-    </Button>
-  );
-}
-
-interface TriggerProps {
-  table: string;
-  streamArn: string;
-  onDismiss: () => void;
-}
-
-export function StreamTriggerModal({ table, streamArn, onDismiss }: TriggerProps) {
-  const functions = useFunctions();
-  const addTrigger = useAddStreamTrigger(table, streamArn);
-  const triggers = useStreamTriggers(table, streamArn);
-  const form = useZodForm(streamTriggerSchema, {
-    functionName: "",
-    startingPosition: DEFAULT_STARTING_POSITION,
-    batchSize: String(STREAM_BATCH_SIZE.default),
-    enabled: true,
-    ...DEFAULT_MAPPING_OPTIONS,
-  });
-  const linked = new Set((triggers.data ?? []).map(functionNameOfMapping));
-  const functionOptions = (functions.data ?? []).map((item) => ({
-    value: item.FunctionName!,
-    label: item.FunctionName!,
-    disabled: linked.has(item.FunctionName!),
-    description: linked.has(item.FunctionName!) ? ALREADY_TRIGGERED : item.Runtime,
-  }));
-
-  const submit = form.handleSubmit((values) =>
-    addTrigger.mutate(
-      values,
-      notifyOutcome({
-        success: `${values.functionName} now runs when items in ${table} change`,
-        successAction: <ViewFunctionButton functionName={values.functionName} />,
-        errorHeader: "Couldn't add the trigger",
-        then: onDismiss,
-      }),
-    ),
-  );
-
-  return (
-    <FormModal
-      header={`Add Lambda trigger to ${table}`}
-      actionText='Add'
-      loading={addTrigger.isPending}
-      onSubmit={submit}
-      onDismiss={onDismiss}
-    >
-      <FormSelect
-        control={form.control}
-        name='functionName'
-        label='Function'
-        placeholder='Choose a function'
-        options={functionOptions}
-      />
-      <ColumnLayout columns={2}>
-        <FormSelect
-          control={form.control}
-          name='startingPosition'
-          label='Starting position'
-          options={STARTING_POSITION_OPTIONS}
-        />
-        <FormInput
-          control={form.control}
-          name='batchSize'
-          label='Batch size'
-          constraintText={`${STREAM_BATCH_SIZE.min}–${STREAM_BATCH_SIZE.max} records per invocation.`}
-        />
-      </ColumnLayout>
-      <MappingOptionsFields form={form} source='dynamodb' />
-      <FormCheckbox control={form.control} name='enabled' text='Enable trigger' />
     </FormModal>
   );
 }

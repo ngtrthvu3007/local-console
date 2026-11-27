@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { enumOfKeys } from "@shared/schemas.ts";
 import {
   ATTRIBUTE_DATA_TYPES,
@@ -21,6 +22,8 @@ export const createTopicSchema = z
     type: enumOfKeys(TOPIC_TYPES),
     name: z.string().trim(),
     contentBasedDedup: z.boolean(),
+    encrypted: z.boolean(),
+    kmsKeyId: kmsKeyIdSchema,
   })
   .superRefine(({ type, name }, context) => {
     const addIssue = (message: string) =>

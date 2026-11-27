@@ -224,6 +224,9 @@ describe("taskResourceOf", () => {
         }),
       ),
     ).toEqual({ kind: "statemachine", name: "child" });
+    expect(
+      taskResourceOf(scheduled("ecs", "runTask.sync", { Cluster: "arn:aws:ecs:r:0:cluster/app" })),
+    ).toEqual({ kind: "ecscluster", name: "app" });
   });
 
   it("falls back to text for other integrations or missing parameters", () => {

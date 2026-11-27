@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import type { DescribeSecretResponse, RotationRulesType } from "@aws-sdk/client-secrets-manager";
 import { enumOfKeys, isWholeNumberIn } from "@shared/schemas.ts";
 import {
@@ -38,6 +39,7 @@ export const createSecretSchema = z
     plaintext: z.string(),
     name: z.string().trim(),
     description: z.string().trim(),
+    kmsKeyId: kmsKeyIdSchema,
   })
   .superRefine(({ type, entries, name }, context) => {
     const nameIssue = !name

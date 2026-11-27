@@ -12,7 +12,7 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate, pluralize } from "@shared/format.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -33,7 +33,6 @@ const GENERAL_COLUMNS = 3;
 const PASSWORD_COLUMNS = 3;
 const EMAIL_COLUMNS = 2;
 
-const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
 // Không có policy thì không biết giá trị: hiện NOT_AVAILABLE, không bịa "No"
 const yesNo = (value?: boolean) => (value ? "Yes" : "No");
 
@@ -48,7 +47,7 @@ export function DetailsTab({ pool }: { pool: UserPoolType }) {
 
   const generalItems: KeyValuePairsProps.Item[] = [
     { label: "Pool ID", value: copyable(poolId) },
-    { label: "ARN", value: pool.Arn ? copyable(pool.Arn) : NOT_AVAILABLE },
+    { label: "ARN", value: copyable(pool.Arn) },
     {
       label: "Sign-in with",
       value:

@@ -1,7 +1,8 @@
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { pageState } from "@shared/components/PageState.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useCallback, useState, type ReactNode } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
@@ -21,19 +22,14 @@ import { SignIn } from "../components/SignIn.tsx";
 import { BROKER_RUNNING, ENGINE_LABEL } from "../constants.ts";
 import { useBrokerAuthorization } from "../credentials.ts";
 import { useBroker, useRebootBroker } from "../hooks/useBrokers.ts";
-import { BROKER_TABS, SEARCH_PARAMS, brokerCrumbs, mqRoutes, type BrokerTab } from "../routes.ts";
-
-const isBrokerTab = (value: string | null): value is BrokerTab =>
-  Object.values<string | null>(BROKER_TABS).includes(value);
+import { BROKER_TABS, brokerCrumbs, mqRoutes } from "../routes.ts";
 
 const WRONG_CREDENTIALS = "Wrong username or password.";
 
 export function BrokerDetail() {
   const { broker: brokerId = "" } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isBrokerTab(requestedTab) ? requestedTab : BROKER_TABS.queues;
+  const [tab, setTab] = useTabParam(BROKER_TABS, BROKER_TABS.queues);
   const details = useBroker(brokerId);
   const reboot = useRebootBroker(brokerId);
   const [authorization, setAuthorization] = useBrokerAuthorization(brokerId);
@@ -51,9 +47,6 @@ export function BrokerDetail() {
     setAuthorization(undefined);
     setSignInError(WRONG_CREDENTIALS);
   }, [setAuthorization]);
-
-  const selectTab = (nextTab: string) =>
-    setSearchParams(nextTab === BROKER_TABS.queues ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
   const state = pageState(details, {
     ready: Boolean(broker),
@@ -145,11 +138,7 @@ export function BrokerDetail() {
         </Header>
       }
     >
-      <Tabs
-        activeTabId={tab}
-        tabs={tabs}
-        onChange={({ detail }) => selectTab(detail.activeTabId)}
-      />
+      <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       <ConfirmModal
         visible={rebooting}
         header={`Reboot ${name}?`}

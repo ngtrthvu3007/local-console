@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { kmsKeyIdSchema } from "../kms/schemas.ts";
 import { formatBytes } from "@shared/format.ts";
 import { enumOfKeys, wholeNumberIn } from "@shared/schemas.ts";
 import { SQS_BATCH_SIZE } from "../lambda/constants.ts";
 import { issueAdder, mappingOptionsIssues, mappingOptionsShape } from "../lambda/schemas.ts";
 import {
+  QUEUE_ENCRYPTION,
   FIFO_SUFFIX,
   MAX_RECEIVE_COUNT,
   QUEUE_NAME_MAX_LENGTH,
@@ -17,6 +19,8 @@ export const createQueueSchema = z
     type: enumOfKeys(QUEUE_TYPES),
     name: z.string().trim(),
     contentBasedDedup: z.boolean(),
+    encryption: z.enum([QUEUE_ENCRYPTION.sseSqs, QUEUE_ENCRYPTION.sseKms]),
+    kmsKeyId: kmsKeyIdSchema,
   })
   .superRefine(({ type, name }, context) => {
     const addIssue = (message: string) =>
