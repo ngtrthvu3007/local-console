@@ -23,6 +23,10 @@ export const apigatewayService: ServiceDefinition = {
       ...lazyPage(() => import("./pages/ApiList.tsx"), "ApiList"),
     },
     {
+      path: APIGATEWAY_ROUTE_PATTERNS.create,
+      ...lazyPage(() => import("./pages/CreateApi.tsx"), "CreateApi"),
+    },
+    {
       path: APIGATEWAY_ROUTE_PATTERNS.api,
       ...lazyPage(() => import("./pages/ApiDetail.tsx"), "ApiDetail"),
     },

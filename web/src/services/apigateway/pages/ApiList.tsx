@@ -93,6 +93,7 @@ export function ApiList() {
   const barActions: BarAction[] = [
     refreshAction(apis),
     { id: "delete", text: "Delete", disabled: !selected, onClick: () => setDeleting(true) },
+    { id: "create", text: "Create API", primary: true, href: apigatewayRoutes.create },
   ];
 
   const header = (
