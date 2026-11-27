@@ -13,30 +13,33 @@ npm run dev:server           # terminal 1: API on :3701
 npm run dev:web              # terminal 2: UI on :5173 (proxies /api and /aws to :3701)
 ```
 
-Checks: `npm run typecheck` · `npm test` (unit tests of `server/` and `web/`)
+Checks: `npm run typecheck` · `npm run lint` · `npm test` (unit tests of `core/`, `server/` and `web/`)
 
 Integration, E2E, UI, UX and mobile suites run against a running console: see [tests/README.md](../tests/README.md).
 
 ## Project layout
 
 ```text
+core/     logic shared by web and MCP: operations, service facades, schemas, mappers, page paths; no React / DOM (oxlint blocks it)
+  src/services/<id>/     operations/ (SDK calls), service.ts (create<Id>Service facade), index.ts (barrel)
+  src/shared/            aws, floci, http, types, utils, validation helpers
 server/   Node API: proxies /aws to Floci, /api for what AWS has no API for (Redis keys, RabbitMQ, health)
 web/      React + Cloudscape UI
   src/registry.ts        every service is one entry: sidebar, router and search read from it
-  src/services/<id>/     one folder per service (pages, components, hooks, routes)
+  src/services/<id>/     one folder per service (pages, components, hooks with query keys, crumbs)
   src/shared/            layout, shared components and hooks
 tests/    black-box suites against a running console (it, e2e, ui, ux, mobile)
 docs/superpowers/        design specs, plans, roadmap
 ```
 
-Adding a service = one folder in `web/src/services/` and one entry in `registry.ts`. How a service goes from spec to release: [roadmap, section 8](superpowers/roadmap.md). Main design: [docs/superpowers/specs/2026-11-09-localconsole-design.md](superpowers/specs/2026-11-09-localconsole-design.md).
+Adding a service = one folder in `core/src/services/` (operations + facade), one in `web/src/services/` (UI + hooks over the facade) and one entry in `registry.ts`. How a service goes from spec to release: [roadmap, section 8](superpowers/roadmap.md). Main design: [docs/superpowers/specs/2026-11-09-localconsole-design.md](superpowers/specs/2026-11-09-localconsole-design.md).
 
 ## Traps & open issues
 
 - **API Gateway WebSocket: on Floci 2.4.0 a route sends the Lambda's reply back only when it is two-way** (`RouteResponseSelectionExpression: "$default"` plus a `$default` route response). Without them the client gets nothing.
 - **API Gateway is checked on Floci 2.4.0 only.** The 2.5.0 changes (quota, v2 SQS integration subtype, `GetApis` paging) are not checked.
 - **SNS email / SMS subscriptions never deliver on Floci.** `Subscribe` with `sms` or `email` succeeds but stays `PendingConfirmation` (`ConfirmSubscription` rejects any token), and `Publish` to the topic writes nothing to the SMS inbox or the SES mailbox (checked 2026-11-21). The subscription modal only offers SQS / Lambda / HTTP(S). Publishing straight to a phone number (SNS › SMS) works.
-- **CloudFormation: "Stack: X" on service pages comes from an index.** `StackLink` (`web/src/shared/StackLink.tsx`) looks a resource up in an index built from `DescribeStacks` + `ListStackResources` of every stack (not `DescribeStackResources?PhysicalResourceId=`, which answers 400 for a resource outside any stack and makes the browser log a `console.error`). One query per 30 s (`RESOURCE_INDEX_STALE_MS`), so it is slow with hundreds of stacks and a stack created a moment ago may not show for up to 30 s. The CloudFormation SDK loads lazily inside that query: keep it out of `shared` and `registry.ts` imports. The delete flow polls `DescribeStacks` without a name for the same 400 reason.
+- **CloudFormation: "Stack: X" on service pages comes from an index.** `StackLink` (`web/src/shared/StackLink.tsx`) looks a resource up in an index built from `DescribeStacks` + `ListStackResources` of every stack (not `DescribeStackResources?PhysicalResourceId=`, which answers 400 for a resource outside any stack and makes the browser log a `console.error`). One query per 30 s (`RESOURCE_INDEX_STALE_MS`), so it is slow with hundreds of stacks and a stack created a moment ago may not show for up to 30 s. The CloudFormation SDK loads lazily inside that query: `import()` only `web/src/services/cloudformation/stackLookup.ts` (named imports), never `import("@localconsole/core/cloudformation")` itself. A dynamic import of a core barrel that `shared` / `registry.ts` also import statically marks every export as used and pulls the SDK into the first load (+100 KB gzip, seen 2026-11-27). The delete flow polls `DescribeStacks` without a name for the same 400 reason.
 - **A `CREATE_COMPLETE` stack on Floci may not deploy on AWS.** Floci stubs resource types it doesn't support (`AWS::AmazonMQ::Broker`, `ElastiCache::ReplicationGroup`, `Glue::*`, …): the stack succeeds but nothing is created. The reason ("was stubbed and nothing was created") exists only in the events, so the stack page shows a warning and a "Stubbed by Floci" badge from them. `Ref` to an undeclared parameter becomes a literal string; `OnFailure`, `DisableRollback` and `RetainResources` are ignored.
 - **Deleting by hand a resource a stack made leaves the stack `CREATE_COMPLETE`**, and creating it again by hand with the same name makes `DeleteStack` delete it too. A queue deleted by hand can also make a later `DeleteStack` end in `DELETE_FAILED` (seen 2026-11-22), so `tests/it/leftovers.mjs` deletes stacks first. A bucket that still has objects makes `DeleteStack` fail with `DELETE_FAILED`.
 - **CDK apps with Node custom resources (`autoDeleteObjects`, `BucketDeployment`, `AwsCustomResource`, `logRetention`) fail to deploy with `ECONNREFUSED …:443`** unless Floci runs with TLS: `FLOCI_TLS_ENABLED=true docker compose up -d` (off by default in `docker-compose.yml`). With it on, the URLs Floci returns (SQS `QueueUrl`, queue physical IDs) become `https://` with a self-signed certificate. The Events tab hints at this when it sees that error.
