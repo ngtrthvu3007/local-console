@@ -7,6 +7,7 @@ import { dynamodbService } from "./services/dynamodb/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
+import { apigatewayService } from "./services/apigateway/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
 import { rdsService } from "./services/rds/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
@@ -37,6 +38,7 @@ export interface ServiceDefinition {
 export const services: ServiceDefinition[] = [
   s3Service,
   lambdaService,
+  apigatewayService,
   dynamodbService,
   rdsService,
   sqsService,

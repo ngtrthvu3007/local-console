@@ -116,6 +116,11 @@ describe("resourceHref", () => {
     ).toBe("/stepfunctions/statemachines/flow");
   });
 
+  it("links API Gateway REST and v2 APIs", () => {
+    expect(resourceHref("AWS::ApiGateway::RestApi", "a1")).toBe("/apigateway/v1/a1");
+    expect(resourceHref("AWS::ApiGatewayV2::Api", "b2")).toBe("/apigateway/v2/b2");
+  });
+
   it("links a Lambda log group to the function's Monitor tab, others stay text", () => {
     expect(resourceHref("AWS::Logs::LogGroup", "/aws/lambda/fn")).toBe(
       "/lambda/functions/fn?tab=monitor",

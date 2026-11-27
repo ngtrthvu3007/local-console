@@ -7,5 +7,6 @@ export default defineConfig({
   plugins: [react()],
   // Alias khai báo một lần ở tsconfig.json (paths), Vite đọc lại từ đó
   resolve: { tsconfigPaths: true },
-  server: { proxy: { "/api": server, "/aws": server } },
+  // "/api/" có dấu "/" cuối: prefix "/api" sẽ proxy nhầm route SPA "/apigateway/*"
+  server: { proxy: { "/api/": server, "/aws": server } },
 });

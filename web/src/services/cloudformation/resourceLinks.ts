@@ -1,3 +1,5 @@
+import { CFN_API_TYPES } from "../apigateway/constants.ts";
+import { API_VERSIONS, apigatewayRoutes } from "../apigateway/routes.ts";
 import { cognitoRoutes } from "../cognito/routes.ts";
 import { eventbridgeRoutes } from "../eventbridge/routes.ts";
 import { dynamodbRoutes } from "../dynamodb/routes.ts";
@@ -52,6 +54,8 @@ const LINK_BUILDERS: Record<string, (physicalId: string) => string | undefined> 
   "AWS::SecretsManager::Secret": (id) => secretsRoutes.secretOfArn(id),
   "AWS::SSM::Parameter": (id) => ssmRoutes.parameter(id),
   "AWS::Events::EventBus": (id) => eventbridgeRoutes.rules(id),
+  [CFN_API_TYPES.v1]: (id) => apigatewayRoutes.api(API_VERSIONS.rest, id),
+  [CFN_API_TYPES.v2]: (id) => apigatewayRoutes.api(API_VERSIONS.v2, id),
   "AWS::StepFunctions::StateMachine": (id) =>
     stepfunctionsRoutes.stateMachine(stateMachineNameOfArn(id)),
 };

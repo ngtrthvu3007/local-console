@@ -33,6 +33,7 @@ const PAGES = [
   { slug: "secretsmanager-create", path: "/secretsmanager/secrets/create" },
   { slug: "ssm-parameters", path: "/ssm/parameters" },
   { slug: "ssm-create", path: "/ssm/parameters/create" },
+  { slug: "apigateway-apis", path: "/apigateway/apis" },
 ];
 
 // Cloudscape gập side navigation dưới mốc này (PHONE_MAX_WIDTH_PX của console)

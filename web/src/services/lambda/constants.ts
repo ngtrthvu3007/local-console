@@ -95,16 +95,18 @@ const DISPLAY_ONLY_SOURCES = {
   eventbridge: "EventBridge",
   scheduler: "Scheduler",
   cognito: "Cognito",
+  apigateway: "API Gateway",
 } as const;
 
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
 
-// Rule / schedule của EventBridge, trigger của user pool: chỉ xem ở đây, sửa / xóa ở trang của nguồn
+// Rule / schedule của EventBridge, trigger của user pool, nguồn API Gateway: chỉ xem ở đây, sửa / xóa ở trang của nguồn
 export const VIEW_ONLY_SOURCES: readonly TriggerRowSource[] = [
   "eventbridge",
   "scheduler",
   "cognito",
+  "apigateway",
 ];
 
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;

@@ -70,6 +70,12 @@ import {
   DeleteRuleCommand,
   DeleteEventBusCommand,
 } from "@aws-sdk/client-eventbridge";
+import {
+  APIGatewayClient,
+  GetRestApisCommand,
+  DeleteRestApiCommand,
+} from "@aws-sdk/client-api-gateway";
+import { ApiGatewayV2Client, GetApisCommand, DeleteApiCommand } from "@aws-sdk/client-apigatewayv2";
 
 const consoleUrl = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
 const { region } = await (await fetch(`${consoleUrl}/api/config`)).json();
@@ -96,6 +102,8 @@ const cognito = new CognitoIdentityProviderClient(config);
 const secretsManager = new SecretsManagerClient(config);
 const ssm = new SSMClient(config);
 const rds = new RDSClient(config);
+const apigateway = new APIGatewayClient(config);
+const apigatewayV2 = new ApiGatewayV2Client(config);
 
 const buckets = mine(
   ((await s3.send(new ListBucketsCommand({}))).Buckets ?? []).map((bucket) => bucket.Name),
@@ -207,6 +215,16 @@ for await (const page of paginateDescribeDBInstances({ client: rds }, {})) {
     ...mine((page.DBInstances ?? []).map((database) => database.DBInstanceIdentifier)),
   );
 }
+// Floci 2.4.0 trả hết một lượt, không cần phân trang (REST: limit mặc định 25 nên đặt cao)
+const API_LIST_LIMIT = 500;
+const restApis = (
+  (await apigateway.send(new GetRestApisCommand({ limit: API_LIST_LIMIT }))).items ?? []
+)
+  .filter((api) => mine([api.name]).length)
+  .map((api) => api.id);
+const httpApis = ((await apigatewayV2.send(new GetApisCommand({}))).Items ?? [])
+  .filter((api) => mine([api.Name]).length)
+  .map((api) => api.ApiId);
 // SMS chỉ liệt kê, không xóa: Floci không xóa được từng tin, DELETE /_aws/sns xóa cả hộp thư của mọi region
 const SMS_TEST_PHONE_PREFIX = "+8490000";
 const smsInbox = (await (await fetch(`${consoleUrl}/aws/_aws/sns`)).json()).messages ?? [];
@@ -233,6 +251,8 @@ console.log(
       secrets,
       parameters,
       databases,
+      restApis,
+      httpApis,
       identities,
       configurationSets,
       templates,
@@ -318,6 +338,8 @@ if (process.argv.includes("--delete")) {
     await rds.send(
       new DeleteDBInstanceCommand({ DBInstanceIdentifier: id, SkipFinalSnapshot: true }),
     );
+  for (const id of restApis) await apigateway.send(new DeleteRestApiCommand({ restApiId: id }));
+  for (const id of httpApis) await apigatewayV2.send(new DeleteApiCommand({ ApiId: id }));
   for (const name of identities)
     await ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: name }));
   for (const name of configurationSets)
