@@ -1,7 +1,7 @@
-import { Fragment } from "react";
 import CopyToClipboard from "@cloudscape-design/components/copy-to-clipboard";
-import { NOT_AVAILABLE, identifierParts } from "@localconsole/core/shared";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { COPY_TEXTS } from "../constants.ts";
+import { BreakableText } from "./BreakableText.tsx";
 
 interface Props {
   text?: string;
@@ -9,21 +9,13 @@ interface Props {
   variant?: "button" | "icon" | "inline";
 }
 
-// <wbr> cho xuống dòng sau ":" "/" mà không thêm ký tự: copy, tìm chữ vẫn ra đúng ARN / URL
-const breakable = (text: string) =>
-  identifierParts(text).map((part, index) => (
-    <Fragment key={index}>
-      {part}
-      <wbr />
-    </Fragment>
-  ));
-
 export function CopyButton({ text, label = COPY_TEXTS.copy, variant = "button" }: Props) {
   return (
     <CopyToClipboard
       variant={variant}
       textToCopy={text ?? ""}
-      textToDisplay={variant === "inline" && text ? breakable(text) : undefined}
+      // Ô inline: ARN / URL dài xuống dòng sau dấu phân cách, chữ copy không đổi
+      textToDisplay={variant === "inline" && text ? <BreakableText text={text} /> : undefined}
       copyButtonText={label}
       copySuccessText={COPY_TEXTS.copied}
       copyErrorText={COPY_TEXTS.failed}

@@ -11,15 +11,9 @@ import {
   DeleteStackCommand,
   ListStackResourcesCommand,
 } from "@aws-sdk/client-cloudformation";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
-import { strToU8, zipSync } from "fflate";
-import { ACCOUNT_ID, consoleConfig, deleteMails, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, test, uniqueName } from "./fixtures.ts";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
+import { consoleConfig, createTestFunction, deleteMails, viaConsole } from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, test, uniqueName } from "./fixtures.ts";
 
 // Cognito nối với Lambda (trigger) và SES (mail mời): đặt trigger trên UI, thấy nó ở trang function,
 // trigger chặn user, mail mời vào SES Mailbox, function bị xóa thì pool báo not found.
@@ -51,21 +45,7 @@ test.beforeAll(async () => {
   lambda = new LambdaClient(config);
   cognito = new CognitoIdentityProviderClient(config);
 
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: fn,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER) }) },
-    }),
-  );
-
-  await waitFor(`${fn} to be Active`, async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: fn }));
-
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+  await createTestFunction(lambda, { name: fn, source: HANDLER, role: LAMBDA_ROLE });
 
   const created = await cognito.send(
     new CreateUserPoolCommand({

@@ -11,8 +11,6 @@ interface Props {
 export function DeleteServicesModal({ cluster, names, onDismiss, onDone }: Props) {
   return (
     <BulkActionModal
-      verb='Delete'
-      done='Deleted'
       mutation={useDeleteServices(cluster)}
       items={names}
       lines={names}

@@ -1,6 +1,6 @@
 import {
-  GetExecutionHistoryCommand,
-  ListExecutionsCommand,
+  paginateGetExecutionHistory,
+  paginateListExecutions,
   DescribeExecutionCommand,
   ExecutionDoesNotExist,
   StartExecutionCommand,
@@ -9,7 +9,7 @@ import {
   type SFNClient,
 } from "@aws-sdk/client-sfn";
 import { isNotFoundError } from "#shared/aws/errors.ts";
-import { allPages } from "#shared/aws/pagination.ts";
+import { collectPages } from "#shared/aws/pagination.ts";
 
 export interface StartExecutionInput {
   name: string;
@@ -25,25 +25,22 @@ export const listExecutions = (
   machineArn: string,
   statusFilter: ExecutionStatus | "",
 ) =>
-  allPages(async (nextToken) => {
-    const page = await sfn.send(
-      new ListExecutionsCommand({
-        stateMachineArn: machineArn,
-        statusFilter: statusFilter || undefined,
-        nextToken,
-      }),
-    );
-    return { items: page.executions ?? [], nextToken: page.nextToken };
-  });
+  collectPages(
+    paginateListExecutions(
+      { client: sfn },
+      { stateMachineArn: machineArn, statusFilter: statusFilter || undefined },
+    ),
+    (page) => page.executions,
+  );
 
 export const getExecution = (sfn: SFNClient, arn: string) =>
   sfn.send(new DescribeExecutionCommand({ executionArn: arn }));
 
 export const getExecutionHistory = (sfn: SFNClient, arn: string) =>
-  allPages(async (nextToken) => {
-    const page = await sfn.send(new GetExecutionHistoryCommand({ executionArn: arn, nextToken }));
-    return { items: page.events ?? [], nextToken: page.nextToken };
-  });
+  collectPages(
+    paginateGetExecutionHistory({ client: sfn }, { executionArn: arn }),
+    (page) => page.events,
+  );
 
 export const startExecution = async (
   sfn: SFNClient,

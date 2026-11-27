@@ -20,5 +20,3 @@ export function createDocDbService(rds: RDSClient) {
     deleteInstances: (ids: readonly string[]) => deleteInstances(rds, ids),
   };
 }
-
-export type DocDbService = ReturnType<typeof createDocDbService>;

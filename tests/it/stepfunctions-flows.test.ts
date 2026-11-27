@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
 import {
   CreateStateMachineCommand,
   DeleteStateMachineCommand,
@@ -10,12 +9,7 @@ import {
   StartExecutionCommand,
   type HistoryEvent,
 } from "@aws-sdk/client-sfn";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -36,13 +30,7 @@ import {
   SNSClient,
   SubscribeCommand,
 } from "@aws-sdk/client-sns";
-import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
   DeleteRuleCommand,
   EventBridgeClient,
@@ -56,7 +44,16 @@ import {
   DeleteScheduleCommand,
   SchedulerClient,
 } from "@aws-sdk/client-scheduler";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import {
+  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Luồng nối Step Functions với các service khác, mỗi test chờ bằng chứng ở service nhận:
 //   EventBridge rule → state machine → Lambda → DynamoDB → SNS → SQS
@@ -106,12 +103,9 @@ let topicArn = "";
 const machineArn = (name: string) => `arn:aws:states:${region}:${ACCOUNT_ID}:stateMachine:${name}`;
 
 async function makeQueue(name: string) {
-  const { QueueUrl } = await sqs.send(new CreateQueueCommand({ QueueName: name }));
-  queueUrls[name] = QueueUrl!;
-  const { Attributes } = await sqs.send(
-    new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }),
-  );
-  queueArns[name] = Attributes!.QueueArn!;
+  const { url, arn } = await createTestQueue(sqs, name);
+  queueUrls[name] = url;
+  queueArns[name] = arn;
 }
 
 async function receive(queue: string, what: string) {
@@ -177,21 +171,12 @@ beforeAll(async () => {
     }),
   );
   functionArn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: names.fn,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER_SOURCE) }) },
-        Timeout: 30,
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: names.fn }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+    await createTestFunction(lambda, {
+      name: names.fn,
+      source: HANDLER_SOURCE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
+    })
+  ).arn;
   await s3.send(new CreateBucketCommand({ Bucket: names.bucket }));
 
   await create(names.order, {

@@ -30,7 +30,7 @@ import { useImages } from "../hooks/useImages.ts";
 import { useLaunchInstance } from "../hooks/useInstances.ts";
 import { ec2Routes } from "@localconsole/core/ec2";
 import { ec2BaseCrumbs } from "../routes.ts";
-import { USER_DATA_EDITOR_HEIGHT_PX } from "../constants.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 const INSTANCE_TYPE_OPTIONS = INSTANCE_TYPES.map((type) => ({ value: type, label: type }));
 
@@ -151,7 +151,7 @@ export function LaunchInstance() {
               name='userData'
               label='User data'
               description='Optional. User data needs internet access: Floci installs SSH in the container before running it. To reach an RDS database, use its endpoint from the RDS page.'
-              height={USER_DATA_EDITOR_HEIGHT_PX}
+              height={SHORT_EDITOR_HEIGHT_PX}
               language='text'
             />
           </SpaceBetween>

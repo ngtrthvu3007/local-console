@@ -5,13 +5,12 @@ import { EmptyState } from "./TableStates.tsx";
 import type { Tag } from "./TagsModal.tsx";
 
 interface Props {
-  description?: string;
   tags: Tag[];
   loading?: boolean;
   onEdit: () => void;
 }
 
-export function TagsTable({ tags, loading, description, onEdit }: Props) {
+export function TagsTable({ tags, loading, onEdit }: Props) {
   return (
     <Table
       variant='container'
@@ -25,11 +24,7 @@ export function TagsTable({ tags, loading, description, onEdit }: Props) {
       ]}
       empty={<EmptyState title='No tags' />}
       header={
-        <Header
-          counter={`(${tags.length})`}
-          description={description}
-          actions={<Button onClick={onEdit}>Edit</Button>}
-        >
+        <Header counter={`(${tags.length})`} actions={<Button onClick={onEdit}>Edit</Button>}>
           Tags
         </Header>
       }

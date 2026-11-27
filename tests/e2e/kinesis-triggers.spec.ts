@@ -1,17 +1,14 @@
-import { strToU8, zipSync } from "fflate";
 import { CreateStreamCommand, DeleteStreamCommand, KinesisClient } from "@aws-sdk/client-kinesis";
 import {
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   LambdaClient,
   ListEventSourceMappingsCommand,
 } from "@aws-sdk/client-lambda";
 // Có sẵn qua mọi client AWS SDK (phụ thuộc chung), không khai báo riêng trong package.json
 import { NodeHttpHandler } from "@smithy/node-http-handler";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, confirmDelete, expect, flash, test, uniqueName } from "./fixtures.ts";
+import { consoleConfig, createTestFunction, viaConsole } from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, confirmDelete, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Trigger Kinesis trên UI (spec Kinesis 3.1, 3.6, 3.7): Add / Edit ở Lambda › Triggers, Add ở trang
 // stream, cảnh báo khi xóa stream còn trigger, trigger của stream đã xóa hiện "(not found)"
@@ -45,20 +42,10 @@ test.beforeAll(async () => {
     await kinesis.send(
       new CreateStreamCommand({ StreamName: name, StreamModeDetails: { StreamMode: "ON_DEMAND" } }),
     );
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: fn,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-      Code: {
-        ZipFile: zipSync({ "index.mjs": strToU8("export const handler = async () => {};") }),
-      },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: fn }));
-    return Configuration?.State === "Active" ? true : undefined;
+  await createTestFunction(lambda, {
+    name: fn,
+    source: "export const handler = async () => {};",
+    role: LAMBDA_ROLE,
   });
 });
 

@@ -7,8 +7,7 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { KIBIBYTE } from "@localconsole/core/shared";
 import { DEFAULT_MAX_RECORD_KIB, putRecordSchema } from "@localconsole/core/kinesis";
 import { usePutRecord } from "../hooks/useStreams.ts";
-
-const DATA_EDITOR_HEIGHT_PX = 200;
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 interface Props {
   stream: StreamDescriptionSummary;
@@ -56,7 +55,7 @@ export function PutRecordModal({ stream, onDismiss }: Props) {
         name='data'
         label='Data'
         description='Sent as UTF-8 text. JSON is shown on one line in the Data viewer.'
-        height={DATA_EDITOR_HEIGHT_PX}
+        height={SHORT_EDITOR_HEIGHT_PX}
       />
     </FormModal>
   );

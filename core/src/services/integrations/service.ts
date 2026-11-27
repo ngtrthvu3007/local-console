@@ -8,5 +8,3 @@ export function createIntegrationsService(services: SenderServices) {
     listBusSenders: (busArn: string) => listBusSenders(services, busArn),
   };
 }
-
-export type IntegrationsService = ReturnType<typeof createIntegrationsService>;

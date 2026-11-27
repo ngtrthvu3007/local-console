@@ -25,7 +25,6 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { ECS_TARGET_NAMES, EcsTargetFields, ecsTargetOf } from "../components/EcsTargetFields.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
 import {
-  EDITOR_HEIGHT_PX,
   AFTER_COMPLETION,
   DEFAULT_FLEXIBLE_MINUTES,
   DEFAULT_SCHEDULE_GROUP,
@@ -51,7 +50,7 @@ import { useSaveSchedule, useSchedule, useScheduleGroups } from "../hooks/useSch
 import { TARGET_KIND_OPTIONS, useTargetOptions } from "../hooks/useTargets.ts";
 import { schedulesCrumbs } from "../routes.ts";
 import { taskDefinitionRefOf } from "@localconsole/core/ecs";
-import { isNotFoundError } from "@localconsole/core/shared";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 const CRON_DESCRIPTION = "Example: 0 9 ? * MON-FRI * runs at 9:00 on weekdays.";
 // Floci chạy ngay schedule `at` có giờ đã qua (AWS thì từ chối), và xóa nó luôn nếu bật Delete after completion
@@ -363,7 +362,7 @@ function ScheduleFormView({ group, existing }: FormProps) {
               control={form.control}
               name='input'
               label='Input - optional'
-              height={EDITOR_HEIGHT_PX}
+              height={SHORT_EDITOR_HEIGHT_PX}
             />
             <Box color='text-body-secondary'>{INPUT_DESCRIPTION}</Box>
           </SpaceBetween>
@@ -414,7 +413,6 @@ export function ScheduleForm() {
 
   const state = pageState(existing, {
     ready: Boolean(existing.data),
-    notFound: existing.isError && isNotFoundError(existing.error),
     title: `Schedule ${name} not found`,
     backHref: eventbridgeRoutes.schedules(group),
     backText: "View schedules",

@@ -19,10 +19,11 @@ import { pluralize, reformatJson } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { PAYLOAD_EDITOR_HEIGHT_PX, DEFAULT_EXCHANGE_LABEL } from "../constants.ts";
+import { DEFAULT_EXCHANGE_LABEL } from "../constants.ts";
 import { useCreateQueue, useExchanges, usePeek, usePublish } from "../hooks/useRabbit.ts";
 import { peekSchema } from "../rabbitSchemas.ts";
 import { createQueueSchema, publishSchema } from "@localconsole/core/mq";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 export const exchangeLabel = (name: string) => name || DEFAULT_EXCHANGE_LABEL;
 
@@ -124,7 +125,7 @@ export function PublishModal({
         control={form.control}
         name='payload'
         label='Payload'
-        height={PAYLOAD_EDITOR_HEIGHT_PX}
+        height={SHORT_EDITOR_HEIGHT_PX}
       />
     </FormModal>
   );

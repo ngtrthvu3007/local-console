@@ -1,10 +1,5 @@
 import type { Page } from "@playwright/test";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import {
   CreateSecretCommand,
   DeleteSecretCommand,
@@ -13,15 +8,14 @@ import {
   RotateSecretCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
-import { strToU8, zipSync } from "fflate";
 import {
-  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
   ROTATION_LAMBDA_SOURCE,
   consoleConfig,
+  createTestFunction,
   viaConsole,
-  waitFor,
 } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+import { LAMBDA_ROLE, choose, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Luồng chính của Secrets Manager trên UI. Tên có "/" để kiểm ?name=. Dọn bằng SDK ở afterAll
 // (ForceDeleteWithoutRecovery: secret chờ xóa vẫn giữ tên)
@@ -253,23 +247,15 @@ test.describe("rotation", () => {
   let lambda: LambdaClient;
   let brokenArn: string;
 
-  const createFunction = async (name: string, source: string) => {
-    const { FunctionArn } = await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: name,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(source) }) },
-        Timeout: 30,
-      }),
-    );
-    await waitFor(`${name} to be Active`, async () => {
-      const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-      return Configuration?.State === "Active" ? true : undefined;
-    });
-    return FunctionArn ?? "";
-  };
+  const createFunction = async (name: string, source: string) =>
+    (
+      await createTestFunction(lambda, {
+        name,
+        source,
+        role: LAMBDA_ROLE,
+        timeout: FUNCTION_TIMEOUT_SECONDS,
+      })
+    ).arn;
 
   test.beforeAll(async () => {
     lambda = new LambdaClient(viaConsole((await consoleConfig()).region));

@@ -3,7 +3,6 @@ import type { StepStatus } from "@localconsole/core/stepfunctions";
 
 // Tải lại khi còn execution RUNNING
 export const EXECUTION_POLL_INTERVAL_MS = 2000;
-export const EDITOR_HEIGHT_PX = 200;
 // Map / Parallel có nhiều con hơn mức này thì gập sẵn, khỏi vẽ hàng trăm dòng khi mở trang
 export const COLLAPSE_CHILDREN_LIMIT = 20;
 export const TRUNCATED_NOTE =

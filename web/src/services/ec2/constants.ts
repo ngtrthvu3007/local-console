@@ -4,7 +4,7 @@ import { INSTANCE_STATES, STATE_FILTER_ALL } from "@localconsole/core/ec2";
 
 // Instance đang đổi trạng thái thì tự tải lại cho tới khi xong
 export const INSTANCE_POLL_INTERVAL_MS = 2 * MILLISECONDS_PER_SECOND;
-export const USER_DATA_EDITOR_HEIGHT_PX = 200;
+
 interface StateStyle {
   label: string;
   type: StatusIndicatorProps.Type;

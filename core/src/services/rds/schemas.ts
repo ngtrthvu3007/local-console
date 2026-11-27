@@ -1,14 +1,11 @@
 import { z } from "zod";
 import { kmsKeyIdSchema } from "#services/kms/schemas.ts";
-import { enumOfKeys } from "#shared/validation/schemas.ts";
+import { enumOfKeys, lowercaseName } from "#shared/validation/schemas.ts";
 import {
   CREDENTIAL_TYPES,
   DATABASE_NAME_PATTERN,
-  DOUBLE_HYPHEN,
   ENGINE_LABELS,
-  HYPHEN,
   IDENTIFIER_MAX_LENGTH,
-  IDENTIFIER_PATTERN,
   PASSWORD_MAX_LENGTHS,
   PASSWORD_MIN_LENGTH,
   PASSWORD_PATTERN,
@@ -20,14 +17,7 @@ import {
 export const createDatabaseSchema = z
   .object({
     engine: enumOfKeys(ENGINE_LABELS),
-    identifier: z
-      .string()
-      .trim()
-      .min(1, "Enter a DB identifier.")
-      .max(IDENTIFIER_MAX_LENGTH, `Must be at most ${IDENTIFIER_MAX_LENGTH} characters.`)
-      .regex(IDENTIFIER_PATTERN, "Start with a letter; use lowercase letters, numbers and hyphens.")
-      .refine((name) => !name.includes(DOUBLE_HYPHEN), "Can't contain two hyphens in a row.")
-      .refine((name) => !name.endsWith(HYPHEN), "Can't end with a hyphen."),
+    identifier: lowercaseName("a DB identifier", IDENTIFIER_MAX_LENGTH),
     username: z
       .string()
       .trim()

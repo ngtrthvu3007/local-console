@@ -7,7 +7,7 @@ import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { pageState } from "@shared/components/PageState.tsx";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
-import { DETAIL_SEPARATOR, isNotFoundError } from "@localconsole/core/shared";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -118,7 +118,6 @@ export function RuleDetail() {
 
   const state = pageState(details, {
     ready: Boolean(details.data),
-    notFound: details.isError && isNotFoundError(details.error),
     title: `Rule ${ruleName} not found`,
     backHref: eventbridgeRoutes.rules(bus),
     backText: "View rules",

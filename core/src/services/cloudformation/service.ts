@@ -26,5 +26,3 @@ export function createCloudFormationService(cloudformation: CloudFormationClient
     deleteStack: (name: string) => deleteStack(cloudformation, name),
   };
 }
-
-export type CloudFormationService = ReturnType<typeof createCloudFormationService>;

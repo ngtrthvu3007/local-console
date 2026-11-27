@@ -1,6 +1,5 @@
 import { gunzipSync } from "node:zlib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
 import {
   CreateStreamCommand,
   DeleteStreamCommand,
@@ -10,12 +9,7 @@ import {
   KinesisClient,
   ListShardsCommand,
 } from "@aws-sdk/client-kinesis";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, GetFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import {
   CloudWatchLogsClient,
@@ -31,7 +25,7 @@ import {
   PutRetentionPolicyCommand,
   PutSubscriptionFilterCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import { consoleConfig, createTestFunction, uniqueName, viaConsole, waitFor } from "./helpers.ts";
 
 // Hành vi CloudWatch Logs của Floci mà trang Logs dựa vào, qua proxy /aws của console (spec mục 7)
 
@@ -189,20 +183,9 @@ describe("subscription filters", () => {
   });
 
   it("delivers matching events to a Lambda subscription filter", async () => {
-    const { FunctionArn = "" } = await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: receiver,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(RECEIVER_SOURCE) }) },
-      }),
-    );
-    await waitFor("function to be Active", async () => {
-      const { Configuration } = await lambda.send(
-        new GetFunctionCommand({ FunctionName: receiver }),
-      );
-      return Configuration?.State === "Active" ? true : undefined;
+    const { arn: functionArn } = await createTestFunction(lambda, {
+      name: receiver,
+      source: RECEIVER_SOURCE,
     });
     const group = await newGroup();
     await logs.send(
@@ -210,7 +193,7 @@ describe("subscription filters", () => {
         logGroupName: group,
         filterName: "errors",
         filterPattern: "ERROR",
-        destinationArn: FunctionArn,
+        destinationArn: functionArn,
       }),
     );
     await sendTestEvent(group, "app", "ERROR to lambda");

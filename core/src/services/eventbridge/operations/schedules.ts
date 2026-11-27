@@ -1,6 +1,6 @@
 import {
-  ListScheduleGroupsCommand,
-  ListSchedulesCommand,
+  paginateListScheduleGroups,
+  paginateListSchedules,
   CreateScheduleCommand,
   CreateScheduleGroupCommand,
   DeleteScheduleCommand,
@@ -10,7 +10,7 @@ import {
   type CreateScheduleCommandInput,
   type SchedulerClient,
 } from "@aws-sdk/client-scheduler";
-import { allPages } from "#shared/aws/pagination.ts";
+import { collectPages } from "#shared/aws/pagination.ts";
 import { runEach } from "#shared/utils/bulk.ts";
 import { SCHEDULE_STATES } from "#services/eventbridge/constants.ts";
 import { toScheduleRow, toUpdateInput, type ScheduleRow } from "#services/eventbridge/schedules.ts";
@@ -18,22 +18,21 @@ import { toScheduleRow, toUpdateInput, type ScheduleRow } from "#services/eventb
 export type SaveScheduleInput = Omit<CreateScheduleCommandInput, "ClientToken">;
 
 // group rỗng = mọi group
-export const listSchedules = (scheduler: SchedulerClient, group?: string) =>
-  allPages(async (nextToken) => {
-    const page = await scheduler.send(
-      new ListSchedulesCommand({ GroupName: group, NextToken: nextToken }),
-    );
-    return { items: (page.Schedules ?? []).map(toScheduleRow), nextToken: page.NextToken };
-  });
+export const listSchedules = async (scheduler: SchedulerClient, group?: string) =>
+  (
+    await collectPages(
+      paginateListSchedules({ client: scheduler }, { GroupName: group }),
+      (page) => page.Schedules,
+    )
+  ).map(toScheduleRow);
 
-export const listScheduleGroups = (scheduler: SchedulerClient) =>
-  allPages(async (nextToken) => {
-    const page = await scheduler.send(new ListScheduleGroupsCommand({ NextToken: nextToken }));
-    return {
-      items: (page.ScheduleGroups ?? []).map((group) => group.Name ?? ""),
-      nextToken: page.NextToken,
-    };
-  });
+export const listScheduleGroups = async (scheduler: SchedulerClient) =>
+  (
+    await collectPages(
+      paginateListScheduleGroups({ client: scheduler }, {}),
+      (page) => page.ScheduleGroups,
+    )
+  ).map((group) => group.Name ?? "");
 
 export const getSchedule = (scheduler: SchedulerClient, group: string, name: string) =>
   scheduler.send(new GetScheduleCommand({ GroupName: group, Name: name }));

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { EventBridgeClient } from "@aws-sdk/client-eventbridge";
-import type { SchedulerClient } from "@aws-sdk/client-scheduler";
+import { SchedulerClient } from "@aws-sdk/client-scheduler";
 import { isArnOrQualified } from "#shared/utils/arn.ts";
 import { listEventSources } from "#services/eventbridge/operations/eventSources.ts";
 
@@ -30,16 +30,18 @@ const fakeEvents = (targetsByRule: Record<string, string[]>) =>
     },
   }) as unknown as EventBridgeClient;
 
-const fakeScheduler = (schedules: { group: string; name: string; arn: string }[]) =>
-  ({
-    send: async () => ({
-      Schedules: schedules.map(({ group, name, arn }) => ({
-        Name: name,
-        GroupName: group,
-        Target: { Arn: arn },
-      })),
-    }),
-  }) as unknown as SchedulerClient;
+// Client thật, chỉ thay send: paginateListSchedules kiểm instanceof
+function fakeScheduler(schedules: { group: string; name: string; arn: string }[]) {
+  const scheduler = new SchedulerClient({ region: "us-east-1" });
+  vi.spyOn(scheduler, "send").mockImplementation((async () => ({
+    Schedules: schedules.map(({ group, name, arn }) => ({
+      Name: name,
+      GroupName: group,
+      Target: { Arn: arn },
+    })),
+  })) as never);
+  return scheduler;
+}
 
 describe("listEventSources", () => {
   const events = fakeEvents({

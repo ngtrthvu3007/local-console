@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { newestInRegion } from "#shared/floci/inbox.ts";
 import { publishSmsSchema } from "#services/sns/schemas.ts";
-import {
-  smsForRegion,
-  formatPhoneNumber,
-  matchesSearch,
-  smsInboxSchema,
-} from "#services/sns/smsInbox.ts";
+import { formatPhoneNumber, matchesSearch, smsInboxSchema } from "#services/sns/smsInbox.ts";
 
 const REGION = "ap-southeast-1";
 const base = {
@@ -16,7 +12,7 @@ const base = {
   Timestamp: "2026-11-19T10:20:01.705209341Z",
 };
 
-describe("smsForRegion", () => {
+describe("newestInRegion", () => {
   it("keeps this region only, newest first", () => {
     const messages = [
       base,
@@ -24,7 +20,7 @@ describe("smsForRegion", () => {
       { ...base, Id: "c", Region: "us-east-1", Timestamp: "2026-11-19T11:00:00.000000Z" },
     ];
 
-    expect(smsForRegion(messages, REGION).map((sms) => sms.Id)).toEqual(["b", "a"]);
+    expect(newestInRegion(messages, REGION).map((sms) => sms.Id)).toEqual(["b", "a"]);
   });
 
   it("orders by time, not by the text of 9-digit timestamps", () => {
@@ -34,7 +30,7 @@ describe("smsForRegion", () => {
       { ...base, Id: "late", Timestamp: "2026-11-19T10:20:02.100000000Z" },
     ];
 
-    expect(smsForRegion(messages, REGION).map((sms) => sms.Id)).toEqual(["late", "early"]);
+    expect(newestInRegion(messages, REGION).map((sms) => sms.Id)).toEqual(["late", "early"]);
   });
 });
 

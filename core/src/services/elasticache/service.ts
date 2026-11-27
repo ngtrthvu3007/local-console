@@ -15,5 +15,3 @@ export function createElastiCacheService(elasticache: ElastiCacheClient) {
     deleteClusters: (clusters: readonly Cluster[]) => deleteClusters(elasticache, clusters),
   };
 }
-
-export type ElastiCacheService = ReturnType<typeof createElastiCacheService>;

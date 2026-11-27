@@ -1,19 +1,19 @@
 # Báo cáo test — ngtrthvu3007/local-console
 
-## Kết quả mới nhất — 2026-11-27 (API Gateway tạo / sửa / xóa)
+## Kết quả mới nhất — 2026-11-27 (API Gateway tạo / sửa / xóa + dọn code)
 
-Working tree trên nhánh `dev` (chưa commit), sau plan [API Gateway CRUD](../docs/superpowers/plans/2026-11-27-apigateway-crud.md). Web chạy bằng bản build mới qua `vite preview` (proxy sang console Docker :3701). Floci 2.4.0, region `ap-southeast-1`.
+Working tree trên nhánh `dev` (chưa commit), sau plan [API Gateway CRUD](../docs/superpowers/plans/2026-11-27-apigateway-crud.md) và đợt dọn code theo audit (mục 17). Web chạy bằng bản build mới qua `vite preview` (proxy sang console Docker :3701). Floci 2.4.0, region `ap-southeast-1`.
 
-| Bộ kiểm tra                | Kết quả                                                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| Typecheck / lint           | ✅ Pass (core, server, web)                                                               |
-| Unit tests                 | ✅ **683/683**: core 612, server 12, web 59                                               |
-| Integration với Floci thật | ✅ Toàn bộ **37 file, 256 test**; sau khi sửa theo review: API Gateway **36/36** (mục 17) |
-| E2E với Floci thật         | ✅ Toàn bộ **300/300**; sau khi sửa theo review: 3 spec API Gateway **46/46**             |
-| UI responsive              | ✅ **268/268**                                                                            |
-| UX                         | ✅ **11/11**                                                                              |
-| Mobile (API fixtures)      | ✅ **36/36** (có thêm `/apigateway/apis/create`)                                          |
-| Bundle so với mốc đo       | ✅ Trong ngưỡng 5%, không SDK nào trong lần tải đầu                                       |
+| Bộ kiểm tra                | Kết quả                                                                                                         |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Typecheck / lint           | ✅ Pass (core, server, web)                                                                                     |
+| Unit tests                 | ✅ **681/681**: core 610, server 12, web 59                                                                     |
+| Integration với Floci thật | ✅ Toàn bộ trước khi dọn code **37 file, 256 test**; sau khi dọn: file liên quan **26 file, 196 test** (mục 17) |
+| E2E với Floci thật         | ✅ Toàn bộ trước khi dọn code **300/300**; sau khi dọn: 31 spec liên quan **196/196**                           |
+| UI responsive              | ✅ **268/268** (trước khi dọn code; dọn code không đổi layout)                                                  |
+| UX                         | ✅ **11/11** trước khi dọn code; sau khi dọn: `ux/integration.spec.ts` **7/7**                                  |
+| Mobile (API fixtures)      | ✅ **36/36** (có thêm `/apigateway/apis/create`)                                                                |
+| Bundle so với mốc đo       | ✅ Trong ngưỡng 5%, không SDK nào trong lần tải đầu                                                             |
 
 Chi tiết ở **mục 17**. Kết quả sau khi tách core ở **mục 14**.
 
@@ -538,7 +538,7 @@ Chạy 2 lượt liên tiếp: IT API Gateway 28/28 (16 cũ + 12 mới), E2E API
 
 Spec API Gateway (mục 2 › Liên kết, mục 5) ghi integration S3 "Test ra 500". Thực tế trên Floci 2.4.0 status theo integration response của method: với integration response mặc định 200 (như CDK tạo) thì Test ra **200** kèm lỗi `MissingAction`, không ghi object. Không có integration response thì mới ra lỗi 5xx.
 
-## 17. API Gateway tạo / sửa / xóa — 2026-11-27
+## 17. API Gateway tạo / sửa / xóa và dọn code — 2026-11-27
 
 Spec [apigateway-crud-design](../docs/superpowers/specs/2026-11-27-apigateway-crud-design.md): tạo / sửa / xóa API (REST, HTTP, WebSocket), resource, method, route, authorizer, stage; tự thêm quyền gọi Lambda để Lambda › Triggers thấy API.
 
@@ -562,3 +562,9 @@ Spec [apigateway-crud-design](../docs/superpowers/specs/2026-11-27-apigateway-cr
 ### Sau review cuối
 
 - Sửa 3 lỗi (sửa route giữ integration / payload của IaC; sửa authorizer đọc query string; route WebSocket có integration HTTP) và 8 mục nhỏ; mỗi lỗi có test đỏ trước, xanh sau. Kiểm: unit toàn bộ, IT API Gateway 36/36, E2E 3 spec API Gateway 46/46 (lượt sửa mục nhỏ chỉ chạy unit).
+
+### Dọn code (ponytail review + audit toàn repo)
+
+- `tests/`: helper chung `createTestFunction` (chờ bằng `waitUntilFunctionActiveV2`), `createTestQueue`, `setEditor`; 39 file, bớt khoảng 500 dòng. IT 16 file đã đổi 131/131 (2 lượt).
+- core / web: bỏ code trùng và code không dùng (paginator của SDK thay vòng tự viết, `issueAdder` / luật tên / lọc hộp thư dùng chung, alias type không dùng, prop không ai truyền, một hằng chiều cao editor). `web/package.json` bỏ 7 dependency chỉ core dùng.
+- Chạy lại sau khi dọn: unit toàn bộ; IT các service có code đổi (stepfunctions, sns, sms, ses, cognito, mq, eventbridge-schedules, apigateway); E2E 31 spec của service liên quan và spec có helper đổi; UX `integration.spec.ts`; mobile toàn bộ.

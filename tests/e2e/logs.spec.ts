@@ -1,4 +1,3 @@
-import { strToU8, zipSync } from "fflate";
 import type { Page } from "@playwright/test";
 import {
   CloudWatchLogsClient,
@@ -13,15 +12,10 @@ import {
   DescribeStreamSummaryCommand,
   KinesisClient,
 } from "@aws-sdk/client-kinesis";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { confirmDelete, expect, flash, test, uniqueName } from "./fixtures.ts";
+import { consoleConfig, createTestFunction, viaConsole, waitFor } from "../it/helpers.ts";
+import { LAMBDA_ROLE, confirmDelete, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Luồng chính của CloudWatch Logs trên UI (spec mục 8): tạo group, retention, test event, Search,
 // stream, subscription filter tới Lambda và Kinesis, link qua lại với Lambda, xóa
@@ -50,25 +44,14 @@ let config: ReturnType<typeof viaConsole>;
 test.beforeAll(async () => {
   config = viaConsole((await consoleConfig()).region);
   const lambda = new LambdaClient(config);
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: receiver,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(RECEIVER_SOURCE) }) },
-    }),
-  );
+  await createTestFunction(lambda, { name: receiver, source: RECEIVER_SOURCE, role: LAMBDA_ROLE });
   const kinesis = new KinesisClient({ ...config, requestHandler: new NodeHttpHandler() });
   await kinesis.send(new CreateStreamCommand({ StreamName: stream, ShardCount: 1 }));
-  await waitFor("function and stream to be ready", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: receiver }));
+  await waitFor("stream to be ready", async () => {
     const { StreamDescriptionSummary } = await kinesis.send(
       new DescribeStreamSummaryCommand({ StreamName: stream }),
     );
-    return Configuration?.State === "Active" && StreamDescriptionSummary?.StreamStatus === "ACTIVE"
-      ? true
-      : undefined;
+    return StreamDescriptionSummary?.StreamStatus === "ACTIVE" ? true : undefined;
   });
 });
 

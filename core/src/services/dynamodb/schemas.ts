@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { kmsKeyIdSchema } from "#services/kms/schemas.ts";
-import { issueAdder } from "#services/lambda/schemas.ts";
+import { issueAdder } from "#shared/validation/schemas.ts";
 import { enumOfKeys } from "#shared/validation/schemas.ts";
 import { formatBytes } from "#shared/utils/format.ts";
 import {

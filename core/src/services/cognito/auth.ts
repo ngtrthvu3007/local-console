@@ -4,7 +4,7 @@ import {
   type InitiateAuthResponse,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { MILLISECONDS_PER_SECOND } from "#shared/constants.ts";
-import { fromBase64 } from "#shared/utils/encoding.ts";
+import { fromBase64, toBase64 } from "#shared/utils/encoding.ts";
 import {
   CHALLENGE_USERNAME_PARAMETER,
   CODE_FLOW,
@@ -62,7 +62,7 @@ export async function secretHash(
     encoder.encode(username + clientId),
   );
 
-  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+  return toBase64(new Uint8Array(signature));
 }
 
 // exp của JWT tính bằng giây

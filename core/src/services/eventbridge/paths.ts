@@ -5,7 +5,6 @@ export const EVENTBRIDGE_SERVICE_ID = "eventbridge";
 const EVENTBRIDGE_ROOT = `/${EVENTBRIDGE_SERVICE_ID}`;
 
 export const RULE_TABS = { targets: "targets", details: "details" } as const;
-export type RuleTab = (typeof RULE_TABS)[keyof typeof RULE_TABS];
 
 export const SEARCH_PARAMS = { bus: "bus", group: "group" } as const;
 

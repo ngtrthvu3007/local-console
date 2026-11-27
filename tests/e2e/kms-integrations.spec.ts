@@ -9,19 +9,13 @@ import {
 import { DeleteBucketCommand, DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { DeleteSecretCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { DeleteTableCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { DeleteDBInstanceCommand, RDSClient } from "@aws-sdk/client-rds";
 import { DeleteTopicCommand, SNSClient } from "@aws-sdk/client-sns";
-import { strToU8, zipSync } from "fflate";
 import { DeleteQueueCommand, GetQueueUrlCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { DeleteParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+import { ACCOUNT_ID, consoleConfig, createTestFunction, viaConsole } from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Chọn key KMS khi tạo resource ở service khác, rồi thấy link sang trang key (spec KMS 3.6).
 // Một key có alias tạo bằng SDK dùng chung cho mọi test
@@ -205,20 +199,10 @@ test("a table encrypted with a customer key links to it", async ({ page }) => {
 
 test("a function's environment encryption key links to it", async ({ page }) => {
   const lambda = new LambdaClient(config);
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: functionName,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8("export const handler = async () => 1;") }) },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: functionName }),
-    );
-    return Configuration?.State === "Active" ? true : undefined;
+  await createTestFunction(lambda, {
+    name: functionName,
+    source: "export const handler = async () => 1;",
+    role: LAMBDA_ROLE,
   });
 
   await page.goto(`/lambda/functions/${functionName}?tab=configuration`);

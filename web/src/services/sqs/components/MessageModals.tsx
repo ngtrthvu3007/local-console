@@ -20,7 +20,6 @@ import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useRunOnMount } from "@shared/hooks/useRunOnMount.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
-  BODY_EDITOR_HEIGHT_PX,
   bodyPreview,
   messageIdPreview,
   receiveCountOf,
@@ -34,6 +33,7 @@ import {
   useSendMessage,
   useStartRedrive,
 } from "../hooks/useMessages.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 // Các modal chỉ mount khi mở
 
@@ -83,7 +83,7 @@ export function SendMessageModal({ queue, onDismiss }: QueueProps) {
         control={form.control}
         name='body'
         label='Body'
-        height={BODY_EDITOR_HEIGHT_PX}
+        height={SHORT_EDITOR_HEIGHT_PX}
       />
       {queue.fifo && (
         <SpaceBetween size='m'>

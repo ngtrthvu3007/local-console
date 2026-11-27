@@ -8,14 +8,8 @@ import {
   DeleteScheduleCommand,
   SchedulerClient,
 } from "@aws-sdk/client-scheduler";
-import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  GetQueueUrlCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, viaConsole } from "../it/helpers.ts";
+import { DeleteQueueCommand, GetQueueUrlCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { ACCOUNT_ID, consoleConfig, createTestQueue, viaConsole } from "../it/helpers.ts";
 import { expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Edge case của EventBridge: Floci trả danh sách rỗng (không báo lỗi) cho bus / group không có,
@@ -38,10 +32,7 @@ test.beforeAll(async () => {
   scheduler = new SchedulerClient(viaConsole(region));
   sqs = new SQSClient(viaConsole(region));
   await events.send(new CreateEventBusCommand({ Name: bus }));
-  const url = (await sqs.send(new CreateQueueCommand({ QueueName: queue }))).QueueUrl!;
-  const arn = (
-    await sqs.send(new GetQueueAttributesCommand({ QueueUrl: url, AttributeNames: ["QueueArn"] }))
-  ).Attributes!.QueueArn!;
+  const { arn } = await createTestQueue(sqs, queue);
   await scheduler.send(
     new CreateScheduleCommand({
       Name: schedule,

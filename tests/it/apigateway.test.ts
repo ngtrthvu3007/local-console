@@ -25,7 +25,6 @@ import {
 } from "@aws-sdk/client-apigatewayv2";
 import {
   AddPermissionCommand,
-  CreateFunctionCommand,
   DeleteFunctionCommand,
   GetFunctionCommand,
   GetPolicyCommand,
@@ -48,7 +47,6 @@ import {
   DeleteUserPoolCommand,
   InitiateAuthCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
-import { strToU8, zipSync } from "fflate";
 import { isNotFoundError } from "../../core/src/shared/aws/errors.ts";
 import { listApis } from "../../core/src/services/apigateway/operations/apis.ts";
 import { apiGatewaySourcesOf } from "../../core/src/services/apigateway/lambdaPermissions.ts";
@@ -63,6 +61,7 @@ import {
   ACCOUNT_ID,
   CONSOLE_URL,
   consoleConfig,
+  createTestFunction,
   uniqueName,
   viaConsole,
   waitFor,
@@ -175,26 +174,11 @@ describe("stages invoke URLs", () => {
     ({ region, flociPublicUrl: publicUrl } = await consoleConfig());
     lambda = new LambdaClient(viaConsole(region));
     fnArn = (
-      await lambda.send(
-        new CreateFunctionCommand({
-          FunctionName: fnName,
-          Runtime: "nodejs22.x",
-          Handler: "index.handler",
-          Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-          Code: {
-            ZipFile: zipSync({
-              "index.mjs": strToU8(
-                `export const handler = async () => ({ statusCode: 200, body: "${LAMBDA_BODY}" });`,
-              ),
-            }),
-          },
-        }),
-      )
-    ).FunctionArn!;
-    await waitFor("function to be Active", async () => {
-      const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: fnName }));
-      return Configuration?.State === "Active" ? true : undefined;
-    });
+      await createTestFunction(lambda, {
+        name: fnName,
+        source: `export const handler = async () => ({ statusCode: 200, body: "${LAMBDA_BODY}" });`,
+      })
+    ).arn;
   });
 
   afterAll(async () => {
@@ -327,17 +311,10 @@ describe("lambda permission for API Gateway", () => {
   beforeAll(async () => {
     ({ region } = await consoleConfig());
     lambda = new LambdaClient(viaConsole(region));
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: fnName,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: {
-          ZipFile: zipSync({ "index.mjs": strToU8("export const handler = async () => ({});") }),
-        },
-      }),
-    );
+    await createTestFunction(lambda, {
+      name: fnName,
+      source: "export const handler = async () => ({});",
+    });
   });
 
   afterAll(async () => {
@@ -477,21 +454,8 @@ describe("testing a REST method through _user_request_", () => {
   const functionArn = async (name: string) =>
     (await lambda.send(new GetFunctionCommand({ FunctionName: name }))).Configuration!.FunctionArn!;
 
-  const createFunction = async (name: string, source: string) => {
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: name,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(source) }) },
-      }),
-    );
-    await waitFor("function to be Active", async () => {
-      const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-      return Configuration?.State === "Active" ? true : undefined;
-    });
-  };
+  const createFunction = (name: string, source: string) =>
+    createTestFunction(lambda, { name, source });
 
   // Một method trên resource `pathPart` (dưới root), tích hợp Lambda proxy, deploy lên STAGE
   const createApi = async (

@@ -27,5 +27,3 @@ export function createFlociService(baseUrl: string) {
     resetData: () => fetchJson(flociUrl(baseUrl, FLOCI_ENDPOINTS.reset), { method: "POST" }),
   };
 }
-
-export type FlociService = ReturnType<typeof createFlociService>;

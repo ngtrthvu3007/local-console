@@ -12,20 +12,14 @@ import {
   PutMethodResponseCommand,
   type PutIntegrationCommandInput,
 } from "@aws-sdk/client-api-gateway";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient, Runtime } from "@aws-sdk/client-lambda";
 import {
   CreateQueueCommand,
   DeleteQueueCommand,
   ReceiveMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { strToU8, zipSync } from "fflate";
-import { consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
+import { consoleConfig, createTestFunction, viaConsole, waitFor } from "../it/helpers.ts";
 import { expect, test, uniqueName } from "./fixtures.ts";
 
 // Trang API Gateway với service khác: hiện integration, gọi thử tới đích, đi sang trang của đích
@@ -37,6 +31,7 @@ const FIRST_INVOKE_TIMEOUT_MS = 60_000;
 const LOG_WAIT_MS = 60_000;
 const QUEUE_WAIT_MS = 10_000;
 const LOG_MARKER = "lc-e2e-apigw-log-marker";
+const APIGW_FUNCTION = { role: "lc-e2e", runtime: Runtime.nodejs20x, file: "index.js" };
 
 let region: string;
 let v1: APIGatewayClient;
@@ -52,19 +47,7 @@ const lambdaUri = (name: string) =>
 async function createFunction(source: string) {
   const name = uniqueName("apigw-fn");
   functions.push(name);
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: name,
-      Runtime: "nodejs20.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e`,
-      Code: { ZipFile: zipSync({ "index.js": strToU8(source) }) },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+  await createTestFunction(lambda, { ...APIGW_FUNCTION, name, source });
   return name;
 }
 

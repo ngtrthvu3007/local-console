@@ -19,13 +19,7 @@ import {
   SNSClient,
   SubscribeCommand,
 } from "@aws-sdk/client-sns";
-import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
   DeleteRuleCommand,
   EventBridgeClient,
@@ -36,6 +30,7 @@ import {
 import {
   ACCOUNT_ID,
   consoleConfig,
+  createTestQueue,
   deleteMails,
   uniqueName,
   viaConsole,
@@ -71,12 +66,9 @@ const sendMail = () =>
   );
 
 const makeQueue = async (name: string) => {
-  const { QueueUrl } = await sqs.send(new CreateQueueCommand({ QueueName: name }));
-  queueUrls[name] = QueueUrl!;
-  const { Attributes } = await sqs.send(
-    new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }),
-  );
-  return Attributes!.QueueArn!;
+  const { url, arn } = await createTestQueue(sqs, name);
+  queueUrls[name] = url;
+  return arn;
 };
 
 const bodies = async (name: string) =>

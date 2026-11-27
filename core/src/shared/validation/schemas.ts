@@ -43,3 +43,26 @@ const checkedText = (check: (text: string) => string | undefined) =>
 
 export const jsonText = checkedText(jsonError);
 export const jsonObjectText = checkedText(jsonObjectError);
+
+const LOWERCASE_NAME = /^[a-z][a-z0-9-]*$/;
+const DOUBLE_HYPHEN = "--";
+const HYPHEN = "-";
+
+// Tên kiểu RDS identifier / ElastiCache cluster: chữ thường, số, "-"; không "--", không kết thúc bằng "-"
+export const lowercaseName = (label: string, maxLength: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, `Enter ${label}.`)
+    .max(maxLength, `Must be at most ${maxLength} characters.`)
+    .regex(LOWERCASE_NAME, "Start with a letter; use lowercase letters, numbers and hyphens.")
+    .refine((name) => !name.includes(DOUBLE_HYPHEN), "Can't contain two hyphens in a row.")
+    .refine((name) => !name.endsWith(HYPHEN), "Can't end with a hyphen.");
+
+export type AddIssue = (path: string | (string | number)[], message: string) => void;
+
+// addIssue của superRefine gọn lại thành (ô, lỗi); ô là tên field hoặc path đầy đủ
+export const issueAdder =
+  (context: z.RefinementCtx): AddIssue =>
+  (path, message) =>
+    context.addIssue({ code: "custom", path: Array.isArray(path) ? path : [path], message });

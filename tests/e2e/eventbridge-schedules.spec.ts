@@ -1,4 +1,3 @@
-import type { Page } from "@playwright/test";
 import {
   DeleteScheduleCommand,
   DeleteScheduleGroupCommand,
@@ -12,7 +11,7 @@ import {
   SQSClient,
 } from "@aws-sdk/client-sqs";
 import { consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { expect, flash, test, uniqueName } from "./fixtures.ts";
+import { expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Luồng chính của trang Schedules trên UI: tạo group → tạo schedule rate đẩy vào queue → queue nhận
 // → tắt → sửa lịch → xóa schedule → xóa group. Resource dọn bằng SDK ở afterAll để test lỗi giữa chừng
@@ -43,18 +42,6 @@ test.afterAll(async () => {
   const { QueueUrl } = await sqs.send(new GetQueueUrlCommand({ QueueName: queue }));
   await sqs.send(new DeleteQueueCommand({ QueueUrl }));
 });
-
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
-async function setEditor(page: Page, index: number, text: string) {
-  await page
-    .locator(".ace_editor")
-    .nth(index)
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
 
 test("create a schedule group; the default group can't be deleted", async ({ page }) => {
   await page.goto("/eventbridge/schedules");
@@ -89,7 +76,7 @@ test("create a rate schedule to the queue and the queue receives its input", asy
   await page.getByRole("option", { name: "SQS", exact: true }).click();
   await page.getByRole("button", { name: /^SQS/ }).last().click();
   await page.getByRole("option", { name: queue }).click();
-  await setEditor(page, 0, PAYLOAD);
+  await setEditor(page, PAYLOAD);
 
   await page.getByRole("button", { name: "Create schedule" }).last().click();
   await expect(flash(page).getByText(`Created schedule ${schedule}`)).toBeVisible();

@@ -10,8 +10,6 @@ interface Props {
 export function DeleteClustersModal({ names, onDismiss, onDone }: Props) {
   return (
     <BulkActionModal
-      verb='Delete'
-      done='Deleted'
       mutation={useDeleteClusters()}
       items={names}
       lines={names}

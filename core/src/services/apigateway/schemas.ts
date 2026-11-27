@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { issueAdder, type AddIssue } from "#shared/validation/schemas.ts";
 import { API_TYPES, type ApiType } from "./apis.ts";
 import { isLambdaAuthorizer, readsOneSource } from "./authorizers.ts";
 import {
@@ -8,13 +9,6 @@ import {
   METHOD_ORDER,
   NAME_MAX_LENGTH,
 } from "./constants.ts";
-
-type AddIssue = (path: string, message: string) => void;
-
-const issueAdder =
-  (context: z.RefinementCtx): AddIssue =>
-  (path, message) =>
-    context.addIssue({ code: "custom", path: [path], message });
 
 const nameRule = z
   .string()

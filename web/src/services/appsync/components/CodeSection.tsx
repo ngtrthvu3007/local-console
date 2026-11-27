@@ -5,9 +5,9 @@ import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { RUNTIMES, isUntouched, type ResolverCode } from "@localconsole/core/appsync";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 const EDITOR_HEIGHT_PX = 320;
-const VTL_EDITOR_HEIGHT_PX = 200;
 
 interface Props<TValues extends FieldValues> {
   control: Control<TValues, unknown, FieldValues>;
@@ -47,14 +47,14 @@ export function CodeSection<TValues extends FieldValues>({
             name={names.request}
             label='Request mapping template'
             language='velocity'
-            height={VTL_EDITOR_HEIGHT_PX}
+            height={SHORT_EDITOR_HEIGHT_PX}
           />
           <FormValueEditor
             control={control}
             name={names.response}
             label='Response mapping template - optional'
             language='velocity'
-            height={VTL_EDITOR_HEIGHT_PX}
+            height={SHORT_EDITOR_HEIGHT_PX}
           />
         </SpaceBetween>
       )}

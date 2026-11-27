@@ -1,5 +1,18 @@
 import { Sha256 } from "@aws-crypto/sha256-js";
+import {
+  CreateFunctionCommand,
+  type LambdaClient,
+  Runtime,
+  waitUntilFunctionActiveV2,
+} from "@aws-sdk/client-lambda";
+import {
+  CreateQueueCommand,
+  type CreateQueueCommandInput,
+  GetQueueAttributesCommand,
+  type SQSClient,
+} from "@aws-sdk/client-sqs";
 import { SignatureV4 } from "@smithy/signature-v4";
+import { strToU8, zipSync } from "fflate";
 
 // Console đang chạy; đổi cổng bằng LOCAL_CONSOLE_URL
 export const CONSOLE_URL = process.env.LOCAL_CONSOLE_URL ?? "http://localhost:3701";
@@ -73,6 +86,67 @@ export async function waitFor<T>(
   }
 
   throw new Error(`Timed out waiting for ${description}${lastError ? `: ${lastError}` : ""}`);
+}
+
+const FUNCTION_ROLE = "lc-it-lambda";
+const FUNCTION_FILE = "index.mjs";
+const FUNCTION_HANDLER = "index.handler";
+const FUNCTION_ACTIVE_TIMEOUT_SECONDS = 120;
+
+// Lambda mặc định 3 giây: không đủ cho function gọi SDK hoặc chạy lần đầu trong container mới
+export const FUNCTION_TIMEOUT_SECONDS = 30;
+
+interface TestFunctionInput {
+  name: string;
+  source: string;
+  // Tên role IAM, không phải ARN
+  role?: string;
+  runtime?: Runtime;
+  file?: string;
+  timeout?: number;
+}
+
+export async function createTestFunction(
+  lambda: LambdaClient,
+  {
+    name,
+    source,
+    role = FUNCTION_ROLE,
+    runtime = Runtime.nodejs22x,
+    file = FUNCTION_FILE,
+    timeout,
+  }: TestFunctionInput,
+) {
+  const { FunctionArn = "" } = await lambda.send(
+    new CreateFunctionCommand({
+      FunctionName: name,
+      Runtime: runtime,
+      Handler: FUNCTION_HANDLER,
+      Role: `arn:aws:iam::${ACCOUNT_ID}:role/${role}`,
+      Code: { ZipFile: zipSync({ [file]: strToU8(source) }) },
+      Timeout: timeout,
+    }),
+  );
+
+  await waitUntilFunctionActiveV2(
+    { client: lambda, maxWaitTime: FUNCTION_ACTIVE_TIMEOUT_SECONDS },
+    { FunctionName: name },
+  );
+  return { name, arn: FunctionArn };
+}
+
+export async function createTestQueue(
+  sqs: SQSClient,
+  name: string,
+  attributes?: CreateQueueCommandInput["Attributes"],
+) {
+  const { QueueUrl = "" } = await sqs.send(
+    new CreateQueueCommand({ QueueName: name, Attributes: attributes }),
+  );
+  const { Attributes } = await sqs.send(
+    new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }),
+  );
+  return { url: QueueUrl, arn: Attributes?.QueueArn ?? "" };
 }
 
 // Gọi API AWS không có SDK cài sẵn (ElastiCache, MQ): ký SigV4 rồi gửi qua proxy của console

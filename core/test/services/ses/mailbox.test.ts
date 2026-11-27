@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { newestInRegion } from "#shared/floci/inbox.ts";
 import {
-  mailboxForRegion,
   headersFromFields,
   mailboxSchema,
   matchesSearch,
@@ -45,7 +45,7 @@ const RAW_MIME = [
   "--b1--",
 ].join("\r\n");
 
-describe("mailboxForRegion", () => {
+describe("newestInRegion", () => {
   it("keeps this region only, newest first", () => {
     const messages = [
       base,
@@ -53,7 +53,7 @@ describe("mailboxForRegion", () => {
       { ...base, Id: "c", Region: "us-east-1", Timestamp: "2026-11-17T18:00:00.000000Z" },
     ];
 
-    expect(mailboxForRegion(messages, REGION).map((email) => email.Id)).toEqual(["b", "a"]);
+    expect(newestInRegion(messages, REGION).map((email) => email.Id)).toEqual(["b", "a"]);
   });
 });
 

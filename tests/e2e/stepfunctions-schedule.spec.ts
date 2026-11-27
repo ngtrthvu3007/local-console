@@ -1,4 +1,3 @@
-import type { Page } from "@playwright/test";
 import {
   CreateStateMachineCommand,
   DeleteStateMachineCommand,
@@ -18,7 +17,7 @@ import {
   SchedulerClient,
 } from "@aws-sdk/client-scheduler";
 import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { expect, flash, test, uniqueName } from "./fixtures.ts";
+import { expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Form Schedule với đích là state machine, trên UI: tạo schedule → state machine chạy với input của
 // schedule → queue nhận → trang schedule link sang state machine → form sửa nhớ đúng đích.
@@ -77,18 +76,6 @@ test.afterAll(async () => {
   const { QueueUrl } = await sqs.send(new GetQueueUrlCommand({ QueueName: queue }));
   await sqs.send(new DeleteQueueCommand({ QueueUrl }));
 });
-
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
-async function setEditor(page: Page, text: string) {
-  await page
-    .locator(".ace_editor")
-    .first()
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
 
 test("a schedule can target a state machine, and the state machine runs with the schedule's input", async ({
   page,
