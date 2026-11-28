@@ -10,4 +10,19 @@ describe("joinRoutes", () => {
     expect(rows[0]).toMatchObject({ key: "GET /a", integrationUri: "https://x" });
     expect(rows[1].integrationType).toBeUndefined();
   });
+
+  it("keeps the ids the console edits by and whether the route replies", () => {
+    const [row] = joinRoutes(
+      [
+        {
+          RouteId: "r1",
+          RouteKey: "$default",
+          Target: "integrations/i1",
+          RouteResponseSelectionExpression: "$default",
+        },
+      ],
+      [{ IntegrationId: "i1" }],
+    );
+    expect(row).toMatchObject({ id: "r1", integrationId: "i1", twoWay: true });
+  });
 });

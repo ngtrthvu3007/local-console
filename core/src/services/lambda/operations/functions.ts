@@ -1,4 +1,5 @@
 import {
+  AddPermissionCommand,
   CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
@@ -17,7 +18,12 @@ import { collectPages } from "#shared/aws/pagination.ts";
 import { runEach } from "#shared/utils/bulk.ts";
 import type { LogsService } from "#services/logs/service.ts";
 import type { SecretsService } from "#services/secretsmanager/service.ts";
-import { DEFAULT_ROLE_ARN } from "#services/lambda/constants.ts";
+import { APIGATEWAY_PRINCIPAL } from "#services/apigateway/constants.ts";
+import {
+  DEFAULT_ROLE_ARN,
+  INVOKE_FUNCTION_ACTION,
+  RESOURCE_CONFLICT_ERROR,
+} from "#services/lambda/constants.ts";
 import { unzipPackage } from "#services/lambda/zipArchive.ts";
 
 export interface CreateFunctionInput {
@@ -142,3 +148,26 @@ export const getPolicy = (lambda: LambdaClient, name: string) =>
     async () => (await lambda.send(new GetPolicyCommand({ FunctionName: name }))).Policy ?? "",
     "",
   );
+
+export interface AddPermissionInput {
+  functionArn: string;
+  statementId: string;
+  sourceArn: string;
+}
+
+// Cho API Gateway gọi function. Statement trùng ID nghĩa là quyền đã có (gắn lại cùng chỗ)
+export async function addPermission(lambda: LambdaClient, input: AddPermissionInput) {
+  try {
+    await lambda.send(
+      new AddPermissionCommand({
+        FunctionName: input.functionArn,
+        StatementId: input.statementId,
+        Action: INVOKE_FUNCTION_ACTION,
+        Principal: APIGATEWAY_PRINCIPAL,
+        SourceArn: input.sourceArn,
+      }),
+    );
+  } catch (error) {
+    if (!(error instanceof Error && error.name === RESOURCE_CONFLICT_ERROR)) throw error;
+  }
+}

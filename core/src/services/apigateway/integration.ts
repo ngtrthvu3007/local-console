@@ -3,7 +3,9 @@ import {
   INTEGRATION_ARROW,
   INTEGRATION_LABELS,
   INTEGRATION_TYPES,
+  INVOCATIONS_SUFFIX,
   LAMBDA_ARN_PREFIX,
+  LAMBDA_INVOCATION_PATH,
   LAMBDA_URI_MARKER,
 } from "./constants.ts";
 
@@ -65,4 +67,33 @@ export function integrationLabel(view: IntegrationView, uri?: string): string {
     case "other":
       return view.type ?? INTEGRATION_LABELS.other;
   }
+}
+
+export const lambdaInvocationUri = (region: string, functionArn: string) =>
+  `${APIGATEWAY_ARN_PREFIX}${region}${LAMBDA_INVOCATION_PATH}${functionArn}${INVOCATIONS_SUFFIX}`;
+
+const INVOCATION_FUNCTION = /\/functions\/(arn:aws:lambda:[^/]+)\/invocations$/;
+
+// REST / authorizer dùng URI invocation, HTTP / WebSocket dùng thẳng ARN function
+export function functionArnOfUri(uri: string | undefined) {
+  if (uri?.startsWith(LAMBDA_ARN_PREFIX)) return uri;
+  return uri ? INVOCATION_FUNCTION.exec(uri)?.[1] : undefined;
+}
+
+type IntegrationKind = "lambda" | "http" | "other";
+
+// Phần integration của form sửa: Lambda proxy, HTTP proxy (khi form có), còn lại khóa.
+// Chưa có integration (tạo dở) thì là form trống để gắn đích
+export function integrationFormOf(
+  type: string | undefined,
+  uri: string | undefined,
+  httpProxy: boolean,
+): { integration: IntegrationKind; functionArn: string; url: string } {
+  if (!type) return { integration: "lambda", functionArn: "", url: "" };
+  const functionArn = type === INTEGRATION_TYPES.awsProxy ? functionArnOfUri(uri) : undefined;
+  if (functionArn) return { integration: "lambda", functionArn, url: "" };
+  if (httpProxy && type === INTEGRATION_TYPES.httpProxy) {
+    return { integration: "http", functionArn: "", url: uri ?? "" };
+  }
+  return { integration: "other", functionArn: "", url: "" };
 }

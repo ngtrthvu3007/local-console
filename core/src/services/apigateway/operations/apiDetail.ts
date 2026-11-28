@@ -56,6 +56,7 @@ export async function listAuthorizers(
     identitySource: a.IdentitySource?.join(IDENTITY_SEPARATOR) ?? "",
     target: a.AuthorizerUri,
     issuer: a.JwtConfiguration?.Issuer,
+    audience: a.JwtConfiguration?.Audience,
   }));
 }
 
@@ -84,12 +85,15 @@ export async function listStages(
   }));
 }
 
+export const getRoutes = (v2: ApiGatewayV2Client, apiId: string) =>
+  allPages(async (NextToken) => {
+    const page = await v2.send(new GetRoutesCommand({ ApiId: apiId, NextToken }));
+    return { items: page.Items ?? [], nextToken: page.NextToken };
+  });
+
 export async function listRoutes(v2: ApiGatewayV2Client, apiId: string) {
   const [routes, integrations] = await Promise.all([
-    allPages(async (NextToken) => {
-      const page = await v2.send(new GetRoutesCommand({ ApiId: apiId, NextToken }));
-      return { items: page.Items ?? [], nextToken: page.NextToken };
-    }),
+    getRoutes(v2, apiId),
     allPages(async (NextToken) => {
       const page = await v2.send(new GetIntegrationsCommand({ ApiId: apiId, NextToken }));
       return { items: page.Items ?? [], nextToken: page.NextToken };

@@ -124,7 +124,8 @@ test("deletes an API from its detail page", async ({ page }) => {
   const name = uniqueName("detail-del");
   const id = (await v1.send(new CreateRestApiCommand({ name }))).id!;
   await page.goto(`/apigateway/v1/${id}`);
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  // Nút đầu là Delete của API ở header; tab Resources cũng có Delete của resource
+  await page.getByRole("button", { name: "Delete", exact: true }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox").fill("delete");
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();

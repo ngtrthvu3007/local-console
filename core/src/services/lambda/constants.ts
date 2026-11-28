@@ -208,3 +208,6 @@ export const ON_FAILURE_KIND_IDS = [
 export type OnFailureKind = (typeof ON_FAILURE_KIND_IDS)[number];
 
 export const LAMBDA_KEY_SERVICE = "lambda";
+
+export const INVOKE_FUNCTION_ACTION = "lambda:InvokeFunction";
+export const RESOURCE_CONFLICT_ERROR = "ResourceConflictException";

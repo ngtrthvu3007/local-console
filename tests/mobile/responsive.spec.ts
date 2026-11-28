@@ -17,6 +17,7 @@ const pages = [
     "elasticache/clusters",
     "mq/brokers",
     "sqs/queues",
+    "apigateway/apis",
   ].map((path) => `/${path}/create`),
 ];
 async function fits(page: Page) {

@@ -207,10 +207,11 @@ interface OptionsProps<TValues extends FieldValues> extends FieldProps<TValues> 
 interface SelectFieldProps<TValues extends FieldValues> extends OptionsProps<TValues> {
   placeholder?: string;
   empty?: ReactNode;
+  disabled?: boolean;
 }
 
 export function FormSelect<TValues extends FieldValues>(props: SelectFieldProps<TValues>) {
-  const { options, placeholder, empty, ...fieldProps } = props;
+  const { options, placeholder, empty, disabled, ...fieldProps } = props;
 
   return (
     <ControlledField {...fieldProps}>
@@ -222,6 +223,7 @@ export function FormSelect<TValues extends FieldValues>(props: SelectFieldProps<
           placeholder={placeholder}
           empty={empty}
           options={options}
+          disabled={disabled}
           selectedOption={options.find((option) => option.value === field.value) ?? null}
           onChange={({ detail }) => field.onChange(detail.selectedOption.value)}
           onBlur={field.onBlur}
@@ -306,17 +308,19 @@ export function FormTiles<TValues extends FieldValues>(props: TilesFieldProps<TV
 
 interface CheckboxProps<TValues extends FieldValues> extends FieldProps<TValues> {
   text: ReactNode; // chữ cạnh ô tick
+  disabled?: boolean;
 }
 
 export function FormCheckbox<TValues extends FieldValues>(props: CheckboxProps<TValues>) {
   // Mô tả đặt dưới chữ của ô tick (như Cloudscape), không đặt trên như FormField
-  const { text, description, ...fieldProps } = props;
+  const { text, description, disabled, ...fieldProps } = props;
 
   return (
     <ControlledField {...fieldProps}>
       {(field) => (
         <Checkbox
           description={description}
+          disabled={disabled}
           checked={Boolean(field.value)}
           onChange={({ detail }) => field.onChange(detail.checked)}
         >

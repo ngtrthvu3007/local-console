@@ -1,11 +1,17 @@
+import { useState } from "react";
+import Button from "@cloudscape-design/components/button";
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Popover from "@cloudscape-design/components/popover";
+import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
+import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
+import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { cognitoRoutes } from "@localconsole/core/cognito";
 import {
   AUTHORIZER_TYPES,
@@ -16,14 +22,30 @@ import {
   cognitoPoolIdOfProviderArn,
   isLocalIssuer,
   type AuthorizerRow,
+  type ApiType,
   type ApiVersion,
 } from "@localconsole/core/apigateway";
-import { useAuthorizers } from "../hooks/useApiDetail.ts";
+import { useAuthorizers, useDeleteAuthorizer } from "../hooks/useApiDetail.ts";
+import { AuthorizerModal } from "./AuthorizerModal.tsx";
 import { IntegrationValue } from "./IntegrationValue.tsx";
 
-export function AuthorizersTab({ version, apiId }: { version: ApiVersion; apiId: string }) {
+type Dialog = "create" | "edit" | "delete";
+
+interface Props {
+  version: ApiVersion;
+  apiId: string;
+  apiType: ApiType;
+}
+
+export function AuthorizersTab({ version, apiId, apiType }: Props) {
   const authorizers = useAuthorizers(version, apiId);
+  const deleteAuthorizer = useDeleteAuthorizer(version, apiId);
   const follow = useFollow();
+  const [selected, setSelected] = useState<AuthorizerRow[]>([]);
+  const [dialog, setDialog] = useState<Dialog | null>(null);
+  // Lấy lại từ dữ liệu mới: đổi tên xong, dòng đã chọn vẫn là bản cũ
+  const current = authorizers.data?.find((row) => row.id === selected[0]?.id);
+  const close = () => setDialog(null);
   const { flociPublicUrl, flociInternalUrl } = useLoadedConfig();
 
   const target = (a: AuthorizerRow) => {
@@ -65,20 +87,74 @@ export function AuthorizersTab({ version, apiId }: { version: ApiVersion; apiId:
     { id: "target", header: "Target", cell: target },
   ];
 
+  const confirmDelete = (authorizer: AuthorizerRow) =>
+    deleteAuthorizer.mutate(
+      authorizer.id,
+      notifyOutcome({
+        success: `Deleted authorizer ${authorizer.name}`,
+        errorHeader: `Couldn't delete authorizer ${authorizer.name}`,
+        then: () => {
+          close();
+          setSelected([]);
+        },
+      }),
+    );
+
   return (
-    <Table
-      variant='container'
-      trackBy='id'
-      items={authorizers.data ?? []}
-      loading={authorizers.isLoading}
-      loadingText='Loading authorizers'
-      columnDefinitions={columns}
-      empty={emptyOrError(authorizers, <EmptyState title='No authorizers' />)}
-      header={
-        <Header counter={authorizers.data ? `(${authorizers.data.length})` : undefined}>
-          Authorizers
-        </Header>
-      }
-    />
+    <>
+      <Table
+        variant='container'
+        trackBy='id'
+        selectionType='single'
+        selectedItems={selected}
+        onSelectionChange={({ detail }) => setSelected(detail.selectedItems)}
+        ariaLabels={selectionLabels<AuthorizerRow>("authorizer", (row) => row.name)}
+        items={authorizers.data ?? []}
+        loading={authorizers.isLoading}
+        loadingText='Loading authorizers'
+        columnDefinitions={columns}
+        empty={emptyOrError(authorizers, <EmptyState title='No authorizers' />)}
+        header={
+          <Header
+            counter={authorizers.data ? `(${authorizers.data.length})` : undefined}
+            actions={
+              <SpaceBetween size='xs' direction='horizontal'>
+                <Button disabled={!current} onClick={() => setDialog("edit")}>
+                  Edit
+                </Button>
+                <Button disabled={!current} onClick={() => setDialog("delete")}>
+                  Delete
+                </Button>
+                <Button onClick={() => setDialog("create")}>Create authorizer</Button>
+              </SpaceBetween>
+            }
+          >
+            Authorizers
+          </Header>
+        }
+      />
+      {(dialog === "create" || dialog === "edit") && (
+        <AuthorizerModal
+          version={version}
+          apiId={apiId}
+          apiType={apiType}
+          existingNames={(authorizers.data ?? []).map((row) => row.name)}
+          current={dialog === "edit" ? current : undefined}
+          onDismiss={close}
+        />
+      )}
+      {dialog === "delete" && current && (
+        <ConfirmModal
+          visible
+          header={`Delete authorizer ${current.name}?`}
+          actionText='Delete'
+          loading={deleteAuthorizer.isPending}
+          onConfirm={() => confirmDelete(current)}
+          onDismiss={close}
+        >
+          Methods and routes using it must be changed first.
+        </ConfirmModal>
+      )}
+    </>
   );
 }

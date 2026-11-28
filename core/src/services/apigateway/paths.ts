@@ -18,6 +18,7 @@ export const SEARCH_PARAMS = { tab: "tab" } as const;
 
 export const APIGATEWAY_ROUTE_PATTERNS = {
   apis: "apis",
+  create: "apis/create",
   api: ":version/:apiId",
 } as const;
 
@@ -32,6 +33,7 @@ const defaultTab = (version: ApiVersion): ApiTab =>
 
 export const apigatewayRoutes = {
   apis: fullPath(APIGATEWAY_ROUTE_PATTERNS.apis),
+  create: fullPath(APIGATEWAY_ROUTE_PATTERNS.create),
   api: (version: ApiVersion, apiId: string, tab?: ApiTab) => {
     const path = fillPath(fullPath(APIGATEWAY_ROUTE_PATTERNS.api), { version, apiId });
     return tab && tab !== defaultTab(version)

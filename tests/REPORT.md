@@ -1,22 +1,21 @@
 # Báo cáo test — ngtrthvu3007/local-console
 
-## Kết quả mới nhất — 2026-11-27 (sau khi tách `core/`)
+## Kết quả mới nhất — 2026-11-27 (API Gateway tạo / sửa / xóa)
 
-Working tree trên nhánh `dev` (chưa commit), sau plan [tách core](../docs/superpowers/plans/2026-11-27-core.md): logic gọi AWS của 25 service chuyển từ `web/` sang `core/` (operation + facade). Build lại Docker từ source local. Floci 2.4.0, region `ap-southeast-1`, Node 26.13.1, Playwright 1.65.0.
+Working tree trên nhánh `dev` (chưa commit), sau plan [API Gateway CRUD](../docs/superpowers/plans/2026-11-27-apigateway-crud.md). Web chạy bằng bản build mới qua `vite preview` (proxy sang console Docker :3701). Floci 2.4.0, region `ap-southeast-1`.
 
-| Bộ kiểm tra                | Kết quả                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------- |
-| Typecheck / lint           | ✅ Pass (core, server, web)                                                           |
-| Unit tests                 | ✅ **629/629**: core 562, server 12, web 55                                           |
-| Integration với Floci thật | ✅ **35/35 file, 224 test** (≈3 phút); 4 test mới của API Gateway, mục 15             |
-| E2E với Floci thật         | ✅ **283/283** (5,6 phút); 1 test mới của API Gateway                                 |
-| UI responsive              | ✅ **268/268** (3,6 phút)                                                             |
-| UX                         | ✅ **11/11** (1,2 phút)                                                               |
-| Mobile (API fixtures)      | ✅ **36/36** (2,8 phút), sau khi sửa fixture, mục 14                                  |
-| Bundle so với mốc đo       | ✅ Trong ngưỡng 5%, không SDK nào trong lần tải đầu (bảng ở mục 14)                   |
-| Leftover sau khi dọn       | ✅ Không còn resource test; còn 73 tin SMS trong hộp thư giả (Floci không có API xóa) |
+| Bộ kiểm tra                | Kết quả                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| Typecheck / lint           | ✅ Pass (core, server, web)                                                               |
+| Unit tests                 | ✅ **683/683**: core 612, server 12, web 59                                               |
+| Integration với Floci thật | ✅ Toàn bộ **37 file, 256 test**; sau khi sửa theo review: API Gateway **36/36** (mục 17) |
+| E2E với Floci thật         | ✅ Toàn bộ **300/300**; sau khi sửa theo review: 3 spec API Gateway **46/46**             |
+| UI responsive              | ✅ **268/268**                                                                            |
+| UX                         | ✅ **11/11**                                                                              |
+| Mobile (API fixtures)      | ✅ **36/36** (có thêm `/apigateway/apis/create`)                                          |
+| Bundle so với mốc đo       | ✅ Trong ngưỡng 5%, không SDK nào trong lần tải đầu                                       |
 
-Chi tiết ở **mục 14** (test lại sau khi tách core) và **mục 15** (API Gateway: đối chiếu spec, test bổ sung).
+Chi tiết ở **mục 17**. Kết quả sau khi tách core ở **mục 14**.
 
 ## Kết quả 2026-11-17
 
@@ -538,3 +537,28 @@ Chạy 2 lượt liên tiếp: IT API Gateway 28/28 (16 cũ + 12 mới), E2E API
 ### Chỉnh lại mô tả trong spec
 
 Spec API Gateway (mục 2 › Liên kết, mục 5) ghi integration S3 "Test ra 500". Thực tế trên Floci 2.4.0 status theo integration response của method: với integration response mặc định 200 (như CDK tạo) thì Test ra **200** kèm lỗi `MissingAction`, không ghi object. Không có integration response thì mới ra lỗi 5xx.
+
+## 17. API Gateway tạo / sửa / xóa — 2026-11-27
+
+Spec [apigateway-crud-design](../docs/superpowers/specs/2026-11-27-apigateway-crud-design.md): tạo / sửa / xóa API (REST, HTTP, WebSocket), resource, method, route, authorizer, stage; tự thêm quyền gọi Lambda để Lambda › Triggers thấy API.
+
+### Test mới
+
+| File                                                                                                        | Nội dung                                                                                                                                    | Kết quả  |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `core/test/services/apigateway/crudHelpers.test.ts`, `schemas.test.ts`, `service.test.ts`, `routes.test.ts` | SourceArn / StatementId, nguồn danh tính, luật form (spec mục 5), quyền lỗi không làm hỏng thao tác, đổi đích route dùng chung integration  | ✅       |
+| `core/test/services/lambda/addPermission.test.ts`                                                           | Statement trùng (409) coi là đã có quyền                                                                                                    | ✅       |
+| `tests/it/apigateway-crud.test.ts`                                                                          | 20 test trên Floci: tạo nhanh HTTP API kèm Lambda, stage, resource / method, route HTTP / WebSocket, authorizer REST / HTTP / Cognito / JWT | ✅ 20/20 |
+| `tests/e2e/apigateway-crud.spec.ts`                                                                         | 13 test qua UI: Create API, Edit API, Stages, Resources + tab Test, Routes, WebSocket two-way, Authorizers                                  | ✅ 13/13 |
+
+### Hành vi Floci 2.4.0 tìm thêm (ghi ở `docs/development.md` › Traps)
+
+- Route WebSocket đã two-way thì không tắt được: xóa `RouteResponseSelectionExpression` và route response, client vẫn nhận reply. Form chỉ cho bật.
+- `UpdateAuthorizer` từ chối mọi patch `/providerARNs`: pool của Cognito authorizer khóa khi sửa.
+- Gỡ authorizer phải gửi ID rỗng (REST `replace /authorizerId ""`, v2 `AuthorizerId: ""`), không thì Floci giữ ID cũ.
+- Thêm lại cùng quyền Lambda trả 409, trình duyệt ghi `console.error`: form sửa chỉ thêm quyền khi đổi function hoặc route key.
+- `ANY /{proxy+}` → `HTTP_PROXY` tự thay `{proxy}` dù không có path mapping (AWS cần mapping).
+
+### Sau review cuối
+
+- Sửa 3 lỗi (sửa route giữ integration / payload của IaC; sửa authorizer đọc query string; route WebSocket có integration HTTP) và 8 mục nhỏ; mỗi lỗi có test đỏ trước, xanh sau. Kiểm: unit toàn bộ, IT API Gateway 36/36, E2E 3 spec API Gateway 46/46 (lượt sửa mục nhỏ chỉ chạy unit).

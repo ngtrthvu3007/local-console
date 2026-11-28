@@ -33,6 +33,7 @@ export interface ApiListing {
 
 export interface ApiDetail {
   name: string;
+  description?: string;
   type: ApiType;
   created?: Date;
   routeSelection?: string;
@@ -46,6 +47,7 @@ export interface AuthorizerRow {
   target?: string;
   providerArns?: string[];
   issuer?: string;
+  audience?: string[];
 }
 
 export interface StageRow {

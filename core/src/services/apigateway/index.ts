@@ -8,5 +8,6 @@ export * from "./methodTest.ts";
 export * from "./paths.ts";
 export * from "./resources.ts";
 export * from "./routeRows.ts";
+export * from "./schemas.ts";
 export * from "./service.ts";
-export type { ApiRef } from "./operations/apis.ts";
+export type { ApiRef, ApiSettings } from "./operations/apis.ts";
