@@ -1,3 +1,5 @@
+import { FLOCI_HOSTNAME } from "#shared/constants.ts";
+
 // ID cố định của cache policy managed (AWS và Floci): CDK và AWS console mặc định dùng nó
 export const MANAGED_CACHING_OPTIMIZED_ID = "658327ea-f89d-4fab-a63d-7e88639e58f6";
 // Floci không áp viewer protocol (spec 7 #8): giữ mặc định ít chặn nhất để URL local http chạy
@@ -26,5 +28,5 @@ export const DEFAULT_BEHAVIOR_LABEL = "Default (*)";
 export const DEFAULT_INVALIDATION_PATH = "/*";
 export const INVALIDATION_COMPLETED = "Completed";
 
-// URL local: Floci phục vụ distribution ở <id>.cloudfront.localhost (spec 7 #2)
-export const LOCAL_HOST_SUFFIX = "cloudfront.localhost";
+// URL local: Floci phục vụ distribution theo host <id>.cloudfront.<bất kỳ> (spec 7 #2)
+export const LOCAL_HOST_SUFFIX = `cloudfront.${FLOCI_HOSTNAME}`;

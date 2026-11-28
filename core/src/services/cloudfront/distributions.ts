@@ -33,7 +33,7 @@ const missing = (kind: string, name: string) =>
 // <bucket>.s3.amazonaws.com hoặc <bucket>.s3.<region>.amazonaws.com: hai dạng Floci phục vụ từ S3 của nó
 const S3_ORIGIN_DOMAIN = /^(.+)\.s3(?:\.[a-z0-9-]+)?\.amazonaws\.com$/;
 
-// Host cố định *.cloudfront.localhost (không cần DNS); chỉ lấy scheme + port của Floci, vì host của
+// Host cố định *.cloudfront.localhost.floci.io; chỉ lấy scheme + port của Floci, vì host của
 // FLOCI_PUBLIC_URL có thể là IP
 export function localUrl(flociPublicUrl: string, id: string): string {
   const url = new URL(flociPublicUrl);

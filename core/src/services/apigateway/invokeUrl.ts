@@ -1,8 +1,8 @@
+import { FLOCI_HOSTNAME } from "#shared/constants.ts";
 import {
   CONNECTIONS_SEGMENT,
   EXECUTE_API_SEGMENT,
   HEADER_ERROR,
-  LOCALHOST_DOMAIN,
   RESTAPIS_SEGMENT,
   USER_REQUEST_SEGMENT,
   WEBSOCKET_SCHEME,
@@ -14,7 +14,7 @@ export const restInvokeUrl = (base: string, apiId: string, stage: string) =>
 export const webSocketUrl = (publicUrl: string, region: string, apiId: string, stage: string) => {
   // Cổng mặc định (80 / 443) thì URL.port rỗng, không được để dư ":"
   const { port } = new URL(publicUrl);
-  return `${WEBSOCKET_SCHEME}${apiId}.${EXECUTE_API_SEGMENT}.${region}.${LOCALHOST_DOMAIN}${port && `:${port}`}/${stage}`;
+  return `${WEBSOCKET_SCHEME}${apiId}.${EXECUTE_API_SEGMENT}.${region}.${FLOCI_HOSTNAME}${port && `:${port}`}/${stage}`;
 };
 
 export const connectionsUrl = (publicUrl: string, apiId: string, stage: string) =>

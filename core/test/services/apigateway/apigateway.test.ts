@@ -62,7 +62,7 @@ describe("apigateway helpers", () => {
       "http://localhost.floci.io:4566/restapis/a1/$default/_user_request_/",
     );
     expect(webSocketUrl("http://localhost:4566", "ap-southeast-1", "w1", "prod")).toBe(
-      "ws://w1.execute-api.ap-southeast-1.localhost:4566/prod",
+      "ws://w1.execute-api.ap-southeast-1.localhost.floci.io:4566/prod",
     );
     expect(connectionsUrl("http://localhost:4566", "w1", "prod")).toBe(
       "http://localhost:4566/execute-api/w1/prod/@connections",
@@ -150,10 +150,10 @@ describe("apigateway helpers", () => {
   });
   it("builds a WebSocket URL without a default port", () => {
     expect(webSocketUrl("http://localhost", "r", "w1", "prod")).toBe(
-      "ws://w1.execute-api.r.localhost/prod",
+      "ws://w1.execute-api.r.localhost.floci.io/prod",
     );
     expect(webSocketUrl("https://host:443", "r", "w1", "prod")).toBe(
-      "ws://w1.execute-api.r.localhost/prod",
+      "ws://w1.execute-api.r.localhost.floci.io/prod",
     );
   });
   it("fills missing method and stage with a wildcard", () => {

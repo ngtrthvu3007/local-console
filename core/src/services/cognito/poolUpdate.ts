@@ -71,10 +71,16 @@ export type UnlistedUserPoolFields = AssertNoMissingField<
   Exclude<keyof UpdateUserPoolRequest, "UserPoolId" | (typeof UPDATE_USER_POOL_FIELDS)[number]>
 >;
 
+// PublishSecretsInAWSSecretsManager: không gửi thì AWS giữ nguyên, gửi false là xoá secret vĩnh viễn
+type UnchangedWhenOmittedClientFields = "PublishSecretsInAWSSecretsManager";
+
 export type UnlistedUserPoolClientFields = AssertNoMissingField<
   Exclude<
     keyof UpdateUserPoolClientRequest,
-    "UserPoolId" | "ClientId" | (typeof UPDATE_USER_POOL_CLIENT_FIELDS)[number]
+    | "UserPoolId"
+    | "ClientId"
+    | UnchangedWhenOmittedClientFields
+    | (typeof UPDATE_USER_POOL_CLIENT_FIELDS)[number]
   >
 >;
 

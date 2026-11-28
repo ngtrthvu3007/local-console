@@ -56,10 +56,10 @@ const bare = () =>
 describe("cloudfront", () => {
   it("builds the local URL on the Floci port, never its host", () => {
     expect(localUrl("http://localhost:4566", "E2ABC")).toBe(
-      "http://e2abc.cloudfront.localhost:4566/",
+      "http://e2abc.cloudfront.localhost.floci.io:4566/",
     );
     expect(localUrl("http://127.0.0.1:4599", "E2ABC")).toBe(
-      "http://e2abc.cloudfront.localhost:4599/",
+      "http://e2abc.cloudfront.localhost.floci.io:4599/",
     );
   });
 

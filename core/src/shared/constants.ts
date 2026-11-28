@@ -5,6 +5,8 @@ export const AWS_TEST_CREDENTIALS = {
 } as const;
 
 export const FLOCI_ACCOUNT_ID = "000000000000";
+// DNS công khai trỏ cả subdomain về 127.0.0.1; *.localhost thì Node / Python trên Windows không resolve được
+export const FLOCI_HOSTNAME = "localhost.floci.io";
 export const FLOCI_SERVICE_RUNNING = "running";
 
 export const MILLISECONDS_PER_SECOND = 1000;
