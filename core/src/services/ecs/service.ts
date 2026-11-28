@@ -68,5 +68,3 @@ export function createEcsService(ecs: ECSClient, { logs }: EcsDeps) {
     getTaskLogs: (target: LogTarget) => getTaskLogs(logs, target),
   };
 }
-
-export type EcsService = ReturnType<typeof createEcsService>;

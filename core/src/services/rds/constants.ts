@@ -17,9 +17,6 @@ export const ALLOCATED_STORAGE_GB = 20;
 
 // Luật tên của RDS
 export const IDENTIFIER_MAX_LENGTH = 63;
-export const IDENTIFIER_PATTERN = /^[a-z][a-z0-9-]*$/;
-export const DOUBLE_HYPHEN = "--";
-export const HYPHEN = "-";
 export const USERNAME_MAX_LENGTH = 16;
 export const USERNAME_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
 export const PASSWORD_MIN_LENGTH = 8;

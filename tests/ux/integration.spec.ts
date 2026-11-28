@@ -1,12 +1,9 @@
 import { join } from "node:path";
-import { strToU8, zipSync } from "fflate";
 import type { Locator, Page, TestInfo } from "@playwright/test";
 import {
   CreateEventSourceMappingCommand,
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   LambdaClient,
   ListEventSourceMappingsCommand,
   PutFunctionEventInvokeConfigCommand,
@@ -37,14 +34,15 @@ import {
   SESv2Client,
 } from "@aws-sdk/client-sesv2";
 import { CreateTopicCommand, DeleteTopicCommand, SNSClient } from "@aws-sdk/client-sns";
+import { DeleteQueueCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, test, uniqueName } from "../e2e/fixtures.ts";
+  ACCOUNT_ID,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  viaConsole,
+} from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, setEditor, test, uniqueName } from "../e2e/fixtures.ts";
 
 // Chụp mọi trang và modal mới của đợt integration ở 4 khung và kiểm không cuộn ngang.
 // Ảnh: results/ux/<desktop|laptop|tablet|phone>-<tên>.png
@@ -94,28 +92,14 @@ let events: EventBridgeClient;
 let dynamodb: DynamoDBClient;
 let queueUrl = "";
 
-const makeFunction = async (name: string) => {
-  const arn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: name,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-        Code: {
-          ZipFile: zipSync({
-            "index.mjs": strToU8("export const handler = async () => ({ ok: true });"),
-          }),
-        },
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor(`${name} to be Active`, async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
-  return arn;
-};
+const makeFunction = async (name: string) =>
+  (
+    await createTestFunction(lambda, {
+      name,
+      source: "export const handler = async () => ({ ok: true });",
+      role: LAMBDA_ROLE,
+    })
+  ).arn;
 
 // Hai ô cạnh nhau trong một hàng của modal phải ngang nhau: nhãn một bên có thêm dòng mô tả sẽ làm
 // ô bên đó lệch xuống
@@ -137,12 +121,8 @@ test.beforeAll(async () => {
   events = new EventBridgeClient(config);
   dynamodb = new DynamoDBClient(config);
 
-  queueUrl = (await sqs.send(new CreateQueueCommand({ QueueName: queue }))).QueueUrl!;
-  const queueArn = (
-    await sqs.send(
-      new GetQueueAttributesCommand({ QueueUrl: queueUrl, AttributeNames: ["QueueArn"] }),
-    )
-  ).Attributes!.QueueArn!;
+  const { url, arn: queueArn } = await createTestQueue(sqs, queue);
+  queueUrl = url;
   const topicArn = (await sns.send(new CreateTopicCommand({ Name: topic }))).TopicArn!;
   const functionArn = await makeFunction(fn);
   await makeFunction(caller);
@@ -266,18 +246,6 @@ test.afterAll(async () => {
   await quiet(sqs.send(new DeleteQueueCommand({ QueueUrl: queueUrl })));
 });
 
-// Ace tự đóng ngoặc khi gõ nên đặt giá trị qua instance của editor
-async function setEditor(page: Page, index: number, text: string) {
-  await page
-    .locator(".ace_editor")
-    .nth(index)
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
-
 test("Lambda › Configuration: asynchronous invocation block and modal", async ({
   page,
 }, testInfo) => {
@@ -326,7 +294,7 @@ test("Lambda › Triggers: details, add and edit modals, other senders", async (
   const edit = dialogOf(page, /Edit trigger/);
   await expect(edit).toBeVisible();
   await shot(page, testInfo, "lambda-edit-trigger-modal");
-  await setEditor(page, 0, "[1]");
+  await setEditor(page, "[1]");
   await edit.getByRole("button", { name: "Save" }).click();
   await shot(page, testInfo, "lambda-edit-trigger-validation");
   await edit.getByRole("button", { name: "Cancel" }).click();

@@ -21,13 +21,13 @@ export function matchesS3Bucket(eventPattern: string | undefined, bucket: string
 }
 
 // TestEventPattern đòi event đủ trường của envelope; dev chỉ viết source, detail-type, detail
-export function wrapSampleEvent(text: string, region: string, now = new Date()): string {
+export function wrapSampleEvent(text: string, region: string): string {
   const sample = JSON.parse(text) as Record<string, unknown>;
 
   return JSON.stringify({
     id: crypto.randomUUID(),
     account: FLOCI_ACCOUNT_ID,
-    time: now.toISOString(),
+    time: new Date().toISOString(),
     region,
     resources: [],
     ...sample,

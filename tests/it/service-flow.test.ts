@@ -1,12 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
+import { strToU8 } from "fflate";
 import {
   AddPermissionCommand,
   CreateEventSourceMappingCommand,
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   InvokeCommand,
   LambdaClient,
 } from "@aws-sdk/client-lambda";
@@ -19,13 +17,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  SendMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
+import { DeleteQueueCommand, SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -33,7 +25,16 @@ import {
   DynamoDBClient,
   PutItemCommand,
 } from "@aws-sdk/client-dynamodb";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import {
+  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Dây chuyền giữa các service, đúng những gì console cho nối trên UI:
 // S3 notification → Lambda, SQS → Lambda, DynamoDB stream → Lambda; kết quả xem qua CloudWatch Logs.
@@ -85,23 +86,13 @@ beforeAll(async () => {
   sqs = new SQSClient(config);
   dynamodb = new DynamoDBClient(config);
 
-  const created = await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: functionName,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER_SOURCE) }) },
-      Timeout: 30,
-    }),
-  );
-  functionArn = created.FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: functionName }),
-    );
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+  functionArn = (
+    await createTestFunction(lambda, {
+      name: functionName,
+      source: HANDLER_SOURCE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
+    })
+  ).arn;
 });
 
 afterAll(async () => {
@@ -180,21 +171,18 @@ describe("cross-service flows", () => {
   });
 
   it("SQS message → Lambda through an event source mapping", async () => {
-    const { QueueUrl } = await sqs.send(new CreateQueueCommand({ QueueName: queueName }));
-    const { Attributes } = await sqs.send(
-      new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }),
-    );
+    const queue = await createTestQueue(sqs, queueName);
     // Đúng tham số tab Triggers gửi khi chọn nguồn SQS
     const mapping = await lambda.send(
       new CreateEventSourceMappingCommand({
         FunctionName: functionName,
-        EventSourceArn: Attributes!.QueueArn,
+        EventSourceArn: queue.arn,
         BatchSize: 10,
       }),
     );
     mappings.push(mapping.UUID!);
     const body = uniqueName("sqs-body");
-    await sqs.send(new SendMessageCommand({ QueueUrl, MessageBody: body }));
+    await sqs.send(new SendMessageCommand({ QueueUrl: queue.url, MessageBody: body }));
     expect(await logLine(`${MARKER} aws:sqs ${body}`)).toBeTruthy();
   });
 

@@ -24,5 +24,3 @@ export function createCloudFrontService(cloudfront: CloudFrontClient) {
     listPolicyNames: () => listPolicyNames(cloudfront),
   };
 }
-
-export type CloudFrontService = ReturnType<typeof createCloudFrontService>;

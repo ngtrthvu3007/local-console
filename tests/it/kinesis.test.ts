@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
+import { strToU8 } from "fflate";
 import {
   CreateStreamCommand,
   DeleteStreamCommand,
@@ -12,10 +12,8 @@ import {
 } from "@aws-sdk/client-kinesis";
 import {
   CreateEventSourceMappingCommand,
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   LambdaClient,
   ListEventSourceMappingsCommand,
   UpdateEventSourceMappingCommand,
@@ -27,7 +25,14 @@ import {
 } from "@aws-sdk/client-cloudwatch-logs";
 // Có sẵn qua mọi client AWS SDK (phụ thuộc chung), không khai báo riêng trong package.json
 import { NodeHttpHandler } from "@smithy/node-http-handler";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import {
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Hành vi Kinesis của Floci mà trang Kinesis dựa vào, qua proxy /aws của console (spec Kinesis mục 7)
 
@@ -235,21 +240,10 @@ describe("Lambda trigger", () => {
   it("delivers records put before the trigger from Trim horizon, in batches", async () => {
     for (const data of ["r1", "r2", "r3"]) await putRecord(data);
 
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: consumer,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(CONSUMER_SOURCE) }) },
-        Timeout: 30,
-      }),
-    );
-    await waitFor(`${consumer} to be Active`, async () => {
-      const { Configuration } = await lambda.send(
-        new GetFunctionCommand({ FunctionName: consumer }),
-      );
-      return Configuration?.State === "Active" ? true : undefined;
+    await createTestFunction(lambda, {
+      name: consumer,
+      source: CONSUMER_SOURCE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
     });
     mappingId =
       (

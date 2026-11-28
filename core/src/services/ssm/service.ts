@@ -15,5 +15,3 @@ export function createSsmService(ssm: SSMClient) {
     deleteParameters: (names: readonly string[]) => deleteParameters(ssm, names),
   };
 }
-
-export type SsmService = ReturnType<typeof createSsmService>;

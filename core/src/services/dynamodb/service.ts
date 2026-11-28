@@ -51,5 +51,3 @@ export function createDynamoDbService(dynamodb: DynamoDBClient) {
     scanAllItems: (table: string) => scanAllItems(dynamodb, table),
   };
 }
-
-export type DynamoDbService = ReturnType<typeof createDynamoDbService>;

@@ -22,5 +22,3 @@ export function createEc2Service(ec2: EC2Client) {
     listNetworkOptions: () => listNetworkOptions(ec2),
   };
 }
-
-export type Ec2Service = ReturnType<typeof createEc2Service>;

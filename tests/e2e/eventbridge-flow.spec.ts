@@ -13,7 +13,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { DeleteQueueCommand, GetQueueUrlCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { consoleConfig, viaConsole } from "../it/helpers.ts";
-import { expect, flash, test, uniqueName } from "./fixtures.ts";
+import { expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Flow qua UI của bốn service: SQS (tạo queue) → S3 (bật EventBridge cho bucket) → EventBridge (rule
 // bắt event aws.s3, target là queue) → upload → SQS (peek thấy event) → xóa queue → rule báo "not found".
@@ -54,18 +54,6 @@ test.afterAll(async () => {
   if (QueueUrl) await sqs.send(new DeleteQueueCommand({ QueueUrl }));
 });
 
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
-async function setEditor(page: import("@playwright/test").Page, index: number, text: string) {
-  await page
-    .locator(".ace_editor")
-    .nth(index)
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
-
 test("SQS: create the queue", async ({ page }) => {
   await page.goto("/sqs/queues/create");
   await page.getByRole("textbox", { name: "Name" }).fill(queue);
@@ -94,7 +82,6 @@ test("EventBridge: a rule for the bucket's events with the queue as its target",
   await page.getByPlaceholder("order-created").fill(rule);
   await setEditor(
     page,
-    0,
     JSON.stringify({
       source: ["aws.s3"],
       "detail-type": ["Object Created"],

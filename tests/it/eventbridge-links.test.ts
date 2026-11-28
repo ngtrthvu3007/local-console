@@ -1,11 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { CloudWatchLogsClient, FilterLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import {
   DeleteRuleCommand,
@@ -16,7 +10,14 @@ import {
   PutTargetsCommand,
   RemoveTargetsCommand,
 } from "@aws-sdk/client-eventbridge";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import {
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Luồng nối EventBridge → Lambda (trang Lambda › Triggers hiện rule và schedule từ ListTargetsByRule):
 // rule trỏ tới function thì PutEvents chạy function với đúng event, và ARN đích đọc lại được
@@ -45,23 +46,12 @@ beforeAll(async () => {
   events = new EventBridgeClient(config);
 
   functionArn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: functionName,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER_SOURCE) }) },
-        Timeout: 30,
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: functionName }),
-    );
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+    await createTestFunction(lambda, {
+      name: functionName,
+      source: HANDLER_SOURCE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
+    })
+  ).arn;
   await events.send(
     new PutRuleCommand({ Name: ruleName, EventPattern: JSON.stringify({ source: [SOURCE] }) }),
   );

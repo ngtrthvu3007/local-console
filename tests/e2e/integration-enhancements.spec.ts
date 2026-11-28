@@ -1,12 +1,8 @@
-import { strToU8, zipSync } from "fflate";
-import type { Page } from "@playwright/test";
 import {
   CreateEventSourceMappingCommand,
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
   GetEventSourceMappingCommand,
-  GetFunctionCommand,
   LambdaClient,
   ListFunctionEventInvokeConfigsCommand,
 } from "@aws-sdk/client-lambda";
@@ -23,12 +19,11 @@ import { CreateTopicCommand, DeleteTopicCommand, SNSClient } from "@aws-sdk/clie
 import {
   CreateQueueCommand,
   DeleteQueueCommand,
-  GetQueueAttributesCommand,
   GetQueueUrlCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+import { consoleConfig, createTestFunction, createTestQueue, viaConsole } from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Ba nhóm của spec integration-enhancements: tùy chọn trigger (Add / Edit), cấu hình async của
 // Lambda, và configuration set của SES. Tạo sẵn resource bằng SDK, thao tác trên UI, đọc lại bằng SDK.
@@ -51,22 +46,6 @@ let ses: SESv2Client;
 let topicArn = "";
 let mappingUuid = "";
 
-const queueArnOf = async (QueueUrl: string) =>
-  (await sqs.send(new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] })))
-    .Attributes!.QueueArn!;
-
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
-async function setEditor(page: Page, index: number, text: string) {
-  await page
-    .locator(".ace_editor")
-    .nth(index)
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
-
 test.beforeAll(async () => {
   const { region } = await consoleConfig();
   const config = viaConsole(region);
@@ -75,33 +54,19 @@ test.beforeAll(async () => {
   sns = new SNSClient(config);
   ses = new SESv2Client(config);
 
-  const queueUrl = (await sqs.send(new CreateQueueCommand({ QueueName: queue }))).QueueUrl!;
+  const { arn: queueArn } = await createTestQueue(sqs, queue);
   await sqs.send(new CreateQueueCommand({ QueueName: failureQueue }));
   topicArn = (await sns.send(new CreateTopicCommand({ Name: topic }))).TopicArn!;
-  const functionArn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: fn,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-        Code: {
-          ZipFile: zipSync({
-            "index.mjs": strToU8("export const handler = async () => ({ ok: true });"),
-          }),
-        },
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: fn }));
-    return Configuration?.State === "Active" ? true : undefined;
+  const { arn: functionArn } = await createTestFunction(lambda, {
+    name: fn,
+    source: "export const handler = async () => ({ ok: true });",
+    role: LAMBDA_ROLE,
   });
   mappingUuid = (
     await lambda.send(
       new CreateEventSourceMappingCommand({
         FunctionName: functionArn,
-        EventSourceArn: await queueArnOf(queueUrl),
+        EventSourceArn: queueArn,
         BatchSize: 10,
         FilterCriteria: { Filters: [{ Pattern: JSON.stringify({ body: { type: ["order"] } }) }] },
       }),
@@ -139,7 +104,7 @@ test("Lambda › Triggers: Details shows the filter, Edit adds a pattern and a p
   const dialog = page.getByRole("dialog", { name: /Edit trigger/ });
   await dialog.getByLabel("Batch size").fill(BATCH_SIZE);
   await dialog.getByRole("button", { name: "Add pattern" }).click();
-  await setEditor(page, 1, '{"body": {"type": ["refund"]}}');
+  await setEditor(page, '{"body": {"type": ["refund"]}}', 1);
   await dialog.getByText("Report batch item failures").click();
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(flash(page).getByText(/Updated trigger/)).toBeVisible();

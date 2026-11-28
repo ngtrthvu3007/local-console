@@ -19,5 +19,3 @@ export function createMqService(mq: MqClient) {
     rebootBroker: (broker: string) => rebootBroker(mq, broker),
   };
 }
-
-export type MqService = ReturnType<typeof createMqService>;

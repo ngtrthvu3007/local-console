@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { jsonError } from "#shared/utils/json.ts";
-import { enumOfKeys, jsonObjectText, wholeNumberIn } from "#shared/validation/schemas.ts";
+import {
+  enumOfKeys,
+  issueAdder,
+  jsonObjectText,
+  wholeNumberIn,
+  type AddIssue,
+} from "#shared/validation/schemas.ts";
 import {
   BUS_NAME_MAX_LENGTH,
   NAME_PATTERN,
@@ -53,8 +59,7 @@ export const ruleSchema = z
     enabled: z.boolean(),
   })
   .superRefine((values, context) => {
-    const addIssue = (path: string, message: string) =>
-      context.addIssue({ code: "custom", path: [path], message });
+    const addIssue = issueAdder(context);
 
     if (values.type === "pattern") {
       const error = patternError(values.eventPattern);
@@ -78,8 +83,6 @@ const ecsTargetFields = {
   securityGroups: z.array(z.string()).default([]),
 };
 
-type AddIssue = (path: string, message: string) => void;
-
 function checkEcsTarget(
   values: { taskFamily: string; taskRevision: string; subnets: string[] },
   addIssue: AddIssue,
@@ -99,8 +102,7 @@ export const addTargetSchema = (fifoArns: ReadonlySet<string>) =>
       ...ecsTargetFields,
     })
     .superRefine((values, context) => {
-      const addIssue: AddIssue = (path, message) =>
-        context.addIssue({ code: "custom", path: [path], message });
+      const addIssue = issueAdder(context);
       if (fifoArns.has(values.arn) && !values.groupId)
         addIssue("groupId", "Enter a message group ID.");
       if (values.kind === "ecs") checkEcsTarget(values, addIssue);
@@ -145,8 +147,7 @@ export const scheduleSchema = (fifoArns: ReadonlySet<string>) =>
       ...ecsTargetFields,
     })
     .superRefine((values, context) => {
-      const addIssue: AddIssue = (path, message) =>
-        context.addIssue({ code: "custom", path: [path], message });
+      const addIssue = issueAdder(context);
 
       for (const [path, message] of Object.entries(timingErrors(values))) addIssue(path, message);
 

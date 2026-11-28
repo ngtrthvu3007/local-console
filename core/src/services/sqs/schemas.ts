@@ -3,7 +3,8 @@ import { kmsKeyIdSchema } from "#services/kms/schemas.ts";
 import { formatBytes } from "#shared/utils/format.ts";
 import { enumOfKeys, wholeNumberIn } from "#shared/validation/schemas.ts";
 import { SQS_BATCH_SIZE } from "#services/lambda/constants.ts";
-import { issueAdder, mappingOptionsIssues, mappingOptionsShape } from "#services/lambda/schemas.ts";
+import { mappingOptionsIssues, mappingOptionsShape } from "#services/lambda/schemas.ts";
+import { issueAdder } from "#shared/validation/schemas.ts";
 import {
   QUEUE_ENCRYPTION,
   FIFO_SUFFIX,

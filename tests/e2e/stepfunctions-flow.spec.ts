@@ -1,15 +1,9 @@
-import { strToU8, zipSync } from "fflate";
 import {
   CreateStateMachineCommand,
   DeleteStateMachineCommand,
   SFNClient,
 } from "@aws-sdk/client-sfn";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { CreateTableCommand, DeleteTableCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   CreateQueueCommand,
@@ -24,8 +18,14 @@ import {
   PutRuleCommand,
   RemoveTargetsCommand,
 } from "@aws-sdk/client-eventbridge";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+import {
+  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  viaConsole,
+} from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Luồng đi xuyên các service trên UI: rule EventBridge → thêm state machine làm target → event tới →
 // execution chạy Lambda → DynamoDB → SQS → từ bảng Steps bấm sang từng service và thấy dấu vết thật.
@@ -70,19 +70,11 @@ test.beforeAll(async () => {
       KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
     }),
   );
-  const { FunctionArn } = await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: names.fn,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER_SOURCE) }) },
-      Timeout: 30,
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: names.fn }));
-    return Configuration?.State === "Active" ? true : undefined;
+  const { arn: functionArn } = await createTestFunction(lambda, {
+    name: names.fn,
+    source: HANDLER_SOURCE,
+    role: LAMBDA_ROLE,
+    timeout: FUNCTION_TIMEOUT_SECONDS,
   });
   await sfn.send(
     new CreateStateMachineCommand({
@@ -91,7 +83,7 @@ test.beforeAll(async () => {
       definition: JSON.stringify({
         StartAt: "Enrich",
         States: {
-          Enrich: { Type: "Task", Resource: FunctionArn, Next: "Save" },
+          Enrich: { Type: "Task", Resource: functionArn, Next: "Save" },
           Save: {
             Type: "Task",
             Resource: "arn:aws:states:::dynamodb:putItem",

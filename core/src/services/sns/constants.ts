@@ -51,7 +51,6 @@ export const PHONE_NUMBER_EXAMPLE = "+84900000111";
 export const VIETNAM_MOBILE_NUMBER_PATTERN = /^\+84(\d{3})(\d{3})(\d{3})$/;
 export const VIETNAM_MOBILE_NUMBER_FORMAT = "+84 $1 $2 $3";
 
-export const EDITOR_HEIGHT_PX = 200;
 export const FILTER_SUMMARY_MAX_LENGTH = 40;
 export const ENDPOINT_PREVIEW_LENGTH = 48;
 

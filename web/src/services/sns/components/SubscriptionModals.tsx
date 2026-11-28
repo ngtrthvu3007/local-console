@@ -21,7 +21,6 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import {
-  EDITOR_HEIGHT_PX,
   DEFAULT_FILTER_SCOPE,
   FILTER_SCOPES,
   HOST_FROM_CONTAINER,
@@ -43,6 +42,7 @@ import {
   useDeleteSubscriptions,
   useSetSubscriptionAttributes,
 } from "../hooks/useSubscriptions.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 // Các modal chỉ mount khi mở
 
@@ -194,7 +194,7 @@ export function CreateSubscriptionModal({
             control={form.control}
             name='filterPolicy'
             label={FILTER_POLICY_LABEL}
-            height={EDITOR_HEIGHT_PX}
+            height={SHORT_EDITOR_HEIGHT_PX}
           />
         </SpaceBetween>
       </ExpandableSection>
@@ -251,7 +251,7 @@ export function EditFilterModal({
         control={form.control}
         name='filterPolicy'
         label={FILTER_POLICY_LABEL}
-        height={EDITOR_HEIGHT_PX}
+        height={SHORT_EDITOR_HEIGHT_PX}
       />
     </FormModal>
   );

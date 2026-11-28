@@ -1,10 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import {
   CreateSecretCommand,
   DeleteSecretCommand,
@@ -21,11 +16,11 @@ import {
   PutParameterCommand,
   SSMClient,
 } from "@aws-sdk/client-ssm";
-import { strToU8, zipSync } from "fflate";
 import {
-  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
   ROTATION_LAMBDA_SOURCE,
   consoleConfig,
+  createTestFunction,
   uniqueName,
   viaConsole,
   waitFor,
@@ -89,28 +84,17 @@ describe("secrets", () => {
   });
 
   it("rotates with a real Lambda through all four steps", async () => {
-    const { FunctionArn = "" } = await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: functionName,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(ROTATION_LAMBDA_SOURCE) }) },
-        Timeout: 30,
-      }),
-    );
-    await waitFor("function to be Active", async () => {
-      const { Configuration } = await lambda.send(
-        new GetFunctionCommand({ FunctionName: functionName }),
-      );
-      return Configuration?.State === "Active" ? true : undefined;
+    const { arn: functionArn } = await createTestFunction(lambda, {
+      name: functionName,
+      source: ROTATION_LAMBDA_SOURCE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
     });
     await secrets.send(new CreateSecretCommand({ Name: rotatedName, SecretString: "before" }));
 
     await secrets.send(
       new RotateSecretCommand({
         SecretId: rotatedName,
-        RotationLambdaARN: FunctionArn,
+        RotationLambdaARN: functionArn,
         RotationRules: { ScheduleExpression: "rate(1 days)" },
         RotateImmediately: true,
       }),
@@ -132,7 +116,7 @@ describe("secrets", () => {
     // Tab Triggers của Lambda tìm secret theo RotationLambdaARN trong ListSecrets, không DescribeSecret
     const { SecretList = [] } = await secrets.send(new ListSecretsCommand({}));
     const listed = SecretList.find((secret) => secret.Name === rotatedName);
-    expect(listed?.RotationLambdaARN).toBe(FunctionArn);
+    expect(listed?.RotationLambdaARN).toBe(functionArn);
   }, 180_000);
 });
 

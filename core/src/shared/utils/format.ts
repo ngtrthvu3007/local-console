@@ -41,9 +41,6 @@ const ELLIPSIS = "…";
 export const truncate = (text: string, length: number) =>
   text.length > length ? `${text.slice(0, length)}${ELLIPSIS}` : text;
 
-const IDENTIFIER_PART = /[^:/]*[:/]+|[^:/]+$/g;
-export const identifierParts = (text: string) => text.match(IDENTIFIER_PART) ?? [text];
-
 // Đếm theo byte UTF-8 như giới hạn của AWS, không theo số ký tự
 const textEncoder = new TextEncoder();
 export const byteLength = (text: string) => textEncoder.encode(text).length;

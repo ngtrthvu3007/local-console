@@ -16,5 +16,3 @@ export function createRdsService(rds: RDSClient) {
     runDatabaseAction: (input: DatabaseActionInput) => runDatabaseAction(rds, input),
   };
 }
-
-export type RdsService = ReturnType<typeof createRdsService>;

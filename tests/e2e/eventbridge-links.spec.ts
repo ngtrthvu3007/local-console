@@ -1,10 +1,7 @@
-import { strToU8, zipSync } from "fflate";
 import {
   CreateAliasCommand,
-  CreateFunctionCommand,
   PublishVersionCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   LambdaClient,
 } from "@aws-sdk/client-lambda";
 import {
@@ -22,13 +19,18 @@ import {
 import {
   CreateQueueCommand,
   DeleteQueueCommand,
-  GetQueueAttributesCommand,
   GetQueueUrlCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
 import { CreateTopicCommand, DeleteTopicCommand, SNSClient } from "@aws-sdk/client-sns";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { expect, test, uniqueName } from "./fixtures.ts";
+import {
+  ACCOUNT_ID,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  viaConsole,
+} from "../it/helpers.ts";
+import { LAMBDA_ROLE, expect, test, uniqueName } from "./fixtures.ts";
 
 // Rule và schedule của EventBridge hiện ở trang của đích: SQS › Settings, SNS › Details,
 // Lambda › Triggers (chỉ xem), và cảnh báo khi xóa đích còn bị trỏ tới
@@ -54,12 +56,6 @@ let lambda: LambdaClient;
 let events: EventBridgeClient;
 let scheduler: SchedulerClient;
 
-const queueArnOf = async (name: string) => {
-  const { QueueUrl } = await sqs.send(new GetQueueUrlCommand({ QueueName: name }));
-  return (await sqs.send(new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] })))
-    .Attributes!.QueueArn!;
-};
-
 test.beforeAll(async () => {
   const { region } = await consoleConfig();
   const config = viaConsole(region);
@@ -69,30 +65,14 @@ test.beforeAll(async () => {
   events = new EventBridgeClient(config);
   scheduler = new SchedulerClient(config);
 
-  await sqs.send(new CreateQueueCommand({ QueueName: queue }));
+  const { arn: queueArn } = await createTestQueue(sqs, queue);
   await sqs.send(new CreateQueueCommand({ QueueName: lonelyQueue }));
   const topicArn = (await sns.send(new CreateTopicCommand({ Name: topic }))).TopicArn!;
-  const functionArn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: fn,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-        Code: {
-          ZipFile: zipSync({
-            "index.mjs": strToU8("export const handler = async () => ({ ok: true });"),
-          }),
-        },
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: fn }));
-    return Configuration?.State === "Active" ? true : undefined;
+  const { arn: functionArn } = await createTestFunction(lambda, {
+    name: fn,
+    source: "export const handler = async () => ({ ok: true });",
+    role: LAMBDA_ROLE,
   });
-
-  const queueArn = await queueArnOf(queue);
 
   // Rule trỏ tới alias của function: cột Resource phải hiện kèm :prod
   const version = (await lambda.send(new PublishVersionCommand({ FunctionName: fn }))).Version!;
@@ -112,8 +92,7 @@ test.beforeAll(async () => {
   );
 
   // Hơn một trang rule cùng trỏ vào một queue: khối EventBridge phải phân trang
-  await sqs.send(new CreateQueueCommand({ QueueName: pagedQueue }));
-  const pagedArn = await queueArnOf(pagedQueue);
+  const { arn: pagedArn } = await createTestQueue(sqs, pagedQueue);
   for (const name of pagedRules) {
     await events.send(
       new PutRuleCommand({

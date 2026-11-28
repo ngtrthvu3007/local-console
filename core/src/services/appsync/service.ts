@@ -58,5 +58,3 @@ export function createAppSyncService(appsync: AppSyncClient, { region }: AppSync
     deleteResolver: (apiId: string, field: ResolverField) => deleteResolver(appsync, apiId, field),
   };
 }
-
-export type AppSyncService = ReturnType<typeof createAppSyncService>;

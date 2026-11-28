@@ -15,8 +15,8 @@ export const serviceIdFromPath = (pathname: string, ids: readonly string[]) => {
   return ids.find((id) => id === segment);
 };
 
-export const pushRecent = (recent: string[], id: string, max = MAX_RECENT_SERVICES) =>
-  [id, ...recent.filter((other) => other !== id)].slice(0, max);
+export const pushRecent = (recent: string[], id: string) =>
+  [id, ...recent.filter((other) => other !== id)].slice(0, MAX_RECENT_SERVICES);
 
 // Storage có thể chứa rác hoặc id đã gỡ: bỏ qua thay vì làm hỏng Home.
 // Không dùng zod vì file nằm trong bundle chính

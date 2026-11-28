@@ -1,11 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { CloudWatchLogsClient, FilterLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import {
   CreateEventBusCommand,
@@ -37,19 +31,23 @@ import {
   SNSClient,
   SubscribeCommand,
 } from "@aws-sdk/client-sns";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Flow kết hợp: EventBridge với S3, SNS, SQS (Standard và FIFO), Lambda, Scheduler. Mỗi test là một
 // đường mà dev dựng khi viết app thật; resource nào có Floci chạy khác AWS thì ghi chú ngay chỗ đó.
 
-const ROLE_ARN = `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-role`;
+const ROLE = "lc-it-role";
+const ROLE_ARN = `arn:aws:iam::${ACCOUNT_ID}:role/${ROLE}`;
 const SOURCE = "lc.it.flows";
 const MARKER = "LC_IT_FLOW";
 
@@ -81,12 +79,9 @@ const queueUrls: Record<string, string> = {};
 const queueArns: Record<string, string> = {};
 
 async function makeQueue(name: string, attributes?: Record<string, string>) {
-  const url = (await sqs.send(new CreateQueueCommand({ QueueName: name, Attributes: attributes })))
-    .QueueUrl!;
+  const { url, arn } = await createTestQueue(sqs, name, attributes);
   queueUrls[name] = url;
-  queueArns[name] = (
-    await sqs.send(new GetQueueAttributesCommand({ QueueUrl: url, AttributeNames: ["QueueArn"] }))
-  ).Attributes!.QueueArn!;
+  queueArns[name] = arn;
 }
 
 async function makeRule(
@@ -151,27 +146,13 @@ beforeAll(async () => {
   await s3.send(new CreateBucketCommand({ Bucket: names.bucket }));
 
   functionArn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: names.fn,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: ROLE_ARN,
-        Code: {
-          ZipFile: zipSync({
-            "index.mjs": strToU8(
-              `export const handler = async (event) => { console.log("${MARKER}", JSON.stringify(event)); return { ok: true }; };`,
-            ),
-          }),
-        },
-        Timeout: 30,
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: names.fn }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+    await createTestFunction(lambda, {
+      name: names.fn,
+      source: `export const handler = async (event) => { console.log("${MARKER}", JSON.stringify(event)); return { ok: true }; };`,
+      role: ROLE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
+    })
+  ).arn;
 });
 
 afterAll(async () => {

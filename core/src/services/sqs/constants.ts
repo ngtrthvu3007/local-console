@@ -31,7 +31,6 @@ export const SIGNING_SERVICE = "sqs";
 
 export const MESSAGE_ID_PREVIEW_LENGTH = 8;
 export const BODY_PREVIEW_LENGTH = 80;
-export const BODY_EDITOR_HEIGHT_PX = 200;
 
 export const MESSAGE_ATTRIBUTES = {
   sent: "SentTimestamp",

@@ -1,6 +1,9 @@
 import { z } from "zod";
+import { sentAt } from "#shared/floci/inbox.ts";
 import { fromBase64 } from "#shared/utils/encoding.ts";
 import { ADDRESS_SEPARATOR, UNNAMED_ATTACHMENT } from "./constants.ts";
+
+export { sentAt };
 
 // Mail SendRawEmail chỉ có RawData, mail bị chặn chỉ có RejectReason (spec 7 #6, #17) nên mọi field khác đều có thể thiếu
 const addressListSchema = z.array(z.string()).nullish();
@@ -38,15 +41,6 @@ const emailSchema = z.object({
 export type Email = z.infer<typeof emailSchema>;
 
 export const mailboxSchema = z.object({ messages: z.array(emailSchema) });
-
-export const sentAt = (email: Email) => Date.parse(email.Timestamp);
-
-// Hộp thư của Floci dùng chung mọi region và trả mail cũ nhất trước
-export function mailboxForRegion(messages: Email[], region: string): Email[] {
-  return messages
-    .filter((email) => email.Region === region)
-    .sort((first, second) => sentAt(second) - sentAt(first));
-}
 
 export function recipientsOf(email: Email): string[] {
   const destination = email.Destination;

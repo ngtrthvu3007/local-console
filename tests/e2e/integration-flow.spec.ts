@@ -1,5 +1,4 @@
-import { strToU8, zipSync } from "fflate";
-import type { Page } from "@playwright/test";
+import { strToU8 } from "fflate";
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -7,11 +6,9 @@ import {
   PutItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import {
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
   DeleteFunctionEventInvokeConfigCommand,
-  GetFunctionCommand,
   InvokeCommand,
   LambdaClient,
   ListEventSourceMappingsCommand,
@@ -38,15 +35,22 @@ import {
   SubscribeCommand,
 } from "@aws-sdk/client-sns";
 import {
-  CreateQueueCommand,
   DeleteQueueCommand,
-  GetQueueAttributesCommand,
   ReceiveMessageCommand,
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, deleteMails, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+import {
+  ACCOUNT_ID,
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  deleteMails,
+  viaConsole,
+  waitFor,
+} from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Luồng nối service, cấu hình bằng UI rồi kích bằng SDK và đọc kết quả ở service nhận:
 //  1. SQS queue → Lambda có filter pattern (message không khớp bị bỏ)
@@ -92,11 +96,9 @@ export const handler = async (event) => {
 };`;
 
 const makeQueue = async (name: string) => {
-  const { QueueUrl } = await sqs.send(new CreateQueueCommand({ QueueName: name }));
-  queueUrls[name] = QueueUrl!;
-  queueArns[name] = (
-    await sqs.send(new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }))
-  ).Attributes!.QueueArn!;
+  const { url, arn } = await createTestQueue(sqs, name);
+  queueUrls[name] = url;
+  queueArns[name] = arn;
 };
 
 const makeTopicInto = async (name: string, queue: string) => {
@@ -126,18 +128,6 @@ const waitForQueue = (description: string, queue: string) =>
     return found.length ? found.join("\n") : undefined;
   });
 
-// Ace tự đóng ngoặc khi gõ nên đặt giá trị qua instance của editor
-async function setEditor(page: Page, index: number, text: string) {
-  await page
-    .locator(".ace_editor")
-    .nth(index)
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
-
 test.beforeAll(async () => {
   region = (await consoleConfig()).region;
   const config = viaConsole(region);
@@ -152,19 +142,11 @@ test.beforeAll(async () => {
     await makeQueue(name);
   await makeTopicInto(topic, topicQueue);
   await makeTopicInto(sesTopic, sesQueue);
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: fn,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER) }) },
-      Timeout: 30,
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: fn }));
-    return Configuration?.State === "Active" ? true : undefined;
+  await createTestFunction(lambda, {
+    name: fn,
+    source: HANDLER,
+    role: LAMBDA_ROLE,
+    timeout: FUNCTION_TIMEOUT_SECONDS,
   });
   await dynamodb.send(
     new CreateTableCommand({
@@ -213,7 +195,7 @@ test("queue trigger with a filter pattern only runs the function for matching me
   const dialog = page.getByRole("dialog");
   await choose(page, dialog, /^Function/, { name: new RegExp(fn) });
   await dialog.getByRole("button", { name: "Add pattern" }).click();
-  await setEditor(page, 0, '{"body": {"type": ["order"]}}');
+  await setEditor(page, '{"body": {"type": ["order"]}}');
   await dialog.getByRole("button", { name: "Add", exact: true }).click();
   await expect(flash(page).getByText(`${fn} now runs when messages arrive`)).toBeVisible();
 

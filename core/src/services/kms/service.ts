@@ -54,5 +54,3 @@ export function createKmsService(kms: KMSClient) {
     getPublicKey: (keyId: string) => getPublicKey(kms, keyId),
   };
 }
-
-export type KmsService = ReturnType<typeof createKmsService>;

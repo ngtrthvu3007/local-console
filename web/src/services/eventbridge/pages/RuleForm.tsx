@@ -25,7 +25,6 @@ import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { isNotFoundError } from "@localconsole/core/shared";
 import { TestPatternSection } from "../components/TestPatternSection.tsx";
 import {
-  EDITOR_HEIGHT_PX,
   DEFAULT_BUS_NAME,
   DEFAULT_EVENT_PATTERN,
   NAME_MAX_LENGTH,
@@ -42,6 +41,7 @@ import {
 import { useBuses } from "../hooks/useBuses.ts";
 import { usePutRule, useRule } from "../hooks/useRules.ts";
 import { rulesCrumbs } from "../routes.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 const SCHEDULE_DESCRIPTION =
   "For new schedules, EventBridge Scheduler offers time zones and one-time runs.";
@@ -176,7 +176,7 @@ function RuleFormView({ bus, existing }: FormProps) {
                   control={form.control}
                   name='eventPattern'
                   label='Event pattern'
-                  height={EDITOR_HEIGHT_PX}
+                  height={SHORT_EDITOR_HEIGHT_PX}
                 />
                 <Alert type='info'>{PATTERN_LIMITS}</Alert>
                 <TestPatternSection pattern={eventPattern} />

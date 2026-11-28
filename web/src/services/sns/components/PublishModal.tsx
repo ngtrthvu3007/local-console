@@ -11,13 +11,13 @@ import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
-  EDITOR_HEIGHT_PX,
   ATTRIBUTE_DATA_TYPES,
   MAX_MESSAGE_ATTRIBUTES,
   publishSchema,
   type Topic,
 } from "@localconsole/core/sns";
 import { usePublish } from "../hooks/useTopics.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 const TYPE_OPTIONS = ATTRIBUTE_DATA_TYPES.map((type) => ({ value: type, label: type }));
 
@@ -73,7 +73,12 @@ export function PublishModal({ topic, onDismiss }: { topic: Topic; onDismiss: ()
     >
       <Box color='text-body-secondary'>{DELIVERY_HINT}</Box>
       <FormInput control={form.control} name='subject' label='Subject' description='Optional.' />
-      <FormValueEditor control={form.control} name='body' label='Body' height={EDITOR_HEIGHT_PX} />
+      <FormValueEditor
+        control={form.control}
+        name='body'
+        label='Body'
+        height={SHORT_EDITOR_HEIGHT_PX}
+      />
       {topic.fifo && (
         <ColumnLayout columns={2}>
           <FormInput

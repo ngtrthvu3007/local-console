@@ -14,12 +14,7 @@ import {
   StartSchemaCreationCommand,
 } from "@aws-sdk/client-appsync";
 import { CreateTableCommand, DeleteTableCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import {
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
@@ -31,12 +26,13 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SignatureV4 } from "@smithy/signature-v4";
-import { strToU8, zipSync } from "fflate";
+import { strToU8 } from "fflate";
 import {
   ACCOUNT_ID,
   AWS_PROXY_URL,
   TEST_CREDENTIALS,
   consoleConfig,
+  createTestFunction,
   uniqueName,
   viaConsole,
   waitFor,
@@ -124,26 +120,10 @@ beforeAll(async () => {
       BillingMode: "PAY_PER_REQUEST",
     }),
   );
-  await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: functionName,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-appsync`,
-      Code: {
-        ZipFile: zipSync({
-          "index.mjs": strToU8(
-            "export const handler = async (event) => `echo:${event.arguments.text}`;",
-          ),
-        }),
-      },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: functionName }),
-    );
-    return Configuration?.State === "Active" ? true : undefined;
+  await createTestFunction(lambda, {
+    name: functionName,
+    source: "export const handler = async (event) => `echo:${event.arguments.text}`;",
+    role: "lc-it-appsync",
   });
 
   const { graphqlApi } = await appsync.send(

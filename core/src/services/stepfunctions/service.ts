@@ -26,5 +26,3 @@ export function createStepFunctionsService(sfn: SFNClient, { region }: StepFunct
     stopExecution: (arn: string) => stopExecution(sfn, arn),
   };
 }
-
-export type StepFunctionsService = ReturnType<typeof createStepFunctionsService>;

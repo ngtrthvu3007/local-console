@@ -12,14 +12,8 @@ import {
   PutTargetsCommand,
   RemoveTargetsCommand,
 } from "@aws-sdk/client-eventbridge";
-import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { consoleConfig, createTestQueue, uniqueName, viaConsole, waitFor } from "./helpers.ts";
 
 // Đúng các luồng của trang Event buses: tạo bus, gửi event, rule đẩy vào queue, xóa bus kèm rule
 
@@ -70,12 +64,8 @@ describe("event bus", () => {
 
 describe("rule to queue", () => {
   beforeAll(async () => {
-    queueUrl = (await sqs.send(new CreateQueueCommand({ QueueName: queueName }))).QueueUrl!;
-    const queueArn = (
-      await sqs.send(
-        new GetQueueAttributesCommand({ QueueUrl: queueUrl, AttributeNames: ["QueueArn"] }),
-      )
-    ).Attributes!.QueueArn!;
+    const queue = await createTestQueue(sqs, queueName);
+    queueUrl = queue.url;
     await events.send(
       new PutRuleCommand({
         Name: ruleName,
@@ -87,7 +77,7 @@ describe("rule to queue", () => {
       new PutTargetsCommand({
         Rule: ruleName,
         EventBusName: busName,
-        Targets: [{ Id: "queue", Arn: queueArn }],
+        Targets: [{ Id: "queue", Arn: queue.arn }],
       }),
     );
   });

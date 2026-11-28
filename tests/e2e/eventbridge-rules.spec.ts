@@ -1,4 +1,3 @@
-import type { Page } from "@playwright/test";
 import {
   DeleteRuleCommand,
   EventBridgeClient,
@@ -13,7 +12,7 @@ import {
   SQSClient,
 } from "@aws-sdk/client-sqs";
 import { consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { expect, flash, test, uniqueName } from "./fixtures.ts";
+import { expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Luồng chính của trang Rules trên UI: tạo rule → Test pattern → thêm target queue → gửi event
 // → queue nhận → tắt rule → xóa rule. Resource dọn bằng SDK ở afterAll để test lỗi giữa chừng vẫn sạch.
@@ -46,33 +45,21 @@ test.afterAll(async () => {
   await sqs.send(new DeleteQueueCommand({ QueueUrl }));
 });
 
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó (editor thứ n)
-async function setEditor(page: Page, index: number, text: string) {
-  await page
-    .locator(".ace_editor")
-    .nth(index)
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
-
 test("create a rule, reject a bad pattern, test the pattern", async ({ page }) => {
   await page.goto("/eventbridge/rules/create");
   await page.getByLabel("Name", { exact: true }).fill(rule);
 
-  await setEditor(page, 0, "{not json");
+  await setEditor(page, "{not json");
   await page.getByRole("button", { name: "Create rule" }).click();
   await expect(page.getByText(/Invalid JSON/).first()).toBeVisible();
 
-  await setEditor(page, 0, `{"source": ["${SOURCE}"]}`);
+  await setEditor(page, `{"source": ["${SOURCE}"]}`);
   await page.getByText("Test pattern").click();
-  await setEditor(page, 1, `{"source": "${SOURCE}", "detail-type": "OrderCreated", "detail": {}}`);
+  await setEditor(page, `{"source": "${SOURCE}", "detail-type": "OrderCreated", "detail": {}}`, 1);
   await page.getByRole("button", { name: "Test", exact: true }).click();
   await expect(page.getByText("Match", { exact: true })).toBeVisible();
 
-  await setEditor(page, 1, `{"source": "other", "detail-type": "OrderCreated", "detail": {}}`);
+  await setEditor(page, `{"source": "other", "detail-type": "OrderCreated", "detail": {}}`, 1);
   await page.getByRole("button", { name: "Test", exact: true }).click();
   await expect(page.getByText("No match", { exact: true })).toBeVisible();
 

@@ -7,9 +7,9 @@ import {
 } from "@aws-sdk/client-cloudformation";
 import {
   AddPermissionCommand,
-  CreateFunctionCommand,
   DeleteFunctionCommand,
   LambdaClient,
+  Runtime,
 } from "@aws-sdk/client-lambda";
 import {
   AdminCreateUserCommand,
@@ -22,7 +22,6 @@ import {
   DeleteUserPoolCommand,
   InitiateAuthCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
-import { strToU8, zipSync } from "fflate";
 import {
   APIGatewayClient,
   CreateAuthorizerCommand as CreateAuthorizerCommand1,
@@ -45,13 +44,14 @@ import {
   DeleteApiCommand,
 } from "@aws-sdk/client-apigatewayv2";
 import { CFN_API_TYPES } from "../../core/src/services/apigateway/constants.ts";
-import { consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
+import { consoleConfig, createTestFunction, viaConsole, waitFor } from "../it/helpers.ts";
 import type { Page } from "@playwright/test";
 import { expect, flash, test, uniqueName } from "./fixtures.ts";
 
 const restName = uniqueName("rest");
 const httpName = uniqueName("http");
 const wsName = uniqueName("ws");
+const APIGW_FUNCTION = { role: "lc-e2e", runtime: Runtime.nodejs20x, file: "index.js" };
 
 test.describe.configure({ mode: "serial" });
 
@@ -147,17 +147,11 @@ test.describe("detail page", () => {
   test.beforeAll(async () => {
     const config = viaConsole((await consoleConfig()).region);
     lambda = new LambdaClient(config);
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: fnName,
-        Runtime: "nodejs20.x",
-        Handler: "index.handler",
-        Role: "arn:aws:iam::000000000000:role/lc-e2e",
-        Code: {
-          ZipFile: zipSync({ "index.js": strToU8("exports.handler=async()=>({statusCode:200})") }),
-        },
-      }),
-    );
+    await createTestFunction(lambda, {
+      ...APIGW_FUNCTION,
+      name: fnName,
+      source: "exports.handler=async()=>({statusCode:200})",
+    });
     detailId = (await v1.send(new CreateRestApiCommand({ name: uniqueName("detail") }))).id!;
     const root = (await v1.send(new GetResourcesCommand({ restApiId: detailId }))).items![0].id!;
     const make = async (parentId: string, pathPart: string) =>
@@ -293,17 +287,11 @@ test.describe("routes and authorizers tabs", () => {
       .UserPool!;
     poolId = pool.Id!;
     poolArn = pool.Arn!;
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: fnName,
-        Runtime: "nodejs20.x",
-        Handler: "index.handler",
-        Role: "arn:aws:iam::000000000000:role/lc-e2e",
-        Code: {
-          ZipFile: zipSync({ "index.js": strToU8("exports.handler=async()=>({})") }),
-        },
-      }),
-    );
+    await createTestFunction(lambda, {
+      ...APIGW_FUNCTION,
+      name: fnName,
+      source: "exports.handler=async()=>({})",
+    });
     issuer = `${flociInternalUrl}/${poolId}`;
     const api = await v2.send(new CreateApiCommand({ Name: routesHttp, ProtocolType: "HTTP" }));
     httpId = api.ApiId!;
@@ -547,15 +535,11 @@ test.describe("Lambda triggers", () => {
   let goneId: string;
 
   const createFn = (name: string) =>
-    lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: name,
-        Runtime: "nodejs20.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e`,
-        Code: { ZipFile: zipSync({ "index.js": strToU8("exports.handler=async()=>({})") }) },
-      }),
-    );
+    createTestFunction(lambda, {
+      ...APIGW_FUNCTION,
+      name,
+      source: "exports.handler=async()=>({})",
+    });
   const allow = (functionName: string, apiId: string, methodAndPath: string) =>
     lambda.send(
       new AddPermissionCommand({
@@ -721,17 +705,8 @@ test.describe("testing a REST method", () => {
   const lambdaUri = (name: string) =>
     `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:000000000000:function:${name}/invocations`;
 
-  const createFunction = async (name: string) => {
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: name,
-        Runtime: "nodejs20.x",
-        Handler: "index.handler",
-        Role: "arn:aws:iam::000000000000:role/lc-e2e",
-        Code: { ZipFile: zipSync({ "index.js": strToU8(ECHO_HANDLER) }) },
-      }),
-    );
-  };
+  const createFunction = (name: string) =>
+    createTestFunction(lambda, { ...APIGW_FUNCTION, name, source: ECHO_HANDLER });
 
   const createApi = async () => {
     const id = (await v1.send(new CreateRestApiCommand({ name: uniqueName("tm") }))).id!;

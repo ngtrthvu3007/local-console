@@ -38,5 +38,3 @@ export function createKinesisService(kinesis: KinesisClient, deps: KinesisDeps) 
     },
   };
 }
-
-export type KinesisService = ReturnType<typeof createKinesisService>;

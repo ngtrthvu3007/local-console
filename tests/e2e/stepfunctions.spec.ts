@@ -17,7 +17,7 @@ import {
   RemoveTargetsCommand,
 } from "@aws-sdk/client-eventbridge";
 import { ACCOUNT_ID, consoleConfig, viaConsole } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+import { choose, expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Luồng chính của Step Functions trên UI: danh sách → state machine → Start execution với input →
 // bảng Steps (Parallel, Map, link tới queue) → mở bước để xem input / output → chạy lỗi, xem
@@ -113,18 +113,6 @@ test.afterAll(async () => {
   const { QueueUrl } = await sqs.send(new GetQueueUrlCommand({ QueueName: queue }));
   await sqs.send(new DeleteQueueCommand({ QueueUrl }));
 });
-
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
-async function setEditor(page: Page, text: string) {
-  await page
-    .locator(".ace_editor")
-    .first()
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, text);
-}
 
 async function startExecution(page: Page, input: object) {
   await page.getByRole("button", { name: "Start execution" }).first().click();

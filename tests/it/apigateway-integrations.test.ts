@@ -25,19 +25,11 @@ import {
 } from "@aws-sdk/client-apigatewayv2";
 import {
   AddPermissionCommand,
-  CreateFunctionCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   GetPolicyCommand,
   LambdaClient,
 } from "@aws-sdk/client-lambda";
-import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
   CreateTopicCommand,
   DeleteTopicCommand,
@@ -80,7 +72,6 @@ import {
   DeleteUserPoolCommand,
   InitiateAuthCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
-import { strToU8, zipSync } from "fflate";
 import { apiGatewaySourcesOf } from "../../core/src/services/apigateway/lambdaPermissions.ts";
 import { testInvokeUrl, webSocketUrl } from "../../core/src/services/apigateway/invokeUrl.ts";
 import { AWS_PROXY_PATH } from "../../web/src/shared/constants.ts";
@@ -88,6 +79,8 @@ import {
   ACCOUNT_ID,
   CONSOLE_URL,
   consoleConfig,
+  createTestFunction,
+  createTestQueue,
   uniqueName,
   viaConsole,
   waitFor,
@@ -124,29 +117,14 @@ const serviceUri = (service: string, rest: string) =>
 async function createFunction(source: string) {
   const name = uniqueName("apigw-fn");
   functions.push(name);
-  const { FunctionArn } = await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: name,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(source) }) },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
-  return { name, arn: FunctionArn! };
+  return createTestFunction(lambda, { name, source });
 }
 
 async function createQueue() {
-  const { QueueUrl } = await sqs.send(new CreateQueueCommand({ QueueName: uniqueName("apigw-q") }));
-  queueUrls.push(QueueUrl!);
-  const { Attributes } = await sqs.send(
-    new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }),
-  );
-  return { url: QueueUrl!, arn: Attributes!.QueueArn!, name: QueueUrl!.split("/").pop()! };
+  const name = uniqueName("apigw-q");
+  const queue = await createTestQueue(sqs, name);
+  queueUrls.push(queue.url);
+  return { ...queue, name };
 }
 
 const receiveOne = (queueUrl: string) =>

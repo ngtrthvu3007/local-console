@@ -6,19 +6,12 @@ import {
   PutMethodCommand,
 } from "@aws-sdk/client-api-gateway";
 import { ApiGatewayV2Client, GetIntegrationsCommand } from "@aws-sdk/client-apigatewayv2";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  GetPolicyCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { DeleteFunctionCommand, GetPolicyCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import {
   CognitoIdentityProviderClient,
   CreateUserPoolCommand,
   DeleteUserPoolCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
-import { strToU8, zipSync } from "fflate";
 import { API_TYPES, type ApiType } from "../../core/src/services/apigateway/apis.ts";
 import { testInvokeUrl, webSocketUrl } from "../../core/src/services/apigateway/invokeUrl.ts";
 import {
@@ -40,6 +33,7 @@ import {
   ACCOUNT_ID,
   CONSOLE_URL,
   consoleConfig,
+  createTestFunction,
   uniqueName,
   viaConsole,
   waitFor,
@@ -64,20 +58,7 @@ const functions: string[] = [];
 async function createFunction(source: string) {
   const name = uniqueName("apigw-crud-fn");
   functions.push(name);
-  const { FunctionArn } = await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: name,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(source) }) },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
-  return { name, arn: FunctionArn! };
+  return createTestFunction(lambda, { name, source });
 }
 
 const replying = (text: string) =>

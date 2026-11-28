@@ -8,12 +8,12 @@ import { ValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { errorMessage, jsonObjectError } from "@localconsole/core/shared";
 import {
-  EDITOR_HEIGHT_PX,
   DEFAULT_SAMPLE_EVENT,
   patternError,
   wrapSampleEvent,
 } from "@localconsole/core/eventbridge";
 import { useTestPattern } from "../hooks/useRules.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 // Thử pattern với một event mẫu trước khi lưu rule
 export function TestPatternSection({ pattern }: { pattern: string }) {
@@ -45,7 +45,7 @@ export function TestPatternSection({ pattern }: { pattern: string }) {
           errorText={problem}
           stretch
         >
-          <ValueEditor value={sample} onChange={setSample} height={EDITOR_HEIGHT_PX} />
+          <ValueEditor value={sample} onChange={setSample} height={SHORT_EDITOR_HEIGHT_PX} />
         </FormField>
         <SpaceBetween size='s' direction='horizontal' alignItems='center'>
           <Button formAction='none' loading={test.isPending} onClick={run}>

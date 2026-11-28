@@ -10,7 +10,7 @@ import {
   startExecutionSchema,
   stepfunctionsRoutes,
 } from "@localconsole/core/stepfunctions";
-import { EDITOR_HEIGHT_PX } from "../constants.ts";
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 import { useStartExecution } from "../hooks/useExecutions.ts";
 
 interface Props {
@@ -53,7 +53,7 @@ export function StartExecutionModal({ machineArn, onDismiss }: Props) {
         control={form.control}
         name='input'
         label='Input'
-        height={EDITOR_HEIGHT_PX}
+        height={SHORT_EDITOR_HEIGHT_PX}
       />
     </FormModal>
   );

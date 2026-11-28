@@ -6,6 +6,8 @@ export { expect };
 export const uniqueName = (kind: string) =>
   `lc-e2e-${kind}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
+export const LAMBDA_ROLE = "lc-e2e-lambda";
+
 // Bucket chưa đặt lifecycle/tag thì S3 trả 404, console coi là rỗng (orEmptyWhenNotFound);
 // trình duyệt vẫn ghi console.error cho request 404 nên bỏ qua đúng các request này
 const NOT_CONFIGURED_S3_QUERY = /\/aws\/[^/?]+\/\?(lifecycle|tagging)=?$/;
@@ -73,4 +75,16 @@ export async function confirmDelete(dialog: Locator) {
   if (await confirm.count())
     await confirm.fill((await confirm.getAttribute("placeholder")) ?? "confirm");
   await dialog.getByRole("button", { name: /Delete/ }).click();
+}
+
+// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
+export async function setEditor(page: Page, text: string, index = 0) {
+  await page
+    .locator(".ace_editor")
+    .nth(index)
+    .evaluate((element, value) => {
+      (
+        element as unknown as { env: { editor: { setValue(text: string): void } } }
+      ).env.editor.setValue(value);
+    }, text);
 }

@@ -12,9 +12,6 @@ export const ELASTICACHE_LOG_GROUP_PREFIX = "/aws/elasticache/cluster/";
 export const engineLogGroup = (id: string) => `${ELASTICACHE_LOG_GROUP_PREFIX}${id}/engine-log`;
 
 export const CLUSTER_NAME_MAX_LENGTH = 40;
-export const CLUSTER_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
-export const DOUBLE_HYPHEN = "--";
-export const HYPHEN = "-";
 
 export const CLUSTER_STATUS_AVAILABLE = "available";
 export const FAILED_STATUSES = ["create-failed", "restore-failed", "incompatible-network"];

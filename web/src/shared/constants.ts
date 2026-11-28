@@ -71,3 +71,6 @@ export const ITEM_LIST_WIDTH_PX = PHONE_MAX_WIDTH_PX + 1;
 export const LOADING_PLACEHOLDER = "…";
 // Phím tắt focus ô search service trên thanh trên cùng (như GitHub, MDN)
 export const SEARCH_SHORTCUT_KEY = "/";
+
+// Ô editor ngắn trong form / modal (event, message, input)
+export const SHORT_EDITOR_HEIGHT_PX = 200;

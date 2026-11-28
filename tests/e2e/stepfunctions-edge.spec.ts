@@ -5,7 +5,7 @@ import {
   SFNClient,
 } from "@aws-sdk/client-sfn";
 import { ACCOUNT_ID, consoleConfig, viaConsole } from "../it/helpers.ts";
-import { expect, flash, test, uniqueName } from "./fixtures.ts";
+import { expect, flash, setEditor, test, uniqueName } from "./fixtures.ts";
 
 // Trường hợp biên của trang Step Functions: execution xong giữa hai lần tự làm mới (bước cuối không
 // được kẹt ở Running), Map quá lớn gập sẵn, bước gọi function đã xóa báo "(not found)".
@@ -73,18 +73,10 @@ test.afterAll(async () => {
   }
 });
 
-// Editor là Ace: gõ từng phím bị Ace tự đóng ngoặc nên đặt giá trị qua instance của nó
 async function startWith(page: Page, machine: string, input: object) {
   await page.goto(`/stepfunctions/statemachines/${machine}`);
   await page.getByRole("button", { name: "Start execution" }).first().click();
-  await page
-    .locator(".ace_editor")
-    .first()
-    .evaluate((element, value) => {
-      (
-        element as unknown as { env: { editor: { setValue(text: string): void } } }
-      ).env.editor.setValue(value);
-    }, JSON.stringify(input));
+  await setEditor(page, JSON.stringify(input));
   await page.getByRole("dialog").getByRole("button", { name: "Start execution" }).click();
   await expect(flash(page)).toContainText("Started execution");
 }

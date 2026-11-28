@@ -11,14 +11,15 @@ import {
   UpdateScheduleCommand,
   type GetScheduleCommandOutput,
 } from "@aws-sdk/client-scheduler";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+  ACCOUNT_ID,
+  consoleConfig,
+  createTestQueue,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Đúng các luồng của trang Schedules: group, rate đẩy vào queue, bật / tắt bằng GetSchedule +
 // UpdateSchedule (giữ trường form không có), at() tự xóa, xóa group kéo theo schedule
@@ -53,12 +54,7 @@ beforeAll(async () => {
   const { region } = await consoleConfig();
   scheduler = new SchedulerClient(viaConsole(region));
   sqs = new SQSClient(viaConsole(region));
-  queueUrl = (await sqs.send(new CreateQueueCommand({ QueueName: queueName }))).QueueUrl!;
-  queueArn = (
-    await sqs.send(
-      new GetQueueAttributesCommand({ QueueUrl: queueUrl, AttributeNames: ["QueueArn"] }),
-    )
-  ).Attributes!.QueueArn!;
+  ({ url: queueUrl, arn: queueArn } = await createTestQueue(sqs, queueName));
   await scheduler.send(new CreateScheduleGroupCommand({ Name: group }));
 });
 

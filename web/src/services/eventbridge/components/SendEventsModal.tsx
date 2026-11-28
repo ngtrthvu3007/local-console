@@ -5,7 +5,6 @@ import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
-  EDITOR_HEIGHT_PX,
   DEFAULT_BUS_NAME,
   DEFAULT_EVENT_DETAIL,
   DEFAULT_EVENT_SOURCE,
@@ -13,18 +12,14 @@ import {
   sendEventsSchema,
 } from "@localconsole/core/eventbridge";
 import { useBuses, usePutEvent } from "../hooks/useBuses.ts";
-
-interface Props {
-  bus?: string; // bus đang xem, mặc định chọn sẵn
-  onDismiss: () => void;
-}
+import { SHORT_EDITOR_HEIGHT_PX } from "@shared/constants.ts";
 
 // Chỉ mount khi mở. Gửi xong vẫn giữ modal và nội dung để gửi tiếp
-export function SendEventsModal({ bus = DEFAULT_BUS_NAME, onDismiss }: Props) {
+export function SendEventsModal({ onDismiss }: { onDismiss: () => void }) {
   const buses = useBuses();
   const putEvent = usePutEvent();
   const form = useZodForm(sendEventsSchema, {
-    bus,
+    bus: DEFAULT_BUS_NAME,
     source: DEFAULT_EVENT_SOURCE,
     detailType: "",
     detail: DEFAULT_EVENT_DETAIL,
@@ -70,7 +65,7 @@ export function SendEventsModal({ bus = DEFAULT_BUS_NAME, onDismiss }: Props) {
         control={form.control}
         name='detail'
         label='Detail'
-        height={EDITOR_HEIGHT_PX}
+        height={SHORT_EDITOR_HEIGHT_PX}
       />
     </FormModal>
   );

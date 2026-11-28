@@ -8,7 +8,6 @@ export const nameConstraint = (maxLength: number) =>
 // Bus có sẵn: không tạo trùng, không xóa được
 export const DEFAULT_BUS_NAME = "default";
 
-export const EDITOR_HEIGHT_PX = 200;
 export const DEFAULT_EVENT_DETAIL = '{\n  "message": "hello"\n}';
 export const DEFAULT_EVENT_SOURCE = "my.app";
 

@@ -17,17 +17,18 @@ import {
   CreateRouteCommand,
   DeleteApiCommand,
 } from "@aws-sdk/client-apigatewayv2";
-import {
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
-import { strToU8, zipSync } from "fflate";
+import { DeleteFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { testInvokeUrl, webSocketUrl } from "../../core/src/services/apigateway/invokeUrl.ts";
 import { FUNCTION_TABS, lambdaRoutes } from "../../core/src/services/lambda/paths.ts";
 import { AWS_PROXY_PATH } from "../../web/src/shared/constants.ts";
-import { ACCOUNT_ID, CONSOLE_URL, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
+import {
+  ACCOUNT_ID,
+  CONSOLE_URL,
+  consoleConfig,
+  createTestFunction,
+  viaConsole,
+  waitFor,
+} from "../it/helpers.ts";
 import { choose, expect, test, uniqueName } from "./fixtures.ts";
 
 // Tạo / sửa / xóa API Gateway trên console (spec 2026-11-27-apigateway-crud)
@@ -35,6 +36,7 @@ test.describe.configure({ mode: "serial" });
 
 const API_URL = /\/apigateway\/(v1|v2)\/([^/?]+)/;
 const FIRST_INVOKE_TIMEOUT_MS = 60_000;
+const APIGW_LAMBDA_ROLE = "lc-e2e";
 const LOCKED_INTEGRATION =
   "Edit this integration in your IaC: the console edits Lambda and HTTP proxy integrations.";
 
@@ -50,20 +52,7 @@ const functions: string[] = [];
 async function createFunction(source: string) {
   const name = uniqueName("apigw-crud-fn");
   functions.push(name);
-  const { FunctionArn } = await lambda.send(
-    new CreateFunctionCommand({
-      FunctionName: name,
-      Runtime: "nodejs22.x",
-      Handler: "index.handler",
-      Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e`,
-      Code: { ZipFile: zipSync({ "index.mjs": strToU8(source) }) },
-    }),
-  );
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
-  return { name, arn: FunctionArn! };
+  return createTestFunction(lambda, { name, source, role: APIGW_LAMBDA_ROLE });
 }
 
 const replying = (text: string) =>

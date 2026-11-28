@@ -16,5 +16,3 @@ export function createLambdaTriggersService(services: TriggerServices) {
     deleteTrigger: (row: TriggerRow) => deleteTrigger(services, row),
   };
 }
-
-export type LambdaTriggersService = ReturnType<typeof createLambdaTriggersService>;

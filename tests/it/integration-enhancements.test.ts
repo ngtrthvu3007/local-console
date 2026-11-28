@@ -1,14 +1,12 @@
 import { CreateTableCommand, DeleteTableCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { strToU8, zipSync } from "fflate";
+import { strToU8 } from "fflate";
 import {
   CreateEventSourceMappingCommand,
-  CreateFunctionCommand,
   DeleteEventSourceMappingCommand,
   DeleteFunctionCommand,
   DeleteFunctionEventInvokeConfigCommand,
   GetEventSourceMappingCommand,
-  GetFunctionCommand,
   InvokeCommand,
   LambdaClient,
   ListFunctionEventInvokeConfigsCommand,
@@ -17,14 +15,20 @@ import {
 } from "@aws-sdk/client-lambda";
 import { CloudWatchLogsClient, FilterLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import {
-  CreateQueueCommand,
   DeleteQueueCommand,
-  GetQueueAttributesCommand,
   ReceiveMessageCommand,
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, uniqueName, viaConsole, waitFor } from "./helpers.ts";
+import {
+  FUNCTION_TIMEOUT_SECONDS,
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  uniqueName,
+  viaConsole,
+  waitFor,
+} from "./helpers.ts";
 
 // Tùy chọn nâng cao của trigger và cấu hình async của Lambda, gọi thật qua /aws
 
@@ -51,13 +55,9 @@ const queueArns: Record<string, string> = {};
 const mappingIds: string[] = [];
 
 const makeQueue = async (name: string) => {
-  const { QueueUrl } = await sqs.send(new CreateQueueCommand({ QueueName: name }));
-  queueUrls.push(QueueUrl!);
-  const { Attributes } = await sqs.send(
-    new GetQueueAttributesCommand({ QueueUrl, AttributeNames: ["QueueArn"] }),
-  );
-  queueArns[name] = Attributes!.QueueArn!;
-  return QueueUrl!;
+  const { url, arn } = await createTestQueue(sqs, name);
+  queueUrls.push(url);
+  queueArns[name] = arn;
 };
 
 const messagesIn = async (queueUrl: string) =>
@@ -91,23 +91,12 @@ beforeAll(async () => {
   sqs = new SQSClient(config);
 
   functionArn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: functionName,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8(HANDLER_SOURCE) }) },
-        Timeout: 30,
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: functionName }),
-    );
-    return Configuration?.State === "Active" ? true : undefined;
-  });
+    await createTestFunction(lambda, {
+      name: functionName,
+      source: HANDLER_SOURCE,
+      timeout: FUNCTION_TIMEOUT_SECONDS,
+    })
+  ).arn;
   await Promise.all([resultQueueName, failureQueueName, sourceQueueName].map(makeQueue));
 });
 

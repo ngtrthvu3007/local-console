@@ -1,8 +1,5 @@
-import { strToU8, zipSync } from "fflate";
 import {
-  CreateFunctionCommand,
   DeleteFunctionCommand,
-  GetFunctionCommand,
   LambdaClient,
   PutFunctionEventInvokeConfigCommand,
 } from "@aws-sdk/client-lambda";
@@ -30,15 +27,15 @@ import {
   SESv2Client,
 } from "@aws-sdk/client-sesv2";
 import { CreateTopicCommand, DeleteTopicCommand, SNSClient } from "@aws-sdk/client-sns";
+import { DeleteQueueCommand, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import {
-  CreateQueueCommand,
-  DeleteQueueCommand,
-  GetQueueAttributesCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { ACCOUNT_ID, consoleConfig, viaConsole, waitFor } from "../it/helpers.ts";
-import { choose, expect, flash, test, uniqueName } from "./fixtures.ts";
+  consoleConfig,
+  createTestFunction,
+  createTestQueue,
+  viaConsole,
+  waitFor,
+} from "../it/helpers.ts";
+import { LAMBDA_ROLE, choose, expect, flash, test, uniqueName } from "./fixtures.ts";
 
 // Nối thêm hai chỗ: rule gửi sang bus khác (target Event bus) và khối "Other senders" trên trang
 // queue / topic / function (S3, Lambda, SES đang gửi vào resource này)
@@ -67,28 +64,14 @@ let queueUrl = "";
 let queueArn = "";
 let topicArn = "";
 
-const makeFunction = async (name: string) => {
-  const arn = (
-    await lambda.send(
-      new CreateFunctionCommand({
-        FunctionName: name,
-        Runtime: "nodejs22.x",
-        Handler: "index.handler",
-        Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-e2e-lambda`,
-        Code: {
-          ZipFile: zipSync({
-            "index.mjs": strToU8("export const handler = async () => ({ ok: true });"),
-          }),
-        },
-      }),
-    )
-  ).FunctionArn!;
-  await waitFor(`${name} to be Active`, async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: name }));
-    return Configuration?.State === "Active" ? true : undefined;
-  });
-  return arn;
-};
+const makeFunction = async (name: string) =>
+  (
+    await createTestFunction(lambda, {
+      name,
+      source: "export const handler = async () => ({ ok: true });",
+      role: LAMBDA_ROLE,
+    })
+  ).arn;
 
 test.beforeAll(async () => {
   const { region } = await consoleConfig();
@@ -100,12 +83,7 @@ test.beforeAll(async () => {
   ses = new SESv2Client(config);
   events = new EventBridgeClient(config);
 
-  queueUrl = (await sqs.send(new CreateQueueCommand({ QueueName: queue }))).QueueUrl!;
-  queueArn = (
-    await sqs.send(
-      new GetQueueAttributesCommand({ QueueUrl: queueUrl, AttributeNames: ["QueueArn"] }),
-    )
-  ).Attributes!.QueueArn!;
+  ({ url: queueUrl, arn: queueArn } = await createTestQueue(sqs, queue));
   topicArn = (await sns.send(new CreateTopicCommand({ Name: topic }))).TopicArn!;
   const functionArn = await makeFunction(fn);
   await makeFunction(caller);

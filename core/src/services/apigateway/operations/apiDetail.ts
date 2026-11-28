@@ -1,6 +1,6 @@
 import {
   GetAuthorizersCommand,
-  GetResourcesCommand,
+  paginateGetResources,
   GetStagesCommand,
   type APIGatewayClient,
 } from "@aws-sdk/client-api-gateway";
@@ -11,7 +11,7 @@ import {
   GetStagesCommand as GetStagesV2Command,
   type ApiGatewayV2Client,
 } from "@aws-sdk/client-apigatewayv2";
-import { allPages } from "#shared/aws/pagination.ts";
+import { allPages, collectPages } from "#shared/aws/pagination.ts";
 import type { AuthorizerRow, StageRow } from "#services/apigateway/apis.ts";
 import { IDENTITY_SEPARATOR } from "#services/apigateway/constants.ts";
 import { API_VERSIONS } from "#services/apigateway/paths.ts";
@@ -19,12 +19,10 @@ import { joinRoutes } from "#services/apigateway/routeRows.ts";
 import type { ApiRef } from "./apis.ts";
 
 export const listResources = (v1: APIGatewayClient, apiId: string) =>
-  allPages(async (position) => {
-    const page = await v1.send(
-      new GetResourcesCommand({ restApiId: apiId, embed: ["methods"], position }),
-    );
-    return { items: page.items ?? [], nextToken: page.position };
-  });
+  collectPages(
+    paginateGetResources({ client: v1 }, { restApiId: apiId, embed: ["methods"] }),
+    (page) => page.items,
+  );
 
 export async function listAuthorizers(
   v1: APIGatewayClient,

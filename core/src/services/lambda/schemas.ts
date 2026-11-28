@@ -2,7 +2,13 @@ import { z } from "zod";
 import { kmsKeyArnSchema } from "#services/kms/schemas.ts";
 import { byteLength, formatBytes } from "#shared/utils/format.ts";
 import { jsonObjectError } from "#shared/utils/json.ts";
-import { enumOfKeys, isWholeNumberIn, wholeNumberIn } from "#shared/validation/schemas.ts";
+import {
+  enumOfKeys,
+  isWholeNumberIn,
+  wholeNumberIn,
+  issueAdder,
+  type AddIssue,
+} from "#shared/validation/schemas.ts";
 import {
   ASYNC_EVENT_AGE_SECONDS,
   ASYNC_RETRY_ATTEMPTS,
@@ -107,15 +113,6 @@ export const mappingOptionsShape = {
   onFailureKind: z.enum(ON_FAILURE_KIND_IDS),
   onFailureArn: z.string(),
 };
-
-type AddIssue = (path: (string | number)[], message: string) => void;
-
-export const issueAdder =
-  (context: {
-    addIssue: (issue: { code: "custom"; path: (string | number)[]; message: string }) => void;
-  }): AddIssue =>
-  (path, message) =>
-    context.addIssue({ code: "custom", path, message });
 
 // Pattern rỗng bỏ qua; pattern sai cú pháp filter (JSON hợp lệ) do Floci từ chối khi lưu
 export function mappingOptionsIssues(
