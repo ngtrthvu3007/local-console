@@ -17,6 +17,7 @@ import { DEFAULT_BUS_NAME, eventbridgeRoutes } from "@localconsole/core/eventbri
 import { useTopics } from "../../sns/hooks/useTopics.ts";
 import { snsRoutes } from "@localconsole/core/sns";
 import {
+  ADD_DESTINATION_DEFAULTS,
   DESTINATION_KIND_LABELS,
   EVENT_TYPE_LABELS,
   addDestinationSchema,
@@ -44,11 +45,10 @@ export function AddDestinationModal({ set, onDismiss }: Props) {
   const topics = useTopics();
   const buses = useBuses();
   const form = useZodForm(addDestinationSchema, {
+    ...ADD_DESTINATION_DEFAULTS,
     name: "",
     eventTypes: [],
-    kind: "sns",
     arn: "",
-    enabled: true,
   });
   const kind = useWatch({ control: form.control, name: "kind" });
   // Đổi loại đích thì bỏ resource đã chọn: ARN của loại kia không dùng được

@@ -47,6 +47,7 @@ Across the console:
 - 🔗 **Wired like AWS:** S3 notifications → Lambda / SQS / SNS, queue and stream triggers for Lambda, SNS fan-out. Connected resources link to each other (queues, topics and functions also list the S3 notifications, Lambda destinations and SES sets that send to them), and references to deleted resources are flagged instead of failing silently.
 - 🔍 **Search** any service from the top bar (press `/`); your recently visited services are on Console Home.
 - 🔌 **Connect your app:** Console Home gives the environment variables to paste, for apps on your machine and inside Docker.
+- 🤖 **MCP server:** let Claude Code, Codex, Cursor… work with SQS and SES for you, with the same checks as the console ([setup](#-use-with-an-ai-agent-mcp)).
 - 🧩 **Code samples:** resource pages have a Connect card with Node.js (AWS SDK v3) and Python (boto3) code, its name / URL / ARN filled in (Cognito: on the app client page; not yet for EC2).
 - 🧹 **Reset data:** wipe everything in Floci from Console Home, without restarting containers.
 - 🌗 **Light / dark** (follows your system), works on phones and tablets.
@@ -120,6 +121,35 @@ RDS databases: from your machine, connect to `localhost:<port>` (DBeaver, `psql`
 - **First use** downloads extra images: Lambda runtime, Valkey, RabbitMQ, PostgreSQL / MySQL.
 
 </details>
+
+## 🤖 Use with an AI agent (MCP)
+
+The console is also an MCP server at `http://localhost:3701/mcp`: ask your agent to "create a FIFO queue `orders.fifo`" or "show the last email sent to `a@x.com`". Tools check input with the same rules as the console forms and return a `consoleUrl` to see the result. Nothing to install, no token; the console must be running.
+
+**Claude Code** (CLI and VS Code / JetBrains extensions):
+
+```bash
+claude mcp add --transport http local-console http://localhost:3701/mcp
+```
+
+**Codex CLI**, in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.local-console]
+url = "http://localhost:3701/mcp"
+```
+
+**Cursor and others** (Copilot, Cline, Continue…): add an HTTP MCP server with that URL. Cursor, in `~/.cursor/mcp.json`:
+
+```json
+{ "mcpServers": { "local-console": { "url": "http://localhost:3701/mcp" } } }
+```
+
+- **Fewer tools:** `http://localhost:3701/mcp?services=sqs,ses`. **Read only:** add `read_only=true`.
+- **Tools:** `floci_read_status`; SQS: read queues, peek / send / poll / delete messages, create / update / delete / purge queues, DLQ redrive, Lambda triggers; SES: read emails, identities, templates and configuration sets, delete emails, manage identities, configuration sets and event destinations.
+- **Reset all data** only with `?services=reset` (never with `read_only=true`).
+- Upload / download files in the console UI.
+- Console Home has a **Connect your AI agent** card with these settings.
 
 ## 🧭 How it works
 

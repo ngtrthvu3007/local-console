@@ -38,5 +38,11 @@ export const addDestinationSchema = z.object({
   enabled: z.boolean(),
 });
 
+// Giá trị ban đầu của form; MCP dùng làm mặc định cho trường agent không gửi
+export const ADD_DESTINATION_DEFAULTS = {
+  kind: "sns",
+  enabled: true,
+} satisfies Pick<z.input<typeof addDestinationSchema>, "kind" | "enabled">;
+
 // Modal "Set configuration set" của identity; rỗng = gỡ
 export const setConfigurationSetSchema = z.object({ configurationSet: z.string() });

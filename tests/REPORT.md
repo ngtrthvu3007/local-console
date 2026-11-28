@@ -568,3 +568,22 @@ Spec [apigateway-crud-design](../docs/superpowers/specs/2026-11-27-apigateway-cr
 - `tests/`: helper chung `createTestFunction` (chờ bằng `waitUntilFunctionActiveV2`), `createTestQueue`, `setEditor`; 39 file, bớt khoảng 500 dòng. IT 16 file đã đổi 131/131 (2 lượt).
 - core / web: bỏ code trùng và code không dùng (paginator của SDK thay vòng tự viết, `issueAdder` / luật tên / lọc hộp thư dùng chung, alias type không dùng, prop không ai truyền, một hằng chiều cao editor). `web/package.json` bỏ 7 dependency chỉ core dùng.
 - Chạy lại sau khi dọn: unit toàn bộ; IT các service có code đổi (stepfunctions, sns, sms, ses, cognito, mq, eventbridge-schedules, apigateway); E2E 31 spec của service liên quan và spec có helper đổi; UX `integration.spec.ts`; mobile toàn bộ.
+
+## 18. MCP server đợt 1 — 2026-11-28
+
+Working tree trên nhánh `dev` (chưa commit), plan [MCP server](../docs/superpowers/plans/2026-11-27-mcp-server.md). Console build lại từ source bằng `docker compose up --build -d`, Floci 2.4.0, region `ap-southeast-1`, npm cài bằng `npx npm@10.9.11` (xem dưới).
+
+| Bộ kiểm tra                                                      | Kết quả                                                                                                    |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Typecheck / lint                                                 | ✅ Pass (core, server, web)                                                                                |
+| Unit                                                             | ✅ core **610/610**, server **43/43** (5 file `test/mcp/` mới); ✅ web **59/59** (sau khi sửa token, dưới) |
+| IT `mcp.test.ts`                                                 | ✅ **9/9** vào console Docker: lọc tool, vòng đời SQS, SES (mail dài bị cắt), `read_only` chặn tool ghi    |
+| Integration toàn bộ                                              | ✅ **38 file, 265 test**; `leftovers` không còn resource của MCP                                           |
+| E2E toàn bộ                                                      | ✅ **300/300** sau khi sửa 1 test CloudFront (dưới); `home.spec.ts` có case card MCP                       |
+| UI responsive                                                    | ✅ **268/268**                                                                                             |
+| Mobile (API fixtures, `LOCAL_CONSOLE_URL=http://127.0.0.1:3701`) | ✅ **36/36**                                                                                               |
+| Chạy tay Claude Code / Codex / Cursor                            | ⏸ Chưa chạy (user)                                                                                         |
+
+- **Lockfile:** `npm install` của npm 11.6.0 xóa khỏi `package-lock.json` mọi binding native tùy chọn có cờ `peer` (rolldown, lightningcss, `fsevents`, mọi nền tảng), kể cả khi xóa `node_modules` cài lại. npm 10.9.11 giữ đủ; diff lockfile chỉ còn 5 gói MCP.
+- **Token nút (không do MCP):** `HEAD` (`7326647`) nâng `@cloudscape-design/components` 3.0.1407 → 3.0.1427, tên biến CSS của nút đổi nên override trong `Layout.css` không còn áp (`test/shared/buttonTokens.test.ts` 4 fail). Đã đổi sang tên mới; web 59/59. Giao diện nút chưa kiểm bằng trình duyệt (chờ Playwright).
+- **CloudFront E2E (không do MCP):** `creates a single-page app distribution…` fail 3/3: flashbar hiện trước khi chuyển trang nên test đọc id từ URL `/create?bucket=…`. Test chờ URL của distribution trước khi đọc; 12/12 khi chạy lặp 3 lần. Distribution sót của các lần fail đã dọn bằng `leftovers --delete`.

@@ -11,6 +11,9 @@
   "dependencies": {
     "@aws-sdk/client-elasticache": "^3.1161.0",
     "@aws-sdk/client-mq": "^3.1161.0",
+    "@localconsole/core": "*",
+    "@modelcontextprotocol/node": "^2.1.2",
+    "@modelcontextprotocol/server": "^2.4.0",
     "express": "^5.3.0",
     "http-proxy-middleware": "^4.2.1",
     "ioredis": "^6.0.0",

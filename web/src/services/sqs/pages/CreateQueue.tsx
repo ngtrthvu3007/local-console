@@ -17,6 +17,7 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
+  CREATE_QUEUE_DEFAULTS,
   QUEUE_ENCRYPTION,
   SQS_KEY_SERVICE,
   FIFO_SUFFIX,
@@ -46,13 +47,7 @@ const TYPE_ITEMS = [
   },
 ];
 
-const INITIAL_VALUES: CreateQueueForm = {
-  type: "standard",
-  name: "",
-  contentBasedDedup: false,
-  encryption: QUEUE_ENCRYPTION.sseSqs,
-  kmsKeyId: "",
-};
+const INITIAL_VALUES: CreateQueueForm = { ...CREATE_QUEUE_DEFAULTS, name: "" };
 
 const ENCRYPTION_ITEMS = [
   { value: QUEUE_ENCRYPTION.sseSqs, label: "SSE-SQS", description: "Keys managed by SQS." },

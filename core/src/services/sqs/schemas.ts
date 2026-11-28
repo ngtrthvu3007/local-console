@@ -4,6 +4,7 @@ import { formatBytes } from "#shared/utils/format.ts";
 import { enumOfKeys, wholeNumberIn } from "#shared/validation/schemas.ts";
 import { SQS_BATCH_SIZE } from "#services/lambda/constants.ts";
 import { mappingOptionsIssues, mappingOptionsShape } from "#services/lambda/schemas.ts";
+import { DEFAULT_MAPPING_OPTIONS } from "#services/lambda/mappingOptions.ts";
 import { issueAdder } from "#shared/validation/schemas.ts";
 import {
   QUEUE_ENCRYPTION,
@@ -41,6 +42,14 @@ export const createQueueSchema = z
   });
 
 export type CreateQueueForm = z.input<typeof createQueueSchema>;
+
+// Giá trị ban đầu của form; MCP dùng làm mặc định cho trường agent không gửi
+export const CREATE_QUEUE_DEFAULTS = {
+  type: "standard",
+  contentBasedDedup: false,
+  encryption: QUEUE_ENCRYPTION.sseSqs,
+  kmsKeyId: "",
+} satisfies Omit<CreateQueueForm, "name">;
 
 export const queueSettingsSchema = z.object({
   visibilityTimeout: wholeNumberIn(SETTING_LIMITS.visibilityTimeout, "seconds"),
@@ -115,3 +124,9 @@ export const queueTriggerSchema = z
     ...mappingOptionsShape,
   })
   .superRefine((values, context) => mappingOptionsIssues("sqs", values, issueAdder(context)));
+
+export const QUEUE_TRIGGER_DEFAULTS = {
+  batchSize: String(SQS_BATCH_SIZE.default),
+  enabled: true,
+  ...DEFAULT_MAPPING_OPTIONS,
+} satisfies Omit<z.input<typeof queueTriggerSchema>, "functionName">;

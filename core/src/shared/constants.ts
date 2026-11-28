@@ -8,6 +8,8 @@ export const FLOCI_ACCOUNT_ID = "000000000000";
 // DNS công khai trỏ cả subdomain về 127.0.0.1; *.localhost thì Node / Python trên Windows không resolve được
 export const FLOCI_HOSTNAME = "localhost.floci.io";
 export const FLOCI_SERVICE_RUNNING = "running";
+// Trang "Floci isn't running" của UI và lỗi của MCP chỉ cùng một lệnh
+export const FLOCI_START_COMMAND = "docker compose up -d floci";
 
 export const MILLISECONDS_PER_SECOND = 1000;
 export const SECONDS_PER_MINUTE = 60;

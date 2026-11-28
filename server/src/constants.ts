@@ -19,6 +19,7 @@ export const ROUTES = {
   awsProxy: "/aws",
   redis: "/api/redis",
   rabbitmq: "/api/mq",
+  mcp: "/mcp",
   spaFallback: "/{*path}",
 } as const;
 

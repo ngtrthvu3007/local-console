@@ -44,10 +44,10 @@
    Đặt thẳng token thay cho applyTheme (runtime theming nặng ~600 KB trong bundle chính).
    Tên biến đổi theo bản Cloudscape: test/shared/buttonTokens.test.ts báo khi lệch */
 body:not(#\9) {
-  --border-radius-button-o0udma: 8px;
-  --border-width-button-7l951k: 1px;
-  --space-button-vertical-sx94m8: 5px;
-  --space-button-horizontal-0ykhor: 16px;
+  --border-radius-button-9k0hrl: 8px;
+  --border-width-button-lffd4t: 1px;
+  --space-button-vertical-r9jnds: 5px;
+  --space-button-horizontal-ojp1rq: 16px;
 }
 
 /* Giao diện tối (Cloudscape gắn class awsui-dark-mode lên body): màu tự đặt đổi theo.

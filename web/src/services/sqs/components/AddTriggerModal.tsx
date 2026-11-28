@@ -3,28 +3,18 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import {
-  ALREADY_TRIGGERED,
-  SQS_BATCH_SIZE,
-  functionNameOfMapping,
-  DEFAULT_MAPPING_OPTIONS,
-} from "@localconsole/core/lambda";
+import { ALREADY_TRIGGERED, SQS_BATCH_SIZE, functionNameOfMapping } from "@localconsole/core/lambda";
 import { MappingOptionsFields } from "../../lambda/components/MappingOptionsFields.tsx";
 import { ViewFunctionButton } from "../../lambda/components/StreamTriggers.tsx";
 import { useAddQueueTrigger, useQueueTriggers } from "../hooks/useQueueTriggers.ts";
-import { type Queue, queueTriggerSchema } from "@localconsole/core/sqs";
+import { type Queue, QUEUE_TRIGGER_DEFAULTS, queueTriggerSchema } from "@localconsole/core/sqs";
 
 // Chỉ mount khi mở. Cùng giới hạn và mặc định với modal Add trigger của Lambda
 export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss: () => void }) {
   const functions = useFunctions();
   const addTrigger = useAddQueueTrigger(queue);
   const triggers = useQueueTriggers(queue);
-  const form = useZodForm(queueTriggerSchema, {
-    functionName: "",
-    batchSize: String(SQS_BATCH_SIZE.default),
-    enabled: true,
-    ...DEFAULT_MAPPING_OPTIONS,
-  });
+  const form = useZodForm(queueTriggerSchema, { ...QUEUE_TRIGGER_DEFAULTS, functionName: "" });
   // AWS từ chối trigger thứ hai cho cùng queue và function (Floci thì nhận, thành hai consumer)
   const linked = new Set((triggers.data ?? []).map(functionNameOfMapping));
   const functionOptions = (functions.data ?? []).map((item) => ({
