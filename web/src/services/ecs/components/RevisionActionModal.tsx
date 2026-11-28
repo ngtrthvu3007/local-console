@@ -1,4 +1,4 @@
-import { taskDefinitionLabel } from "../arns.ts";
+import { taskDefinitionLabel } from "@localconsole/core/ecs";
 import { useDeleteRevisions, useDeregisterRevisions } from "../hooks/useTaskDefinitions.ts";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 

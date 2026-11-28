@@ -1,5 +1,5 @@
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
-import type { ClusterRow } from "../clusters.ts";
+import type { ClusterRow } from "@localconsole/core/docdb";
 import { useDeleteClusters } from "../hooks/useClusters.ts";
 
 interface Props {

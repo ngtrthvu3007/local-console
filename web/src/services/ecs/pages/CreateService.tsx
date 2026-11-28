@@ -13,10 +13,14 @@ import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { NetworkFields } from "../components/NetworkFields.tsx";
 import { TaskDefinitionFields } from "../components/TaskDefinitionFields.tsx";
-import { DESIRED_COUNT, RESOURCE_NAME_RULE } from "../constants.ts";
+import {
+  DESIRED_COUNT,
+  RESOURCE_NAME_RULE,
+  serviceSchema,
+  ecsRoutes,
+} from "@localconsole/core/ecs";
 import { useCreateService } from "../hooks/useServices.ts";
-import { clusterCrumbs, ecsRoutes } from "../routes.ts";
-import { serviceSchema } from "../schemas.ts";
+import { clusterCrumbs } from "../routes.ts";
 
 const NETWORK_NAMES = { subnets: "subnets", securityGroups: "securityGroups" } as const;
 const DEFINITION_NAMES = { family: "family", revision: "revision" } as const;

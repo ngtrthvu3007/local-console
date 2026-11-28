@@ -8,11 +8,9 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import { ErrorState } from "@shared/components/TableStates.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { resolverRows } from "../apis.ts";
-import { SCHEMA_TIMEOUT } from "../hooks/useApis.ts";
+import { resolverRows, STARTER_SCHEMA, SCHEMA_TIMEOUT } from "@localconsole/core/appsync";
 import { useResolvers } from "../hooks/useResolvers.ts";
 import { useSaveSchema, useSchemaTypes } from "../hooks/useSchema.ts";
-import { STARTER_SCHEMA } from "../resolverTemplates.ts";
 import { ResolversTable } from "./ResolversTable.tsx";
 
 const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));

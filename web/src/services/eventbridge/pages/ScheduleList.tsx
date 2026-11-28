@@ -13,24 +13,28 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, pluralize, lastArnPart } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { lastArnPart } from "@shared/arn.ts";
 import { CreateGroupModal } from "../components/CreateGroupModal.tsx";
 import { EnabledState } from "../components/EnabledState.tsx";
 import { DeleteGroupModal } from "../components/DeleteGroupModal.tsx";
 import { DeleteSchedulesModal } from "../components/DeleteSchedulesModal.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
-import { DEFAULT_SCHEDULE_GROUP } from "../constants.ts";
+import {
+  DEFAULT_SCHEDULE_GROUP,
+  TARGET_KINDS,
+  targetKindOfArn,
+  type ScheduleRow,
+  SEARCH_PARAMS,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 import { useScheduleGroups, useSchedules, useSetSchedulesEnabled } from "../hooks/useSchedules.ts";
-import { SEARCH_PARAMS, eventbridgeRoutes, schedulesCrumbs } from "../routes.ts";
-import type { ScheduleRow } from "../schedules.ts";
-import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
+import { schedulesCrumbs } from "../routes.ts";
 
 const NAME_FIELD = "name";
 const ALL_GROUPS = "";

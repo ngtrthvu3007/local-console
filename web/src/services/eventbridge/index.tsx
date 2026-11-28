@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconCalendarEvent } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { EVENTBRIDGE_ROUTE_PATTERNS, EVENTBRIDGE_SERVICE_ID, eventbridgeRoutes } from "./routes.ts";
+import {
+  EVENTBRIDGE_ROUTE_PATTERNS,
+  EVENTBRIDGE_SERVICE_ID,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 
 export const eventbridgeService: ServiceDefinition = {
   id: EVENTBRIDGE_SERVICE_ID,

@@ -5,7 +5,7 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -15,8 +15,9 @@ import { useInstanceStateActions } from "../components/InstanceStateActions.tsx"
 import { UserDataTab } from "../components/UserDataTab.tsx";
 import { useImages } from "../hooks/useImages.ts";
 import { useInstance } from "../hooks/useInstances.ts";
-import { instanceName } from "../instances.ts";
-import { INSTANCE_TABS, ec2Routes, instanceCrumbs } from "../routes.ts";
+import { instanceName } from "@localconsole/core/ec2";
+import { INSTANCE_TABS, ec2Routes } from "@localconsole/core/ec2";
+import { instanceCrumbs } from "../routes.ts";
 
 export function InstanceDetail() {
   const { instanceId: id = "" } = useParams();

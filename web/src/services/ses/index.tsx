@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconMail } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { SES_ROUTE_PATTERNS, SES_SERVICE_ID, sesRoutes } from "./routes.ts";
+import { SES_ROUTE_PATTERNS, SES_SERVICE_ID, sesRoutes } from "@localconsole/core/ses";
 
 export const sesService: ServiceDefinition = {
   id: SES_SERVICE_ID,

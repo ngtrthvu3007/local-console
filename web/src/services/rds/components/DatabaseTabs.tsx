@@ -7,23 +7,25 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { BreakableText } from "@shared/components/BreakableText.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { copyable, CopyButton } from "@shared/components/CopyButton.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import { secretsRoutes } from "../../secretsmanager/routes.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
+import { secretsRoutes } from "@localconsole/core/secretsmanager";
 import { connectionUrl, databaseSample } from "../codeSamples.ts";
 import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
-import { RDS_KEY_SERVICE, CREDENTIAL_TYPES, errorLogGroup } from "../constants.ts";
 import {
+  RDS_KEY_SERVICE,
+  CREDENTIAL_TYPES,
+  errorLogGroup,
   addressText,
   endpointOf,
   engineText,
   isSupportedEngine,
   machineAddress,
   type Address,
-} from "../databases.ts";
+} from "@localconsole/core/rds";
 
 export function ConnectivityTab({ database }: { database: DBInstance }) {
   const follow = useFollow();

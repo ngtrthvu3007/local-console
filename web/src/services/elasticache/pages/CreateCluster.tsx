@@ -10,10 +10,16 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { CLUSTER_NAME_MAX_LENGTH, DEFAULT_ENGINE, ENGINE_LABELS } from "../constants.ts";
+import {
+  CLUSTER_NAME_MAX_LENGTH,
+  DEFAULT_ENGINE,
+  ENGINE_LABELS,
+  elasticacheRoutes,
+  createClusterSchema,
+  type CreateClusterForm,
+} from "@localconsole/core/elasticache";
 import { useCreateCluster } from "../hooks/useClusters.ts";
-import { elasticacheBaseCrumbs, elasticacheRoutes } from "../routes.ts";
-import { createClusterSchema, type CreateClusterForm } from "../schemas.ts";
+import { elasticacheBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `1–${CLUSTER_NAME_MAX_LENGTH} characters: lowercase letters, numbers and hyphens. Start with a letter.`;
 const INITIAL_VALUES: CreateClusterForm = { name: "", engine: DEFAULT_ENGINE };

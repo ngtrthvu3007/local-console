@@ -13,7 +13,8 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -23,10 +24,11 @@ import { AddEmailModal } from "../components/AddEmailModal.tsx";
 import { DeleteIdentitiesModal } from "../components/DeleteIdentitiesModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { identitySample, senderOf } from "../codeSamples.ts";
-import { IDENTITY_TYPE_LABELS, VERIFICATION_STATUS } from "../constants.ts";
+import { IDENTITY_TYPE_LABELS, sesRoutes } from "@localconsole/core/ses";
+import { VERIFICATION_STATUS } from "../constants.ts";
 import { SetConfigurationSetModal } from "../components/SetConfigurationSetModal.tsx";
 import { useIdentities, useIdentityConfigurationSets } from "../hooks/useIdentities.ts";
-import { sesBaseCrumbs, sesRoutes } from "../routes.ts";
+import { sesBaseCrumbs } from "../routes.ts";
 
 const NAME_FIELD = "IdentityName";
 

@@ -4,8 +4,9 @@ import Alert from "@cloudscape-design/components/alert";
 import type { ButtonDropdownProps } from "@cloudscape-design/components/button-dropdown";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { CONFIRM_DELETE_DATABASE, DB_STATUSES } from "../constants.ts";
-import { DATABASE_ACTIONS, useDatabaseAction, type DatabaseAction } from "../hooks/useDatabases.ts";
+import { DB_STATUSES, DATABASE_ACTIONS, type DatabaseAction } from "@localconsole/core/rds";
+import { CONFIRM_DELETE_DATABASE } from "../constants.ts";
+import { useDatabaseAction } from "../hooks/useDatabases.ts";
 
 interface ActionConfig {
   text: string;

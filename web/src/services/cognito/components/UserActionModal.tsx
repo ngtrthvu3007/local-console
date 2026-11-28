@@ -2,9 +2,10 @@ import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
-import { useUserActions, type UserAction } from "../hooks/useUsers.ts";
+import type { UserAction } from "@localconsole/core/cognito";
+import { useUserActions } from "../hooks/useUsers.ts";
 
 const ACTION_COPY: Record<
   UserAction,

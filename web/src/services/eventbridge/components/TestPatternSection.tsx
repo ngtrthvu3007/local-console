@@ -6,11 +6,14 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import { ValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
-import { jsonObjectError } from "@shared/json.ts";
-import { DEFAULT_SAMPLE_EVENT, EDITOR_HEIGHT_PX } from "../constants.ts";
+import { errorMessage, jsonObjectError } from "@localconsole/core/shared";
+import {
+  EDITOR_HEIGHT_PX,
+  DEFAULT_SAMPLE_EVENT,
+  patternError,
+  wrapSampleEvent,
+} from "@localconsole/core/eventbridge";
 import { useTestPattern } from "../hooks/useRules.ts";
-import { patternError, wrapSampleEvent } from "../pattern.ts";
 
 // Thử pattern với một event mẫu trước khi lưu rule
 export function TestPatternSection({ pattern }: { pattern: string }) {

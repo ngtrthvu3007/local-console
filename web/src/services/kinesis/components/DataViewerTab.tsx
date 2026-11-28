@@ -12,17 +12,26 @@ import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate, truncate } from "@shared/format.ts";
-import { reformatJson } from "@shared/json.ts";
+import {
+  DETAIL_SEPARATOR,
+  NOT_AVAILABLE,
+  formatDate,
+  truncate,
+  reformatJson,
+} from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_ITERATOR_TYPE, ITERATOR_TYPES } from "../constants.ts";
+import {
+  DEFAULT_ITERATOR_TYPE,
+  ITERATOR_TYPES,
+  recordText,
+  dataViewerSchema,
+  type DataViewerForm,
+} from "@localconsole/core/kinesis";
 import { useRecords, type KinesisRecord } from "../hooks/useRecords.ts";
 import { useShards } from "../hooks/useStreams.ts";
-import { recordText } from "../recordData.ts";
-import { dataViewerSchema, type DataViewerForm } from "../schemas.ts";
 
 const DATA_PREVIEW_LENGTH = 120;
 const POSITION_OPTIONS = Object.entries(ITERATOR_TYPES).map(([value, label]) => ({

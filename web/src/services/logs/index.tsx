@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconLogs } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { LOGS_ROUTE_PATTERNS, LOGS_SERVICE_ID, logsRoutes } from "./routes.ts";
+import { LOGS_ROUTE_PATTERNS, LOGS_SERVICE_ID, logsRoutes } from "@localconsole/core/logs";
 
 export const logsService: ServiceDefinition = {
   id: LOGS_SERVICE_ID,

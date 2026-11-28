@@ -1,3 +1,5 @@
+import { MILLISECONDS_PER_SECOND } from "@localconsole/core/shared";
+
 export const APP_NAME = "Local Console";
 export const LOGO_PATH = "/mark.svg";
 export const HOME_PATH = "/";
@@ -9,41 +11,18 @@ export const API_PATHS = {
   config: "/api/config",
 } as const;
 
-export const FLOCI_PATHS = {
-  info: `${AWS_PROXY_PATH}/_floci/info`,
-  health: `${AWS_PROXY_PATH}/_floci/health`,
-  reset: `${AWS_PROXY_PATH}/_floci/state/reset`,
-} as const;
-
-export const FLOCI_SERVICE_RUNNING = "running";
 export const FLOCI_START_COMMAND = "docker compose up -d floci";
 export const FLOCI_RESTART_COMMAND = "docker compose restart floci";
 // Chỉ gặp khi chạy UI bằng npm run dev:web (console trong Docker tự có server)
 export const DEV_SERVER_START_COMMAND = "npm run dev:server";
-
-// Floci nhận credential bất kỳ
-export const AWS_TEST_CREDENTIALS = {
-  accessKeyId: "test",
-  secretAccessKey: "test",
-} as const;
-
-export const FLOCI_ACCOUNT_ID = "000000000000";
 
 // Region hiển thị kèm mã Local Zone
 export const REGION_LABELS: Record<string, string> = {
   "ap-southeast-1": "ap-southeast-1-han-1a (Ha Noi)",
 };
 
-export const MILLISECONDS_PER_SECOND = 1000;
-export const SECONDS_PER_MINUTE = 60;
-export const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
-export const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
-
 // Số dòng mỗi trang của bảng danh sách (Cloudscape Pagination)
 export const TABLE_PAGE_SIZE = 50;
-
-export const KIBIBYTE = 1024;
-export const MEBIBYTE = 1024 * KIBIBYTE;
 
 export const HEALTH_REFRESH_INTERVAL_MS = 10 * MILLISECONDS_PER_SECOND;
 export const SUCCESS_MESSAGE_LIFETIME_MS = 5 * MILLISECONDS_PER_SECOND;
@@ -86,12 +65,6 @@ export type ServiceCategory = keyof typeof SERVICE_CATEGORIES;
 // Modal xóa hàng loạt chỉ liệt kê vài mục đầu
 export const DELETE_PREVIEW_COUNT = 8;
 
-export const NOT_AVAILABLE = "—";
-
-// Ngăn các phần trong một dòng mô tả: "pk String · sk String · 68 items"
-export const DETAIL_SEPARATOR = " · ";
-// Nối tên trong câu thông báo: "a, b, c"
-export const LIST_SEPARATOR = ", ";
 // Dưới độ rộng này bảng thành danh sách hai tầng (điện thoại), tablet vẫn là
 // bảng nhiều cột. Cùng mốc phone với Cloudscape; ResizeObserver so sánh bằng <
 export const ITEM_LIST_WIDTH_PX = PHONE_MAX_WIDTH_PX + 1;

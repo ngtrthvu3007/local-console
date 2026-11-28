@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ace from "ace-builds";
+import type { EditorLanguage } from "@localconsole/core/shared";
 // CodeEditor bật autocomplete nên cần extension này
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-graphqlschema";
@@ -44,8 +45,7 @@ ace.config.setDefaultValue("renderer", "showPrintMargin", false);
 
 // "text": chế độ chữ thường có sẵn trong ace, không cần nạp thêm
 // graphqlschema, velocity: schema / query và mapping template của AppSync
-export type EditorLanguage =
-  "json" | "javascript" | "python" | "yaml" | "graphqlschema" | "velocity" | "text";
+export type { EditorLanguage };
 
 interface Props {
   value: string;

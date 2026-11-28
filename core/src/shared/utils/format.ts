@@ -1,0 +1,82 @@
+import {
+  NOT_AVAILABLE,
+  SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_MINUTE,
+} from "#shared/constants.ts";
+
+const BYTES_PER_UNIT = 1024;
+const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
+const SIZE_DECIMALS = 1;
+// Locale Thụy Điển in ngày giờ đúng dạng YYYY-MM-DD HH:mm:ss
+const DATE_TIME_LOCALE = "sv-SE";
+
+export function formatBytes(bytes?: number): string {
+  if (bytes === undefined) return NOT_AVAILABLE;
+  let amount = bytes;
+  let unitIndex = 0;
+  while (amount >= BYTES_PER_UNIT && unitIndex < BYTE_UNITS.length - 1) {
+    amount /= BYTES_PER_UNIT;
+    unitIndex++;
+  }
+  const value = unitIndex === 0 ? String(amount) : amount.toFixed(SIZE_DECIMALS);
+  return `${value} ${BYTE_UNITS[unitIndex]}`;
+}
+
+export const formatDate = (date?: Date | string | number) =>
+  date ? new Date(date).toLocaleString(DATE_TIME_LOCALE) : NOT_AVAILABLE;
+
+const MILLISECOND_DIGITS = 3;
+export const formatDateMs = (date?: Date | string | number) =>
+  date
+    ? `${formatDate(date)}.${String(new Date(date).getMilliseconds()).padStart(MILLISECOND_DIGITS, "0")}`
+    : NOT_AVAILABLE;
+
+export function formatTime(timestamp: number): string {
+  if (!timestamp) return NOT_AVAILABLE;
+  return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+const ELLIPSIS = "…";
+export const truncate = (text: string, length: number) =>
+  text.length > length ? `${text.slice(0, length)}${ELLIPSIS}` : text;
+
+const IDENTIFIER_PART = /[^:/]*[:/]+|[^:/]+$/g;
+export const identifierParts = (text: string) => text.match(IDENTIFIER_PART) ?? [text];
+
+// Đếm theo byte UTF-8 như giới hạn của AWS, không theo số ký tự
+const textEncoder = new TextEncoder();
+export const byteLength = (text: string) => textEncoder.encode(text).length;
+
+export const nounFor = (count: number, singular: string, pluralForm = `${singular}s`) =>
+  count === 1 ? singular : pluralForm;
+
+export const pluralize = (count: number, singular: string, pluralForm?: string) =>
+  `${count} ${nounFor(count, singular, pluralForm)}`;
+
+const DURATION_UNITS = [
+  { seconds: SECONDS_PER_DAY, suffix: "d" },
+  { seconds: SECONDS_PER_HOUR, suffix: "h" },
+  { seconds: SECONDS_PER_MINUTE, suffix: "m" },
+  { seconds: 1, suffix: "s" },
+];
+const DURATION_PARTS = 2;
+
+export function formatDuration(totalSeconds: number): string {
+  const first = DURATION_UNITS.findIndex((unit) => totalSeconds >= unit.seconds);
+  if (first < 0) return `${totalSeconds}s`;
+  let remaining = totalSeconds;
+  return DURATION_UNITS.slice(first, first + DURATION_PARTS)
+    .map((unit) => {
+      const amount = Math.floor(remaining / unit.seconds);
+      remaining -= amount * unit.seconds;
+      return `${amount}${unit.suffix}`;
+    })
+    .join(" ");
+}
+
+const listFormat = new Intl.ListFormat("en", { type: "conjunction" });
+export const usedByText = (users: readonly string[]) =>
+  users.length ? `Used by ${listFormat.format(users)}.` : undefined;
+
+export const lines = (...parts: string[]) => parts.join("\n");

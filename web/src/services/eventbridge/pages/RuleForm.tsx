@@ -22,22 +22,26 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { isNotFoundError } from "@shared/aws.ts";
+import { isNotFoundError } from "@localconsole/core/shared";
 import { TestPatternSection } from "../components/TestPatternSection.tsx";
 import {
+  EDITOR_HEIGHT_PX,
   DEFAULT_BUS_NAME,
   DEFAULT_EVENT_PATTERN,
-  EDITOR_HEIGHT_PX,
   NAME_MAX_LENGTH,
   nameConstraint,
   RULE_TYPES,
   SCHEDULE_PLACEHOLDER,
-} from "../constants.ts";
+  ruleType,
+  type Rule,
+  ruleSchema,
+  type RuleForm as RuleFormValues,
+  SEARCH_PARAMS,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 import { useBuses } from "../hooks/useBuses.ts";
 import { usePutRule, useRule } from "../hooks/useRules.ts";
-import { ruleType, type Rule } from "../rules.ts";
-import { SEARCH_PARAMS, eventbridgeRoutes, rulesCrumbs } from "../routes.ts";
-import { ruleSchema, type RuleForm as RuleFormValues } from "../schemas.ts";
+import { rulesCrumbs } from "../routes.ts";
 
 const SCHEDULE_DESCRIPTION =
   "For new schedules, EventBridge Scheduler offers time zones and one-time runs.";

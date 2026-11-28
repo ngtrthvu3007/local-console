@@ -3,7 +3,7 @@ import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { errorMessage } from "../hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
 
 export function EmptyState({
   title,

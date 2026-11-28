@@ -8,12 +8,13 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import type { DescribeBrokerResponse } from "@aws-sdk/client-mq";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
-import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { brokerSample, brokerUrl } from "../codeSamples.ts";
 import { LogGroupLink } from "../../logs/components/LogGroupLink.tsx";
-import { ENGINE_LABEL, HOST_PORT_HINT, brokerLogGroup } from "../constants.ts";
+import { ENGINE_LABEL, brokerLogGroup } from "@localconsole/core/mq";
+import { HOST_PORT_HINT } from "../constants.ts";
 
 const CONNECT_COLUMNS = 2;
 const GENERAL_COLUMNS = 4;

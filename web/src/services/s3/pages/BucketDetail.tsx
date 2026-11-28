@@ -10,9 +10,10 @@ import { StackLink } from "@shared/StackLink.tsx";
 import { ObjectsTab } from "../components/ObjectsTab.tsx";
 import { PermissionsTab } from "../components/PermissionsTab.tsx";
 import { PropertiesTab } from "../components/PropertiesTab.tsx";
-import { s3Uri } from "../helpers.ts";
+import { s3Uri } from "@localconsole/core/s3";
 import { useBucketExists } from "../hooks/useBuckets.ts";
-import { BUCKET_TABS, SEARCH_PARAMS, bucketCrumbs, s3Routes } from "../routes.ts";
+import { BUCKET_TABS, SEARCH_PARAMS, s3Routes } from "@localconsole/core/s3";
+import { bucketCrumbs } from "../routes.ts";
 
 export function BucketDetail() {
   const { bucket = "" } = useParams();

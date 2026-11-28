@@ -8,6 +8,7 @@
     "test:ui": "playwright test --project=ui-*",
     "test:ux": "playwright test --project=ux",
     "leftovers": "node it/leftovers.mjs",
+    "bundle": "node bundle/measure.mjs ../web/dist --compare bundle/baseline.json",
     "test:mobile": "playwright test --config playwright.mobile.config.ts"
   },
   "devDependencies": {

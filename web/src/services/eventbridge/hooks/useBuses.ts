@@ -5,15 +5,7 @@ import {
   type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
-import {
-  CreateEventBusCommand,
-  DeleteEventBusCommand,
-  PutEventsCommand,
-} from "@aws-sdk/client-eventbridge";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import { listBuses, type Bus } from "../buses.ts";
-import { deleteRule, listRules } from "../rules.ts";
-import { useEventBridge } from "./useEventBridge.ts";
+import { useEventBridgeService } from "./useEventBridgeService.ts";
 
 // Mọi query của EventBridge nằm dưới key gốc này
 export const EVENTBRIDGE_QUERY_ROOT = "eventbridge";
@@ -30,8 +22,9 @@ export const invalidateExcept = (queryClient: QueryClient, deleted: QueryKey[]) 
   });
 
 export function useBuses() {
-  const client = useEventBridge();
-  return useQuery({ queryKey: busesQueryKey, queryFn: () => listBuses(client) });
+  const eventbridge = useEventBridgeService();
+
+  return useQuery({ queryKey: busesQueryKey, queryFn: eventbridge.listBuses });
 }
 
 // Mọi thay đổi của EventBridge kéo theo nhiều nơi (số target ở danh sách rule, khối liên kết ở
@@ -42,58 +35,21 @@ export function useInvalidateEventBridge() {
 }
 
 export function useCreateBus() {
-  const client = useEventBridge();
+  const eventbridge = useEventBridgeService();
   const invalidate = useInvalidateEventBridge();
 
-  return useMutation({
-    mutationFn: (name: string) => client.send(new CreateEventBusCommand({ Name: name })),
-    onSuccess: invalidate,
-  });
+  return useMutation({ mutationFn: eventbridge.createBus, onSuccess: invalidate });
 }
 
 export function useDeleteBuses() {
-  const client = useEventBridge();
+  const eventbridge = useEventBridgeService();
   const invalidate = useInvalidateEventBridge();
 
-  return useMutation({
-    mutationFn: (buses: readonly Bus[]) =>
-      runEach(
-        buses,
-        (bus) => bus.name,
-        async (bus) => {
-          // Rule nằm trong bus nên xóa cùng
-          for (const rule of await listRules(client, bus.name))
-            await deleteRule(client, bus.name, rule.name);
-          await client.send(new DeleteEventBusCommand({ Name: bus.name }));
-        },
-      ),
-    onSuccess: invalidate,
-  });
-}
-
-interface PutEventInput {
-  bus: string;
-  source: string;
-  detailType: string;
-  detail: string;
+  return useMutation({ mutationFn: eventbridge.deleteBuses, onSuccess: invalidate });
 }
 
 export function usePutEvent() {
-  const client = useEventBridge();
+  const eventbridge = useEventBridgeService();
 
-  return useMutation({
-    mutationFn: async ({ bus, source, detailType, detail }: PutEventInput) => {
-      const result = await client.send(
-        new PutEventsCommand({
-          Entries: [{ EventBusName: bus, Source: source, DetailType: detailType, Detail: detail }],
-        }),
-      );
-
-      const entry = result.Entries?.[0];
-      // PutEvents báo lỗi từng entry ở đây chứ không ném
-      if (result.FailedEntryCount)
-        throw new Error(entry?.ErrorMessage ?? "Couldn't send the event");
-      return entry?.EventId;
-    },
-  });
+  return useMutation({ mutationFn: eventbridge.putEvent });
 }

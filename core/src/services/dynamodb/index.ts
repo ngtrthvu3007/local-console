@@ -1,0 +1,11 @@
+export * from "./constants.ts";
+export * from "./expressions.ts";
+export * from "./itemJson.ts";
+export * from "./keys.ts";
+export * from "./paths.ts";
+export * from "./schemas.ts";
+export * from "./searchSummary.ts";
+export * from "./service.ts";
+export type { ItemPage, ItemSearchInput, PutItemInput } from "./operations/items.ts";
+export type { StreamChange, TimeToLiveChange } from "./operations/settings.ts";
+export type { CreateTableInput } from "./operations/tables.ts";

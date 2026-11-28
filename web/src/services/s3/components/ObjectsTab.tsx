@@ -13,17 +13,16 @@ import Toggle from "@cloudscape-design/components/toggle";
 import { copyToClipboard } from "@shared/clipboard.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes, formatDate } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatBytes, formatDate } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { DOWNLOAD_SPACING_MS } from "../constants.ts";
-import { extensionOf, s3Uri } from "../helpers.ts";
+import { DOWNLOAD_SPACING_MS, extensionOf, s3Uri } from "@localconsole/core/s3";
 import { useIsVersioned } from "../hooks/useBucketSettings.ts";
-import { useObjectVersions, useObjects, type ObjectRow } from "../hooks/useObjects.ts";
-import { useS3 } from "../hooks/useS3.ts";
-import { downloadObject } from "../presign.ts";
-import { s3Routes } from "../routes.ts";
+import type { ObjectRow } from "@localconsole/core/s3";
+import { useObjectVersions, useObjects } from "../hooks/useObjects.ts";
+import { useS3Service } from "../hooks/useS3Service.ts";
+import { downloadObject } from "../downloadObject.ts";
+import { s3Routes } from "@localconsole/core/s3";
 import {
   CreateFolderModal,
   DeleteObjectsModal,
@@ -105,7 +104,7 @@ interface Props {
 
 export function ObjectsTab({ bucket, prefix, onOpenFolder }: Props) {
   const follow = useFollow();
-  const { signer } = useS3();
+  const s3 = useS3Service();
   const { ref, compact } = useIsCompact();
   const versioned = useIsVersioned(bucket);
   const [search, setSearch] = useState("");
@@ -137,7 +136,7 @@ export function ObjectsTab({ bucket, prefix, onOpenFolder }: Props) {
 
   const downloadSelected = async () => {
     for (const row of selectedFiles) {
-      await downloadObject(signer, bucket, row.key, row.versionId);
+      await downloadObject(s3, bucket, row.key, row.versionId);
       await waitBetweenDownloads();
     }
   };

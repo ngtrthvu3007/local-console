@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { SelectProps } from "@cloudscape-design/components/select";
 import { FormMultiselect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useSetMembership } from "../hooks/useGroups.ts";

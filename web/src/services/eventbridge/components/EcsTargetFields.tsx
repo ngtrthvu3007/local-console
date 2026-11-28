@@ -1,8 +1,8 @@
 import type { Control, FieldValues, Path } from "react-hook-form";
-import { taskDefinitionArn } from "../../ecs/arns.ts";
+import { taskDefinitionArn } from "@localconsole/core/ecs";
 import { NetworkFields } from "../../ecs/components/NetworkFields.tsx";
 import { TaskDefinitionFields } from "../../ecs/components/TaskDefinitionFields.tsx";
-import type { EcsTarget } from "../targets.ts";
+import type { EcsTarget } from "@localconsole/core/eventbridge";
 
 interface EcsFormValues {
   taskFamily: string;

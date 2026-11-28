@@ -18,8 +18,8 @@ import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -38,19 +38,16 @@ import {
   PHONE_ATTRIBUTE,
   SUB_ATTRIBUTE,
   UNCONFIRMED_STATUS,
-  USER_STATUSES,
-} from "../constants.ts";
-import { isCognitoMissing } from "../hooks/useCognito.ts";
+  attributeValue,
+  isCognitoMissing,
+  type UserAction,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
+import { USER_STATUSES } from "../constants.ts";
 import { useGroups, useSetMembership, useUserGroups } from "../hooks/useGroups.ts";
 import { useUserPool } from "../hooks/usePools.ts";
-import {
-  useDeleteUserAttribute,
-  useUpdateUserAttributes,
-  useUser,
-  type UserAction,
-} from "../hooks/useUsers.ts";
-import { cognitoRoutes, mailboxHref, poolCrumbs, smsHref } from "../routes.ts";
-import { attributeValue } from "../users.ts";
+import { useDeleteUserAttribute, useUpdateUserAttributes, useUser } from "../hooks/useUsers.ts";
+import { mailboxHref, poolCrumbs, smsHref } from "../routes.ts";
 
 const MODALS = {
   setPassword: "setPassword",

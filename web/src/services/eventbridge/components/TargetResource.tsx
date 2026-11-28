@@ -1,15 +1,15 @@
 import Box from "@cloudscape-design/components/box";
-import { lastArnPart } from "@shared/arn.ts";
-import { clusterNameOf } from "../../ecs/arns.ts";
+import { lastArnPart } from "@localconsole/core/shared";
+import { clusterNameOf } from "@localconsole/core/ecs";
 import { ClusterLink } from "../../ecs/components/ClusterLink.tsx";
 import { TaskDefinitionLink } from "../../ecs/components/TaskDefinitionLink.tsx";
 import { StreamLink } from "../../kinesis/components/StreamLink.tsx";
-import { streamNameOfArn } from "../../kinesis/recordData.ts";
+import { streamNameOfArn } from "@localconsole/core/kinesis";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import { StateMachineLink } from "../../stepfunctions/components/StateMachineLink.tsx";
-import { busNameOfArn, qualifierOfArn, targetKindOfArn } from "../targets.ts";
+import { busNameOfArn, qualifierOfArn, targetKindOfArn } from "@localconsole/core/eventbridge";
 import { BusLink } from "./BusLink.tsx";
 
 interface Props {

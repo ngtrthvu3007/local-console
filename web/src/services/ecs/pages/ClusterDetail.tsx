@@ -8,8 +8,7 @@ import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, pluralize } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -19,7 +18,8 @@ import { ServicesTab } from "../components/ServicesTab.tsx";
 import { TasksTable } from "../components/TasksTable.tsx";
 import { useCluster } from "../hooks/useClusters.ts";
 import { useNetworkOptions } from "../hooks/useNetworkOptions.ts";
-import { CLUSTER_TABS, clusterCrumbs, ecsRoutes } from "../routes.ts";
+import { CLUSTER_TABS, ecsRoutes } from "@localconsole/core/ecs";
+import { clusterCrumbs } from "../routes.ts";
 
 export function ClusterDetail() {
   const { cluster: name = "" } = useParams();

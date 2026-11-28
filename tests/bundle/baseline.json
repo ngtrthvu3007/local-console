@@ -1,0 +1,30 @@
+{
+  "chunks": 373,
+  "index": {
+    "raw": 784216,
+    "gzip": 219170
+  },
+  "initialLoad": {
+    "raw": 1252646,
+    "gzip": 357928
+  },
+  "total": {
+    "raw": 5903466,
+    "gzip": 1685422
+  },
+  "pages": {
+    "QueueList": {
+      "raw": 2118498,
+      "gzip": 636053
+    },
+    "QueueDetail": {
+      "raw": 2369325,
+      "gzip": 723622
+    },
+    "FunctionList": {
+      "raw": 2043229,
+      "gzip": 612262
+    }
+  },
+  "sdkInInitialLoad": []
+}

@@ -13,22 +13,33 @@ import { copyToClipboard } from "@shared/clipboard.ts";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
+import {
+  DETAIL_SEPARATOR,
+  NOT_AVAILABLE,
+  reformatJson,
+  isNotFoundError,
+} from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { reformatJson } from "@shared/json.ts";
 import { StackLink } from "@shared/StackLink.tsx";
-import { isNotFoundError } from "@shared/aws.ts";
 import { scheduleSample } from "../codeSamples.ts";
 import { DeleteSchedulesModal } from "../components/DeleteSchedulesModal.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
-import { AFTER_COMPLETION, FLEXIBLE_MODES, SCHEDULE_STATES } from "../constants.ts";
+import {
+  AFTER_COMPLETION,
+  FLEXIBLE_MODES,
+  SCHEDULE_STATES,
+  parseExpression,
+  toScheduleRow,
+  type Schedule,
+  TARGET_KINDS,
+  targetKindOfArn,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 import { useSchedule, useSetSchedulesEnabled } from "../hooks/useSchedules.ts";
-import { eventbridgeRoutes, scheduleCrumbs } from "../routes.ts";
-import { parseExpression } from "../scheduleExpression.ts";
-import { toScheduleRow, type Schedule } from "../schedules.ts";
-import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
+import { scheduleCrumbs } from "../routes.ts";
 
 const DETAILS_COLUMNS = 3;
 

@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconCpu } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { EC2_ROUTE_PATTERNS, EC2_SERVICE_ID, ec2Routes } from "./routes.ts";
+import { EC2_ROUTE_PATTERNS, EC2_SERVICE_ID, ec2Routes } from "@localconsole/core/ec2";
 
 export const ec2Service: ServiceDefinition = {
   id: EC2_SERVICE_ID,

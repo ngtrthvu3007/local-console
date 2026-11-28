@@ -16,8 +16,7 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { KeyValueEditor, type KeyValue } from "@shared/components/KeyValueEditor.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
-import { LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes } from "@shared/format.ts";
+import { LIST_SEPARATOR, NOT_AVAILABLE, formatBytes } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
@@ -28,14 +27,15 @@ import {
   MEMORY_LIMITS_MB,
   RUNTIME_OPTIONS,
   TIMEOUT_LIMITS_SECONDS,
-} from "../constants.ts";
+  environmentSchema,
+  generalConfigurationSchema,
+} from "@localconsole/core/lambda";
 import { useUpdateConfiguration } from "../hooks/useFunctions.ts";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
 import { functionSample } from "../codeSamples.ts";
 import { AsyncInvocationBlock } from "./AsyncInvocationBlock.tsx";
-import { environmentSchema, generalConfigurationSchema } from "../schemas.ts";
 
 const GENERAL_COLUMNS = 4;
 const BYTES_PER_MEGABYTE = 1024 * 1024;

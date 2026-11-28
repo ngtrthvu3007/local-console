@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconLambda } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { LAMBDA_ROUTE_PATTERNS, LAMBDA_SERVICE_ID, lambdaRoutes } from "./routes.ts";
+import { LAMBDA_ROUTE_PATTERNS, LAMBDA_SERVICE_ID, lambdaRoutes } from "@localconsole/core/lambda";
 
 export const lambdaService: ServiceDefinition = {
   id: LAMBDA_SERVICE_ID,

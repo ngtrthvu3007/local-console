@@ -1,4 +1,4 @@
-import { usageOf } from "../apis.ts";
+import { usageOf } from "@localconsole/core/appsync";
 import { useApiFunctions } from "./useFunctions.ts";
 import { useResolvers } from "./useResolvers.ts";
 import { useSchemaTypes } from "./useSchema.ts";

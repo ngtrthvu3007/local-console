@@ -8,7 +8,7 @@ import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { StackLink } from "@shared/StackLink.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { DeletePoolsModal } from "../components/DeletePoolsModal.tsx";
@@ -19,10 +19,16 @@ import { UsersTab } from "../components/UsersTab.tsx";
 import { DetailsTab } from "../components/DetailsTab.tsx";
 import { TriggersTab } from "../components/TriggersTab.tsx";
 import { TestSignInModal } from "../components/TestSignInModal.tsx";
-import { EMAIL_ATTRIBUTE, SIGN_IN_WITH } from "../constants.ts";
-import { isCognitoMissing } from "../hooks/useCognito.ts";
+import {
+  EMAIL_ATTRIBUTE,
+  SIGN_IN_WITH,
+  isCognitoMissing,
+  POOL_TABS,
+  cognitoRoutes,
+  type PoolTab,
+} from "@localconsole/core/cognito";
 import { useUserPool } from "../hooks/usePools.ts";
-import { POOL_TABS, cognitoRoutes, poolCrumbs, type PoolTab } from "../routes.ts";
+import { poolCrumbs } from "../routes.ts";
 
 const TAB_LABELS: Record<PoolTab, string> = {
   users: "Users",

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchJson } from "../api.ts";
+import { fetchJson } from "@localconsole/core/shared";
 import { API_PATHS, HEALTH_REFRESH_INTERVAL_MS } from "../constants.ts";
 
 const configQueryKey = ["config"];

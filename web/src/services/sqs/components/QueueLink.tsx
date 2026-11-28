@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useQueueExists } from "../hooks/useQueues.ts";
-import { sqsRoutes } from "../routes.ts";
+import { sqsRoutes } from "@localconsole/core/sqs";
 
 // Tên queue thành link sang trang queue; dùng ở Lambda, S3, SNS và chính SQS
 export function QueueLink({ name }: { name: string }) {

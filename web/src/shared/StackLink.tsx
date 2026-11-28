@@ -1,8 +1,7 @@
 import Link from "@cloudscape-design/components/link";
 import { useResourceIndex } from "../services/cloudformation/hooks/useResourceIndex.ts";
-import { indexKey } from "../services/cloudformation/resourceIndex.ts";
-import { cloudformationRoutes } from "../services/cloudformation/routes.ts";
-import { DETAIL_SEPARATOR } from "./constants.ts";
+import { cloudformationRoutes } from "@localconsole/core/cloudformation";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useFollow } from "./hooks/useFollow.ts";
 
 interface Props {
@@ -15,7 +14,7 @@ interface Props {
 // Không thuộc stack nào (hoặc đang tải, lỗi) thì không hiện gì
 export function StackLink({ type, physicalId, separated }: Props) {
   const follow = useFollow();
-  const stack = useResourceIndex().data?.get(indexKey(type, physicalId));
+  const stack = useResourceIndex().data?.(type, physicalId);
   if (!stack) return null;
   return (
     <span>

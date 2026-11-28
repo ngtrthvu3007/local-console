@@ -22,29 +22,36 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { isNotFoundError } from "@shared/aws.ts";
 import { ECS_TARGET_NAMES, EcsTargetFields, ecsTargetOf } from "../components/EcsTargetFields.tsx";
 import { TargetResource } from "../components/TargetResource.tsx";
 import {
+  EDITOR_HEIGHT_PX,
   AFTER_COMPLETION,
   DEFAULT_FLEXIBLE_MINUTES,
   DEFAULT_SCHEDULE_GROUP,
-  EDITOR_HEIGHT_PX,
   FLEXIBLE_MODES,
   RATE_UNITS,
   SCHEDULE_KINDS,
   NAME_MAX_LENGTH,
   nameConstraint,
   SCHEDULE_STATES,
-} from "../constants.ts";
+  buildExpression,
+  parseExpression,
+  scheduleSchema,
+  type ScheduleForm as ScheduleFormValues,
+  buildTarget,
+  editableTargetKind,
+  toUpdateInput,
+  type Schedule,
+  TARGET_KINDS,
+  SEARCH_PARAMS,
+  eventbridgeRoutes,
+} from "@localconsole/core/eventbridge";
 import { useSaveSchedule, useSchedule, useScheduleGroups } from "../hooks/useSchedules.ts";
 import { TARGET_KIND_OPTIONS, useTargetOptions } from "../hooks/useTargets.ts";
-import { SEARCH_PARAMS, eventbridgeRoutes, schedulesCrumbs } from "../routes.ts";
-import { buildExpression, parseExpression } from "../scheduleExpression.ts";
-import { scheduleSchema, type ScheduleForm as ScheduleFormValues } from "../schemas.ts";
-import { buildTarget, editableTargetKind, toUpdateInput, type Schedule } from "../schedules.ts";
-import { TARGET_KINDS } from "../targets.ts";
-import { taskDefinitionRefOf } from "../../ecs/arns.ts";
+import { schedulesCrumbs } from "../routes.ts";
+import { taskDefinitionRefOf } from "@localconsole/core/ecs";
+import { isNotFoundError } from "@localconsole/core/shared";
 
 const CRON_DESCRIPTION = "Example: 0 9 ? * MON-FRI * runs at 9:00 on weekdays.";
 // Floci chạy ngay schedule `at` có giờ đã qua (AWS thì từ chối), và xóa nó luôn nếu bật Delete after completion

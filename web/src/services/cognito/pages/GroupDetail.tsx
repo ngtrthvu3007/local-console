@@ -14,8 +14,8 @@ import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -23,13 +23,19 @@ import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { AddMembersModal } from "../components/AddMembersModal.tsx";
 import { EnabledStatus, UserStatus } from "../components/UsersTab.tsx";
-import { EMAIL_ATTRIBUTE, GROUP_GENERAL_COLUMNS, GROUP_MEMBERS_DESCRIPTION } from "../constants.ts";
-import { isCognitoMissing } from "../hooks/useCognito.ts";
+import {
+  EMAIL_ATTRIBUTE,
+  attributeValue,
+  truncateMiddle,
+  isCognitoMissing,
+  POOL_TABS,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
+import { GROUP_GENERAL_COLUMNS, GROUP_MEMBERS_DESCRIPTION } from "../constants.ts";
 import { useGroup, useGroupMembers, useSetMembership } from "../hooks/useGroups.ts";
 import { useUserPool } from "../hooks/usePools.ts";
 import { useUsers } from "../hooks/useUsers.ts";
-import { POOL_TABS, cognitoRoutes, poolCrumbs } from "../routes.ts";
-import { attributeValue, truncateMiddle } from "../users.ts";
+import { poolCrumbs } from "../routes.ts";
 
 const USERNAME_FIELD = "Username";
 

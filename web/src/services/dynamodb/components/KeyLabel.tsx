@@ -1,7 +1,6 @@
 import Box from "@cloudscape-design/components/box";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { KEY_TYPES } from "../constants.ts";
-import type { KeyAttribute } from "../hooks/useTables.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
+import { KEY_TYPES, type KeyAttribute } from "@localconsole/core/dynamodb";
 
 // "pk String": tên key ở màu chữ chính, kiểu màu xám (dễ đọc hơn "pk (S)")
 export function KeyLabel({ attribute }: { attribute?: KeyAttribute }) {

@@ -9,11 +9,11 @@ import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.ts
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { errorMessage, notifyOutcome, notifySuccess } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
+import { notifyOutcome, notifySuccess } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { HOSTED_UI_PATHS } from "../constants.ts";
+import { HOSTED_UI_PATHS, domainSchema, type DomainForm } from "@localconsole/core/cognito";
 import { useCreateDomain, useDeleteDomain } from "../hooks/usePools.ts";
-import { domainSchema, type DomainForm } from "../schemas.ts";
 
 const INITIAL_VALUES: DomainForm = { prefix: "" };
 

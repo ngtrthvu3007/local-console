@@ -21,21 +21,27 @@ import { skipLeaveGuard, useLeaveGuard } from "@shared/hooks/useLeaveGuard.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { dataSourceOptions, formOfResolver, moveAt } from "../apis.ts";
-import { CodeSection, useCodeTemplate } from "../components/CodeSection.tsx";
 import {
+  dataSourceOptions,
+  formOfResolver,
+  moveAt,
   DATA_SOURCE_TYPES,
   LAMBDA_INVOKE_NOTE,
   RESOLVER_KINDS,
   RUNTIME_LABELS,
   RUNTIMES,
-} from "../constants.ts";
+  PIPELINE_TEMPLATE,
+  templateFor,
+  resolverSchema,
+  type ResolverForm,
+  API_TABS,
+  appsyncRoutes,
+} from "@localconsole/core/appsync";
+import { CodeSection, useCodeTemplate } from "../components/CodeSection.tsx";
 import { useDataSources } from "../hooks/useDataSources.ts";
 import { useApiFunctions } from "../hooks/useFunctions.ts";
 import { useResolvers, useSaveResolver } from "../hooks/useResolvers.ts";
-import { PIPELINE_TEMPLATE, templateFor } from "../resolverTemplates.ts";
-import { API_TABS, apiCrumbs, appsyncRoutes } from "../routes.ts";
-import { resolverSchema, type ResolverForm } from "../schemas.ts";
+import { apiCrumbs } from "../routes.ts";
 
 const KIND_ITEMS = [
   { value: RESOLVER_KINDS.unit, label: "Unit", description: "One data source." },

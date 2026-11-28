@@ -2,9 +2,8 @@ import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { NAME_MAX_LENGTH, nameConstraint } from "../constants.ts";
+import { NAME_MAX_LENGTH, nameConstraint, createGroupSchema } from "@localconsole/core/eventbridge";
 import { useCreateGroup } from "../hooks/useSchedules.ts";
-import { createGroupSchema } from "../schemas.ts";
 
 interface Props {
   onCreated: (name: string) => void;

@@ -11,11 +11,10 @@ import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { copyable } from "@shared/components/CopyButton.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { distributionSample } from "../codeSamples.ts";
-import { errorResponsesOf, isSpa, localUrl } from "../distributions.ts";
+import { errorResponsesOf, isSpa, localUrl } from "@localconsole/core/cloudfront";
 import { SettingsModal } from "./SettingsModal.tsx";
 
 const DETAILS_COLUMNS = 2;

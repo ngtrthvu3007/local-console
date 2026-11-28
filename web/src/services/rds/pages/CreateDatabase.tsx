@@ -28,13 +28,15 @@ import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_RULE,
   USERNAME_MAX_LENGTH,
-} from "../constants.ts";
+  createDatabaseSchema,
+  type CreateDatabaseForm,
+  rdsRoutes,
+} from "@localconsole/core/rds";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import { SECRETS_KEY_SERVICE } from "../../secretsmanager/constants.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
+import { SECRETS_KEY_SERVICE } from "@localconsole/core/secretsmanager";
 import { useCreateDatabase } from "../hooks/useDatabases.ts";
-import { rdsBaseCrumbs, rdsRoutes } from "../routes.ts";
-import { createDatabaseSchema, type CreateDatabaseForm } from "../schemas.ts";
+import { rdsBaseCrumbs } from "../routes.ts";
 
 const IDENTIFIER_CONSTRAINT = `1–${IDENTIFIER_MAX_LENGTH} characters: lowercase letters, numbers and hyphens. Start with a letter.`;
 const USERNAME_CONSTRAINT = `1–${USERNAME_MAX_LENGTH} characters: letters, numbers and underscores. Start with a letter.`;

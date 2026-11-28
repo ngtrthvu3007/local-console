@@ -5,17 +5,16 @@ import Container from "@cloudscape-design/components/container";
 import Spinner from "@cloudscape-design/components/spinner";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
-import { formatBytes } from "@shared/format.ts";
-import { reformatJson } from "@shared/json.ts";
+import { formatBytes, reformatJson } from "@localconsole/core/shared";
 import {
   DOWNLOAD_URL_LIFETIME_SECONDS,
   IMAGE_PREVIEW_MAX_BYTES,
   TEXT_PREVIEW_MAX_BYTES,
-} from "../constants.ts";
-import { previewKind } from "../helpers.ts";
+  previewKind,
+} from "@localconsole/core/s3";
 import { useTextContent } from "../hooks/useObject.ts";
-import { useS3 } from "../hooks/useS3.ts";
-import { downloadObject, presign } from "../presign.ts";
+import { useS3Service } from "../hooks/useS3Service.ts";
+import { downloadObject } from "../downloadObject.ts";
 
 const PREVIEW_MAX_HEIGHT = "70vh";
 const previewFrameStyle = { maxHeight: PREVIEW_MAX_HEIGHT, overflow: "auto" } as const;
@@ -29,7 +28,7 @@ interface Props {
 }
 
 export function ObjectPreview({ bucket, objectKey, contentType, size }: Props) {
-  const { signer } = useS3();
+  const s3 = useS3Service();
   const kind = previewKind(objectKey, contentType, size);
   const isText = kind === "text" || kind === "json";
   const text = useTextContent(bucket, objectKey, isText);
@@ -38,13 +37,13 @@ export function ObjectPreview({ bucket, objectKey, contentType, size }: Props) {
   // <img> không đi qua SDK được nên tải thẳng từ Floci bằng pre-signed URL
   useEffect(() => {
     if (kind !== "image") return;
-    presign(signer, {
+    s3.presign({
       bucket,
       key: objectKey,
       method: "GET",
       expiresIn: DOWNLOAD_URL_LIFETIME_SECONDS,
     }).then(setImageUrl);
-  }, [kind, signer, bucket, objectKey]);
+  }, [kind, s3, bucket, objectKey]);
 
   if (kind === "none") {
     return (
@@ -56,7 +55,7 @@ export function ObjectPreview({ bucket, objectKey, contentType, size }: Props) {
             {formatBytes(IMAGE_PREVIEW_MAX_BYTES)}.
           </Box>
           <Box padding={{ top: "s" }}>
-            <Button iconName='download' onClick={() => downloadObject(signer, bucket, objectKey)}>
+            <Button iconName='download' onClick={() => downloadObject(s3, bucket, objectKey)}>
               Download
             </Button>
           </Box>

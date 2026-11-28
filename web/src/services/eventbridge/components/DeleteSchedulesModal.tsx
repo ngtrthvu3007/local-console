@@ -1,6 +1,6 @@
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { useDeleteSchedules } from "../hooks/useSchedules.ts";
-import type { ScheduleRow } from "../schedules.ts";
+import type { ScheduleRow } from "@localconsole/core/eventbridge";
 
 interface Props {
   schedules: readonly ScheduleRow[];

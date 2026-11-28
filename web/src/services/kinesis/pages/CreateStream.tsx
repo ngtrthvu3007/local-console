@@ -16,10 +16,12 @@ import {
   SHARD_COUNT,
   STREAM_MODES,
   STREAM_NAME_MAX_LENGTH,
-} from "../constants.ts";
+  kinesisRoutes,
+  createStreamSchema,
+  type CreateStreamForm,
+} from "@localconsole/core/kinesis";
 import { useCreateStream } from "../hooks/useStreams.ts";
-import { kinesisBaseCrumbs, kinesisRoutes } from "../routes.ts";
-import { createStreamSchema, type CreateStreamForm } from "../schemas.ts";
+import { kinesisBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `Up to ${STREAM_NAME_MAX_LENGTH} characters: letters, numbers, underscores (_), periods (.) and hyphens (-).`;
 

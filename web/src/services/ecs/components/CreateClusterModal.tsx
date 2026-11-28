@@ -3,10 +3,8 @@ import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { RESOURCE_NAME_RULE } from "../constants.ts";
+import { RESOURCE_NAME_RULE, createClusterSchema, ecsRoutes } from "@localconsole/core/ecs";
 import { useCreateCluster } from "../hooks/useClusters.ts";
-import { ecsRoutes } from "../routes.ts";
-import { createClusterSchema } from "../schemas.ts";
 
 // Chỉ mount khi mở
 export function CreateClusterModal({ onDismiss }: { onDismiss: () => void }) {

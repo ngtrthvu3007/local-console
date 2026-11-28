@@ -1,4 +1,5 @@
-import { lines, literal, SAMPLE_TEXT, type CodeSample } from "@shared/codeSamples.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, SAMPLE_TEXT, type CodeSample } from "@shared/codeSamples.ts";
 
 const SAMPLE_QUEUE = "hello";
 // Floci không trả user của broker (đã kiểm 2026-11-20), mật khẩu thì không API

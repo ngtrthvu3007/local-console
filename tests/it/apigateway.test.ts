@@ -38,7 +38,7 @@ import {
   DescribeStacksCommand,
   ListStackResourcesCommand,
 } from "@aws-sdk/client-cloudformation";
-import { CFN_API_TYPES } from "../../web/src/services/apigateway/constants.ts";
+import { CFN_API_TYPES } from "../../core/src/services/apigateway/constants.ts";
 import {
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
@@ -49,15 +49,16 @@ import {
   InitiateAuthCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { strToU8, zipSync } from "fflate";
-import { isNotFoundError } from "../../web/src/shared/aws.ts";
-import { listApis } from "../../web/src/services/apigateway/apis.ts";
-import { apiGatewaySourcesOf } from "../../web/src/services/apigateway/lambdaPermissions.ts";
+import { isNotFoundError } from "../../core/src/shared/aws/errors.ts";
+import { listApis } from "../../core/src/services/apigateway/operations/apis.ts";
+import { apiGatewaySourcesOf } from "../../core/src/services/apigateway/lambdaPermissions.ts";
 import {
   buildTestPath,
   restInvokeUrl,
   testInvokeUrl,
   webSocketUrl,
-} from "../../web/src/services/apigateway/invokeUrl.ts";
+} from "../../core/src/services/apigateway/invokeUrl.ts";
+import { AWS_PROXY_PATH } from "../../web/src/shared/constants.ts";
 import {
   ACCOUNT_ID,
   CONSOLE_URL,
@@ -332,7 +333,9 @@ describe("lambda permission for API Gateway", () => {
         Runtime: "nodejs22.x",
         Handler: "index.handler",
         Role: `arn:aws:iam::${ACCOUNT_ID}:role/lc-it-lambda`,
-        Code: { ZipFile: zipSync({ "index.mjs": strToU8("export const handler = async () => ({});") }) },
+        Code: {
+          ZipFile: zipSync({ "index.mjs": strToU8("export const handler = async () => ({});") }),
+        },
       }),
     );
   });
@@ -394,7 +397,9 @@ describe("CloudFormation", () => {
       );
       return Stacks?.[0]?.StackStatus?.endsWith("_IN_PROGRESS") ? undefined : Stacks?.[0];
     });
-    const listed = await cloudformation.send(new ListStackResourcesCommand({ StackName: stackName }));
+    const listed = await cloudformation.send(
+      new ListStackResourcesCommand({ StackName: stackName }),
+    );
     resources = (listed.StackResourceSummaries ?? []).map((r) => ({
       type: r.ResourceType,
       physicalId: r.PhysicalResourceId,
@@ -446,11 +451,28 @@ describe("testing a REST method through _user_request_", () => {
   let echoId: string;
   let authedId: string;
   let strandedId: string;
+  let failingId: string;
+  let tokenId: string;
+  let iamId: string;
   const apiIds: string[] = [];
   const strandedFn = uniqueName("gone");
+  const failingFn = uniqueName("fail");
+  const authFn = uniqueName("auth");
+  // Lambda TOKEN authorizer: token "allow" → Allow, còn lại → Deny
+  const AUTH_HANDLER = `export const handler = async (event) => ({
+    principalId: "user",
+    policyDocument: {
+      Version: "2012-10-17",
+      Statement: [{
+        Action: "execute-api:Invoke",
+        Effect: event.authorizationToken === "allow" ? "Allow" : "Deny",
+        Resource: event.methodArn,
+      }],
+    },
+  });`;
 
   const testUrl = (apiId: string, path: string) =>
-    `${CONSOLE_URL}${testInvokeUrl(apiId, STAGE, path, "")}`;
+    `${CONSOLE_URL}${testInvokeUrl(AWS_PROXY_PATH, apiId, STAGE, path, "")}`;
 
   const functionArn = async (name: string) =>
     (await lambda.send(new GetFunctionCommand({ FunctionName: name }))).Configuration!.FunctionArn!;
@@ -518,6 +540,31 @@ describe("testing a REST method through _user_request_", () => {
     echoId = await createApi("{id}", "POST", fnName);
     strandedId = await createApi("gone", "GET", strandedFn);
     await lambda.send(new DeleteFunctionCommand({ FunctionName: strandedFn }));
+    await createFunction(
+      failingFn,
+      `export const handler = async () => { throw new Error("boom"); };`,
+    );
+    failingId = await createApi("fail", "GET", failingFn);
+    await createFunction(authFn, AUTH_HANDLER);
+    tokenId = await createApi(
+      "secret",
+      "GET",
+      fnName,
+      "CUSTOM",
+      async (restApiId) =>
+        (
+          await v1.send(
+            new CreateAuthorizerCommand({
+              restApiId,
+              name: "token-auth",
+              type: "TOKEN",
+              authorizerUri: `arn:aws:apigateway:${publicRegion}:lambda:path/2015-03-31/functions/${await functionArn(authFn)}/invocations`,
+              identitySource: "method.request.header.Authorization",
+            }),
+          )
+        ).id!,
+    );
+    iamId = await createApi("signed", "GET", fnName, "AWS_IAM");
     poolId = (await cognito.send(new CreateUserPoolCommand({ PoolName: uniqueName("pool") })))
       .UserPool!.Id!;
     authedId = await createApi(
@@ -547,6 +594,8 @@ describe("testing a REST method through _user_request_", () => {
       await v1.send(new DeleteRestApiCommand({ restApiId: id })).catch(() => {});
     await lambda.send(new DeleteFunctionCommand({ FunctionName: fnName })).catch(() => {});
     await lambda.send(new DeleteFunctionCommand({ FunctionName: strandedFn })).catch(() => {});
+    for (const name of [failingFn, authFn])
+      await lambda.send(new DeleteFunctionCommand({ FunctionName: name })).catch(() => {});
     await cognito.send(new DeleteUserPoolCommand({ UserPoolId: poolId })).catch(() => {});
   });
 
@@ -588,7 +637,7 @@ describe("testing a REST method through _user_request_", () => {
   it("path param, query, header and body reach the Lambda", async () => {
     const path = buildTestPath("/{id}", { id: PATH_VALUE });
     const response = await fetch(
-      `${CONSOLE_URL}${testInvokeUrl(echoId, STAGE, path, `q=${QUERY_VALUE}`)}`,
+      `${CONSOLE_URL}${testInvokeUrl(AWS_PROXY_PATH, echoId, STAGE, path, `q=${QUERY_VALUE}`)}`,
       { method: "POST", headers: { [HEADER_NAME]: HEADER_VALUE }, body: BODY },
     );
 
@@ -618,5 +667,35 @@ describe("testing a REST method through _user_request_", () => {
     expect(await response.text()).toContain(
       `Function not found: arn:aws:lambda:${publicRegion}:${ACCOUNT_ID}:function:${strandedFn}`,
     );
+  });
+
+  it("reaches the Lambda without lambda:AddPermission (Floci doesn't check the resource policy)", async () => {
+    const policy = lambda.send(new GetPolicyCommand({ FunctionName: fnName }));
+
+    await expect(policy).rejects.toMatchObject({ $metadata: { httpStatusCode: 404 } });
+    expect((await fetch(testUrl(echoId, "/1"), { method: "POST" })).status).toBe(200);
+  });
+
+  it("a Lambda that throws answers 502 with an empty body", async () => {
+    const response = await fetch(testUrl(failingId, "/fail"));
+
+    expect(response.status).toBe(502);
+    expect(await response.text()).toBe("");
+  });
+
+  it("a Lambda TOKEN authorizer answers 401 without a token, 403 on Deny, 200 on Allow", async () => {
+    const call = (token?: string) =>
+      fetch(testUrl(tokenId, "/secret"), token ? { headers: { Authorization: token } } : {});
+
+    expect((await call()).status).toBe(401);
+    expect((await call("deny")).status).toBe(403);
+    expect((await call("allow")).status).toBe(200);
+  });
+
+  it("an AWS_IAM method answers 403 Missing Authentication Token to an unsigned call", async () => {
+    const response = await fetch(testUrl(iamId, "/signed"));
+
+    expect(response.status).toBe(403);
+    expect(await response.text()).toContain("Missing Authentication Token");
   });
 });

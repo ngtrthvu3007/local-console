@@ -16,12 +16,19 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { FIFO_SUFFIX, SNS_KEY_SERVICE, TOPIC_NAME_MAX_LENGTH, TOPIC_TYPES } from "../constants.ts";
+import {
+  FIFO_SUFFIX,
+  SNS_KEY_SERVICE,
+  TOPIC_NAME_MAX_LENGTH,
+  TOPIC_TYPES,
+  createTopicSchema,
+  type CreateTopicForm,
+  snsRoutes,
+} from "@localconsole/core/sns";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
 import { useCreateTopic } from "../hooks/useTopics.ts";
-import { snsBaseCrumbs, snsRoutes } from "../routes.ts";
-import { createTopicSchema, type CreateTopicForm } from "../schemas.ts";
+import { snsBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `Up to ${TOPIC_NAME_MAX_LENGTH} characters: letters, numbers, hyphens and underscores. A FIFO topic name ends with ${FIFO_SUFFIX}.`;
 

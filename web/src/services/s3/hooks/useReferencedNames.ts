@@ -1,41 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
-import { GetBucketNotificationConfigurationCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
-import { isArnOrQualified as refersTo } from "@shared/arn.ts";
-import { listRuleTargets, listScheduleTargets } from "../../eventbridge/eventSources.ts";
-import { useEventBridge } from "../../eventbridge/hooks/useEventBridge.ts";
-import { useScheduler } from "../../eventbridge/hooks/useScheduler.ts";
-import { useSNS } from "../../sns/hooks/useSNS.ts";
-import { listSubscriptionsOfEndpoint } from "../../sns/hooks/useSubscriptions.ts";
-import { toNotificationRules } from "../notificationRules.ts";
-import { useS3 } from "./useS3.ts";
+import { isArnOrQualified as refersTo } from "@localconsole/core/shared";
+import { useEventBridgeService } from "../../eventbridge/hooks/useEventBridgeService.ts";
+import { useSnsService } from "../../sns/hooks/useSnsService.ts";
+import { toNotificationRules } from "@localconsole/core/s3";
+import { useS3Service } from "./useS3Service.ts";
 
 const REFERENCES = "references";
 
 // Floci không dọn tham chiếu khi xóa nên cảnh báo trước; local ít resource nên quét hết khi mở modal
 export function useReferencedNames(items: readonly { name: string; arn: string }[]) {
-  const { s3 } = useS3();
-  const sns = useSNS();
-  const events = useEventBridge();
-  const scheduler = useScheduler();
+  const s3 = useS3Service();
+  const sns = useSnsService();
+  const eventbridge = useEventBridgeService();
 
   return useQuery({
     queryKey: [REFERENCES, ...items.map((item) => item.arn)],
     queryFn: async () => {
-      const buckets = (await s3.send(new ListBucketsCommand({}))).Buckets ?? [];
+      const buckets = await s3.listBuckets();
 
       const [subscriptions, perBucket, ruleTargets, scheduleTargets] = await Promise.all([
-        listSubscriptionsOfEndpoint(sns, (endpoint) =>
+        sns.listSubscriptionsOfEndpoint((endpoint) =>
           items.some((item) => refersTo(endpoint, item.arn)),
         ),
         Promise.all(
           buckets.map(async ({ Name: bucket = "" }) =>
-            toNotificationRules(
-              await s3.send(new GetBucketNotificationConfigurationCommand({ Bucket: bucket })),
-            ),
+            toNotificationRules(await s3.getBucketNotifications(bucket)),
           ),
         ),
-        listRuleTargets(events),
-        listScheduleTargets(scheduler),
+        eventbridge.listRuleTargets(),
+        eventbridge.listScheduleTargets(),
       ]);
 
       const referrers = [

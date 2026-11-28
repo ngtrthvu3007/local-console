@@ -23,7 +23,7 @@ import {
   DeleteEmailIdentityCommand,
   SESv2Client,
 } from "@aws-sdk/client-sesv2";
-import { toUpdateUserPoolInput } from "../../web/src/services/cognito/poolUpdate.ts";
+import { toUpdateUserPoolInput } from "../../core/src/services/cognito/poolUpdate.ts";
 import { startFakeOidc } from "./fakeOidc.ts";
 import {
   ACCOUNT_ID,

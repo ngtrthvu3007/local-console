@@ -4,8 +4,7 @@ import Checkbox from "@cloudscape-design/components/checkbox";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { LIST_SEPARATOR } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { LIST_SEPARATOR, pluralize } from "@localconsole/core/shared";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import {

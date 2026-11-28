@@ -14,12 +14,18 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { KeyValueEditor } from "@shared/components/KeyValueEditor.tsx";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import { SECRETS_KEY_SERVICE, SECRET_NAME_MAX_LENGTH, SECRET_TYPES } from "../constants.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
+import {
+  SECRETS_KEY_SERVICE,
+  SECRET_NAME_MAX_LENGTH,
+  SECRET_TYPES,
+  createSecretSchema,
+  type CreateSecretForm,
+  textOfKeyValue,
+  secretsRoutes,
+} from "@localconsole/core/secretsmanager";
 import { useCreateSecret } from "../hooks/useSecrets.ts";
-import { secretsBaseCrumbs, secretsRoutes } from "../routes.ts";
-import { createSecretSchema, type CreateSecretForm } from "../schemas.ts";
-import { textOfKeyValue } from "../secretValue.ts";
+import { secretsBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `1–${SECRET_NAME_MAX_LENGTH} characters: letters, numbers and / _ + = . @ -`;
 

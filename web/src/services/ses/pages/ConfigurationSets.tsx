@@ -8,7 +8,8 @@ import Pagination from "@cloudscape-design/components/pagination";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -19,11 +20,10 @@ import { DeleteDestinationModal } from "../components/DeleteDestinationModal.tsx
 import { ConfigurationSetPanel } from "../components/ConfigurationSetPanel.tsx";
 import { CreateConfigurationSetModal } from "../components/CreateConfigurationSetModal.tsx";
 import { DeleteConfigurationSetsModal } from "../components/DeleteConfigurationSetsModal.tsx";
-import { toInput } from "../configurationSets.ts";
-import { DESTINATION_KIND_LABELS } from "../constants.ts";
+import { toInput, DESTINATION_KIND_LABELS, SEARCH_PARAMS, sesRoutes } from "@localconsole/core/ses";
 import { useAllEventDestinations, useConfigurationSets } from "../hooks/useConfigurationSets.ts";
 import { useIdentityConfigurationSets } from "../hooks/useIdentities.ts";
-import { SEARCH_PARAMS, sesBaseCrumbs, sesRoutes } from "../routes.ts";
+import { sesBaseCrumbs } from "../routes.ts";
 
 interface SetRow {
   name: string;

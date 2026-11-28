@@ -1,5 +1,5 @@
+import { lines } from "@localconsole/core/shared";
 import {
-  lines,
   literal,
   NODE_AWS_NOTE,
   PYTHON_AWS_NOTE,

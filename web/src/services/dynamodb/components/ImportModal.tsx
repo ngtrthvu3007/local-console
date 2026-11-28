@@ -5,19 +5,21 @@ import Box from "@cloudscape-design/components/box";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { FormFileUpload, FormRadioGroup } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { formatBytes, pluralize } from "@shared/format.ts";
-import { errorMessage, notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
+import { formatBytes, pluralize, errorMessage } from "@localconsole/core/shared";
+import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   IMPORT_FILE_EXTENSION,
   IMPORT_MAX_BYTES,
   ITEM_FORMATS,
   ITEM_FORMAT_LABELS,
-} from "../constants.ts";
-import { parseImportText, type Item } from "../itemJson.ts";
+  parseImportText,
+  type Item,
+  keySchemaOf,
+  importSchema,
+  importTooLargeMessage,
+} from "@localconsole/core/dynamodb";
 import { useImportItems } from "../hooks/useItems.ts";
-import { keySchemaOf } from "../hooks/useTables.ts";
-import { importSchema, importTooLargeMessage } from "../schemas.ts";
 
 const FORMAT_ITEMS = [
   {

@@ -10,7 +10,7 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useTables } from "../../dynamodb/hooks/useTables.ts";
-import { dynamodbRoutes } from "../../dynamodb/routes.ts";
+import { dynamodbRoutes } from "@localconsole/core/dynamodb";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import {
   DATA_SOURCE_LABELS,
@@ -18,9 +18,10 @@ import {
   LAMBDA_INVOKE_NOTE,
   isDataSourceKind,
   type DataSourceKind,
-} from "../constants.ts";
+  dataSourceSchema,
+  type DataSourceForm,
+} from "@localconsole/core/appsync";
 import { useSaveDataSource } from "../hooks/useDataSources.ts";
-import { dataSourceSchema, type DataSourceForm } from "../schemas.ts";
 
 const TYPE_DESCRIPTIONS: Record<DataSourceKind, string> = {
   NONE: "Return data from the resolver code itself.",

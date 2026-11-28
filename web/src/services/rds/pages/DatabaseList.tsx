@@ -9,7 +9,8 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -17,9 +18,9 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useDatabaseActions } from "../components/DatabaseActions.tsx";
 import { DatabaseStatus } from "../components/DatabaseStatus.tsx";
-import { engineText } from "../databases.ts";
+import { engineText, rdsRoutes } from "@localconsole/core/rds";
 import { useDatabases } from "../hooks/useDatabases.ts";
-import { rdsBaseCrumbs, rdsRoutes } from "../routes.ts";
+import { rdsBaseCrumbs } from "../routes.ts";
 
 const ID_FIELD = "DBInstanceIdentifier";
 

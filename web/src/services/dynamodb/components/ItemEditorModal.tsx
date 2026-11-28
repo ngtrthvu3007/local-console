@@ -8,10 +8,12 @@ import Toggle from "@cloudscape-design/components/toggle";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { ModalFooter } from "@shared/components/ModalFooter.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
-import { errorMessage, notifySuccess } from "@shared/hooks/useNotify.ts";
-import { prettyJson } from "@shared/json.ts";
-import { ITEM_FORMATS, ITEM_FORMAT_LABELS, type ItemFormat } from "../constants.ts";
+import { errorMessage, prettyJson } from "@localconsole/core/shared";
+import { notifySuccess } from "@shared/hooks/useNotify.ts";
 import {
+  ITEM_FORMATS,
+  ITEM_FORMAT_LABELS,
+  type ItemFormat,
   keyChanged,
   keyError,
   keyLabel,
@@ -19,9 +21,11 @@ import {
   parseEditorText,
   toEditorText,
   type Item,
-} from "../itemJson.ts";
+  keyAttributesOf,
+  keySchemaOf,
+  type IndexKeys,
+} from "@localconsole/core/dynamodb";
 import { useFullItem, usePutItem } from "../hooks/useItems.ts";
-import { keyAttributesOf, keySchemaOf, type IndexKeys } from "../hooks/useTables.ts";
 
 const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));
 

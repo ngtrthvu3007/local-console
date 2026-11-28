@@ -7,16 +7,13 @@ import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import Link from "@cloudscape-design/components/link";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import { ActionBar } from "@shared/components/ActionBar.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { functionNameOfArn } from "../../lambda/helpers.ts";
-import { FUNCTION_TABS, lambdaRoutes } from "../../lambda/routes.ts";
-import { ROTATION_STARTED_MESSAGE } from "../constants.ts";
+import { functionNameOfArn, FUNCTION_TABS, lambdaRoutes } from "@localconsole/core/lambda";
+import { ROTATION_STARTED_MESSAGE, scheduleOf } from "@localconsole/core/secretsmanager";
 import { useRotateNow } from "../hooks/useSecrets.ts";
-import { scheduleOf } from "../schemas.ts";
 import { EditRotationModal } from "./EditRotationModal.tsx";
 
 // Log của Lambda là nơi duy nhất thấy rotation chạy ra sao (Floci chạy nền)

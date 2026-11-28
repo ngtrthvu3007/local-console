@@ -15,10 +15,12 @@ import {
   PASSWORD_FORBIDDEN_CHARACTERS,
   PASSWORD_LENGTH,
   USERNAME_LENGTH,
-} from "../constants.ts";
+  mqRoutes,
+  createBrokerSchema,
+  type CreateBrokerForm,
+} from "@localconsole/core/mq";
 import { useCreateBroker } from "../hooks/useBrokers.ts";
-import { mqBaseCrumbs, mqRoutes } from "../routes.ts";
-import { createBrokerSchema, type CreateBrokerForm } from "../schemas.ts";
+import { mqBaseCrumbs } from "../routes.ts";
 
 const INITIAL_VALUES: CreateBrokerForm = { name: "", username: "", password: "" };
 

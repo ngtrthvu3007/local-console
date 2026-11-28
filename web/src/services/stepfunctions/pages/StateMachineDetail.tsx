@@ -9,8 +9,7 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatDate } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -21,10 +20,12 @@ import { StartExecutionModal } from "../components/StartExecutionModal.tsx";
 import { STATE_MACHINE_TYPE_LABELS } from "../constants.ts";
 import {
   isStateMachineMissing,
-  useStateMachine,
   type StateMachineDetails,
-} from "../hooks/useStateMachines.ts";
-import { STATE_MACHINE_TABS, stateMachineCrumbs, stepfunctionsRoutes } from "../routes.ts";
+  STATE_MACHINE_TABS,
+  stepfunctionsRoutes,
+} from "@localconsole/core/stepfunctions";
+import { useStateMachine } from "../hooks/useStateMachines.ts";
+import { stateMachineCrumbs } from "../routes.ts";
 
 function StateMachineView({ machine }: { machine: StateMachineDetails }) {
   const { ref, compact } = useIsCompact();

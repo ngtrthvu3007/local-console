@@ -13,16 +13,21 @@ import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { TagsModal } from "@shared/components/TagsModal.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
+  type ObjectRow,
   asFolderKey,
   bucketOptions,
   fileNameOf,
   s3Uri,
   withoutTrailingDelimiter,
-} from "../helpers.ts";
+  createFolderSchema,
+  metadataSchema,
+  renameSchema,
+  transferSchema,
+} from "@localconsole/core/s3";
 import { useBuckets } from "../hooks/useBuckets.ts";
 import {
   useEditMetadata,
@@ -30,13 +35,7 @@ import {
   useObjectTags,
   usePutObjectTags,
 } from "../hooks/useObject.ts";
-import {
-  useCreateFolder,
-  useDeleteObjects,
-  useTransfer,
-  type ObjectRow,
-} from "../hooks/useObjects.ts";
-import { createFolderSchema, metadataSchema, renameSchema, transferSchema } from "../schemas.ts";
+import { useCreateFolder, useDeleteObjects, useTransfer } from "../hooks/useObjects.ts";
 
 // Các modal ở đây chỉ mount khi mở, nên không nhận `visible`
 interface ModalProps {

@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconKey } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { KMS_ROUTE_PATTERNS, KMS_SERVICE_ID, kmsRoutes } from "./routes.ts";
+import { KMS_ROUTE_PATTERNS, KMS_SERVICE_ID, kmsRoutes } from "@localconsole/core/kms";
 
 export const kmsService: ServiceDefinition = {
   id: KMS_SERVICE_ID,

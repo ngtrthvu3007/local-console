@@ -1,9 +1,8 @@
 import Alert from "@cloudscape-design/components/alert";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
-import { keyLabel, type Item } from "../itemJson.ts";
+import { keyLabel, type Item, keySchemaOf } from "@localconsole/core/dynamodb";
 import { useDeleteItems } from "../hooks/useItems.ts";
-import { keySchemaOf } from "../hooks/useTables.ts";
 
 interface Props {
   table: TableDescription;

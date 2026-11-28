@@ -14,11 +14,19 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { KeyFields } from "../components/KeyFields.tsx";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import { DYNAMODB_KEY_SERVICE, TABLE_ENCRYPTION, TABLE_NAME_LENGTH } from "../constants.ts";
-import { useCreateTable, type IndexKeys, type KeyAttribute } from "../hooks/useTables.ts";
-import { dynamodbBaseCrumbs, dynamodbRoutes } from "../routes.ts";
-import { createTableSchema, type CreateTableForm } from "../schemas.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
+import {
+  DYNAMODB_KEY_SERVICE,
+  TABLE_ENCRYPTION,
+  TABLE_NAME_LENGTH,
+  type IndexKeys,
+  type KeyAttribute,
+  createTableSchema,
+  type CreateTableForm,
+  dynamodbRoutes,
+} from "@localconsole/core/dynamodb";
+import { useCreateTable } from "../hooks/useTables.ts";
+import { dynamodbBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `${TABLE_NAME_LENGTH.min}–${TABLE_NAME_LENGTH.max} characters: letters, numbers, underscores, hyphens and dots.`;
 const EMPTY_KEY = { name: "", type: "S" as const };

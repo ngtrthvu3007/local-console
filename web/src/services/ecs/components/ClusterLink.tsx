@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useClusters } from "../hooks/useClusters.ts";
-import { ecsRoutes, type CLUSTER_TABS } from "../routes.ts";
+import { ecsRoutes, type CLUSTER_TABS } from "@localconsole/core/ecs";
 
 interface Props {
   name: string;

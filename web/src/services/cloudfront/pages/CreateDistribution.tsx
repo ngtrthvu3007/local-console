@@ -13,15 +13,19 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { bucketOptions } from "../../s3/helpers.ts";
+import { bucketOptions } from "@localconsole/core/s3";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
-import { s3Routes } from "../../s3/routes.ts";
+import { s3Routes } from "@localconsole/core/s3";
 import { SPA_DESCRIPTION, SPA_TEXT } from "../components/SettingsModal.tsx";
-import { DEFAULT_ROOT_OBJECT } from "../constants.ts";
-import { newDistributionConfig } from "../distributions.ts";
+import {
+  DEFAULT_ROOT_OBJECT,
+  newDistributionConfig,
+  createDistributionSchema,
+  SEARCH_PARAMS,
+  cloudfrontRoutes,
+} from "@localconsole/core/cloudfront";
 import { useCreateDistribution } from "../hooks/useDistributions.ts";
-import { SEARCH_PARAMS, cloudfrontBaseCrumbs, cloudfrontRoutes } from "../routes.ts";
-import { createDistributionSchema } from "../schemas.ts";
+import { cloudfrontBaseCrumbs } from "../routes.ts";
 
 // Chỉ origin S3: custom origin thêm ở tab Origins sau khi tạo (spec 3.3)
 export function CreateDistribution() {

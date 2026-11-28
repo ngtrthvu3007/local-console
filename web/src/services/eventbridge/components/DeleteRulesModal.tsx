@@ -1,7 +1,8 @@
 import Alert from "@cloudscape-design/components/alert";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
-import { pluralize } from "@shared/format.ts";
-import { useDeleteRules, type RuleRow } from "../hooks/useRules.ts";
+import { pluralize } from "@localconsole/core/shared";
+import type { RuleRow } from "@localconsole/core/eventbridge";
+import { useDeleteRules } from "../hooks/useRules.ts";
 
 interface Props {
   rules: readonly RuleRow[];

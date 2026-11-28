@@ -1,85 +1,55 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  CreateTopicCommand,
-  DeleteTopicCommand,
-  GetTopicAttributesCommand,
-  NotFoundException,
-  paginateListTopics,
-  PublishCommand,
-  type SNSClient,
-} from "@aws-sdk/client-sns";
-import { existsUnlessMissing, isNotFoundError } from "@shared/aws.ts";
+  isTopicMissing,
+  topicArn,
+  type CreateTopicInput,
+  type PublishInput,
+  type SnsService,
+  type Topic,
+} from "@localconsole/core/sns";
+import { existsQuery } from "@shared/aws.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import { lastArnPart } from "@shared/arn.ts";
-import { ATTRIBUTE_TRUE } from "../../sqs/constants.ts";
-import { awsManagedAlias } from "../../kms/keys.ts";
-import { SNS_KEY_SERVICE, type AttributeDataType, type TopicType } from "../constants.ts";
-import { toTopic, topicArn, type Topic } from "../topics.ts";
-import { useSNS } from "./useSNS.ts";
+import { lastArnPart } from "@localconsole/core/shared";
+import { useSnsService } from "./useSnsService.ts";
 
-// Mọi query của SNS nằm dưới key gốc này
 export const SNS_QUERY_ROOT = "sns";
 const topicsQueryKey = [SNS_QUERY_ROOT, "topics"];
-// Mọi query về một topic (chi tiết, subscription) nằm dưới key này
 const anyTopicQueryKey = [SNS_QUERY_ROOT, "topic"];
 export const topicQueryKey = (topic: string, part?: string) =>
   part ? [...anyTopicQueryKey, topic, part] : [...anyTopicQueryKey, topic];
 const DETAILS = "details";
 
-export const isTopicMissing = (error: unknown) =>
-  error instanceof NotFoundException || isNotFoundError(error);
-
-// Nơi khác tham chiếu tới topic (S3 rule, trigger…) còn trỏ được không
-export const topicExistsQuery = (client: SNSClient, arn: string) => ({
-  queryKey: topicQueryKey(lastArnPart(arn), "exists"),
-  queryFn: () =>
-    existsUnlessMissing(
-      () => client.send(new GetTopicAttributesCommand({ TopicArn: arn })),
-      isTopicMissing,
-    ),
-  retry: false,
-});
+// Nơi khác tham chiếu tới topic (S3 rule, trigger…) còn trỏ được không.
+// Query option dùng chung: trang service khác truyền facade SNS của nó
+export const topicExistsQuery = (sns: Pick<SnsService, "getTopic">, arn: string) =>
+  existsQuery(
+    topicQueryKey(lastArnPart(arn), "exists"),
+    () => sns.getTopic(lastArnPart(arn)),
+    isTopicMissing,
+  );
 
 export function useTopicExists(name: string) {
-  const client = useSNS();
+  const sns = useSnsService();
   const { region } = useLoadedConfig();
-  return useQuery(topicExistsQuery(client, topicArn(region, name)));
-}
-
-async function describeTopic(client: SNSClient, arn: string) {
-  const { Attributes = {} } = await client.send(new GetTopicAttributesCommand({ TopicArn: arn }));
-  return toTopic(arn, Attributes);
+  return useQuery(topicExistsQuery(sns, topicArn(region, name)));
 }
 
 export function useTopics() {
-  const client = useSNS();
+  const sns = useSnsService();
 
-  return useQuery({
-    queryKey: topicsQueryKey,
-    queryFn: async () => {
-      const arns: string[] = [];
-      for await (const page of paginateListTopics({ client }, {}))
-        arns.push(...(page.Topics ?? []).map((topic) => topic.TopicArn!));
-      // Local ít topic nên đọc attribute từng topic song song
-      return Promise.all(arns.map((arn) => describeTopic(client, arn)));
-    },
-  });
+  return useQuery({ queryKey: topicsQueryKey, queryFn: sns.listTopics });
 }
 
-// Đường dẫn dùng tên topic; ARN ghép từ region + account của Floci
 export function useTopic(name: string) {
-  const client = useSNS();
-  const { region } = useLoadedConfig();
+  const sns = useSnsService();
 
   return useQuery({
     queryKey: topicQueryKey(name, DETAILS),
-    queryFn: () => describeTopic(client, topicArn(region, name)),
+    queryFn: () => sns.getTopic(name),
     retry: false,
   });
 }
 
-// Làm mới mọi query của topic và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
 export function useInvalidateTopic() {
   const queryClient = useQueryClient();
 
@@ -90,80 +60,29 @@ export function useInvalidateTopic() {
     ]);
 }
 
-interface CreateTopicInput {
-  name: string;
-  type: TopicType;
-  contentBasedDedup: boolean;
-  encrypted: boolean;
-  kmsKeyId: string;
-}
-
 export function useCreateTopic() {
-  const client = useSNS();
+  const sns = useSnsService();
   const invalidate = useInvalidateTopic();
 
   return useMutation({
-    mutationFn: ({ name, type, contentBasedDedup, encrypted, kmsKeyId }: CreateTopicInput) =>
-      client.send(
-        new CreateTopicCommand({
-          Name: name,
-          Attributes: {
-            ...(type === "fifo"
-              ? { FifoTopic: ATTRIBUTE_TRUE, ContentBasedDeduplication: String(contentBasedDedup) }
-              : {}),
-            ...(encrypted ? { KmsMasterKeyId: kmsKeyId || awsManagedAlias(SNS_KEY_SERVICE) } : {}),
-          },
-        }),
-      ),
+    mutationFn: (input: CreateTopicInput) => sns.createTopic(input),
     onSuccess: (_result, input) => invalidate(input.name),
   });
 }
 
 export function useDeleteTopics() {
-  const client = useSNS();
+  const sns = useSnsService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (topics: readonly Topic[]) =>
-      runEach(
-        topics,
-        (topic) => topic.name,
-        (topic) => client.send(new DeleteTopicCommand({ TopicArn: topic.arn })),
-      ),
+    mutationFn: (topics: readonly Topic[]) => sns.deleteTopics(topics),
     // Xóa topic kéo theo subscription của nó, kể cả khối SNS ở trang queue / function
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [SNS_QUERY_ROOT] }),
   });
 }
 
-export interface PublishInput {
-  subject: string;
-  body: string;
-  attributes: { name: string; type: AttributeDataType; value: string }[];
-  groupId: string;
-  dedupId: string;
-}
-
 export function usePublish(topic: Topic) {
-  const client = useSNS();
+  const sns = useSnsService();
 
-  return useMutation({
-    mutationFn: ({ subject, body, attributes, groupId, dedupId }: PublishInput) =>
-      client.send(
-        new PublishCommand({
-          TopicArn: topic.arn,
-          Subject: subject || undefined,
-          Message: body,
-          MessageAttributes: attributes.length
-            ? Object.fromEntries(
-                attributes.map(({ name, type, value }) => [
-                  name,
-                  { DataType: type, StringValue: value },
-                ]),
-              )
-            : undefined,
-          MessageGroupId: topic.fifo ? groupId : undefined,
-          MessageDeduplicationId: topic.fifo && dedupId ? dedupId : undefined,
-        }),
-      ),
-  });
+  return useMutation({ mutationFn: (input: PublishInput) => sns.publish(topic, input) });
 }

@@ -6,11 +6,13 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Tabs from "@cloudscape-design/components/tabs";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { MILLISECONDS_PER_SECOND, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
-import { prettyJson } from "@shared/json.ts";
-import { decodeJwt, isExpired } from "../auth.ts";
-import { GROUPS_CLAIM, GROUPS_SEPARATOR } from "../constants.ts";
+import {
+  MILLISECONDS_PER_SECOND,
+  NOT_AVAILABLE,
+  formatDate,
+  prettyJson,
+} from "@localconsole/core/shared";
+import { decodeJwt, isExpired, GROUPS_CLAIM, GROUPS_SEPARATOR } from "@localconsole/core/cognito";
 
 // exp / iat của JWT tính bằng giây
 const dateOf = (seconds?: number) => formatDate(seconds && seconds * MILLISECONDS_PER_SECOND);

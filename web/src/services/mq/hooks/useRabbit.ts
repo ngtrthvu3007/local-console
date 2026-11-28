@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchJson } from "@shared/api.ts";
-import { runEach } from "@shared/hooks/useNotify.ts";
+import { fetchJson, runEach } from "@localconsole/core/shared";
 import {
   RABBIT_ERROR_CODES,
   type CreateQueueInput,
@@ -10,7 +9,8 @@ import {
   type PublishResult,
   type Queue,
 } from "@server/routes/rabbitmq/contract.ts";
-import { QUEUE_REFRESH_INTERVAL_MS, RABBIT_API_PATH } from "../constants.ts";
+import { QUEUE_REFRESH_INTERVAL_MS } from "@localconsole/core/mq";
+import { RABBIT_API_PATH } from "../constants.ts";
 
 // Mọi dữ liệu RabbitMQ của một broker nằm dưới key này: ghi xong thì làm mới cả nhóm
 const rabbitQueryKey = (broker: string) => ["mq", "rabbit", broker];

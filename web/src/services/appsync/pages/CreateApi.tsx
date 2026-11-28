@@ -14,11 +14,16 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useUserPools } from "../../cognito/hooks/usePools.ts";
-import { cognitoRoutes } from "../../cognito/routes.ts";
-import { AUTH_LABELS, AUTH_TYPES } from "../constants.ts";
+import { cognitoRoutes } from "@localconsole/core/cognito";
+import {
+  AUTH_LABELS,
+  AUTH_TYPES,
+  createApiSchema,
+  type CreateApiForm,
+  appsyncRoutes,
+} from "@localconsole/core/appsync";
 import { useCreateApi } from "../hooks/useApis.ts";
-import { appsyncBaseCrumbs, appsyncRoutes } from "../routes.ts";
-import { createApiSchema, type CreateApiForm } from "../schemas.ts";
+import { appsyncBaseCrumbs } from "../routes.ts";
 
 const AUTH_DESCRIPTIONS: Record<string, string> = {
   [AUTH_TYPES.apiKey]: "Send x-api-key with each request. A key is created for you.",

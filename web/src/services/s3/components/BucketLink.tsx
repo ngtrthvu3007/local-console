@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useBucketExists } from "../hooks/useBuckets.ts";
-import { s3Routes } from "../routes.ts";
+import { s3Routes } from "@localconsole/core/s3";
 
 // Tên bucket thành link sang trang bucket; dùng ở origin của CloudFront
 export function BucketLink({ name }: { name: string }) {

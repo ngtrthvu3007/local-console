@@ -3,12 +3,13 @@ import Alert from "@cloudscape-design/components/alert";
 import Button from "@cloudscape-design/components/button";
 import { FormCheckbox, FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { errorMessage, notifySuccess } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
+import { notifySuccess } from "@shared/hooks/useNotify.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useCreateUser } from "../hooks/useUsers.ts";
 import { mailboxHref } from "../routes.ts";
-import { createUserSchema, type CreateUserForm } from "../schemas.ts";
+import { createUserSchema, type CreateUserForm } from "@localconsole/core/cognito";
 
 const INITIAL_VALUES: CreateUserForm = {
   username: "",

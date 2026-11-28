@@ -1,56 +1,32 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CreateConfigurationSetCommand,
-  CreateConfigurationSetEventDestinationCommand,
-  DeleteConfigurationSetCommand,
-  DeleteConfigurationSetEventDestinationCommand,
-  GetConfigurationSetEventDestinationsCommand,
-  paginateListConfigurationSets,
-  UpdateConfigurationSetEventDestinationCommand,
-  type EventDestination,
-  type SESv2Client,
-} from "@aws-sdk/client-sesv2";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import { toDefinition, type DestinationInput } from "../configurationSets.ts";
-import { useSES } from "./useSES.ts";
+import type { EventDestination } from "@aws-sdk/client-sesv2";
+import type { DestinationChange, SesService } from "@localconsole/core/ses";
+import { useSesService } from "./useSesService.ts";
 
 const SETS_ROOT = "ses-configuration-sets";
 const configurationSetsQueryKey = [SETS_ROOT];
 const destinationsKey = (name: string) => [SETS_ROOT, name, "destinations"];
 
 export function useConfigurationSets() {
-  const client = useSES();
+  const ses = useSesService();
 
-  return useQuery({
-    queryKey: configurationSetsQueryKey,
-    queryFn: async () => {
-      const names: string[] = [];
-      for await (const page of paginateListConfigurationSets({ client }, {}))
-        names.push(...(page.ConfigurationSets ?? []));
-      return names;
-    },
-  });
+  return useQuery({ queryKey: configurationSetsQueryKey, queryFn: ses.listConfigurationSets });
 }
 
-const destinationsQuery = (client: SESv2Client, name: string) => ({
+const destinationsQuery = (ses: SesService, name: string) => ({
   queryKey: destinationsKey(name),
-  queryFn: async () =>
-    (
-      await client.send(
-        new GetConfigurationSetEventDestinationsCommand({ ConfigurationSetName: name }),
-      )
-    ).EventDestinations ?? [],
+  queryFn: () => ses.listEventDestinations(name),
   retry: false,
 });
 
 export function useEventDestinations(name: string) {
-  return useQuery(destinationsQuery(useSES(), name));
+  return useQuery(destinationsQuery(useSesService(), name));
 }
 
-// Một lần cho cả bảng: tên set → destination (cùng key với panel nên dùng chung cache)
+// Cùng key với panel nên dùng chung cache
 export function useAllEventDestinations(names: readonly string[]) {
-  const client = useSES();
-  const results = useQueries({ queries: names.map((name) => destinationsQuery(client, name)) });
+  const ses = useSesService();
+  const results = useQueries({ queries: names.map((name) => destinationsQuery(ses, name)) });
 
   return new Map<string, EventDestination[] | undefined>(
     names.map((name, index) => [name, results[index].data]),
@@ -58,78 +34,53 @@ export function useAllEventDestinations(names: readonly string[]) {
 }
 
 export function useCreateConfigurationSet() {
-  const client = useSES();
+  const ses = useSesService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name: string) =>
-      client.send(new CreateConfigurationSetCommand({ ConfigurationSetName: name })),
+    mutationFn: (name: string) => ses.createConfigurationSet(name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: configurationSetsQueryKey }),
   });
 }
 
 export function useDeleteConfigurationSets() {
-  const client = useSES();
+  const ses = useSesService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (names: string[]) =>
-      runEach(
-        names,
-        (name) => name,
-        (name) => client.send(new DeleteConfigurationSetCommand({ ConfigurationSetName: name })),
-      ),
-    // Chỉ đọc lại danh sách tên, không đọc lại destination của set vừa xóa (404)
+    mutationFn: (names: string[]) => ses.deleteConfigurationSets(names),
+    // Không đọc lại destination của set vừa xóa (404)
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: configurationSetsQueryKey, exact: true }),
   });
 }
 
-interface DestinationChange {
-  set: string;
-  name: string;
-  input: DestinationInput;
-}
-
-type Sender =
-  | typeof CreateConfigurationSetEventDestinationCommand
-  | typeof UpdateConfigurationSetEventDestinationCommand;
-
-function useDestinationMutation(Command: Sender) {
-  const client = useSES();
+function useDestinationMutation(send: (change: DestinationChange) => Promise<unknown>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ set, name, input }: DestinationChange) =>
-      client.send(
-        new Command({
-          ConfigurationSetName: set,
-          EventDestinationName: name,
-          EventDestination: toDefinition(input),
-        }),
-      ),
+    mutationFn: send,
     onSuccess: (_result, change) =>
       queryClient.invalidateQueries({ queryKey: destinationsKey(change.set) }),
   });
 }
 
-export const useAddDestination = () =>
-  useDestinationMutation(CreateConfigurationSetEventDestinationCommand);
-export const useUpdateDestination = () =>
-  useDestinationMutation(UpdateConfigurationSetEventDestinationCommand);
+export function useAddDestination() {
+  const ses = useSesService();
+  return useDestinationMutation(ses.addEventDestination);
+}
+
+export function useUpdateDestination() {
+  const ses = useSesService();
+  return useDestinationMutation(ses.updateEventDestination);
+}
 
 export function useDeleteDestination(set: string) {
-  const client = useSES();
+  const ses = useSesService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name: string) =>
-      client.send(
-        new DeleteConfigurationSetEventDestinationCommand({
-          ConfigurationSetName: set,
-          EventDestinationName: name,
-        }),
-      ),
+    mutationFn: (name: string) => ses.deleteEventDestination(set, name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: destinationsKey(set) }),
   });
 }

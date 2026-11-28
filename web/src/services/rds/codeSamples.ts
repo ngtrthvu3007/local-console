@@ -1,7 +1,7 @@
 import type { DBInstance } from "@aws-sdk/client-rds";
-import { lines, literal, type CodeSample } from "@shared/codeSamples.ts";
-import { DEFAULT_DATABASES, URL_SCHEMES, type Engine } from "./constants.ts";
-import type { Address } from "./databases.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, type CodeSample } from "@shared/codeSamples.ts";
+import { DEFAULT_DATABASES, URL_SCHEMES, type Engine, type Address } from "@localconsole/core/rds";
 
 // DB không đi qua AWS SDK: app nối thẳng bằng driver. Địa chỉ mặc định là máy dev;
 // trong compose / Lambda thì đặt biến môi trường thành endpoint Floci trả

@@ -7,8 +7,7 @@ import Tabs from "@cloudscape-design/components/tabs";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { formatBytes, formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, formatBytes, formatDate } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -20,10 +19,16 @@ import { EditRetentionModal } from "../components/EditRetentionModal.tsx";
 import { SendTestEventModal } from "../components/SendTestEventModal.tsx";
 import { StreamsTab } from "../components/StreamsTab.tsx";
 import { SubscriptionFiltersTab } from "../components/SubscriptionFiltersTab.tsx";
-import { TEXT, retentionLabel } from "../constants.ts";
+import {
+  TEXT,
+  retentionLabel,
+  logSourceOf,
+  GROUP_TABS,
+  SEARCH_PARAMS,
+  logsRoutes,
+} from "@localconsole/core/logs";
 import { useLogGroup } from "../hooks/useLogGroups.ts";
-import { GROUP_TABS, SEARCH_PARAMS, groupCrumbs, logsRoutes } from "../routes.ts";
-import { logSourceOf } from "../sources.ts";
+import { groupCrumbs } from "../routes.ts";
 
 const LOG_GROUP_TYPE = "AWS::Logs::LogGroup";
 

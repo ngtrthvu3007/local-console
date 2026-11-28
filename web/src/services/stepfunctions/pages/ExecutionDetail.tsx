@@ -15,25 +15,29 @@ import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import {
+  DETAIL_SEPARATOR,
+  NOT_AVAILABLE,
+  formatDate,
+  reformatJson,
+  lastArnPart,
+} from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { reformatJson } from "@shared/json.ts";
-import { lastArnPart } from "@shared/arn.ts";
 import { StateMachineLink } from "../components/StateMachineLink.tsx";
 import { StepsTable } from "../components/StepsTable.tsx";
-import { RUNNING_STATUS, TRUNCATED_NOTE, EXECUTION_STATUS_STYLES } from "../constants.ts";
 import {
+  RUNNING_STATUS,
+  stateMachineOfExecutionArn,
+  buildSteps,
   isExecutionMissing,
-  useExecution,
-  useExecutionHistory,
-  useStopExecution,
-} from "../hooks/useExecutions.ts";
-import { SEARCH_PARAMS, stateMachineCrumbs, stepfunctionsRoutes } from "../routes.ts";
-import { stateMachineOfExecutionArn } from "../stateMachines.ts";
-import { buildSteps } from "../steps.ts";
+  SEARCH_PARAMS,
+  stepfunctionsRoutes,
+} from "@localconsole/core/stepfunctions";
+import { TRUNCATED_NOTE, EXECUTION_STATUS_STYLES } from "../constants.ts";
+import { useExecution, useExecutionHistory, useStopExecution } from "../hooks/useExecutions.ts";
+import { stateMachineCrumbs } from "../routes.ts";
 
 // DescribeExecution báo payload không có trong kết quả (quá lớn) bằng inputDetails.included = false
 const payloadNote = (included?: boolean) =>

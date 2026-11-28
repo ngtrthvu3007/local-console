@@ -1,4 +1,5 @@
-import { lines, literal, type CodeSample } from "@shared/codeSamples.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, type CodeSample } from "@shared/codeSamples.ts";
 
 const SAMPLE_KEY = "greeting";
 const SAMPLE_VALUE = "hello";

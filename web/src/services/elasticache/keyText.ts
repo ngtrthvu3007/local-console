@@ -1,6 +1,11 @@
 import type { KeyValue } from "@server/routes/redis/contract.ts";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatBytes, formatDuration, pluralize } from "@shared/format.ts";
+import {
+  DETAIL_SEPARATOR,
+  NOT_AVAILABLE,
+  formatBytes,
+  formatDuration,
+  pluralize,
+} from "@localconsole/core/shared";
 import { KEY_TYPE_LABELS } from "./constants.ts";
 
 export const typeLabel = (type: string) => KEY_TYPE_LABELS[type] ?? type;

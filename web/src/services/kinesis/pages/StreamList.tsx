@@ -11,8 +11,8 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -20,8 +20,8 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { DeleteStreamsModal } from "../components/DeleteStreamsModal.tsx";
 import { useStreams, type StreamRow } from "../hooks/useStreams.ts";
-import { streamModeLabel } from "../recordData.ts";
-import { kinesisBaseCrumbs, kinesisRoutes } from "../routes.ts";
+import { streamModeLabel, kinesisRoutes } from "@localconsole/core/kinesis";
+import { kinesisBaseCrumbs } from "../routes.ts";
 import { STREAM_STATUS_STYLES } from "../constants.ts";
 
 const NAME_FIELD = "name";

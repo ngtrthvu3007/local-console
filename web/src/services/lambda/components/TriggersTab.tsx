@@ -9,13 +9,13 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import Link from "@cloudscape-design/components/link";
-import { dynamodbRoutes } from "../../dynamodb/routes.ts";
-import { s3Routes } from "../../s3/routes.ts";
+import { dynamodbRoutes } from "@localconsole/core/dynamodb";
+import { s3Routes } from "@localconsole/core/s3";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
 import { StreamLink } from "../../kinesis/components/StreamLink.tsx";
@@ -25,16 +25,16 @@ import {
   TRIGGER_SOURCES,
   VIEW_ONLY_SOURCES,
   type TriggerRowSource,
-} from "../constants.ts";
+  type TriggerFormOutput,
+  type TriggerRow,
+} from "@localconsole/core/lambda";
 import {
   useAddTrigger,
   useDeleteTrigger,
   useEditTrigger,
   useSetTriggerEnabled,
   useTriggers,
-  type TriggerRow,
 } from "../hooks/useTriggers.ts";
-import type { TriggerFormOutput } from "../schemas.ts";
 import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
 import { AddTriggerModal } from "./AddTriggerModal.tsx";
 import { EditTriggerModal } from "./EditTriggerModal.tsx";

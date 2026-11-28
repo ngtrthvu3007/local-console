@@ -1,6 +1,6 @@
 import Alert from "@cloudscape-design/components/alert";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
-import { LIST_SEPARATOR } from "@shared/constants.ts";
+import { LIST_SEPARATOR } from "@localconsole/core/shared";
 import { useDeleteStreams, useStreamsWithTriggers, type StreamRow } from "../hooks/useStreams.ts";
 
 interface Props {

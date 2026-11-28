@@ -2,9 +2,14 @@ import { FormInput, FormTextarea, FormTiles } from "@shared/components/form/Form
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_SMS_TYPE, PHONE_NUMBER_EXAMPLE, SMS_TYPES, type SmsType } from "../constants.ts";
+import {
+  DEFAULT_SMS_TYPE,
+  PHONE_NUMBER_EXAMPLE,
+  SMS_TYPES,
+  type SmsType,
+  publishSmsSchema,
+} from "@localconsole/core/sns";
 import { usePublishSms } from "../hooks/useSms.ts";
-import { publishSmsSchema } from "../schemas.ts";
 
 const TYPE_DESCRIPTIONS: Record<SmsType, string> = {
   Transactional: "Critical messages, like one-time passwords.",

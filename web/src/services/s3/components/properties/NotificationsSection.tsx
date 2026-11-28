@@ -8,26 +8,24 @@ import Link from "@cloudscape-design/components/link";
 import Toggle from "@cloudscape-design/components/toggle";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import type { TableProps } from "@cloudscape-design/components/table";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, pluralize, lastArnPart } from "@localconsole/core/shared";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
-import { pluralize } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { lastArnPart } from "@shared/arn.ts";
-import { NOTIFICATION_DESTINATIONS } from "../../constants.ts";
+import {
+  NOTIFICATION_DESTINATIONS,
+  toNotificationConfiguration,
+  toNotificationRules,
+  type NotificationRule,
+} from "@localconsole/core/s3";
 import {
   useBucketNotifications,
   useSaveBucketNotifications,
 } from "../../hooks/useBucketSettings.ts";
 import { useMissingDestinations } from "../../hooks/useMissingDestinations.ts";
-import {
-  toNotificationConfiguration,
-  toNotificationRules,
-  type NotificationRule,
-} from "../../notificationRules.ts";
 import { useS3EventRules } from "../../../eventbridge/hooks/useRules.ts";
-import { eventbridgeRoutes } from "../../../eventbridge/routes.ts";
+import { eventbridgeRoutes } from "@localconsole/core/eventbridge";
 import { FunctionLink } from "../../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../../sqs/components/QueueLink.tsx";
 import { TopicLink } from "../../../sns/components/TopicLink.tsx";

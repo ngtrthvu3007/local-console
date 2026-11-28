@@ -15,13 +15,12 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import type { Bus } from "../buses.ts";
-import { DEFAULT_BUS_NAME } from "../constants.ts";
+import { type Bus, DEFAULT_BUS_NAME, eventbridgeRoutes } from "@localconsole/core/eventbridge";
 import { CreateBusModal } from "../components/CreateBusModal.tsx";
 import { DeleteBusesModal } from "../components/DeleteBusesModal.tsx";
 import { SendEventsModal } from "../components/SendEventsModal.tsx";
 import { useBuses } from "../hooks/useBuses.ts";
-import { busesCrumbs, eventbridgeRoutes } from "../routes.ts";
+import { busesCrumbs } from "../routes.ts";
 import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 
 const NAME_FIELD = "name";

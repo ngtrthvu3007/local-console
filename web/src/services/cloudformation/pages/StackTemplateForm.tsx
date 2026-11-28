@@ -14,25 +14,26 @@ import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { errorMessage, notifyInfo } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
+import { notifyInfo } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
-  EDIT_TEMPLATE_NOTE,
   LOADING_EDIT_LOCK_REASON,
-  NO_CHANGES_NOTICE,
   STARTER_TEMPLATE,
-  TEMPLATE_EDITOR_HEIGHT_PX,
-} from "../constants.ts";
+  stackTemplateSchema,
+  isStackMissing,
+  editLockReason,
+  isNoUpdatesError,
+  cloudformationRoutes,
+} from "@localconsole/core/cloudformation";
+import { EDIT_TEMPLATE_NOTE, NO_CHANGES_NOTICE, TEMPLATE_EDITOR_HEIGHT_PX } from "../constants.ts";
 import {
   useDeployStack,
   useStack,
   useStackResources,
   useStackTemplate,
 } from "../hooks/useStacks.ts";
-import { cloudformationRoutes, stackCrumbs, stacksCrumbs } from "../routes.ts";
-import { stackTemplateSchema } from "../schemas.ts";
-import { isStackMissing } from "../stacks.ts";
-import { editLockReason, isNoUpdatesError } from "../status.ts";
+import { stackCrumbs, stacksCrumbs } from "../routes.ts";
 
 interface ViewProps {
   stack?: string; // có thì là sửa: tên stack bị khóa

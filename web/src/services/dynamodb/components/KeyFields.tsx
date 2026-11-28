@@ -2,7 +2,7 @@ import { Controller, type Control, type FieldValues, type Path } from "react-hoo
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
 import Select from "@cloudscape-design/components/select";
-import { KEY_TYPES } from "../constants.ts";
+import { KEY_TYPES } from "@localconsole/core/dynamodb";
 
 const KEY_TYPE_OPTIONS = Object.entries(KEY_TYPES).map(([value, label]) => ({
   value,

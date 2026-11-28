@@ -4,9 +4,8 @@ import { FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { EMAIL_ATTRIBUTE } from "../constants.ts";
+import { EMAIL_ATTRIBUTE, attributeSchema, type AttributeForm } from "@localconsole/core/cognito";
 import { useUpdateUserAttributes } from "../hooks/useUsers.ts";
-import { attributeSchema, type AttributeForm } from "../schemas.ts";
 
 const EMAIL_EDIT_HINT = "Floci sets email_verified to false and emails a code.";
 

@@ -12,7 +12,8 @@ import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { errorMessage, notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
+import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSubmitOnce } from "@shared/hooks/useSubmitOnce.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
@@ -20,14 +21,16 @@ import {
   DEFAULT_AMI_DESCRIPTION,
   DEFAULT_INSTANCE_TYPE,
   INSTANCE_TYPES,
-  USER_DATA_EDITOR_HEIGHT_PX,
-} from "../constants.ts";
+  amiWarning,
+  launchInstanceSchema,
+  type LaunchInstanceForm,
+} from "@localconsole/core/ec2";
 import { OsIcon } from "../components/OsIcon.tsx";
-import { amiWarning } from "../images.ts";
 import { useImages } from "../hooks/useImages.ts";
 import { useLaunchInstance } from "../hooks/useInstances.ts";
-import { ec2BaseCrumbs, ec2Routes } from "../routes.ts";
-import { launchInstanceSchema, type LaunchInstanceForm } from "../schemas.ts";
+import { ec2Routes } from "@localconsole/core/ec2";
+import { ec2BaseCrumbs } from "../routes.ts";
+import { USER_DATA_EDITOR_HEIGHT_PX } from "../constants.ts";
 
 const INSTANCE_TYPE_OPTIONS = INSTANCE_TYPES.map((type) => ({ value: type, label: type }));
 

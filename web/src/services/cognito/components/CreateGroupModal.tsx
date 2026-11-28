@@ -1,10 +1,11 @@
 import Alert from "@cloudscape-design/components/alert";
 import { FormInput } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { errorMessage, notifySuccess } from "@shared/hooks/useNotify.ts";
+import { errorMessage } from "@localconsole/core/shared";
+import { notifySuccess } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useCreateGroup } from "../hooks/useGroups.ts";
-import { createGroupSchema, type CreateGroupForm } from "../schemas.ts";
+import { createGroupSchema, type CreateGroupForm } from "@localconsole/core/cognito";
 
 const INITIAL_VALUES: CreateGroupForm = { name: "", description: "", precedence: "" };
 

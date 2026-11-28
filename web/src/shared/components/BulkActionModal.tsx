@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { UseMutationResult } from "@tanstack/react-query";
-import { pluralize } from "../format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { notifyBulkOutcome } from "../hooks/useNotify.ts";
 import { CONFIRM_DELETE, ConfirmModal } from "./ConfirmModal.tsx";
 import { DeletePreview } from "./DeletePreview.tsx";

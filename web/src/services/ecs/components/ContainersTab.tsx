@@ -6,12 +6,11 @@ import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { copyable } from "@shared/components/CopyButton.tsx";
-import { LIST_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { LIST_SEPARATOR, NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { secretRefOf } from "../arns.ts";
-import { AWSLOGS_OPTIONS } from "../constants.ts";
-import { secretsRoutes } from "../../secretsmanager/routes.ts";
-import { ssmRoutes } from "../../ssm/routes.ts";
+import { secretRefOf, AWSLOGS_OPTIONS } from "@localconsole/core/ecs";
+import { secretsRoutes } from "@localconsole/core/secretsmanager";
+import { ssmRoutes } from "@localconsole/core/ssm";
 
 const DETAILS_COLUMNS = 3;
 

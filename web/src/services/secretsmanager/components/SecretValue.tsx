@@ -9,9 +9,14 @@ import { BreakableText } from "@shared/components/BreakableText.tsx";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ErrorState } from "@shared/components/TableStates.tsx";
-import { SECRET_TYPES, type SecretType } from "../constants.ts";
+import {
+  SECRET_TYPES,
+  type SecretType,
+  keyValueOf,
+  readableText,
+  type KeyValue,
+} from "@localconsole/core/secretsmanager";
 import { useSecretValue } from "../hooks/useSecrets.ts";
-import { keyValueOf, readableText, type KeyValue } from "../secretValue.ts";
 import { EditKeyValueModal, EditPlaintextModal } from "./EditSecretValueModal.tsx";
 
 // Như bảng biến môi trường của Lambda: khung hẹp thành dòng hai tầng, giá trị dài xuống dòng

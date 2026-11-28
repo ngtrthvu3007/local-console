@@ -7,8 +7,7 @@ import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -18,8 +17,8 @@ import { DataViewerTab } from "../components/DataViewerTab.tsx";
 import { DeleteStreamsModal } from "../components/DeleteStreamsModal.tsx";
 import { PutRecordModal } from "../components/PutRecordModal.tsx";
 import { useStream } from "../hooks/useStreams.ts";
-import { streamModeLabel } from "../recordData.ts";
-import { STREAM_TABS, kinesisRoutes, streamCrumbs } from "../routes.ts";
+import { streamModeLabel, STREAM_TABS, kinesisRoutes } from "@localconsole/core/kinesis";
+import { streamCrumbs } from "../routes.ts";
 import { STREAM_STATUS_STYLES } from "../constants.ts";
 
 export function StreamDetail() {

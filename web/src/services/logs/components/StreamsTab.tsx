@@ -7,10 +7,10 @@ import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { formatDate } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useLogStreams } from "../hooks/useLogStreams.ts";
-import { logsRoutes } from "../routes.ts";
+import { logsRoutes } from "@localconsole/core/logs";
 
 export function StreamsTab({ group }: { group: string }) {
   const follow = useFollow();

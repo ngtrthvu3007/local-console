@@ -9,13 +9,17 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { fieldLabel, runtimeLabel, type ResolverRow } from "../apis.ts";
-import { RESOLVER_KINDS } from "../constants.ts";
+import {
+  fieldLabel,
+  runtimeLabel,
+  type ResolverRow,
+  RESOLVER_KINDS,
+  appsyncRoutes,
+} from "@localconsole/core/appsync";
 import { useDeleteResolver } from "../hooks/useResolvers.ts";
-import { appsyncRoutes } from "../routes.ts";
 
 const ALL_TYPES = "";
 const MENU = { edit: "edit", delete: "delete" } as const;

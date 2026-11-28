@@ -4,7 +4,7 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useConfigurationSets } from "../hooks/useConfigurationSets.ts";
 import { useSetIdentityConfigurationSet } from "../hooks/useIdentities.ts";
-import { setConfigurationSetSchema } from "../schemas.ts";
+import { setConfigurationSetSchema } from "@localconsole/core/ses";
 
 const NONE = { value: "", label: "None" };
 

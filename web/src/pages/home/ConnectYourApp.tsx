@@ -4,7 +4,7 @@ import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { TerminalBlock } from "@shared/components/TerminalBlock.tsx";
-import { AWS_TEST_CREDENTIALS } from "@shared/constants.ts";
+import { AWS_TEST_CREDENTIALS } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 
 // SDK JS v3 đọc AWS_REGION, boto3 chỉ đọc AWS_DEFAULT_REGION (thiếu là

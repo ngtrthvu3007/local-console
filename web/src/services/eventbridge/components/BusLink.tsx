@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useBuses } from "../hooks/useBuses.ts";
-import { eventbridgeRoutes } from "../routes.ts";
+import { eventbridgeRoutes } from "@localconsole/core/eventbridge";
 
 // Bus không có trang chi tiết để dò nên so với danh sách bus đã tải để báo "not found"
 export function BusLink({ name }: { name: string }) {

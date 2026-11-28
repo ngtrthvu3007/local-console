@@ -5,9 +5,8 @@ import Link from "@cloudscape-design/components/link";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { distributionsServing } from "../distributions.ts";
+import { distributionsServing, cloudfrontRoutes } from "@localconsole/core/cloudfront";
 import { useDistributions } from "../hooks/useDistributions.ts";
-import { cloudfrontRoutes } from "../routes.ts";
 import { DistributionStatus } from "./DistributionStatus.tsx";
 import { LocalUrlLink } from "./LocalUrlLink.tsx";
 

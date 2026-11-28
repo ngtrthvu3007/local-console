@@ -13,18 +13,23 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize, DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { DeleteTablesModal } from "../components/DeleteTablesModal.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
-import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
+import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { KeyLabel, keyText } from "../components/KeyLabel.tsx";
-import { TABLE_STATUS_ACTIVE } from "../constants.ts";
-import { indexCountOf, keySchemaOf, useTables } from "../hooks/useTables.ts";
-import { dynamodbBaseCrumbs, dynamodbRoutes } from "../routes.ts";
+import {
+  TABLE_STATUS_ACTIVE,
+  indexCountOf,
+  keySchemaOf,
+  dynamodbRoutes,
+} from "@localconsole/core/dynamodb";
+import { useTables } from "../hooks/useTables.ts";
+import { dynamodbBaseCrumbs } from "../routes.ts";
 
 const TABLE_NAME_FIELD = "TableName";
 

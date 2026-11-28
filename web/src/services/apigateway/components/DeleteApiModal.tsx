@@ -1,7 +1,7 @@
 import Box from "@cloudscape-design/components/box";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import type { ApiRow } from "../apis.ts";
+import type { ApiRow } from "@localconsole/core/apigateway";
 import { useDeleteApi } from "../hooks/useApis.ts";
 
 interface Props {

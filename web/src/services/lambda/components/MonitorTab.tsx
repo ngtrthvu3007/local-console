@@ -1,7 +1,7 @@
 import { EmptyState } from "@shared/components/TableStates.tsx";
 import { LogEvents } from "@shared/logs/LogEvents.tsx";
 import { ViewInLogsLink } from "../../logs/components/LogGroupLink.tsx";
-import { logsRoutes } from "../../logs/routes.ts";
+import { logsRoutes } from "@localconsole/core/logs";
 
 export function MonitorTab({ logGroup }: { logGroup: string }) {
   return (

@@ -1,11 +1,15 @@
 import Header from "@cloudscape-design/components/header";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { AUTH_NONE, ROUTE_SELECTION_LABEL } from "../constants.ts";
-import { useAuthorizers, useRoutes, type AuthorizerRow } from "../hooks/useApiDetail.ts";
-import type { RouteRow } from "../routeRows.ts";
-import { API_VERSIONS } from "../routes.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
+import {
+  AUTH_NONE,
+  ROUTE_SELECTION_LABEL,
+  type AuthorizerRow,
+  type RouteRow,
+  API_VERSIONS,
+} from "@localconsole/core/apigateway";
+import { useAuthorizers, useRoutes } from "../hooks/useApiDetail.ts";
 import { IntegrationValue } from "./IntegrationValue.tsx";
 
 // Route không có authorizer: Floci trả NONE, spec hiện "—" như mọi giá trị thiếu

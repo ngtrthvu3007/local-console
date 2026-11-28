@@ -1,13 +1,12 @@
+import { lines } from "@localconsole/core/shared";
 import {
-  lines,
   literal,
   NODE_AWS_NOTE,
   PYTHON_AWS_NOTE,
   SAMPLE_TEXT,
   type CodeSample,
 } from "@shared/codeSamples.ts";
-import type { KeyType } from "./constants.ts";
-import type { KeyAttribute } from "./hooks/useTables.ts";
+import type { KeyType, KeyAttribute } from "@localconsole/core/dynamodb";
 
 const SAMPLE_VALUE = "example";
 const SAMPLE_NUMBER = "1";

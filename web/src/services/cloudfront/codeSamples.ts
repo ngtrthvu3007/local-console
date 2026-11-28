@@ -1,11 +1,6 @@
-import {
-  lines,
-  literal,
-  NODE_AWS_NOTE,
-  PYTHON_AWS_NOTE,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
-import { DEFAULT_INVALIDATION_PATH } from "./constants.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, NODE_AWS_NOTE, PYTHON_AWS_NOTE, type CodeSample } from "@shared/codeSamples.ts";
+import { DEFAULT_INVALIDATION_PATH } from "@localconsole/core/cloudfront";
 
 const NO_CACHE_NOTE = "Floci doesn't cache: the invalidation completes at once";
 

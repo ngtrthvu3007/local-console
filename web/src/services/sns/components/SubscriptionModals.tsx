@@ -15,15 +15,14 @@ import {
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
-import { pluralize } from "@shared/format.ts";
-import { reformatJson } from "@shared/json.ts";
+import { pluralize, reformatJson } from "@localconsole/core/shared";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import {
-  DEFAULT_FILTER_SCOPE,
   EDITOR_HEIGHT_PX,
+  DEFAULT_FILTER_SCOPE,
   FILTER_SCOPES,
   HOST_FROM_CONTAINER,
   HTTP_PROTOCOLS,
@@ -32,15 +31,18 @@ import {
   RAW_DELIVERY_PROTOCOLS,
   SUBSCRIPTION_ATTRIBUTES,
   type Protocol,
-} from "../constants.ts";
-import {
+  createSubscriptionSchema,
+  filterPolicySchema,
+  protocolLabel,
+  type Subscription,
+  type Topic,
   filterPolicyAttributes,
+} from "@localconsole/core/sns";
+import {
   useCreateSubscription,
   useDeleteSubscriptions,
   useSetSubscriptionAttributes,
 } from "../hooks/useSubscriptions.ts";
-import { createSubscriptionSchema, filterPolicySchema } from "../schemas.ts";
-import { protocolLabel, type Subscription, type Topic } from "../topics.ts";
 
 // Các modal chỉ mount khi mở
 

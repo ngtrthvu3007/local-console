@@ -1,13 +1,11 @@
+import { lines } from "@localconsole/core/shared";
+import { literal, NODE_AWS_NOTE, PYTHON_AWS_NOTE, type CodeSample } from "@shared/codeSamples.ts";
 import {
-  lines,
-  literal,
-  NODE_AWS_NOTE,
-  PYTHON_AWS_NOTE,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
-import { DEFAULT_BUS_NAME, DEFAULT_EVENT_SOURCE } from "./constants.ts";
-import type { Rule } from "./rules.ts";
-import type { Schedule } from "./schedules.ts";
+  DEFAULT_BUS_NAME,
+  DEFAULT_EVENT_SOURCE,
+  type Rule,
+  type Schedule,
+} from "@localconsole/core/eventbridge";
 
 const SAMPLE_DETAIL_TYPE = "OrderCreated";
 

@@ -13,13 +13,15 @@ import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useBuses } from "../../eventbridge/hooks/useBuses.ts";
-import { DEFAULT_BUS_NAME } from "../../eventbridge/constants.ts";
-import { eventbridgeRoutes } from "../../eventbridge/routes.ts";
+import { DEFAULT_BUS_NAME, eventbridgeRoutes } from "@localconsole/core/eventbridge";
 import { useTopics } from "../../sns/hooks/useTopics.ts";
-import { snsRoutes } from "../../sns/routes.ts";
-import { DESTINATION_KIND_LABELS, EVENT_TYPE_LABELS } from "../constants.ts";
+import { snsRoutes } from "@localconsole/core/sns";
+import {
+  DESTINATION_KIND_LABELS,
+  EVENT_TYPE_LABELS,
+  addDestinationSchema,
+} from "@localconsole/core/ses";
 import { useAddDestination } from "../hooks/useConfigurationSets.ts";
-import { addDestinationSchema } from "../schemas.ts";
 
 const EVENT_TYPE_OPTIONS = Object.entries(EVENT_TYPE_LABELS).map(([value, label]) => ({
   value,

@@ -1,7 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
-import { functionNameOfArn } from "../helpers.ts";
+import { functionNameOfArn, lambdaRoutes, type FunctionTab } from "@localconsole/core/lambda";
 import { useFunctionExists } from "../hooks/useFunctions.ts";
-import { lambdaRoutes, type FunctionTab } from "../routes.ts";
 
 // ARN function thành link sang trang function; dùng ở S3 (event notification), SNS (subscription)
 // và trigger của queue / bảng

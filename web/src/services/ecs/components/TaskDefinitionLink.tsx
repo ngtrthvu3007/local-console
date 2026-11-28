@@ -1,8 +1,7 @@
 import Link from "@cloudscape-design/components/link";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
-import { taskDefinitionLabel, taskDefinitionRefOf } from "../arns.ts";
-import { ecsRoutes } from "../routes.ts";
+import { taskDefinitionLabel, taskDefinitionRefOf, ecsRoutes } from "@localconsole/core/ecs";
 
 // "family:revision" thành link sang trang revision
 export function TaskDefinitionLink({ arn }: { arn?: string }) {

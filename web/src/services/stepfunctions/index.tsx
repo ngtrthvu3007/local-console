@@ -6,7 +6,7 @@ import {
   STEPFUNCTIONS_ROUTE_PATTERNS,
   STEPFUNCTIONS_SERVICE_ID,
   stepfunctionsRoutes,
-} from "./routes.ts";
+} from "@localconsole/core/stepfunctions";
 
 export const stepfunctionsService: ServiceDefinition = {
   id: STEPFUNCTIONS_SERVICE_ID,

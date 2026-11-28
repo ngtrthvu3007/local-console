@@ -5,41 +5,34 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { fetchJson } from "@shared/api.ts";
-import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
-import { MAILBOX_ID_PARAM, MAILBOX_PATH, MAILBOX_REFRESH_INTERVAL_MS } from "../constants.ts";
 import {
-  mailboxForRegion,
-  mailboxSchema,
+  MAILBOX_REFRESH_INTERVAL_MS,
   needsMimeFields,
-  readEmail,
   withMimeFields,
   type Email,
-} from "../mailbox.ts";
+} from "@localconsole/core/ses";
+import { useSesService } from "./useSesService.ts";
 
 const mailboxQueryKey = ["ses", "mailbox"];
-const MISSING_ID_FAILURE = "Email has no id, not deleted";
 
 export function useMailbox(autoRefresh = false) {
-  const { region } = useLoadedConfig();
+  const ses = useSesService();
 
   return useQuery({
     queryKey: mailboxQueryKey,
-    queryFn: async () => {
-      const body = mailboxSchema.parse(await fetchJson<unknown>(MAILBOX_PATH));
-      return mailboxForRegion(body.messages, region);
-    },
+    queryFn: ses.listEmails,
     refetchInterval: autoRefresh ? MAILBOX_REFRESH_INTERVAL_MS : false,
   });
 }
 
 // Ngoài mailboxQueryKey để Auto refresh không đọc lại MIME (mail không đổi)
 export function useEmailContent(email?: Email) {
+  const ses = useSesService();
+
   return useQuery({
     queryKey: ["ses", "email", email?.Id],
     // skipToken thay cho enabled: TypeScript biết email có mặt khi queryFn chạy
-    queryFn: email && !email.RejectReason ? () => readEmail(email) : skipToken,
+    queryFn: email && !email.RejectReason ? () => ses.readEmail(email) : skipToken,
     staleTime: Infinity,
     gcTime: 0,
   });
@@ -47,11 +40,12 @@ export function useEmailContent(email?: Email) {
 
 // Không nằm dưới mailboxQueryKey: Refresh, Auto refresh và xóa mail không đọc lại MIME. Chỉ giữ subject + to, bỏ attachment
 export function useMimeFields(emails: Email[] | undefined): Email[] | undefined {
+  const ses = useSesService();
   const results = useQueries({
     queries: (emails ?? []).filter(needsMimeFields).map((email) => ({
       queryKey: ["ses", "mimeFields", email.Id],
       queryFn: async () => {
-        const { subject, to } = await readEmail(email);
+        const { subject, to } = await ses.readEmail(email);
         return { subject, to };
       },
       staleTime: Infinity,
@@ -67,31 +61,11 @@ export function useMimeFields(emails: Email[] | undefined): Email[] | undefined 
 }
 
 export function useDeleteEmails() {
+  const ses = useSesService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (ids: string[]) => {
-      const failures: string[] = [];
-
-      for (const id of ids) {
-        // Id rỗng làm DELETE không id, xóa mail của mọi region: không bao giờ gửi
-        if (!id.trim()) {
-          failures.push(MISSING_ID_FAILURE);
-          continue;
-        }
-
-        try {
-          // Phải xóa theo id: DELETE không id xóa mail của mọi region
-          await fetchJson(`${MAILBOX_PATH}?${new URLSearchParams({ [MAILBOX_ID_PARAM]: id })}`, {
-            method: "DELETE",
-          });
-        } catch (error) {
-          failures.push(`${id}: ${errorMessage(error)}`);
-        }
-      }
-
-      return { count: ids.length - failures.length, failures };
-    },
+    mutationFn: (ids: string[]) => ses.deleteEmails(ids),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: mailboxQueryKey }),
   });
 }

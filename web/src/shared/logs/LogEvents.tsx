@@ -11,7 +11,7 @@ import Table, { type TableProps } from "../components/ResponsiveTable.tsx";
 import { emptyOrError } from "../components/TableStates.tsx";
 import { useFollow } from "../hooks/useFollow.ts";
 import { useIsCompact } from "../hooks/useIsCompact.ts";
-import { DEFAULT_LOG_RANGE, LOG_RANGES, type LogRangeId } from "./constants.ts";
+import { DEFAULT_LOG_RANGE, LOG_RANGES, type LogRangeId } from "@localconsole/core/logs";
 import { logEventColumns } from "./columns.tsx";
 import { useLogEvents } from "./useLogEvents.ts";
 

@@ -4,7 +4,7 @@ import { BreakableText } from "@shared/components/BreakableText.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 
 const columns: TableProps.ColumnDefinition<Output>[] = [
   { id: "key", header: "Key", isRowHeader: true, cell: (output) => output.OutputKey },

@@ -15,7 +15,7 @@ import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { SERVICE_STATUS_STYLES } from "../constants.ts";
 import { useServices } from "../hooks/useServices.ts";
-import { ecsRoutes } from "../routes.ts";
+import { ecsRoutes } from "@localconsole/core/ecs";
 import { DeleteServicesModal } from "./DeleteServicesModal.tsx";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
 import { TaskDefinitionLink } from "./TaskDefinitionLink.tsx";

@@ -1,8 +1,8 @@
 import type { KeyMetadata } from "@aws-sdk/client-kms";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
-import { KEY_STATES, KEY_STATE_STYLES, OTHER_STATE_TYPE } from "../constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { KEY_STATES } from "@localconsole/core/kms";
+import { KEY_STATE_STYLES, OTHER_STATE_TYPE } from "../constants.ts";
 
 export function KeyStatus({ meta }: { meta: KeyMetadata }) {
   const state = meta.KeyState;

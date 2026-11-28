@@ -15,20 +15,24 @@ import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { NOT_AVAILABLE, pluralize } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
-import { hostedUiBlocker } from "../auth.ts";
+import {
+  hostedUiBlocker,
+  isCognitoMissing,
+  POOL_TABS,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
+import { CLIENT_GENERAL_COLUMNS } from "../constants.ts";
 import { clientSample } from "../codeSamples.ts";
 import { OpenHostedUiModal } from "../components/OpenHostedUiModal.tsx";
-import { CLIENT_GENERAL_COLUMNS } from "../constants.ts";
-import { isCognitoMissing } from "../hooks/useCognito.ts";
 import { useClient, useDeleteClients } from "../hooks/useClients.ts";
 import { useUserPool } from "../hooks/usePools.ts";
-import { POOL_TABS, cognitoRoutes, poolCrumbs } from "../routes.ts";
+import { poolCrumbs } from "../routes.ts";
 
 const GENERAL_COLUMNS = CLIENT_GENERAL_COLUMNS;
 // Secret 51 ký tự không có chỗ ngắt: cho xuống dòng, kẻo tràn trang

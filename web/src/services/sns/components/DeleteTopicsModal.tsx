@@ -1,10 +1,10 @@
 import Alert from "@cloudscape-design/components/alert";
 import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
 import { ReferencedWarning } from "@shared/components/ReferencedWarning.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { useReferencedNames } from "../../s3/hooks/useReferencedNames.ts";
 import { useDeleteTopics } from "../hooks/useTopics.ts";
-import type { Topic } from "../topics.ts";
+import type { Topic } from "@localconsole/core/sns";
 
 interface Props {
   topics: readonly Topic[];

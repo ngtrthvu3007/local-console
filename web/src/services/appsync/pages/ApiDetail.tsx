@@ -17,10 +17,10 @@ import { FunctionsTab } from "../components/FunctionsTab.tsx";
 import { QueriesTab } from "../components/QueriesTab.tsx";
 import { SchemaTab } from "../components/SchemaTab.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
-import { authLabel } from "../apis.ts";
+import { authLabel, API_TABS, appsyncRoutes } from "@localconsole/core/appsync";
 import { useApi } from "../hooks/useApis.ts";
 import { useQueryDraft } from "../hooks/useQueryDraft.ts";
-import { API_TABS, apiCrumbs, appsyncRoutes } from "../routes.ts";
+import { apiCrumbs } from "../routes.ts";
 
 export function ApiDetail() {
   const { apiId = "" } = useParams();

@@ -10,12 +10,15 @@ import { FormTextarea } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { formatDate } from "@shared/format.ts";
+import { formatDate } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { DEFAULT_INVALIDATION_PATH, INVALIDATION_COMPLETED } from "../constants.ts";
+import {
+  DEFAULT_INVALIDATION_PATH,
+  INVALIDATION_COMPLETED,
+  invalidationSchema,
+} from "@localconsole/core/cloudfront";
 import { useCreateInvalidation, useInvalidations } from "../hooks/useInvalidations.ts";
-import { invalidationSchema } from "../schemas.ts";
 
 const CREATED_FIELD = "CreateTime";
 const PATHS_ROWS = 4;

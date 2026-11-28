@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import CopyToClipboard from "@cloudscape-design/components/copy-to-clipboard";
-import { COPY_TEXTS, NOT_AVAILABLE } from "../constants.ts";
-import { identifierParts } from "../format.ts";
+import { NOT_AVAILABLE, identifierParts } from "@localconsole/core/shared";
+import { COPY_TEXTS } from "../constants.ts";
 
 interface Props {
   text?: string;

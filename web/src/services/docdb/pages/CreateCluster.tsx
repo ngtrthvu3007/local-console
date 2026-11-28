@@ -17,12 +17,14 @@ import {
   INSTANCE_COUNT,
   CLUSTER_IDENTIFIER_RULE,
   PASSWORD_RULE,
-  TEXT,
   USERNAME_RULE,
-} from "../constants.ts";
+  createClusterSchema,
+  type CreateClusterForm,
+  docdbRoutes,
+} from "@localconsole/core/docdb";
+import { TEXT } from "../constants.ts";
 import { useCreateCluster } from "../hooks/useClusters.ts";
-import { docdbBaseCrumbs, docdbRoutes } from "../routes.ts";
-import { createClusterSchema, type CreateClusterForm } from "../schemas.ts";
+import { docdbBaseCrumbs } from "../routes.ts";
 
 const INITIAL_VALUES: CreateClusterForm = {
   identifier: "",

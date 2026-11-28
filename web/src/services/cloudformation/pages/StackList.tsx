@@ -9,7 +9,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { formatDate } from "@shared/format.ts";
+import { formatDate } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
@@ -18,7 +18,8 @@ import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { DeleteStackModal } from "../components/DeleteStackModal.tsx";
 import { StackStatus } from "../components/StackStatus.tsx";
 import { useStacks } from "../hooks/useStacks.ts";
-import { cloudformationRoutes, stacksCrumbs } from "../routes.ts";
+import { cloudformationRoutes } from "@localconsole/core/cloudformation";
+import { stacksCrumbs } from "../routes.ts";
 import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 
 const NAME_FIELD = "StackName";

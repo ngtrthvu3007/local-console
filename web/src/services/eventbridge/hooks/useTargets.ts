@@ -1,21 +1,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PutTargetsCommand, RemoveTargetsCommand } from "@aws-sdk/client-eventbridge";
+import {
+  ADDABLE_TARGET_KINDS,
+  TARGET_KINDS,
+  type AddTargetInput,
+  type AddableTargetKind,
+} from "@localconsole/core/eventbridge";
 import { useClusters } from "../../ecs/hooks/useClusters.ts";
-import { DEFAULT_ROLE_ARN } from "../../lambda/constants.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
 import { useTopics } from "../../sns/hooks/useTopics.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
 import { useStateMachines } from "../../stepfunctions/hooks/useStateMachines.ts";
-import { listTargets } from "../rules.ts";
-import {
-  ADDABLE_TARGET_KINDS,
-  TARGET_KINDS,
-  ecsParameters,
-  type AddableTargetKind,
-  type EcsTarget,
-} from "../targets.ts";
 import { EVENTBRIDGE_QUERY_ROOT, useBuses, useInvalidateEventBridge } from "./useBuses.ts";
-import { useEventBridge } from "./useEventBridge.ts";
+import { useEventBridgeService } from "./useEventBridgeService.ts";
 
 const targetsQueryKey = (bus: string, rule: string) => [
   EVENTBRIDGE_QUERY_ROOT,
@@ -26,55 +22,30 @@ const targetsQueryKey = (bus: string, rule: string) => [
 ];
 
 export function useTargets(bus: string, rule: string) {
-  const client = useEventBridge();
+  const eventbridge = useEventBridgeService();
+
   return useQuery({
     queryKey: targetsQueryKey(bus, rule),
-    queryFn: () => listTargets(client, bus, rule),
+    queryFn: () => eventbridge.listTargets(bus, rule),
   });
 }
 
-interface AddTargetInput {
-  arn: string;
-  id: string;
-  messageGroupId?: string; // queue FIFO
-  ecs?: EcsTarget; // target là cluster ECS: chạy task Fargate
-}
-
 export function useAddTarget(bus: string, rule: string) {
-  const client = useEventBridge();
+  const eventbridge = useEventBridgeService();
   const invalidate = useInvalidateEventBridge();
+
   return useMutation({
-    mutationFn: async ({ arn, id, messageGroupId, ecs }: AddTargetInput) => {
-      const result = await client.send(
-        new PutTargetsCommand({
-          EventBusName: bus,
-          Rule: rule,
-          Targets: [
-            {
-              Id: id,
-              Arn: arn,
-              SqsParameters: messageGroupId ? { MessageGroupId: messageGroupId } : undefined,
-              // AWS bắt buộc role cho target ECS; Floci không kiểm, dùng role thay thế như schedule
-              RoleArn: ecs ? DEFAULT_ROLE_ARN : undefined,
-              EcsParameters: ecs ? ecsParameters(ecs) : undefined,
-            },
-          ],
-        }),
-      );
-      // PutTargets báo lỗi từng target ở đây chứ không ném
-      if (result.FailedEntryCount)
-        throw new Error(result.FailedEntries?.[0]?.ErrorMessage ?? "Couldn't add the target");
-    },
+    mutationFn: (input: AddTargetInput) => eventbridge.addTarget(bus, rule, input),
     onSuccess: invalidate,
   });
 }
 
 export function useRemoveTargets(bus: string, rule: string) {
-  const client = useEventBridge();
+  const eventbridge = useEventBridgeService();
   const invalidate = useInvalidateEventBridge();
+
   return useMutation({
-    mutationFn: (ids: string[]) =>
-      client.send(new RemoveTargetsCommand({ EventBusName: bus, Rule: rule, Ids: ids })),
+    mutationFn: (ids: string[]) => eventbridge.removeTargets(bus, rule, ids),
     onSuccess: invalidate,
   });
 }

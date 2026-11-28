@@ -3,11 +3,15 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import type { TableProps } from "@cloudscape-design/components/table";
 import type { LifecycleRule } from "@aws-sdk/client-s3";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { LIFECYCLE_STATUS } from "../../constants.ts";
+import {
+  LIFECYCLE_STATUS,
+  describeLifecycleActions,
+  lifecycleScope,
+  toLifecycleRule,
+} from "@localconsole/core/s3";
 import { useLifecycleRules, useSaveLifecycleRules } from "../../hooks/useBucketSettings.ts";
-import { describeLifecycleActions, lifecycleScope, toLifecycleRule } from "../../lifecycleRules.ts";
 import { LifecycleModal } from "./LifecycleModal.tsx";
 import { RulesSection } from "./RulesSection.tsx";
 

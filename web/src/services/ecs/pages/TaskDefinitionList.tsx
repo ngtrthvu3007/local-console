@@ -14,9 +14,10 @@ import { TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { REVISION_STATUS_STYLES, STATUS } from "../constants.ts";
-import { useFamilies, type FamilyStatus } from "../hooks/useTaskDefinitions.ts";
-import { ecsRoutes, ecsTaskDefinitionCrumbs } from "../routes.ts";
+import { STATUS, type FamilyStatus, ecsRoutes } from "@localconsole/core/ecs";
+import { REVISION_STATUS_STYLES } from "../constants.ts";
+import { useFamilies } from "../hooks/useTaskDefinitions.ts";
+import { ecsTaskDefinitionCrumbs } from "../routes.ts";
 
 interface FamilyRow {
   family: string;

@@ -8,11 +8,16 @@ import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import Table from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { DEFAULT_BEHAVIOR_LABEL, DEFAULT_BEHAVIOR_PATH } from "../constants.ts";
-import { behaviorsOf, moveBehavior, withoutBehavior } from "../distributions.ts";
+import {
+  DEFAULT_BEHAVIOR_LABEL,
+  DEFAULT_BEHAVIOR_PATH,
+  behaviorsOf,
+  moveBehavior,
+  withoutBehavior,
+} from "@localconsole/core/cloudfront";
 import { useUpdateDistribution } from "../hooks/useDistributions.ts";
 import { usePolicyNames } from "../hooks/usePolicyNames.ts";
 import { BehaviorModal } from "./BehaviorModal.tsx";

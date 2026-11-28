@@ -14,13 +14,13 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useTables } from "../../dynamodb/hooks/useTables.ts";
-import { dynamodbRoutes } from "../../dynamodb/routes.ts";
+import { dynamodbRoutes } from "@localconsole/core/dynamodb";
 import { useStreams } from "../../kinesis/hooks/useStreams.ts";
-import { kinesisRoutes } from "../../kinesis/routes.ts";
-import { bucketOptions } from "../../s3/helpers.ts";
+import { kinesisRoutes } from "@localconsole/core/kinesis";
+import { bucketOptions } from "@localconsole/core/s3";
 import { useBuckets } from "../../s3/hooks/useBuckets.ts";
 import { useQueues } from "../../sqs/hooks/useQueues.ts";
-import { sqsRoutes } from "../../sqs/routes.ts";
+import { sqsRoutes } from "@localconsole/core/sqs";
 import {
   ALREADY_TRIGGERED,
   DEFAULT_STARTING_POSITION,
@@ -30,10 +30,11 @@ import {
   STREAM_BATCH_SIZE,
   TRIGGER_SOURCES,
   type TriggerSource,
-} from "../constants.ts";
-import type { AddTriggerInput } from "../hooks/useTriggers.ts";
-import { DEFAULT_MAPPING_OPTIONS } from "../mappingOptions.ts";
-import { triggerSchema, type TriggerFormOutput } from "../schemas.ts";
+  DEFAULT_MAPPING_OPTIONS,
+  triggerSchema,
+  type TriggerFormOutput,
+  type AddTriggerInput,
+} from "@localconsole/core/lambda";
 import { MappingOptionsFields } from "./MappingOptionsFields.tsx";
 
 const SOURCE_ITEMS = Object.entries(TRIGGER_SOURCES).map(([value, label]) => ({ value, label }));

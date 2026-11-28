@@ -10,13 +10,13 @@ import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { kinesisRoutes } from "../../kinesis/routes.ts";
-import { lambdaRoutes } from "../../lambda/routes.ts";
+import { kinesisRoutes } from "@localconsole/core/kinesis";
+import { lambdaRoutes } from "@localconsole/core/lambda";
 import {
   useDeleteSubscriptionFilters,
   useSubscriptionFilters,
 } from "../hooks/useSubscriptionFilters.ts";
-import { destinationOf } from "../sources.ts";
+import { destinationOf } from "@localconsole/core/logs";
 import { CreateSubscriptionFilterModal } from "./CreateSubscriptionFilterModal.tsx";
 
 const ID_FIELD = "filterName";

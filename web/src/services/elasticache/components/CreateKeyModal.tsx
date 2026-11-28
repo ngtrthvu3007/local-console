@@ -4,7 +4,7 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { KEY_TYPE_OPTIONS } from "../constants.ts";
 import { useCreateKey } from "../hooks/useRedis.ts";
-import { createKeySchema, type CreateKeyForm } from "../schemas.ts";
+import { createKeySchema, type CreateKeyForm } from "../redisSchemas.ts";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 
 interface Props {

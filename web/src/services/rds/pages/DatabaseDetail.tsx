@@ -5,16 +5,16 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
 import { useDatabaseActions } from "../components/DatabaseActions.tsx";
 import { DatabaseStatus } from "../components/DatabaseStatus.tsx";
 import { ConfigurationTab, ConnectivityTab, LogsTab } from "../components/DatabaseTabs.tsx";
-import { engineText } from "../databases.ts";
+import { engineText, DATABASE_TABS, rdsRoutes } from "@localconsole/core/rds";
 import { useDatabase } from "../hooks/useDatabases.ts";
-import { DATABASE_TABS, databaseCrumbs, rdsRoutes } from "../routes.ts";
+import { databaseCrumbs } from "../routes.ts";
 
 export function DatabaseDetail() {
   const { database: id = "" } = useParams();

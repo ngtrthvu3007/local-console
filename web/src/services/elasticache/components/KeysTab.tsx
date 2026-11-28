@@ -19,13 +19,13 @@ import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.ts
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, pluralize, errorMessage } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { errorMessage, notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useSplitPanel } from "@shared/hooks/useSplitPanel.ts";
 import { ALL_KEYS_PATTERN, ALL_TYPES_OPTION, KEY_TYPE_OPTIONS } from "../constants.ts";
-import { isTransitional, type Cluster } from "../hooks/useClusters.ts";
+import { isTransitional, type Cluster, SEARCH_PARAMS } from "@localconsole/core/elasticache";
 import {
   errorCode,
   isKeyNotFound,
@@ -37,7 +37,6 @@ import {
   type KeyFilter,
 } from "../hooks/useRedis.ts";
 import { keySummary, ttlCell, typeLabel } from "../keyText.ts";
-import { SEARCH_PARAMS } from "../routes.ts";
 import { CreateKeyModal } from "./CreateKeyModal.tsx";
 import { KeyValueBody } from "./KeyValueBody.tsx";
 import { TtlModal } from "./TtlModal.tsx";

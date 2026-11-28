@@ -11,7 +11,7 @@ import Header from "@cloudscape-design/components/header";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { DeleteBrokersModal } from "../components/DeleteBrokersModal.tsx";
@@ -19,10 +19,10 @@ import { DetailsTab } from "../components/DetailsTab.tsx";
 import { ExchangesTab } from "../components/ExchangesTab.tsx";
 import { QueuesTab } from "../components/QueuesTab.tsx";
 import { SignIn } from "../components/SignIn.tsx";
-import { BROKER_RUNNING, ENGINE_LABEL } from "../constants.ts";
+import { BROKER_RUNNING, ENGINE_LABEL, BROKER_TABS, mqRoutes } from "@localconsole/core/mq";
 import { useBrokerAuthorization } from "../credentials.ts";
 import { useBroker, useRebootBroker } from "../hooks/useBrokers.ts";
-import { BROKER_TABS, brokerCrumbs, mqRoutes } from "../routes.ts";
+import { brokerCrumbs } from "../routes.ts";
 
 const WRONG_CREDENTIALS = "Wrong username or password.";
 

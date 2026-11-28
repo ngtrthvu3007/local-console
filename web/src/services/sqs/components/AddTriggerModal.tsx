@@ -3,14 +3,16 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../lambda/hooks/useFunctions.ts";
-import { ALREADY_TRIGGERED, SQS_BATCH_SIZE } from "../../lambda/constants.ts";
+import {
+  ALREADY_TRIGGERED,
+  SQS_BATCH_SIZE,
+  functionNameOfMapping,
+  DEFAULT_MAPPING_OPTIONS,
+} from "@localconsole/core/lambda";
 import { MappingOptionsFields } from "../../lambda/components/MappingOptionsFields.tsx";
 import { ViewFunctionButton } from "../../lambda/components/StreamTriggers.tsx";
-import { functionNameOfMapping } from "../../lambda/helpers.ts";
-import { DEFAULT_MAPPING_OPTIONS } from "../../lambda/mappingOptions.ts";
 import { useAddQueueTrigger, useQueueTriggers } from "../hooks/useQueueTriggers.ts";
-import type { Queue } from "../queues.ts";
-import { queueTriggerSchema } from "../schemas.ts";
+import { type Queue, queueTriggerSchema } from "@localconsole/core/sqs";
 
 // Chỉ mount khi mở. Cùng giới hạn và mặc định với modal Add trigger của Lambda
 export function AddTriggerModal({ queue, onDismiss }: { queue: Queue; onDismiss: () => void }) {

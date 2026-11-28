@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router";
-import { TAB_PARAM } from "../routes.ts";
+import { TAB_PARAM } from "@localconsole/core/shared";
 
 // Tab mặc định không ghi lên URL. keep: query param khác của trang giữ lại khi đổi tab (vd: ?key= của KMS)
 export function useTabParam<T extends string>(

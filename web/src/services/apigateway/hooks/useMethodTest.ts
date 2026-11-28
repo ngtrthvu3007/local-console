@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { readTestResponse, type MethodTestResult } from "../methodTest.ts";
+import { readTestResponse, type MethodTestResult } from "@localconsole/core/apigateway";
 
 export interface MethodTestRequest {
   url: string;
@@ -19,7 +19,13 @@ export function useMethodTest() {
       body,
     }: MethodTestRequest): Promise<MethodTestResult> => {
       const startedAt = performance.now();
-      const response = await fetch(url, { method, headers, body });
+      // Body chuỗi thì trình duyệt tự đặt Content-Type text/plain, Floci bỏ qua template application/json.
+      // Blob không type: không có Content-Type (trừ khi người dùng tự nhập), Floci coi là JSON như AWS
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: body === undefined ? undefined : new Blob([body]),
+      });
       return readTestResponse(response, startedAt);
     },
   });

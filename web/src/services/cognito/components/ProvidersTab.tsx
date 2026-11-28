@@ -12,14 +12,13 @@ import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.ts
 import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate, pluralize } from "@shared/format.ts";
+import { NOT_AVAILABLE, formatDate, pluralize } from "@localconsole/core/shared";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
 import { useDeleteProviders, useProviders } from "../hooks/useProviders.ts";
-import { cognitoRoutes } from "../routes.ts";
+import { cognitoRoutes } from "@localconsole/core/cognito";
 import { DomainBlock } from "./DomainBlock.tsx";
 
 const NAME_FIELD = "ProviderName";

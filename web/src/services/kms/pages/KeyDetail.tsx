@@ -5,7 +5,7 @@ import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, refreshAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -15,10 +15,16 @@ import { useKeyActions } from "../components/KeyActions.tsx";
 import { KeyStatus } from "../components/KeyStatus.tsx";
 import { PolicyTab } from "../components/PolicyTab.tsx";
 import { TryItTab } from "../components/TryItTab.tsx";
-import { KEY_MANAGERS } from "../constants.ts";
+import {
+  KEY_MANAGERS,
+  keyTypeLabel,
+  keyUsageLabel,
+  KEY_TABS,
+  SEARCH_PARAMS,
+  kmsRoutes,
+} from "@localconsole/core/kms";
 import { useKey } from "../hooks/useKeys.ts";
-import { keyTypeLabel, keyUsageLabel } from "../keys.ts";
-import { KEY_TABS, SEARCH_PARAMS, keyCrumbs, kmsRoutes } from "../routes.ts";
+import { keyCrumbs } from "../routes.ts";
 
 export function KeyDetail() {
   const [searchParams] = useSearchParams();

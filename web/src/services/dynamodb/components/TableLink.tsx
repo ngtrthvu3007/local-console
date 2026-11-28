@@ -1,6 +1,6 @@
 import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import { useTableExists } from "../hooks/useTables.ts";
-import { dynamodbRoutes } from "../routes.ts";
+import { dynamodbRoutes } from "@localconsole/core/dynamodb";
 
 // Tên bảng thành link sang trang bảng; dùng ở data source của AppSync
 export function TableLink({ name }: { name: string }) {

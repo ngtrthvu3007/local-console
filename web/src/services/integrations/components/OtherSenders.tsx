@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLambda } from "../../lambda/hooks/useLambda.ts";
-import { useS3 } from "../../s3/hooks/useS3.ts";
-import { useSES } from "../../ses/hooks/useSES.ts";
-import { listSenders, type SenderKind } from "../senders.ts";
+import type { SenderKind } from "@localconsole/core/integrations";
+import { useIntegrationsService } from "../hooks/useIntegrationsService.ts";
 import { SendersTable } from "./SendersTable.tsx";
 
 interface Props {
@@ -13,12 +11,10 @@ interface Props {
 
 // S3, Lambda và SES đang gửi vào resource này qua cấu hình ở trang của chúng
 export function OtherSenders({ arn, kinds }: Props) {
-  const { s3 } = useS3();
-  const { lambda } = useLambda();
-  const ses = useSES();
+  const integrations = useIntegrationsService();
   const senders = useQuery({
     queryKey: ["senders", arn, ...kinds],
-    queryFn: () => listSenders({ s3, lambda, ses }, arn, kinds),
+    queryFn: () => integrations.listSenders(arn, kinds),
   });
   return (
     <SendersTable

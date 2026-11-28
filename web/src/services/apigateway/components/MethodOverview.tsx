@@ -2,10 +2,15 @@ import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import Tabs from "@cloudscape-design/components/tabs";
 import type { Method } from "@aws-sdk/client-api-gateway";
 import { BreakableText } from "@shared/components/BreakableText.tsx";
-import { authorizerTypeLabel } from "../authorizers.ts";
-import { useAuthorizers, type AuthorizerRow } from "../hooks/useApiDetail.ts";
-import { AUTH_IAM, AUTH_NONE, IAM_NOTE } from "../constants.ts";
-import { API_VERSIONS } from "../routes.ts";
+import {
+  authorizerTypeLabel,
+  AUTH_IAM,
+  AUTH_NONE,
+  IAM_NOTE,
+  type AuthorizerRow,
+  API_VERSIONS,
+} from "@localconsole/core/apigateway";
+import { useAuthorizers } from "../hooks/useApiDetail.ts";
 import { IntegrationValue } from "./IntegrationValue.tsx";
 import { MethodTest } from "./MethodTest.tsx";
 

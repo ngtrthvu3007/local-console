@@ -25,11 +25,14 @@ import {
   SYMMETRIC_SPEC,
   type KeyType,
   type KeyUsage,
-} from "../constants.ts";
+  kmsRoutes,
+  createKeySchema,
+  specsFor,
+  type CreateKeyForm,
+} from "@localconsole/core/kms";
 import { useAllAliases } from "../hooks/useAliases.ts";
 import { useCreateKey } from "../hooks/useKeys.ts";
-import { kmsBaseCrumbs, kmsRoutes } from "../routes.ts";
-import { createKeySchema, specsFor, type CreateKeyForm } from "../schemas.ts";
+import { kmsBaseCrumbs } from "../routes.ts";
 
 const TYPE_ITEMS = Object.entries(KEY_TYPES).map(([value, { label, description }]) => ({
   value,

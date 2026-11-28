@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useBlocker } from "react-router";
 
 // Rời trang có thay đổi chưa lưu thì hỏi lại, trừ điều hướng mang cờ này (vd: sau khi lưu / xóa)
-export const SKIP_LEAVE_GUARD = "skipLeaveGuard";
+const SKIP_LEAVE_GUARD = "skipLeaveGuard";
 export const skipLeaveGuard = { state: { [SKIP_LEAVE_GUARD]: true } };
 
 // Hỏi lại khi đóng tab hoặc chuyển trang lúc còn thay đổi chưa lưu; đổi tab trong trang thì không

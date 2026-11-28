@@ -1,5 +1,5 @@
 import type { TableProps } from "@cloudscape-design/components/table";
-import { nounFor } from "./format.ts";
+import { nounFor } from "@localconsole/core/shared";
 
 export function selectionLabels<T>(
   noun: string,

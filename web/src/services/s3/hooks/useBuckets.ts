@@ -1,138 +1,66 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CreateBucketCommand,
-  DeleteBucketCommand,
-  HeadBucketCommand,
-  ListBucketsCommand,
-  ListObjectVersionsCommand,
-  PutBucketEncryptionCommand,
-  PutBucketTaggingCommand,
-  PutBucketVersioningCommand,
-  type BucketLocationConstraint,
-} from "@aws-sdk/client-s3";
-import { existsUnlessMissing } from "@shared/aws.ts";
-import type { Tag } from "@shared/components/TagsModal.tsx";
-import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
-import {
-  REGION_WITHOUT_LOCATION_CONSTRAINT,
-  SSE_KMS_ALGORITHM,
-  VERSIONING_STATUS,
-} from "../constants.ts";
-import { toS3TagSet } from "../helpers.ts";
-import { deleteAllVersions } from "../operations.ts";
+import type { CreateBucketInput, DeleteBucketInput } from "@localconsole/core/s3";
+import { existsUnlessMissing } from "@localconsole/core/shared";
 import { objectsQueryKey } from "./useObjects.ts";
-import { useS3 } from "./useS3.ts";
+import { useS3Service } from "./useS3Service.ts";
 
 const bucketsQueryKey = ["s3", "buckets"];
 // Mọi query về một bucket (tồn tại, cấu hình…) nằm dưới key này
 export const bucketQueryKey = (bucket: string, part: string) => ["s3", "bucket", bucket, part];
 
 export function useBuckets() {
-  const { s3 } = useS3();
-  return useQuery({
-    queryKey: bucketsQueryKey,
-    queryFn: async () => (await s3.send(new ListBucketsCommand({}))).Buckets ?? [],
-  });
+  const s3 = useS3Service();
+
+  return useQuery({ queryKey: bucketsQueryKey, queryFn: s3.listBuckets });
 }
 
 export function useBucketExists(bucket: string) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useQuery({
     queryKey: bucketQueryKey(bucket, "exists"),
-    queryFn: () => existsUnlessMissing(() => s3.send(new HeadBucketCommand({ Bucket: bucket }))),
+    queryFn: () => existsUnlessMissing(() => s3.headBucket(bucket)),
   });
 }
 
 export function useBucketHasObjects(bucket: string, enabled: boolean) {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
+
   return useQuery({
     queryKey: bucketQueryKey(bucket, "has-objects"),
     enabled,
     staleTime: 0,
-    queryFn: async () => {
-      const page = await s3.send(new ListObjectVersionsCommand({ Bucket: bucket, MaxKeys: 1 }));
-      return Boolean(page.Versions?.length || page.DeleteMarkers?.length);
-    },
+    queryFn: () => s3.bucketHasObjects(bucket),
   });
 }
 
-interface CreateBucketInput {
-  name: string;
-  versioning: boolean;
-  tags: Tag[];
-  kmsKeyId?: string; // có (kể cả "" = aws/s3) thì đặt mã hóa mặc định SSE-KMS
-}
-
 export function useCreateBucket() {
-  const { s3 } = useS3();
-  const { region } = useLoadedConfig();
+  const s3 = useS3Service();
   const queryClient = useQueryClient();
-  const needsLocation = region !== REGION_WITHOUT_LOCATION_CONSTRAINT;
 
   return useMutation({
-    mutationFn: async ({ name, versioning, tags, kmsKeyId }: CreateBucketInput) => {
-      const createBucketConfiguration = needsLocation
-        ? { LocationConstraint: region as BucketLocationConstraint }
-        : undefined;
-      await s3.send(
-        new CreateBucketCommand({
-          Bucket: name,
-          CreateBucketConfiguration: createBucketConfiguration,
-        }),
-      );
-      if (versioning) {
-        await s3.send(
-          new PutBucketVersioningCommand({
-            Bucket: name,
-            VersioningConfiguration: { Status: VERSIONING_STATUS.enabled },
-          }),
-        );
-      }
-      if (tags.length) {
-        await s3.send(
-          new PutBucketTaggingCommand({ Bucket: name, Tagging: { TagSet: toS3TagSet(tags) } }),
-        );
-      }
-      if (kmsKeyId !== undefined) {
-        await s3.send(
-          new PutBucketEncryptionCommand({
-            Bucket: name,
-            ServerSideEncryptionConfiguration: {
-              Rules: [
-                {
-                  ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: SSE_KMS_ALGORITHM,
-                    KMSMasterKeyID: kmsKeyId || undefined,
-                  },
-                },
-              ],
-            },
-          }),
-        );
-      }
-    },
+    mutationFn: (input: CreateBucketInput) => s3.createBucket(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: bucketsQueryKey }),
   });
 }
 
 export function useEmptyBucket() {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: (bucket: string) => deleteAllVersions(s3, bucket),
+    mutationFn: s3.emptyBucket,
     onSuccess: (_deleted, bucket) =>
       queryClient.invalidateQueries({ queryKey: objectsQueryKey(bucket) }),
   });
 }
 
 export function useDeleteBucket() {
-  const { s3 } = useS3();
+  const s3 = useS3Service();
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ bucket, emptyFirst }: { bucket: string; emptyFirst: boolean }) => {
-      if (emptyFirst) await deleteAllVersions(s3, bucket);
-      await s3.send(new DeleteBucketCommand({ Bucket: bucket }));
-    },
+    mutationFn: (input: DeleteBucketInput) => s3.deleteBucket(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: bucketsQueryKey }),
   });
 }

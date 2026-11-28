@@ -3,10 +3,13 @@ import { FormCheckbox, FormInput, FormTiles } from "@shared/components/form/Form
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { SIGN_IN_WITH } from "../constants.ts";
+import {
+  SIGN_IN_WITH,
+  createPoolSchema,
+  type CreatePoolForm,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
 import { useCreateUserPool } from "../hooks/usePools.ts";
-import { cognitoRoutes } from "../routes.ts";
-import { createPoolSchema, type CreatePoolForm } from "../schemas.ts";
 
 const INITIAL_VALUES: CreatePoolForm = {
   name: "",

@@ -1,17 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { SendersTable } from "../../integrations/components/SendersTable.tsx";
-import { useLambda } from "../../lambda/hooks/useLambda.ts";
-import { useSES } from "../../ses/hooks/useSES.ts";
-import { listBusSenders } from "../busSenders.ts";
+import { useIntegrationsService } from "../../integrations/hooks/useIntegrationsService.ts";
 import { EVENTBRIDGE_QUERY_ROOT } from "../hooks/useBuses.ts";
 
 // Lambda (đích async) và configuration set của SES đang gửi event vào bus này
 export function BusSenders({ busArn }: { busArn: string }) {
-  const { lambda } = useLambda();
-  const ses = useSES();
+  const integrations = useIntegrationsService();
   const senders = useQuery({
     queryKey: [EVENTBRIDGE_QUERY_ROOT, "senders", busArn],
-    queryFn: () => listBusSenders(lambda, ses, busArn),
+    queryFn: () => integrations.listBusSenders(busArn),
     enabled: Boolean(busArn),
   });
   return (

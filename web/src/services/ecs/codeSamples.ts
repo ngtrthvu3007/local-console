@@ -1,11 +1,6 @@
-import {
-  lines,
-  literal,
-  NODE_AWS_NOTE,
-  PYTHON_AWS_NOTE,
-  type CodeSample,
-} from "@shared/codeSamples.ts";
-import { LAUNCH_TYPE } from "./constants.ts";
+import { lines } from "@localconsole/core/shared";
+import { literal, NODE_AWS_NOTE, PYTHON_AWS_NOTE, type CodeSample } from "@shared/codeSamples.ts";
+import { LAUNCH_TYPE } from "@localconsole/core/ecs";
 
 // Chạy một task trên cluster từ app rồi đọc trạng thái; "my-task" là family task definition của app
 export function clusterSample(cluster: string, subnet: string): CodeSample {

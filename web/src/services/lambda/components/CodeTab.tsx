@@ -10,13 +10,20 @@ import Spinner from "@cloudscape-design/components/spinner";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import type { FunctionConfiguration } from "@aws-sdk/client-lambda";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
-import { formatBytes } from "@shared/format.ts";
+import { formatBytes } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
-import { editorLanguageOf, handlerModuleOf, inlineLanguageOf } from "../codeTemplates.ts";
-import { INLINE_EDIT_MAX_BYTES, PACKAGE_TYPE_ZIP } from "../constants.ts";
+import {
+  editorLanguageOf,
+  handlerModuleOf,
+  inlineLanguageOf,
+  INLINE_EDIT_MAX_BYTES,
+  PACKAGE_TYPE_ZIP,
+  textFilesOf,
+  zipPackage,
+  type CodeEdits,
+} from "@localconsole/core/lambda";
 import { useCodePackage } from "../hooks/useFunctionCode.ts";
 import { useDeployCode } from "../hooks/useFunctions.ts";
-import { textFilesOf, zipPackage, type CodeEdits } from "../zipArchive.ts";
 
 const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));
 

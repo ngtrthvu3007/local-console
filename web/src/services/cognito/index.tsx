@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconUserShield } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { COGNITO_ROUTE_PATTERNS, COGNITO_SERVICE_ID, cognitoRoutes } from "./routes.ts";
+import {
+  COGNITO_ROUTE_PATTERNS,
+  COGNITO_SERVICE_ID,
+  cognitoRoutes,
+} from "@localconsole/core/cognito";
 
 export const cognitoService: ServiceDefinition = {
   id: COGNITO_SERVICE_ID,

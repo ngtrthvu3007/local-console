@@ -4,8 +4,7 @@ import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
-import { RUNTIMES } from "../constants.ts";
-import { isUntouched, type ResolverCode } from "../resolverTemplates.ts";
+import { RUNTIMES, isUntouched, type ResolverCode } from "@localconsole/core/appsync";
 
 const EDITOR_HEIGHT_PX = 320;
 const VTL_EDITOR_HEIGHT_PX = 200;

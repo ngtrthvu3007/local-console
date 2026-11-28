@@ -3,7 +3,7 @@ import Alert from "@cloudscape-design/components/alert";
 import type { StreamSpecification, TimeToLiveDescription } from "@aws-sdk/client-dynamodb";
 import { FormCheckbox, FormInput, FormSelect } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
@@ -11,9 +11,10 @@ import {
   STREAM_VIEW_TYPES,
   TTL_STATUS_ENABLED,
   type StreamViewTypeId,
-} from "../constants.ts";
+  streamSchema,
+  ttlSchema,
+} from "@localconsole/core/dynamodb";
 import { useUpdateStream, useUpdateTimeToLive } from "../hooks/useTableSettings.ts";
-import { streamSchema, ttlSchema } from "../schemas.ts";
 
 const STREAM_VIEW_OPTIONS = Object.entries(STREAM_VIEW_TYPES).map(([value, label]) => ({
   value,

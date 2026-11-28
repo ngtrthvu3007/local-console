@@ -10,19 +10,24 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
 import { parameterSample } from "../codeSamples.ts";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
-import { SECURE_STRING, SSM_KEY_SERVICE } from "../constants.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
+import {
+  SECURE_STRING,
+  SSM_KEY_SERVICE,
+  isParameterMissing,
+  SEARCH_PARAMS,
+  ssmRoutes,
+} from "@localconsole/core/ssm";
 import { DeleteParametersModal } from "../components/DeleteParametersModal.tsx";
 import { ParameterValue } from "../components/ParameterValue.tsx";
-import { isParameterMissing, useParameter } from "../hooks/useParameters.ts";
-import { SEARCH_PARAMS, parameterCrumbs, ssmRoutes } from "../routes.ts";
+import { useParameter } from "../hooks/useParameters.ts";
+import { parameterCrumbs } from "../routes.ts";
 
 interface ViewProps {
   name: string;

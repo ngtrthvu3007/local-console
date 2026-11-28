@@ -6,8 +6,12 @@ import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { TARGET_KIND_OPTIONS, useAddTarget, useTargetOptions } from "../hooks/useTargets.ts";
-import { addTargetSchema, type AddTargetForm } from "../schemas.ts";
-import { TARGET_KINDS, targetId } from "../targets.ts";
+import {
+  addTargetSchema,
+  type AddTargetForm,
+  TARGET_KINDS,
+  targetId,
+} from "@localconsole/core/eventbridge";
 import { ECS_TARGET_NAMES, EcsTargetFields, ecsTargetOf } from "./EcsTargetFields.tsx";
 
 interface Props {

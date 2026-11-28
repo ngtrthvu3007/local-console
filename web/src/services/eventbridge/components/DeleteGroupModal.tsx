@@ -1,6 +1,6 @@
 import Alert from "@cloudscape-design/components/alert";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { pluralize } from "@shared/format.ts";
+import { pluralize } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useDeleteGroup, useSchedules } from "../hooks/useSchedules.ts";
 

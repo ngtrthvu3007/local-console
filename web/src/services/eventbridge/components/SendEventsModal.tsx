@@ -5,14 +5,14 @@ import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
+  EDITOR_HEIGHT_PX,
   DEFAULT_BUS_NAME,
   DEFAULT_EVENT_DETAIL,
   DEFAULT_EVENT_SOURCE,
   DELIVERY_HINT,
-  EDITOR_HEIGHT_PX,
-} from "../constants.ts";
+  sendEventsSchema,
+} from "@localconsole/core/eventbridge";
 import { useBuses, usePutEvent } from "../hooks/useBuses.ts";
-import { sendEventsSchema } from "../schemas.ts";
 
 interface Props {
   bus?: string; // bus đang xem, mặc định chọn sẵn

@@ -1,12 +1,12 @@
+import { lines } from "@localconsole/core/shared";
 import {
-  lines,
   literal,
   NODE_AWS_NOTE,
   PYTHON_AWS_NOTE,
   fifoFields,
   type CodeSample,
 } from "@shared/codeSamples.ts";
-import type { Topic } from "./topics.ts";
+import type { Topic } from "@localconsole/core/sns";
 
 export function topicSample(topic: Topic): CodeSample {
   const fifo = fifoFields(topic.fifo, topic.contentBasedDedup);

@@ -2,7 +2,7 @@ import type { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import Button from "@cloudscape-design/components/button";
 import ProgressBar from "@cloudscape-design/components/progress-bar";
-import { formatBytes, pluralize } from "@shared/format.ts";
+import { formatBytes, pluralize } from "@localconsole/core/shared";
 import { notifyBulkResult, setLiveMessage } from "@shared/hooks/useNotify.ts";
 import { createStore } from "@shared/store.ts";
 import {
@@ -10,8 +10,8 @@ import {
   MIN_MULTIPART_PART_BYTES,
   UPLOAD_FILES_IN_PARALLEL,
   UPLOAD_PARTS_IN_PARALLEL,
-} from "./constants.ts";
-import { s3Uri } from "./helpers.ts";
+  s3Uri,
+} from "@localconsole/core/s3";
 import type { PickedFile } from "./uploadFiles.ts";
 
 // Hàng đợi upload nằm ngoài React: rời trang Upload thì upload vẫn chạy,

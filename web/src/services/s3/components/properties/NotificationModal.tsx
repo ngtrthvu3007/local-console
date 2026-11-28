@@ -9,7 +9,7 @@ import {
   FormSelect,
 } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
-import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
+import { FLOCI_ACCOUNT_ID } from "@localconsole/core/shared";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import { useFunctions } from "../../../lambda/hooks/useFunctions.ts";
@@ -20,9 +20,9 @@ import {
   NOTIFICATION_DESTINATIONS,
   NOTIFICATION_EVENT_TYPES,
   type NotificationDestination,
-} from "../../constants.ts";
-import type { NotificationRule } from "../../notificationRules.ts";
-import { notificationSchema } from "../../schemas.ts";
+  notificationSchema,
+} from "@localconsole/core/s3";
+import type { NotificationRule } from "@localconsole/core/s3";
 
 const EVENT_OPTIONS = NOTIFICATION_EVENT_TYPES.map((event) => ({ value: event, label: event }));
 

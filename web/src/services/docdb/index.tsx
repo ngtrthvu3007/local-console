@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconLeaf } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { DOCDB_ROUTE_PATTERNS, DOCDB_SERVICE_ID, docdbRoutes } from "./routes.ts";
+import { DOCDB_ROUTE_PATTERNS, DOCDB_SERVICE_ID, docdbRoutes } from "@localconsole/core/docdb";
 
 export const docdbService: ServiceDefinition = {
   id: DOCDB_SERVICE_ID,

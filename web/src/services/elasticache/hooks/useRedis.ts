@@ -5,7 +5,7 @@ import {
   useQueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
-import { fetchJson } from "@shared/api.ts";
+import { fetchJson } from "@localconsole/core/shared";
 import {
   REDIS_ERROR_CODES,
   type CreateKeyInput,

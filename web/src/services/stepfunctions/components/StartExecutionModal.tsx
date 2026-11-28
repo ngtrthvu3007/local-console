@@ -6,12 +6,12 @@ import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
 import {
   DEFAULT_EXECUTION_INPUT,
-  EDITOR_HEIGHT_PX,
   EXECUTION_NAME_MAX_LENGTH,
-} from "../constants.ts";
+  startExecutionSchema,
+  stepfunctionsRoutes,
+} from "@localconsole/core/stepfunctions";
+import { EDITOR_HEIGHT_PX } from "../constants.ts";
 import { useStartExecution } from "../hooks/useExecutions.ts";
-import { stepfunctionsRoutes } from "../routes.ts";
-import { startExecutionSchema } from "../schemas.ts";
 
 interface Props {
   machineArn: string;

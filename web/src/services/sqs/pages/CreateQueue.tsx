@@ -22,12 +22,14 @@ import {
   FIFO_SUFFIX,
   QUEUE_NAME_MAX_LENGTH,
   QUEUE_TYPES,
-} from "../constants.ts";
+  createQueueSchema,
+  type CreateQueueForm,
+  sqsRoutes,
+} from "@localconsole/core/sqs";
 import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
-import { defaultKeyLabel } from "../../kms/keys.ts";
+import { defaultKeyLabel } from "@localconsole/core/kms";
 import { useCreateQueue } from "../hooks/useQueues.ts";
-import { sqsBaseCrumbs, sqsRoutes } from "../routes.ts";
-import { createQueueSchema, type CreateQueueForm } from "../schemas.ts";
+import { sqsBaseCrumbs } from "../routes.ts";
 
 const NAME_CONSTRAINT = `Up to ${QUEUE_NAME_MAX_LENGTH} characters: letters, numbers, hyphens and underscores. A FIFO queue name ends with ${FIFO_SUFFIX}.`;
 

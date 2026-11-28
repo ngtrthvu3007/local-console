@@ -7,8 +7,7 @@ import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { copyToClipboard } from "@shared/clipboard.ts";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, pluralize } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StackLink } from "@shared/StackLink.tsx";
@@ -16,9 +15,15 @@ import { DeleteTopicsModal } from "../components/DeleteTopicsModal.tsx";
 import { DetailsTab } from "../components/DetailsTab.tsx";
 import { PublishModal } from "../components/PublishModal.tsx";
 import { SubscriptionsTab } from "../components/SubscriptionsTab.tsx";
-import { isTopicMissing, useTopic } from "../hooks/useTopics.ts";
-import { TOPIC_TABS, snsRoutes, topicCrumbs } from "../routes.ts";
-import { topicTypeLabel, type Topic } from "../topics.ts";
+import {
+  isTopicMissing,
+  TOPIC_TABS,
+  snsRoutes,
+  topicTypeLabel,
+  type Topic,
+} from "@localconsole/core/sns";
+import { useTopic } from "../hooks/useTopics.ts";
+import { topicCrumbs } from "../routes.ts";
 
 const MODALS = { publish: "publish", delete: "delete" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];

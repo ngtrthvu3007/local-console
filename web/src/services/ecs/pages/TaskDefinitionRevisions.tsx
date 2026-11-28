@@ -12,12 +12,12 @@ import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { taskDefinitionLabel } from "../arns.ts";
+import { taskDefinitionLabel, STATUS, type RevisionRow, ecsRoutes } from "@localconsole/core/ecs";
+import { REVISION_STATUS_STYLES } from "../constants.ts";
 import { RevisionActionModal } from "../components/RevisionActionModal.tsx";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
-import { REVISION_STATUS_STYLES, STATUS } from "../constants.ts";
-import { useRevisions, type RevisionRow } from "../hooks/useTaskDefinitions.ts";
-import { ecsRoutes, familyCrumbs } from "../routes.ts";
+import { useRevisions } from "../hooks/useTaskDefinitions.ts";
+import { familyCrumbs } from "../routes.ts";
 
 const ARN_FIELD = "arn";
 

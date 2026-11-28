@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { IconBroadcast } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { SNS_ROUTE_PATTERNS, SNS_SERVICE_ID, snsRoutes } from "./routes.ts";
+import { SNS_ROUTE_PATTERNS, SNS_SERVICE_ID, snsRoutes } from "@localconsole/core/sns";
 
 export const snsService: ServiceDefinition = {
   id: SNS_SERVICE_ID,

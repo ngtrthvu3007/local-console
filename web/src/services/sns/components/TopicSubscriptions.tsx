@@ -1,9 +1,8 @@
 import Header from "@cloudscape-design/components/header";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
-import { lastArnPart } from "@shared/arn.ts";
-import { summarizeFilterPolicy } from "../filterPolicy.ts";
+import { lastArnPart } from "@localconsole/core/shared";
+import { summarizeFilterPolicy, type Subscription } from "@localconsole/core/sns";
 import { useSubscriptionsOfEndpoint } from "../hooks/useSubscriptions.ts";
-import { type Subscription } from "../topics.ts";
 import { TopicLink } from "./TopicLink.tsx";
 
 const COLUMNS: TableProps.ColumnDefinition<Subscription>[] = [

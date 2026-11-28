@@ -8,15 +8,18 @@ import type { EventDestination } from "@aws-sdk/client-sesv2";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { errorMessage, notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { DETAIL_SEPARATOR, errorMessage, lastArnPart } from "@localconsole/core/shared";
+import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
-import { lastArnPart } from "@shared/arn.ts";
 import { BusLink } from "../../eventbridge/components/BusLink.tsx";
-import { busNameOfArn } from "../../eventbridge/targets.ts";
+import { busNameOfArn } from "@localconsole/core/eventbridge";
 import { TopicLink } from "../../sns/components/TopicLink.tsx";
-import { eventTypeLabel, toInput } from "../configurationSets.ts";
-import { DESTINATION_KIND_LABELS, SIMULATOR_HINTS } from "../constants.ts";
+import {
+  eventTypeLabel,
+  toInput,
+  DESTINATION_KIND_LABELS,
+  SIMULATOR_HINTS,
+} from "@localconsole/core/ses";
 import { useEventDestinations, useUpdateDestination } from "../hooks/useConfigurationSets.ts";
 
 const BUS_HINT =

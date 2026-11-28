@@ -1,58 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  DeleteEmailTemplateCommand,
-  GetEmailTemplateCommand,
-  paginateListEmailTemplates,
-  type EmailTemplateMetadata,
-} from "@aws-sdk/client-sesv2";
-import { runEach } from "@shared/hooks/useNotify.ts";
-import { useSES } from "./useSES.ts";
+import { useSesService } from "./useSesService.ts";
 
 const templatesQueryKey = ["ses", "templates"];
 
 export function useTemplates() {
-  const client = useSES();
+  const ses = useSesService();
 
-  return useQuery({
-    queryKey: templatesQueryKey,
-    queryFn: async () => {
-      const templates: EmailTemplateMetadata[] = [];
-
-      for await (const page of paginateListEmailTemplates({ client }, {})) {
-        templates.push(...(page.TemplatesMetadata ?? []));
-      }
-
-      return templates;
-    },
-  });
+  return useQuery({ queryKey: templatesQueryKey, queryFn: ses.listTemplates });
 }
 
 export function useTemplate(name?: string) {
-  const client = useSES();
+  const ses = useSesService();
 
   return useQuery({
     queryKey: [...templatesQueryKey, name],
-    queryFn: async () => {
-      const response = await client.send(new GetEmailTemplateCommand({ TemplateName: name }));
-      return response.TemplateContent ?? {};
-    },
+    queryFn: () => ses.getTemplate(name!),
     enabled: !!name,
     retry: false,
   });
 }
 
 export function useDeleteTemplates() {
-  const client = useSES();
+  const ses = useSesService();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (names: string[]) =>
-      runEach(
-        names,
-        (name) => name,
-        (name) => client.send(new DeleteEmailTemplateCommand({ TemplateName: name })),
-      ),
-    // exact: chỉ đọc lại danh sách, không đọc lại chi tiết template vừa xóa (404)
+    mutationFn: (names: string[]) => ses.deleteTemplates(names),
+    // exact: không đọc lại chi tiết template vừa xóa (404)
     onSuccess: () => queryClient.invalidateQueries({ queryKey: templatesQueryKey, exact: true }),
   });
 }

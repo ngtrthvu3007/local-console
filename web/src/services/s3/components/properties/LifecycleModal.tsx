@@ -3,8 +3,7 @@ import type { RadioGroupProps } from "@cloudscape-design/components/radio-group"
 import { FormCheckbox, FormInput, FormRadioGroup } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { LIFECYCLE_STATUS } from "../../constants.ts";
-import { lifecycleSchema, type LifecycleFormOutput } from "../../schemas.ts";
+import { LIFECYCLE_STATUS, lifecycleSchema, type LifecycleFormOutput } from "@localconsole/core/s3";
 
 const STATUS_ITEMS: RadioGroupProps.RadioButtonDefinition[] = [
   { value: LIFECYCLE_STATUS.enabled, label: "Enabled" },

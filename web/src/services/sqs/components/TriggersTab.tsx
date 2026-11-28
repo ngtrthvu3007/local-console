@@ -8,12 +8,11 @@ import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import { EVENT_SOURCE_STATES } from "../../lambda/constants.ts";
+import { EVENT_SOURCE_STATES, FUNCTION_TABS } from "@localconsole/core/lambda";
 import { BrokenTriggersAlert } from "../../lambda/components/BrokenTriggersAlert.tsx";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
-import { FUNCTION_TABS } from "../../lambda/routes.ts";
 import { useQueueTriggers } from "../hooks/useQueueTriggers.ts";
-import type { Queue } from "../queues.ts";
+import type { Queue } from "@localconsole/core/sqs";
 import { AddTriggerModal } from "./AddTriggerModal.tsx";
 
 // Chỉ xem và thêm; bật/tắt, xóa làm ở tab Triggers của Lambda (giống DynamoDB)

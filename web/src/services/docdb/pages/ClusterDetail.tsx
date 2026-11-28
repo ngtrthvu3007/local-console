@@ -6,8 +6,7 @@ import Tabs from "@cloudscape-design/components/tabs";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { StatusBadge } from "@shared/components/StatusBadge.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, pluralize } from "@localconsole/core/shared";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { useTabParam } from "@shared/hooks/useTabParam.ts";
@@ -16,8 +15,9 @@ import { ConnectivityTab } from "../components/ConnectivityTab.tsx";
 import { DeleteClustersModal } from "../components/DeleteClustersModal.tsx";
 import { InstancesTab } from "../components/InstancesTab.tsx";
 import { CLUSTER_STATUS_STYLES, TEXT } from "../constants.ts";
-import { instanceId, useCluster } from "../hooks/useClusters.ts";
-import { CLUSTER_TABS, clusterCrumbs, docdbRoutes } from "../routes.ts";
+import { instanceId, CLUSTER_TABS, docdbRoutes } from "@localconsole/core/docdb";
+import { useCluster } from "../hooks/useClusters.ts";
+import { clusterCrumbs } from "../routes.ts";
 
 // Gợi ý tên instance kế tiếp chưa dùng: <cluster>-1, <cluster>-2…
 const nextInstanceId = (cluster: string, taken: readonly (string | undefined)[]) => {

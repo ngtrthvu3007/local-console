@@ -6,7 +6,7 @@ import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import type { KeyValue } from "@server/routes/redis/contract.ts";
 import { EmptyState, ErrorState } from "@shared/components/TableStates.tsx";
-import { formatBytes } from "@shared/format.ts";
+import { formatBytes } from "@localconsole/core/shared";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { STRING_EDITOR_HEIGHT_PX } from "../constants.ts";
 import { isKeyNotFound, useUpdateKey, type KeyValueQuery } from "../hooks/useRedis.ts";

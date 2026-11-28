@@ -15,20 +15,21 @@ import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
-import { NOT_AVAILABLE, PHONE_MAX_WIDTH_PX } from "@shared/constants.ts";
+import { NOT_AVAILABLE, jsonError, prettyJson } from "@localconsole/core/shared";
+import { PHONE_MAX_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyError, notifySuccess } from "@shared/hooks/useNotify.ts";
-import { jsonError, prettyJson } from "@shared/json.ts";
 import {
   DEFAULT_EVENT_TEMPLATE,
   INVOCATION_TYPES,
   eventTemplates,
   type EventTemplateName,
   type InvocationType,
-} from "../constants.ts";
-import { useInvoke, type InvokeResult } from "../hooks/useInvoke.ts";
+  testEventNameSchema,
+  type InvokeResult,
+} from "@localconsole/core/lambda";
+import { useInvoke } from "../hooks/useInvoke.ts";
 import { useTestEvents } from "../hooks/useTestEvents.ts";
-import { testEventNameSchema } from "../schemas.ts";
 
 const CodeEditor = lazy(() => import("@shared/components/CodeEditor.tsx"));
 

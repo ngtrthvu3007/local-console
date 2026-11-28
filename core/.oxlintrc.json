@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": ["react", "react-*", "@cloudscape-design/*", "@tanstack/*", "@hookform/*"]
+      }
+    ],
+    "no-restricted-globals": [
+      "error",
+      "window",
+      "document",
+      "sessionStorage",
+      "localStorage",
+      "Buffer",
+      "process"
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": {
+        "no-restricted-globals": "off"
+      }
+    }
+  ]
+}

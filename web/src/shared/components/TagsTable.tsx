@@ -5,9 +5,9 @@ import { EmptyState } from "./TableStates.tsx";
 import type { Tag } from "./TagsModal.tsx";
 
 interface Props {
+  description?: string;
   tags: Tag[];
   loading?: boolean;
-  description?: string;
   onEdit: () => void;
 }
 

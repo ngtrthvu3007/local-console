@@ -10,10 +10,14 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { ATTRIBUTE_DATA_TYPES, EDITOR_HEIGHT_PX, MAX_MESSAGE_ATTRIBUTES } from "../constants.ts";
+import {
+  EDITOR_HEIGHT_PX,
+  ATTRIBUTE_DATA_TYPES,
+  MAX_MESSAGE_ATTRIBUTES,
+  publishSchema,
+  type Topic,
+} from "@localconsole/core/sns";
 import { usePublish } from "../hooks/useTopics.ts";
-import { publishSchema } from "../schemas.ts";
-import type { Topic } from "../topics.ts";
 
 const TYPE_OPTIONS = ATTRIBUTE_DATA_TYPES.map((type) => ({ value: type, label: type }));
 

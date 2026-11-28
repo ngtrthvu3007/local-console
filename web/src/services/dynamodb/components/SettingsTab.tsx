@@ -18,8 +18,8 @@ import type {
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
-import { formatDate } from "@shared/format.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, formatDate } from "@localconsole/core/shared";
+import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { StreamTriggersTable } from "../../lambda/components/StreamTriggers.tsx";
 import { useStreamTriggers } from "../../lambda/hooks/useTriggers.ts";
@@ -29,9 +29,10 @@ import {
   STREAM_VIEW_TYPES,
   TTL_STATUS_ENABLED,
   type StreamViewTypeId,
-} from "../constants.ts";
+  keyAttributesOf,
+  keySchemaOf,
+} from "@localconsole/core/dynamodb";
 import { useTimeToLive } from "../hooks/useTableSettings.ts";
-import { keyAttributesOf, keySchemaOf } from "../hooks/useTables.ts";
 import { tableSample } from "../codeSamples.ts";
 import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { KeyLabel, keyText } from "./KeyLabel.tsx";

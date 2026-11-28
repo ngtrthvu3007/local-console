@@ -2,7 +2,11 @@ import { Navigate } from "react-router";
 import { IconKey } from "@tabler/icons-react";
 import type { ServiceDefinition } from "../../registry.ts";
 import { lazyPage } from "@shared/lazyPage.ts";
-import { SECRETS_ROUTE_PATTERNS, SECRETS_SERVICE_ID, secretsRoutes } from "./routes.ts";
+import {
+  SECRETS_ROUTE_PATTERNS,
+  SECRETS_SERVICE_ID,
+  secretsRoutes,
+} from "@localconsole/core/secretsmanager";
 
 export const secretsManagerService: ServiceDefinition = {
   id: SECRETS_SERVICE_ID,
