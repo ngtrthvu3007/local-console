@@ -3,15 +3,18 @@ export const LOGO_PATH = "/mark.svg";
 export const HOME_PATH = "/";
 
 export const AWS_PROXY_PATH = "/aws";
+
 export const API_PATHS = {
   health: "/api/health",
   config: "/api/config",
 } as const;
+
 export const FLOCI_PATHS = {
   info: `${AWS_PROXY_PATH}/_floci/info`,
   health: `${AWS_PROXY_PATH}/_floci/health`,
   reset: `${AWS_PROXY_PATH}/_floci/state/reset`,
 } as const;
+
 export const FLOCI_SERVICE_RUNNING = "running";
 export const FLOCI_START_COMMAND = "docker compose up -d floci";
 export const FLOCI_RESTART_COMMAND = "docker compose restart floci";
@@ -23,6 +26,7 @@ export const AWS_TEST_CREDENTIALS = {
   accessKeyId: "test",
   secretAccessKey: "test",
 } as const;
+
 export const FLOCI_ACCOUNT_ID = "000000000000";
 
 // Region hiển thị kèm mã Local Zone
@@ -35,9 +39,17 @@ export const SECONDS_PER_MINUTE = 60;
 export const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
 export const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 
+// Số dòng mỗi trang của bảng danh sách (Cloudscape Pagination)
+export const TABLE_PAGE_SIZE = 50;
+
+export const KIBIBYTE = 1024;
+export const MEBIBYTE = 1024 * KIBIBYTE;
+
 export const HEALTH_REFRESH_INTERVAL_MS = 10 * MILLISECONDS_PER_SECOND;
 export const SUCCESS_MESSAGE_LIFETIME_MS = 5 * MILLISECONDS_PER_SECOND;
 export const FLASHBAR_STACK_THRESHOLD = 3;
+// Phone: mỗi banner cao ~60px nên gộp ngay từ banner thứ 2, nội dung không bị đẩy xuống
+export const PHONE_FLASHBAR_STACK_THRESHOLD = 1;
 export const QUERY_RETRY_COUNT = 1;
 
 export const COPY_TEXTS = {
@@ -48,7 +60,7 @@ export const COPY_TEXTS = {
 
 // Khung hẹp hơn mức này thì gom nút vào dropdown và ẩn cột phụ của bảng
 export const COMPACT_WIDTH_PX = 900;
-// Mốc điện thoại của Cloudscape: dưới mức này panel luôn nằm dưới
+// Mốc điện thoại của Cloudscape: dưới mức này panel luôn nằm dưới. CSS viết cứng số này trong @media
 export const PHONE_MAX_WIDTH_PX = 688;
 // Panel bên phải rộng 480px; trên điện thoại cao 2/3 màn hình cho bảng có chỗ
 export const SPLIT_PANEL_SIDE_WIDTH_PX = 480;
@@ -62,9 +74,13 @@ export const SERVICE_CATEGORIES = {
   compute: { label: "Compute", color: "#ED7100" },
   storage: { label: "Storage", color: "#3F8624" },
   database: { label: "Database", color: "#2E27AD" },
+  networking: { label: "Networking & content delivery", color: "#8C4FFF" },
   integration: { label: "Application integration", color: "#E7157B" },
+  security: { label: "Security, identity, & compliance", color: "#DD344C" },
   business: { label: "Business applications", color: "#DD344C" },
+  management: { label: "Management & governance", color: "#C925D1" },
 } as const;
+
 export type ServiceCategory = keyof typeof SERVICE_CATEGORIES;
 
 // Modal xóa hàng loạt chỉ liệt kê vài mục đầu
@@ -74,6 +90,8 @@ export const NOT_AVAILABLE = "—";
 
 // Ngăn các phần trong một dòng mô tả: "pk String · sk String · 68 items"
 export const DETAIL_SEPARATOR = " · ";
+// Nối tên trong câu thông báo: "a, b, c"
+export const LIST_SEPARATOR = ", ";
 // Dưới độ rộng này bảng thành danh sách hai tầng (điện thoại), tablet vẫn là
 // bảng nhiều cột. Cùng mốc phone với Cloudscape; ResizeObserver so sánh bằng <
 export const ITEM_LIST_WIDTH_PX = PHONE_MAX_WIDTH_PX + 1;

@@ -35,8 +35,8 @@ import {
 } from "@aws-sdk/client-eventbridge";
 import {
   ACCOUNT_ID,
-  AWS_PROXY_URL,
   consoleConfig,
+  deleteMails,
   uniqueName,
   viaConsole,
   waitFor,
@@ -125,11 +125,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const quiet = (promise: Promise<unknown>) => promise.catch(() => {});
-  const { messages = [] } = await (await fetch(`${AWS_PROXY_URL}/_aws/ses`)).json();
-  for (const mail of messages.filter((item: { Source: string }) => item.Source === sender))
-    await fetch(`${AWS_PROXY_URL}/_aws/ses?id=${encodeURIComponent(mail.Id)}`, {
-      method: "DELETE",
-    });
+  await deleteMails((mail) => mail.Source === sender);
   await quiet(ses.send(new DeleteEmailIdentityCommand({ EmailIdentity: sender })));
   await quiet(ses.send(new DeleteConfigurationSetCommand({ ConfigurationSetName: setName })));
   await quiet(

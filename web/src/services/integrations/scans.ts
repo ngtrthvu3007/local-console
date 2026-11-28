@@ -13,7 +13,7 @@ import {
 // Hai lượt quét chung cho khối "Other senders" (queue / topic / function) và "Event senders" (bus).
 // Floci chỉ có ít resource nên hỏi song song từng cái
 
-export interface AsyncDestinations {
+interface AsyncDestinations {
   name: string;
   onSuccess?: string;
   onFailure?: string;
@@ -24,12 +24,15 @@ export async function listAsyncDestinations(lambda: LambdaClient): Promise<Async
   const names: string[] = [];
   for await (const page of paginateListFunctions({ client: lambda }, {}))
     names.push(...(page.Functions ?? []).flatMap((fn) => fn.FunctionName ?? []));
+
   return Promise.all(
     names.map(async (name) => {
       const { FunctionEventInvokeConfigs = [] } = await lambda.send(
         new ListFunctionEventInvokeConfigsCommand({ FunctionName: name }),
       );
+
       const destinations = FunctionEventInvokeConfigs[0]?.DestinationConfig;
+
       return {
         name,
         onSuccess: destinations?.OnSuccess?.Destination,
@@ -46,6 +49,7 @@ export async function listSetDestinations(
   const names: string[] = [];
   for await (const page of paginateListConfigurationSets({ client: ses }, {}))
     names.push(...(page.ConfigurationSets ?? []));
+
   return Promise.all(
     names.map(async (name) => ({
       name,

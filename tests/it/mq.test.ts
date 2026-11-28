@@ -4,7 +4,9 @@ import { amazonMq, consoleApi, consoleConfig, uniqueName, waitFor } from "./help
 // Broker RabbitMQ thật do Floci bật; console gọi API quản lý của nó qua /api/mq
 const USERNAME = "lcit";
 const PASSWORD = "lc-it-password-1"; // MQ đòi mật khẩu từ 12 ký tự
-const auth = { authorization: `Basic ${Buffer.from(`${USERNAME}:${PASSWORD}`).toString("base64")}` };
+const auth = {
+  authorization: `Basic ${Buffer.from(`${USERNAME}:${PASSWORD}`).toString("base64")}`,
+};
 const queue = uniqueName("queue");
 let region: string;
 let brokerId: string;
@@ -43,7 +45,9 @@ describe("RabbitMQ through /api/mq", () => {
 
   it("reports a wrong password as 401, not as a broker error", async () => {
     const wrong = { authorization: `Basic ${Buffer.from(`${USERNAME}:nope`).toString("base64")}` };
-    const { status, body } = await consoleApi("GET", `/api/mq/${brokerId}/queues`, { headers: wrong });
+    const { status, body } = await consoleApi("GET", `/api/mq/${brokerId}/queues`, {
+      headers: wrong,
+    });
     expect(status).toBe(401);
     expect(body.message).toBe("Wrong username or password");
   });
@@ -56,10 +60,14 @@ describe("RabbitMQ through /api/mq", () => {
     expect(created).toEqual({ status: 201, body: { name: queue } });
 
     // Exchange mặc định định tuyến theo tên queue
-    const published = await consoleApi("POST", `/api/mq/${brokerId}/exchanges/amq.default/publish`, {
-      headers: auth,
-      body: { routingKey: queue, payload: '{"orderId":1}' },
-    });
+    const published = await consoleApi(
+      "POST",
+      `/api/mq/${brokerId}/exchanges/amq.default/publish`,
+      {
+        headers: auth,
+        body: { routingKey: queue, payload: '{"orderId":1}' },
+      },
+    );
     expect(published.status).toBe(200);
 
     const peeked = await consoleApi("POST", `/api/mq/${brokerId}/queues/${queue}/peek`, {
@@ -89,7 +97,9 @@ describe("RabbitMQ through /api/mq", () => {
   });
 
   it("deletes the queue", async () => {
-    const deleted = await consoleApi("DELETE", `/api/mq/${brokerId}/queues/${queue}`, { headers: auth });
+    const deleted = await consoleApi("DELETE", `/api/mq/${brokerId}/queues/${queue}`, {
+      headers: auth,
+    });
     expect(deleted.status).toBe(200);
     const { body } = await consoleApi("GET", `/api/mq/${brokerId}/queues`, { headers: auth });
     expect(body.map((item: { name: string }) => item.name)).not.toContain(queue);

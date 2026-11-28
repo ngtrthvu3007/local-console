@@ -1,0 +1,40 @@
+import {
+  paginateListStateMachines,
+  type SFNClient,
+  type StateMachineType,
+} from "@aws-sdk/client-sfn";
+import { ARN_SEPARATOR } from "@shared/arn.ts";
+import { FLOCI_ACCOUNT_ID } from "@shared/constants.ts";
+
+// …:execution:<state machine>:<name>, Express …:express:<state machine>:<id>:<id> → tên ở vị trí 6
+const EXECUTION_ARN_MACHINE_INDEX = 6;
+
+export interface StateMachine {
+  name: string;
+  arn: string;
+  type: StateMachineType;
+  createdAt?: Date;
+}
+
+export const stateMachineArn = (region: string, name: string) =>
+  `arn:aws:states:${region}:${FLOCI_ACCOUNT_ID}:stateMachine:${name}`;
+
+export const stateMachineOfExecutionArn = (executionArn: string) =>
+  executionArn.split(ARN_SEPARATOR)[EXECUTION_ARN_MACHINE_INDEX] ?? "";
+
+export async function listStateMachines(client: SFNClient): Promise<StateMachine[]> {
+  const machines: StateMachine[] = [];
+
+  for await (const page of paginateListStateMachines({ client }, {})) {
+    for (const item of page.stateMachines ?? []) {
+      machines.push({
+        name: item.name ?? "",
+        arn: item.stateMachineArn ?? "",
+        type: item.type ?? "STANDARD",
+        createdAt: item.creationDate,
+      });
+    }
+  }
+
+  return machines;
+}

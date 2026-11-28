@@ -43,9 +43,10 @@ export function useUploader(bucket: string, prefix: string) {
     setDraft((list) => list.filter((item) => !ids.includes(item.id)));
 
   // Lần đầu tạo lượt mới; các lần sau chạy lại những file lỗi/bị hủy của lượt đó
-  const start = () => {
+  // kmsKeyId: có thì mã hóa SSE-KMS bằng key đó ("" = aws/s3); chỉ áp cho lượt mới
+  const start = (kmsKeyId?: string) => {
     if (batch) return void runBatch(s3, batch.id, onFinished);
-    setBatchId(startBatch(s3, { bucket, prefix, items: draft }, onFinished));
+    setBatchId(startBatch(s3, { bucket, prefix, items: draft, kmsKeyId }, onFinished));
   };
 
   const cancel = () => {

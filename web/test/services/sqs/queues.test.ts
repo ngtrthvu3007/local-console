@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   parseRedrivePolicy,
-  queueNameOfArn,
   queueNameOfUrl,
   queueUrlAt,
   redrivePolicyAttribute,
@@ -13,9 +12,8 @@ const QUEUE_URL = "http://localhost:4566/000000000000/orders.fifo";
 const DLQ_ARN = "arn:aws:sqs:ap-southeast-1:000000000000:orders-dlq";
 
 describe("queue names", () => {
-  it("reads the name from a URL and an ARN", () => {
+  it("reads the name from a URL", () => {
     expect(queueNameOfUrl(QUEUE_URL)).toBe("orders.fifo");
-    expect(queueNameOfArn(DLQ_ARN)).toBe("orders-dlq");
   });
 
   it("moves the URL to another host, keeping the path", () => {
@@ -46,6 +44,15 @@ describe("parseRedrivePolicy", () => {
 });
 
 describe("toQueue", () => {
+  it("reads the encryption of the queue", () => {
+    const url = "http://localhost.floci.io:4566/000000000000/orders";
+    expect(toQueue(url, { KmsMasterKeyId: "alias/orders" }).encryption).toEqual({
+      kmsKeyId: "alias/orders",
+      sqsManaged: false,
+    });
+    expect(toQueue(url, { SqsManagedSseEnabled: "true" }).encryption.sqsManaged).toBe(true);
+  });
+
   it("reads string attributes into numbers, flags and dates", () => {
     const queue = toQueue(QUEUE_URL, {
       QueueArn: "arn:aws:sqs:ap-southeast-1:000000000000:orders.fifo",

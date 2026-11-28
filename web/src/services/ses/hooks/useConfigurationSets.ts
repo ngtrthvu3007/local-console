@@ -15,11 +15,12 @@ import { toDefinition, type DestinationInput } from "../configurationSets.ts";
 import { useSES } from "./useSES.ts";
 
 const SETS_ROOT = "ses-configuration-sets";
-export const configurationSetsQueryKey = [SETS_ROOT];
+const configurationSetsQueryKey = [SETS_ROOT];
 const destinationsKey = (name: string) => [SETS_ROOT, name, "destinations"];
 
 export function useConfigurationSets() {
   const client = useSES();
+
   return useQuery({
     queryKey: configurationSetsQueryKey,
     queryFn: async () => {
@@ -50,6 +51,7 @@ export function useEventDestinations(name: string) {
 export function useAllEventDestinations(names: readonly string[]) {
   const client = useSES();
   const results = useQueries({ queries: names.map((name) => destinationsQuery(client, name)) });
+
   return new Map<string, EventDestination[] | undefined>(
     names.map((name, index) => [name, results[index].data]),
   );
@@ -58,6 +60,7 @@ export function useAllEventDestinations(names: readonly string[]) {
 export function useCreateConfigurationSet() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (name: string) =>
       client.send(new CreateConfigurationSetCommand({ ConfigurationSetName: name })),
@@ -68,6 +71,7 @@ export function useCreateConfigurationSet() {
 export function useDeleteConfigurationSets() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (names: string[]) =>
       runEach(
@@ -94,6 +98,7 @@ type Sender =
 function useDestinationMutation(Command: Sender) {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({ set, name, input }: DestinationChange) =>
       client.send(
@@ -116,6 +121,7 @@ export const useUpdateDestination = () =>
 export function useDeleteDestination(set: string) {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (name: string) =>
       client.send(

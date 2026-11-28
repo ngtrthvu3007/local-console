@@ -12,8 +12,7 @@ const GENERIC_ERROR_NAME = "Error";
 const store = createStore<Message[]>([]);
 let nextMessageId = 0;
 
-// Lỗi hạ tầng (mạng, proxy, Floci không trả lời) thì SDK chỉ ra câu kỹ thuật kiểu "DOMParser XML
-// parsing error. Deserialization error…": đổi sang câu dễ hiểu. Lỗi của AWS (ResourceNotFound…) giữ nguyên
+// Lỗi hạ tầng (mạng, Floci tắt) SDK chỉ báo kiểu "Deserialization error": đổi sang câu dễ hiểu
 const NETWORK_FAILURE = /Failed to fetch|NetworkError|Load failed/;
 const GATEWAY_STATUSES = new Set([502, 503, 504]);
 const DESERIALIZATION_ERROR = "Deserialization error";
@@ -29,13 +28,17 @@ function infrastructureMessage(details: ErrorDetails): string | undefined {
   if (details.name === "TypeError" && NETWORK_FAILURE.test(details.message ?? "")) {
     return "Can't reach the console server.";
   }
+
   const status = details.$metadata?.httpStatusCode ?? details.$response?.statusCode;
+
   if (status && GATEWAY_STATUSES.has(status)) {
     return `Floci didn't answer (HTTP ${status}). Check that it's running.`;
   }
+
   if (details.message?.includes(DESERIALIZATION_ERROR)) {
     return `Floci sent an unexpected response${status ? ` (HTTP ${status})` : ""}.`;
   }
+
   return undefined;
 }
 
@@ -44,6 +47,7 @@ export function errorMessage(error: unknown): string {
   if (!details?.message) return String(error);
   const infrastructure = infrastructureMessage(details);
   if (infrastructure) return infrastructure;
+
   return details.name && details.name !== GENERIC_ERROR_NAME
     ? `${details.name}: ${details.message}`
     : details.message;
@@ -67,6 +71,7 @@ export function setLiveMessage(id: string, message: Omit<Message, "id"> | null) 
   if (!message) return store.set(messages.filter((existing) => existing.id !== id));
   const live = { ...message, id };
   const exists = messages.some((existing) => existing.id === id);
+
   store.set(
     exists
       ? messages.map((existing) => (existing.id === id ? live : existing))
@@ -74,12 +79,15 @@ export function setLiveMessage(id: string, message: Omit<Message, "id"> | null) 
   );
 }
 
+export const notifyInfo = (content: string) => notify({ type: "info", content });
+
 export const notifyError = (error: unknown, header?: string) =>
   notify({ type: "error", header, content: errorMessage(error) });
 
 // Kết quả hàng loạt: thành công, hoặc cảnh báo kèm vài mục lỗi đầu
 export function notifyBulkResult(doneMessage: string, failures: string[]) {
   if (!failures.length) return notifySuccess(doneMessage);
+
   notify({
     type: "warning",
     header: `${doneMessage}, ${pluralize(failures.length, "item")} failed`,
@@ -103,10 +111,12 @@ export function notifyOutcome<TResult>(options: {
   return {
     onSuccess: (result: TResult) => {
       dismissErrors(options.errorHeader);
+
       notifySuccess(
         typeof options.success === "function" ? options.success(result) : options.success,
         options.successAction,
       );
+
       options.then?.(result);
     },
     onError: (error: unknown) => notifyError(error, options.errorHeader),
@@ -120,6 +130,7 @@ export async function runEach<T>(
   run: (item: T) => Promise<unknown>,
 ) {
   const failures: string[] = [];
+
   for (const item of items) {
     try {
       await run(item);
@@ -127,6 +138,7 @@ export async function runEach<T>(
       failures.push(`${nameOf(item)}: ${errorMessage(error)}`);
     }
   }
+
   return { count: items.length - failures.length, failures };
 }
 
@@ -134,13 +146,13 @@ export async function runEach<T>(
 export function notifyBulkOutcome<TResult extends { failures: string[] }>(options: {
   success: (result: TResult) => string;
   errorHeader: string;
-  then?: () => void;
+  then?: (result: TResult) => void;
 }) {
   return {
     onSuccess: (result: TResult) => {
       dismissErrors(options.errorHeader);
       notifyBulkResult(options.success(result), result.failures);
-      options.then?.();
+      options.then?.(result);
     },
     onError: (error: unknown) => notifyError(error, options.errorHeader),
   };

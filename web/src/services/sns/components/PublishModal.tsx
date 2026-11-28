@@ -16,8 +16,8 @@ import { publishSchema } from "../schemas.ts";
 import type { Topic } from "../topics.ts";
 
 const TYPE_OPTIONS = ATTRIBUTE_DATA_TYPES.map((type) => ({ value: type, label: type }));
-// Một hàng attribute: name, type, value, nút xóa (tổng 12 cột của Grid).
-// Khung hẹp: name một hàng riêng, type + value + nút xóa ở hàng dưới để ô type không bị cắt chữ
+
+// Khung hẹp: name một hàng, type + value + nút xóa hàng dưới để ô type không bị cắt chữ
 const ATTRIBUTE_ROW_COLUMNS = [
   { colspan: { default: 12, xs: 4 } },
   { colspan: { default: 5, xs: 3 } },
@@ -32,6 +32,7 @@ const DELIVERY_HINT =
 // Chỉ mount khi mở. Publish xong vẫn giữ modal và nội dung để gửi tiếp
 export function PublishModal({ topic, onDismiss }: { topic: Topic; onDismiss: () => void }) {
   const publish = usePublish(topic);
+
   const form = useZodForm(publishSchema(topic), {
     subject: "",
     body: "",
@@ -39,6 +40,7 @@ export function PublishModal({ topic, onDismiss }: { topic: Topic; onDismiss: ()
     groupId: "",
     dedupId: "",
   });
+
   const attributes = useFieldArray({ control: form.control, name: "attributes" });
 
   const submit = form.handleSubmit((values) =>

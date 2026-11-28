@@ -9,8 +9,9 @@ import { pluralize } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { useRemoveTargets, useTargets } from "../hooks/useTargets.ts";
-import { TARGET_KINDS, resourceNameOfArn, targetKindOfArn } from "../targets.ts";
+import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
 import { AddTargetModal } from "./AddTargetModal.tsx";
 import { TargetResource } from "./TargetResource.tsx";
 
@@ -26,7 +27,12 @@ const columns: TableProps.ColumnDefinition<Target>[] = [
   {
     id: "resource",
     header: "Resource",
-    cell: (target) => <TargetResource arn={target.Arn ?? ""} />,
+    cell: (target) => (
+      <TargetResource
+        arn={target.Arn ?? ""}
+        ecsTaskDefinition={target.EcsParameters?.TaskDefinitionArn}
+      />
+    ),
   },
 ];
 
@@ -92,7 +98,7 @@ export function TargetsTab({ bus, rule }: { bus: string; rule: string }) {
         onDismiss={() => setModal(null)}
         onConfirm={remove}
       >
-        {selected.map((target) => resourceNameOfArn(target.Arn ?? "")).join(", ")}
+        {selected.map((target) => lastArnPart(target.Arn ?? "")).join(", ")}
       </ConfirmModal>
     </>
   );

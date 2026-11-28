@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createStore } from "../store.ts";
 
-export interface SplitPanelContent {
+interface SplitPanelContent {
   header: string;
   description?: ReactNode;
   body: ReactNode;
@@ -15,8 +15,7 @@ export const useSplitPanelContent = store.use;
 // Trang khai báo panel, Layout hiển thị (AppLayout nằm ở Layout, trang render qua Outlet).
 // null = không có panel. Rời trang thì gỡ panel.
 export function useSplitPanel(content: SplitPanelContent | null) {
-  // Nội dung là element mới mỗi lần render, nên cập nhật sau mọi lần render.
-  // Layout render lại không làm trang render lại (Outlet giữ nguyên element), nên không lặp.
+  // Cập nhật sau mọi render vì nội dung là element mới; không lặp vì Layout render lại không kéo trang theo
   useEffect(() => store.set(content));
   useEffect(() => () => store.set(null), []);
 }

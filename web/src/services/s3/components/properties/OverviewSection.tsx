@@ -7,12 +7,19 @@ import KeyValuePairs, {
 } from "@cloudscape-design/components/key-value-pairs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
-import { LOADING_PLACEHOLDER } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, LOADING_PLACEHOLDER } from "@shared/constants.ts";
 import { formatBytes, formatDate, formatTime, pluralize } from "@shared/format.ts";
 import { notifyError } from "@shared/hooks/useNotify.ts";
 import { bucketArn, s3Uri } from "../../helpers.ts";
 import { useBuckets } from "../../hooks/useBuckets.ts";
-import { useBucketRegion, useBucketTotalSize } from "../../hooks/useBucketSettings.ts";
+import { KeyLink } from "../../../kms/components/KeyLink.tsx";
+import { defaultKeyLabel } from "../../../kms/keys.ts";
+import { S3_KEY_SERVICE, SSE_KMS_ALGORITHM, SSE_LABELS } from "../../constants.ts";
+import {
+  useBucketEncryption,
+  useBucketRegion,
+  useBucketTotalSize,
+} from "../../hooks/useBucketSettings.ts";
 
 const OVERVIEW_COLUMNS = 4;
 
@@ -43,6 +50,22 @@ function TotalSize({ bucket }: { bucket: string }) {
   );
 }
 
+// "SSE-S3", hoặc "SSE-KMS" kèm link key (trống = aws/s3)
+function DefaultEncryption({ bucket }: { bucket: string }) {
+  const encryption = useBucketEncryption(bucket).data;
+  if (!encryption) return <>{LOADING_PLACEHOLDER}</>;
+
+  const label = SSE_LABELS[encryption.algorithm] ?? encryption.algorithm;
+  if (encryption.algorithm !== SSE_KMS_ALGORITHM) return <>{label}</>;
+  return (
+    <>
+      {label}
+      {DETAIL_SEPARATOR}
+      {encryption.keyId ? <KeyLink value={encryption.keyId} /> : defaultKeyLabel(S3_KEY_SERVICE)}
+    </>
+  );
+}
+
 export function OverviewSection({ bucket }: { bucket: string }) {
   const region = useBucketRegion(bucket);
   const created = useBuckets().data?.find((item) => item.Name === bucket)?.CreationDate;
@@ -55,6 +78,7 @@ export function OverviewSection({ bucket }: { bucket: string }) {
     { label: "ARN", value: <CopyButton variant='inline' text={arn} label={arn} /> },
     { label: "S3 URI", value: <CopyButton variant='inline' text={uri} label={uri} /> },
     { label: "Total size", value: <TotalSize bucket={bucket} /> },
+    { label: "Default encryption", value: <DefaultEncryption bucket={bucket} /> },
   ];
 
   return (

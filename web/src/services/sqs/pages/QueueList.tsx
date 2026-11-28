@@ -11,7 +11,7 @@ import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -23,7 +23,6 @@ import { queueTypeLabel, type Queue } from "../queues.ts";
 import { sqsBaseCrumbs, sqsRoutes } from "../routes.ts";
 
 const QUEUE_NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 export function QueueList() {
   useBreadcrumbs(sqsBaseCrumbs);
@@ -60,7 +59,7 @@ export function QueueList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: QUEUE_NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: QUEUE_NAME_FIELD },
     });
 

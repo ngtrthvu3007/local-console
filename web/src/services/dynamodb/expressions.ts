@@ -10,11 +10,9 @@ import {
 import type { IndexKeys } from "./hooks/useTables.ts";
 import { fromBase64 } from "./itemJson.ts";
 
-// Dựng input của Scan/Query từ điều kiện người dùng nhập.
-// Tên và giá trị luôn đi qua #placeholder / :placeholder, nên tên trùng từ khóa
-// dành riêng của DynamoDB (status, name, data, count…) vẫn chạy.
+// Tên và giá trị luôn qua #placeholder / :placeholder để tên trùng từ khóa DynamoDB (status, name…) vẫn chạy
 
-export interface SortKeyCondition {
+interface SortKeyCondition {
   operator: SortKeyOperator;
   value: string;
   secondValue: string; // chỉ dùng cho between
@@ -75,9 +73,11 @@ export function buildSearchInput(
     names[name] = filter.attribute.trim();
     if (!VALUELESS_FILTER_OPERATORS.includes(filter.operator))
       values[value] = FILTER_VALUE_BUILDERS[filter.type](filter.value);
+
     if (filter.operator === "between") {
       values[endValue] = FILTER_VALUE_BUILDERS[filter.type](filter.secondValue);
     }
+
     return comparison(filter.operator, name, value, endValue);
   });
 
@@ -85,6 +85,7 @@ export function buildSearchInput(
     TableName: table,
     IndexName: search.indexName,
   };
+
   if (filterExpressions.length) input.FilterExpression = filterExpressions.join(" AND ");
 
   if (search.mode === "query") {
@@ -92,6 +93,7 @@ export function buildSearchInput(
     values[":key0"] = KEY_VALUE_BUILDERS[keys.partitionKey.type](search.partitionKeyValue);
     let keyCondition = "#key0 = :key0";
     const sortKey = search.sortKey;
+
     if (keys.sortKey && sortKey?.value.trim()) {
       const buildValue = KEY_VALUE_BUILDERS[keys.sortKey.type];
       names["#key1"] = keys.sortKey.name;
@@ -99,6 +101,7 @@ export function buildSearchInput(
       if (sortKey.operator === "between") values[":key1end"] = buildValue(sortKey.secondValue);
       keyCondition += ` AND ${comparison(sortKey.operator, "#key1", ":key1", ":key1end")}`;
     }
+
     input.KeyConditionExpression = keyCondition;
     input.ScanIndexForward = !search.descending;
   }

@@ -1,17 +1,32 @@
 import type { RouteObject } from "react-router";
 import type { Icon } from "@tabler/icons-react";
 import type { ServiceCategory } from "@shared/constants.ts";
+import { appsyncService } from "./services/appsync/index.tsx";
+import { cloudformationService } from "./services/cloudformation/index.tsx";
+import { cloudfrontService } from "./services/cloudfront/index.tsx";
+import { cognitoService } from "./services/cognito/index.tsx";
+import { docdbService } from "./services/docdb/index.tsx";
 import { dynamodbService } from "./services/dynamodb/index.tsx";
+import { ec2Service } from "./services/ec2/index.tsx";
+import { ecsService } from "./services/ecs/index.tsx";
 import { elasticacheService } from "./services/elasticache/index.tsx";
 import { eventbridgeService } from "./services/eventbridge/index.tsx";
+import { kinesisService } from "./services/kinesis/index.tsx";
+import { kmsService } from "./services/kms/index.tsx";
+import { logsService } from "./services/logs/index.tsx";
 import { lambdaService } from "./services/lambda/index.tsx";
+import { apigatewayService } from "./services/apigateway/index.tsx";
 import { mqService } from "./services/mq/index.tsx";
+import { rdsService } from "./services/rds/index.tsx";
 import { s3Service } from "./services/s3/index.tsx";
+import { secretsManagerService } from "./services/secretsmanager/index.tsx";
 import { sesService } from "./services/ses/index.tsx";
 import { snsService } from "./services/sns/index.tsx";
 import { sqsService } from "./services/sqs/index.tsx";
+import { ssmService } from "./services/ssm/index.tsx";
+import { stepfunctionsService } from "./services/stepfunctions/index.tsx";
 
-export interface ServiceLink {
+interface ServiceLink {
   text: string;
   href: string;
 }
@@ -31,13 +46,28 @@ export interface ServiceDefinition {
 export const services: ServiceDefinition[] = [
   s3Service,
   lambdaService,
+  apigatewayService,
+  ec2Service,
+  ecsService,
   dynamodbService,
+  rdsService,
+  docdbService,
+  cloudfrontService,
   sqsService,
   snsService,
+  kinesisService,
   eventbridgeService,
+  appsyncService,
+  stepfunctionsService,
+  cloudformationService,
+  logsService,
   elasticacheService,
   mqService,
   sesService,
+  cognitoService,
+  secretsManagerService,
+  kmsService,
+  ssmService,
 ];
 
 export const servicePath = (service: ServiceDefinition) => `/${service.id}`;

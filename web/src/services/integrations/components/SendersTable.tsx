@@ -1,20 +1,15 @@
 import Header from "@cloudscape-design/components/header";
-import Link from "@cloudscape-design/components/link";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
-import { useFollow } from "@shared/hooks/useFollow.ts";
+import { ReferenceLink } from "@shared/components/MissingReference.tsx";
 import type { Sender } from "../senders.ts";
 
-function NameCell({ sender }: { sender: Sender }) {
-  const follow = useFollow();
-  return (
-    <Link href={sender.href} onFollow={follow}>
-      {sender.name}
-    </Link>
-  );
-}
-
 const COLUMNS: TableProps.ColumnDefinition<Sender>[] = [
-  { id: "name", header: "Name", isRowHeader: true, cell: (sender) => <NameCell sender={sender} /> },
+  {
+    id: "name",
+    header: "Name",
+    isRowHeader: true,
+    cell: (sender) => <ReferenceLink name={sender.name} href={sender.href} missing={false} />,
+  },
   { id: "type", header: "Type", cell: (sender) => sender.type },
   { id: "detail", header: "Sends", cell: (sender) => sender.detail },
 ];

@@ -1,14 +1,10 @@
 import type { Runtime } from "@aws-sdk/client-lambda";
 import {
   FLOCI_ACCOUNT_ID,
+  KIBIBYTE,
+  MEBIBYTE,
   MILLISECONDS_PER_SECOND,
-  SECONDS_PER_DAY,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_MINUTE,
 } from "@shared/constants.ts";
-
-const KIBIBYTE = 1024;
-const MEBIBYTE = 1024 * KIBIBYTE;
 
 // Chỉ hỗ trợ Node.js và Python (sửa code ngay trên trang được), mới trước cũ.
 // Function runtime khác (deploy bằng tool khác) vẫn xem, test, cấu hình được
@@ -20,6 +16,7 @@ export const RUNTIMES = [
   "python3.12",
   "python3.11",
 ] as const satisfies readonly Runtime[];
+
 export const DEFAULT_RUNTIME: Runtime = "nodejs22.x";
 export const RUNTIME_OPTIONS = RUNTIMES.map((runtime) => ({ value: runtime, label: runtime }));
 
@@ -42,6 +39,7 @@ export const LOG_GROUP_PREFIX = "/aws/lambda/";
 // Biến môi trường
 export const ENVIRONMENT_KEY_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 export const ENVIRONMENT_MAX_BYTES = 4 * KIBIBYTE;
+
 // Lambda tự đặt các biến này; AWS thật từ chối nếu function tự khai báo (Floci thì không chặn)
 export const RESERVED_ENVIRONMENT_KEYS = [
   "_HANDLER",
@@ -70,32 +68,39 @@ export type InvocationType = (typeof INVOCATION_TYPES)[keyof typeof INVOCATION_T
 // Đồng hồ của container Floci và của trình duyệt có thể lệch nhau chút ít
 export const LOG_CLOCK_SKEW_MS = MILLISECONDS_PER_SECOND;
 
-// Tab Monitor
-export const LOG_RANGES = [
-  { id: "15m", text: "15m", milliseconds: 15 * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND },
-  { id: "1h", text: "1h", milliseconds: SECONDS_PER_HOUR * MILLISECONDS_PER_SECOND },
-  { id: "1d", text: "1d", milliseconds: SECONDS_PER_DAY * MILLISECONDS_PER_SECOND },
-  { id: "7d", text: "7d", milliseconds: 7 * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND },
-] as const;
-export type LogRangeId = (typeof LOG_RANGES)[number]["id"];
-export const DEFAULT_LOG_RANGE: LogRangeId = "1h";
-export const LOG_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
-
 // Trigger
-export const TRIGGER_SOURCES = { s3: "S3", sqs: "SQS", dynamodb: "DynamoDB" } as const;
-export type TriggerSource = keyof typeof TRIGGER_SOURCES;
-// Nguồn chỉ hiện trong bảng Triggers, không thêm được từ trang Lambda (SNS tạo từ trang topic,
-// rule và schedule tạo từ trang EventBridge)
-const DISPLAY_ONLY_SOURCES = {
+export const TRIGGER_SOURCES = {
+  s3: "S3",
+  sqs: "SQS",
+  dynamodb: "DynamoDB",
   kinesis: "Kinesis",
+} as const;
+export type TriggerSource = keyof typeof TRIGGER_SOURCES;
+
+// Nguồn chỉ xem ở đây; tạo từ trang của nó (SNS: topic, rule/schedule: EventBridge, Cognito: user pool,
+// Secrets Manager: rotation của secret)
+const DISPLAY_ONLY_SOURCES = {
   sns: "SNS",
   eventbridge: "EventBridge",
   scheduler: "Scheduler",
+  cognito: "Cognito",
+  apigateway: "API Gateway",
+  secretsmanager: "Secrets Manager",
 } as const;
+
 export const SOURCE_LABELS = { ...TRIGGER_SOURCES, ...DISPLAY_ONLY_SOURCES };
 export type TriggerRowSource = keyof typeof SOURCE_LABELS;
-// Rule / schedule của EventBridge: chỉ xem ở đây, bật / tắt / xóa ở trang EventBridge
-export const EVENTBRIDGE_SOURCES: readonly TriggerRowSource[] = ["eventbridge", "scheduler"];
+
+// Rule / schedule của EventBridge, trigger của user pool, rotation của secret, nguồn API Gateway:
+// chỉ xem ở đây, sửa / xóa ở trang của nguồn
+export const VIEW_ONLY_SOURCES: readonly TriggerRowSource[] = [
+  "eventbridge",
+  "scheduler",
+  "cognito",
+  "apigateway",
+  "secretsmanager",
+];
+
 export const KINESIS_ARN_PATTERN = /^arn:aws:kinesis:/;
 export const S3_TRIGGER_EVENTS = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"] as const;
 export const SQS_BATCH_SIZE = { min: 1, max: 10, default: 10 } as const;
@@ -107,12 +112,14 @@ export const STREAM_BATCH_SIZE = { min: 1, max: 10000, default: 100 } as const;
 export const STARTING_POSITIONS = { LATEST: "Latest", TRIM_HORIZON: "Trim horizon" } as const;
 export type StartingPosition = keyof typeof STARTING_POSITIONS;
 export const DEFAULT_STARTING_POSITION: StartingPosition = "LATEST";
+
 export const STARTING_POSITION_OPTIONS = Object.entries(STARTING_POSITIONS).map(
   ([value, label]) => ({
     value,
     label,
   }),
 );
+
 export const EVENT_SOURCE_STATES = { enabled: "Enabled", disabled: "Disabled" } as const;
 
 // Mẫu event ở tab Test, rút gọn từ mẫu của AWS Console
@@ -175,11 +182,11 @@ export const eventTemplates = (region: string) => ({
     isBase64Encoded: false,
   },
 });
+
 export type EventTemplateName = keyof ReturnType<typeof eventTemplates>;
 export const DEFAULT_EVENT_TEMPLATE: EventTemplateName = "Hello world";
 
-// Tùy chọn nâng cao của trigger SQS / DynamoDB stream (spec integration-enhancements 3.2)
-// Filter criteria: AWS cho tối đa 5 pattern mỗi trigger, khớp một pattern là đủ
+// Tùy chọn nâng cao của trigger SQS / DynamoDB stream; AWS cho tối đa 5 filter pattern
 export const FILTER_PATTERN_LIMIT = 5;
 // -1 = thử lại mãi mãi
 export const STREAM_RETRY_ATTEMPTS = { min: -1, max: 10000, default: -1 } as const;
@@ -189,6 +196,7 @@ export const REPORT_BATCH_FAILURES = "ReportBatchItemFailures";
 
 export const ASYNC_RETRY_ATTEMPTS = { min: 0, max: 2, default: 2 } as const;
 export const ASYNC_EVENT_AGE_SECONDS = { min: 60, max: 21600, default: 21600 } as const;
+
 export const DESTINATION_KINDS = {
   none: "None",
   sqs: "SQS queue",
@@ -196,11 +204,17 @@ export const DESTINATION_KINDS = {
   lambda: "Lambda function",
   eventbus: "Event bus",
 } as const;
+
 export type DestinationKind = keyof typeof DESTINATION_KINDS;
+
 // Stream chỉ gửi bản ghi lỗi tới queue hoặc topic
 export const ON_FAILURE_KIND_IDS = [
   "none",
   "sqs",
   "sns",
 ] as const satisfies readonly DestinationKind[];
+
 export type OnFailureKind = (typeof ON_FAILURE_KIND_IDS)[number];
+
+// Tên service trong alias key AWS managed mã hóa biến môi trường: alias/aws/lambda
+export const LAMBDA_KEY_SERVICE = "lambda";

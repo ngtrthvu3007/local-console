@@ -13,6 +13,7 @@ export const SEARCH_PARAMS = {
   email: "email",
   template: "template",
   configurationSet: "set",
+  search: "search", // điền sẵn ô tìm của hộp thư (link từ Cognito)
 } as const;
 
 const fullPath = (pattern: string) => `${SES_ROOT}/${pattern}`;

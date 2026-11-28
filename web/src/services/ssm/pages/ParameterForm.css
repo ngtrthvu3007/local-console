@@ -1,0 +1,4 @@
+/* SecureString: che giá trị mà vẫn giữ xuống dòng (ô password nuốt \n, vd: private key PEM) */
+.ssm-masked-value textarea {
+  -webkit-text-security: disc;
+}

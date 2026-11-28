@@ -1,0 +1,124 @@
+{
+  "status": "FAILED",
+  "error": "ItemBad",
+  "cause": "item failed",
+  "events": [
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "ExecutionStarted",
+      "id": 1,
+      "previousEventId": 0,
+      "executionStartedEventDetails": {
+        "input": "{\"items\":[1,2]}",
+        "inputDetails": {
+          "truncated": false
+        },
+        "roleArn": "arn:aws:iam::000000000000:role/x"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapStateEntered",
+      "id": 2,
+      "previousEventId": 0,
+      "stateEnteredEventDetails": {
+        "name": "M",
+        "input": "{\"items\":[1,2]}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapStateStarted",
+      "id": 3,
+      "previousEventId": 2,
+      "mapStateStartedEventDetails": {
+        "length": 2
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapIterationStarted",
+      "id": 4,
+      "previousEventId": 3,
+      "mapIterationStartedEventDetails": {
+        "name": "M",
+        "index": 0
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "FailStateEntered",
+      "id": 5,
+      "previousEventId": 4,
+      "stateEnteredEventDetails": {
+        "name": "Boom",
+        "input": "1",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapIterationStarted",
+      "id": 6,
+      "previousEventId": 3,
+      "mapIterationStartedEventDetails": {
+        "name": "M",
+        "index": 1
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "FailStateEntered",
+      "id": 7,
+      "previousEventId": 6,
+      "stateEnteredEventDetails": {
+        "name": "Boom",
+        "input": "2",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapIterationAborted",
+      "id": 8,
+      "previousEventId": 5,
+      "mapIterationAbortedEventDetails": {
+        "name": "M",
+        "index": 1
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapIterationFailed",
+      "id": 9,
+      "previousEventId": 5,
+      "mapIterationFailedEventDetails": {
+        "name": "M",
+        "index": 0
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "MapStateFailed",
+      "id": 10,
+      "previousEventId": 5
+    },
+    {
+      "timestamp": "2026-11-22T05:09:29.156Z",
+      "type": "ExecutionFailed",
+      "id": 11,
+      "previousEventId": 10,
+      "executionFailedEventDetails": {
+        "error": "ItemBad",
+        "cause": "item failed"
+      }
+    }
+  ]
+}

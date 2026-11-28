@@ -1,6 +1,6 @@
 # CloudFormation — Thiết kế
 
-> Ngày: 2026-11-19 · Trạng thái: đã duyệt (2026-11-19) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
+> Ngày: 2026-11-19 · Trạng thái: đã làm (2026-11-22; IT `it/cloudformation.test.ts`, E2E `cloudformation*.spec.ts`, UI `ui/cloudformation.spec.ts`; `StackLink` ở `shared`, đã gắn vào S3, Lambda, DynamoDB, SQS, ElastiCache, SNS, EventBridge rule / schedule, Step Functions, Cognito (2026-11-23); chưa làm cho API Gateway, RDS, EC2… vì các service đó chưa có) · Tạo / sửa stack từ template YAML (3.6): đã làm 2026-11-23 (E2E `cloudformation-templates.spec.ts`) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
 
 ## 1. Mục tiêu
 
@@ -11,6 +11,7 @@ Làm màn hình CloudFormation giống AWS CloudFormation Console cho stack mà 
 - Từ stack đi sang trang service của từng resource, và ngược lại: từ trang bucket, function, bảng, queue… biết nó thuộc stack nào (`StackLink`).
 - Lấy output (URL, ARN, tên) để cấu hình app; xem parameter và template đã deploy.
 - Dọn stack ở local.
+- Người không quen CLI hay CDK: viết template YAML, deploy, sửa rồi deploy lại ngay trên console (3.6).
 
 Mọi thao tác gọi thẳng Floci bằng AWS SDK qua proxy `/aws`. **Server không phải sửa gì.**
 
@@ -34,13 +35,15 @@ Mọi thao tác gọi thẳng Floci bằng AWS SDK qua proxy `/aws`. **Server kh
 | Tab Outputs     | Key, value (copy), export name                                                                       | (1)      | Toàn phần (không có `Description`)                       |
 | Xóa stack       | Xác nhận; hiện lý do `DELETE_FAILED`                                                                 | (1)      | Toàn phần                                                |
 | **StackLink**   | Trang chi tiết S3, Lambda, DynamoDB, SQS, ElastiCache hiện "Stack: X" (link)                         | (2)      | Toàn phần (qua index, 3.8)                               |
+| Tạo / sửa stack | Editor YAML có template mẫu; Deploy = tạo hoặc update stack; stack do CDK tạo thì khóa sửa (3.6)     | (1)      | Toàn phần (7 #1, #11)                                    |
 
 ### Để sau
 
 | Tính năng                                                        | Ghi chú                                                                                    |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Change set (xem, tạo, thực thi)                                  | Đoán dev ít dùng: xem diff bằng `cdk diff`. Floci không có diff theo property              |
-| Tạo / update stack từ UI (upload template)                       | Đoán dev ít dùng: team deploy bằng `cdk deploy`                                            |
+| Ô nhập Parameters khi deploy                                     | Template có tham số không có `Default` thì Floci báo lỗi dưới editor; thêm `Default` là đủ |
+| Upload file template; kiểm tra template trước khi deploy         | Dán vào editor là đủ; lỗi do Floci trả về khi deploy (3.6). User chốt 2026-11-23           |
 | Trang Exports                                                    | Đoán dev ít dùng; export đã hiện ở tab Outputs                                             |
 | Termination protection, stack policy, tag                        | Đoán dev ít dùng                                                                           |
 | Tab Parameters, Template; cột References (quan hệ giữa resource) | User chốt cắt 2026-11-19: dev xem trong code CDK / `cdk.out/`; không ảnh hưởng flow deploy |
@@ -137,10 +140,50 @@ Resources (9)                                                     [🔍 Find res
 
 `DescribeStacks` `Outputs`: Key, Value (copy được), Export name.
 
+### 3.6 Tạo / sửa stack (template YAML)
+
+**Vì sao:** người không quen CLI hay CDK vẫn tạo được stack và sửa đi sửa lại ngay trên console (user chốt 2026-11-23). Vòng làm việc: viết template → Deploy → xem Events → sửa → Deploy lại.
+
+```text
+Create stack                                        [Cancel] [Deploy]
+Stack name  [ my-stack            ]
+Template (YAML)
+┌──────────────────────────────────────────────────────────┐
+│ Resources:                                               │
+│   Queue:                                                 │
+│     Type: AWS::SQS::Queue                                │
+│ Outputs:                                                 │
+│   QueueUrl: { Value: !Ref Queue }                        │
+└──────────────────────────────────────────────────────────┘
+```
+
+- **Một trang dùng chung cho tạo và sửa**, nạp lười (`lazyPage`): `/cloudformation/stacks/create/template` (giống AWS console; hai đoạn sau `stacks/` để không trùng trang chi tiết của stack tên `create`) và `/cloudformation/stacks/:stack/edit`.
+- **Tạo:** nút **Create stack** (nút chính) ở danh sách stack. Ô tên stack (luật của AWS: bắt đầu bằng chữ cái, chỉ chữ, số và `-`, tối đa 128 ký tự) và editor điền sẵn **template mẫu** (1 queue + 1 output). Deploy = `CreateStack` (`TemplateBody`).
+- **Sửa:** nút **Edit template** trên header trang stack. Editor nạp template đang deploy bằng `GetTemplate` (`TemplateStage: Original`, Floci trả nguyên văn kể cả comment, 7 #11). Tên stack chỉ đọc. Deploy = `UpdateStack`. Dưới editor có một dòng nhắc: _"Deploying this stack again from a file replaces changes made here."_
+- **Khóa Edit template**, kèm lý do ở mô tả nút; mở thẳng URL `/edit` thì trang cũng khóa nút Deploy và hiện lý do (cùng hàm `editLockReason`). Đang tải resources thì cũng khóa:
+  - Stack do CDK tạo: resource có `AWS::CDK::Metadata` (CDK luôn thêm vào stack của app), hoặc output `BootstrapVersion` (stack `cdk bootstrap` như `CDKToolkit`, không có CDK::Metadata): _"Deployed by CDK: edit it in your CDK app. `cdk deploy` would overwrite changes made here."_
+  - Stack đang `*_IN_PROGRESS` (kể cả `REVIEW_IN_PROGRESS`).
+- **Editor chỉ YAML:** `CodeEditor` có sẵn, thêm mode `yaml` của Ace. JSON là YAML hợp lệ nên template JSON vẫn mở và deploy được, chỉ không tô màu riêng; không chuyển JSON ↔ YAML.
+- **Sau khi bấm Deploy:** `CreateStack` của Floci chạy đồng bộ (7 #1), nút Deploy ở trạng thái loading tới khi xong, rồi sang trang stack, **tab Events**: thành công hay resource lỗi đều đọc ở đó.
+  - Lỗi API trả về ngay (YAML sai, tên stack đã có, tham số thiếu `Default`): hiện lỗi gốc dưới editor, giữ nguyên nội dung đang soạn.
+  - Update không đổi gì: Floci trả "No updates are to be performed." (7 #1) → thông báo info, ở lại trang.
+- **Không làm:** ô nhập Parameters, upload file, change set / diff, kiểm tra template trước khi deploy, tô màu hay chuyển đổi JSON.
+
+**Cách làm đã cân nhắc** (user chọn B, 2026-11-23):
+
+| Cách                        | Đánh đổi                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| A. Chỉ tạo stack mới        | Ít việc nhất, nhưng muốn sửa phải xóa stack rồi tạo lại: mất resource và dữ liệu |
+| **B. Tạo và sửa (đã chọn)** | Thêm một màn hình; đúng vòng làm việc của người dùng UI                          |
+| C. Editor hỗ trợ cả JSON    | Không cần: JSON là YAML hợp lệ. Chuyển đổi định dạng thì phải thêm thư viện YAML |
+
+**Test:** E2E tạo stack từ template mẫu → Events có `CREATE_COMPLETE`, queue có thật; sửa (thêm một resource) → `UPDATE_COMPLETE`; YAML sai → lỗi dưới editor, giữ nội dung; Deploy lại không đổi gì → thông báo info; stack có `AWS::CDK::Metadata` → Edit template bị khóa. Unit: luật tên stack, nhận stack của CDK.
+
 ### 3.7 Xóa stack (modal)
 
 - `ConfirmModal` có sẵn: gõ `delete` để xác nhận, như các service khác.
 - `DeleteStack`, rồi theo dõi tới khi xong. `DELETE_FAILED`: thông báo kèm reason của stack (Floci ghi resource lỗi, vd bucket còn object). Resource có `DeletionPolicy: Retain` được Floci giữ lại, events có dòng `DELETE_SKIPPED` (7 #19).
+- Stack kẹt `DELETE_FAILED`: trang chi tiết có `Alert` lỗi liệt kê từng resource `DELETE_FAILED` (physical ID có link như 3.10, logical ID, lý do lấy từ events), kèm cách gỡ: sửa resource rồi xóa lại; resource bị xóa tay phải tạo lại cùng tên trước (Floci không bỏ qua resource đã mất, 7 #16).
 - Xóa xong về danh sách, làm mới index (3.8).
 
 ### 3.8 StackLink và index resource
@@ -156,7 +199,7 @@ Resources (9)                                                     [🔍 Find res
 - Không có stack nào: một request, luôn 200.
 - **Không dùng `DescribeStackResources?PhysicalResourceId=`**: resource không thuộc stack → HTTP 400 → trình duyệt log `console.error` → E2E fail (development.md › Traps, 7 #14). User chốt 2026-11-19.
 
-**`StackLink`** (`web/src/services/cloudformation/components/StackLink.tsx`, user chốt): nhận `type` và `physicalId`, tra index, render "Stack: <link>" hoặc `null` (không thuộc stack, đang tải, lỗi).
+**`StackLink`** (`web/src/shared/StackLink.tsx`, user đổi chốt 2026-11-22: đặt ở `shared`; import `useResourceIndex` và route stack từ `services/cloudformation`, SDK vẫn nạp lười trong `queryFn` nên không vào bundle chính): nhận `type` và `physicalId`, tra index, render "Stack: <link>" hoặc `null` (không thuộc stack, đang tải, lỗi).
 
 | Trang                                 | Type                             | Physical ID truyền vào               |
 | ------------------------------------- | -------------------------------- | ------------------------------------ |
@@ -194,7 +237,9 @@ Map đủ enum của AWS dù Floci chỉ trả một phần (7 #8). Hàm thuần
 | `AWS::CloudFormation::Stack`                                                                                                                         | ARN stack con                             | trang stack con (tên lấy từ ARN)                                           |
 | `AWS::SNS::Topic`, `Subscription`                                                                                                                    | ARN topic; ARN subscription               | khi SNS vào `main`: trang topic (bỏ `:<uuid>` của subscription)            |
 | `AWS::SES::EmailIdentity`                                                                                                                            | địa chỉ                                   | khi SES vào `main`: trang Identities                                       |
-| `AWS::Cognito::UserPool`                                                                                                                             | pool id                                   | khi Cognito vào `main`: trang pool                                         |
+| `AWS::Cognito::UserPool`                                                                                                                             | pool id                                   | trang pool (đã làm 2026-11-23)                                             |
+| `AWS::SecretsManager::Secret`                                                                                                                        | ARN đủ hậu tố                             | trang secret `?name=` (đã làm 2026-11-23)                                  |
+| `AWS::SSM::Parameter`                                                                                                                                | tên                                       | trang parameter `?name=` (đã làm 2026-11-23)                               |
 | `AWS::Events::EventBus`                                                                                                                              | tên bus                                   | khi EventBridge vào `main`: trang Rules lọc theo bus                       |
 | `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`                                                                                                 | id                                        | khi API Gateway có trang                                                   |
 | Resource bị stub, `Lambda::EventSourceMapping`, `Cognito::UserPoolClient`, `Events::Rule`, `Scheduler::Schedule`, IAM, Permission, policy, type khác | —                                         | text (physical ID không khớp thẳng route, phải gọi thêm API mới link được) |
@@ -213,6 +258,8 @@ Bảng map là một module thuần (`resourceLinks.ts`): **chỉ link khi physi
 | Resources           | `ListStackResources` + `DescribeStackEvents` (reason, stub)      |
 | Outputs             | `DescribeStacks`                                                 |
 | Xóa                 | `DeleteStack` → poll `DescribeStacks`                            |
+| Tạo stack           | `CreateStack` (`TemplateBody`), đồng bộ trên Floci               |
+| Sửa stack           | `GetTemplate` (`Original`) → `UpdateStack` (`TemplateBody`)      |
 | Index cho StackLink | `DescribeStacks` + `ListStackResources` từng stack               |
 
 Mọi list API đều viết vòng `NextToken` cho đúng chuẩn AWS dù Floci 2.4.0 trả hết một lần.
@@ -221,15 +268,15 @@ Mọi list API đều viết vòng `NextToken` cho đúng chuẩn AWS dù Floci 
 
 ## 5. Trạng thái và lỗi
 
-| Tình huống                                          | Hiển thị                                                  |
-| --------------------------------------------------- | --------------------------------------------------------- |
-| Stack không có (`ValidationError … does not exist`) | Trang chi tiết: "Stack … not found" kèm link về danh sách |
-| Stack `REVIEW_IN_PROGRESS`                          | `Alert` info + empty state các tab (3.2)                  |
-| Stack đang chạy                                     | Tự làm mới (3.1, 3.2)                                     |
-| Resource bị stub                                    | `Alert` đầu trang + badge, không link (3.2, 3.4)          |
-| Xóa stack còn bucket có object                      | Thông báo kèm reason (3.7)                                |
-| `DELETE_FAILED` (bucket còn object)                 | Thông báo kèm reason, link sang bucket (3.7)              |
-| Index lỗi                                           | `StackLink` ẩn; trang service không báo lỗi               |
+| Tình huống                                           | Hiển thị                                                                            |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Stack không có (`ValidationError … does not exist`)  | Trang chi tiết: "Stack … not found" kèm link về danh sách                           |
+| Stack `REVIEW_IN_PROGRESS`                           | `Alert` info + empty state các tab (3.2)                                            |
+| Stack đang chạy                                      | Tự làm mới (3.1, 3.2)                                                               |
+| Resource bị stub                                     | `Alert` đầu trang + badge, không link (3.2, 3.4)                                    |
+| Xóa stack còn bucket có object                       | Thông báo kèm reason (3.7)                                                          |
+| `DELETE_FAILED` (bucket còn object, resource đã mất) | Thông báo kèm reason; `Alert` trang chi tiết nêu từng resource, link, cách gỡ (3.7) |
+| Index lỗi                                            | `StackLink` ẩn; trang service không báo lỗi                                         |
 
 ---
 
@@ -259,18 +306,21 @@ environment:
 ```bash
 web/src/services/cloudformation/
 ├── index.tsx, routes.ts, constants.ts       # STUB_REASON_MARKER, STACK_POLL_INTERVAL_MS, RESOURCE_INDEX_STALE_MS
-├── status.ts                  # statusGroup(), nhóm lọc
+├── status.ts                  # statusGroup(), isRunning() (không poll REVIEW_IN_PROGRESS), needsTls()
+├── stacks.ts                  # gọi SDK: list, describe, events, resources, xóa; client
 ├── resourceLinks.ts           # type + physical ID → href (3.10)
+├── resourceIndex.ts           # khóa và dựng index (thuần, 3.8)
 ├── stub.ts                    # gom logical ID bị stub từ events
 ├── hooks/
 │   ├── useCloudFormation.ts   # client qua /aws, nạp lười
 │   ├── useStacks.ts           # list, chi tiết, events, resources, template, xóa
 │   └── useResourceIndex.ts    # index cho StackLink (3.8)
 ├── pages/                     # StackList, StackDetail
-└── components/                # EventsTab, ResourcesTab, OutputsTab, DeleteStackModal, StackStatus, StackLink
+└── components/                # EventsTab, ResourcesTab, OutputsTab, DeleteStackModal, StackStatus
+web/src/shared/StackLink.tsx   # dùng chung (3.8)
 ```
 
-Khai báo trong `registry.ts` (một dòng, `navigation` có 1 mục); icon `web/public/icons/cloudformation.svg` theo cùng khung với các icon cũ. Repo đã có tiền lệ service import từ service khác (DynamoDB dùng route của Lambda), nên `resourceLinks.ts` import route của S3, Lambda, DynamoDB, SQS, ElastiCache và các trang đó import `StackLink`.
+Khai báo trong `registry.ts` (một dòng, `navigation` có 1 mục); icon là glyph Tabler (`IconTemplate`) trên ô màu của nhóm `management` (thêm vào `SERVICE_CATEGORIES`), không có file svg. Repo đã có tiền lệ service import từ service khác (DynamoDB dùng route của Lambda), nên `resourceLinks.ts` import route của S3, Lambda, DynamoDB, SQS, ElastiCache và các trang đó import `StackLink`.
 
 ### Dùng lại từ phần đã có
 
@@ -310,7 +360,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 | 13  | **Nested stack**                                        | Chạy; tên con `<cha>-<Logical>`; physical ID của resource `AWS::CloudFormation::Stack` là ARN con. Stack cha chỉ ghi "Nested stack … rolled back"; nguyên nhân nằm ở events của con                                                                                                                                                                                                                                                                                                                                 |
 | 14  | **Tra ngược theo physical ID**                          | `DescribeStackResources?PhysicalResourceId=` chạy nhưng: resource không thuộc stack → **HTTP 400**; tìm thấy thì trả cả stack (phải lọc type: `BucketPolicy` cùng ID với `Bucket`); stack đã xóa vẫn trả. → dùng index (3.8)                                                                                                                                                                                                                                                                                        |
 | 15  | **Physical ID theo type**                               | Như bảng 3.10 (kiểm thật từng type). SQS URL luôn `localhost:4566` dù Host gọi là gì                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 16  | **Xóa resource do stack quản lý**                       | Xóa tay queue / bảng: stack vẫn `CREATE_COMPLETE`; `DeleteStack` sau đó bỏ qua resource đã mất; **queue tạo tay lại cùng tên bị `DeleteStack` xóa luôn**. Bucket có object → `DELETE_FAILED`                                                                                                                                                                                                                                                                                                                        |
+| 16  | **Xóa resource do stack quản lý**                       | Xóa tay queue / bảng: stack vẫn `CREATE_COMPLETE`; `DeleteStack` sau đó `DELETE_FAILED` ("The specified queue does not exist", kiểm lại 2026-11-23; `RetainResources` bị bỏ qua); **tạo tay lại cùng tên rồi xóa lại thì được, resource đó bị xóa luôn**. Bucket có object → `DELETE_FAILED`                                                                                                                                                                                                                        |
 | 17  | **Drift, type registry**                                | `UnknownAction`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 18  | **Persistence**                                         | **Ổn (đã restart thật 2026-11-19).** Stack (thành công, rollback, `REVIEW_IN_PROGRESS`, tạo qua change set), events, resources, template, exports, `ListStacks` giống hệt trước restart. Stack đã xóa (giữ 30 s) không lưu                                                                                                                                                                                                                                                                                          |
 | 19  | **`DeletionPolicy: Retain`**                            | **Ổn.** Resource có `Retain` được giữ khi xóa stack, event `DELETE_SKIPPED` (bucket của CDK bootstrap). Khác với `RetainResources` của `DeleteStack` (bị bỏ qua)                                                                                                                                                                                                                                                                                                                                                    |
@@ -322,6 +372,8 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 - Stack đang `*_IN_PROGRESS` lúc Floci restart.
 - SDK v3 (query protocol) qua proxy `/aws`.
 - Bundle sau khi nạp lười SDK CloudFormation.
+- ~~(3.6) `CreateStack` đồng bộ với template lâu: request qua proxy `/aws` có bị cắt giữa chừng không.~~ **Đã kiểm (2026-11-23):** server không đặt timeout cho proxy; timeout của HTTP server Node chỉ tính lúc nhận request, không tính lúc chờ Floci trả lời. Chưa thử stack thật sự lâu.
+- ~~(3.6) Giới hạn kích thước `TemplateBody` của Floci (AWS: 51.200 byte).~~ **Đã kiểm (2026-11-23):** Floci nhận cả template 120 KB qua proxy. Template lớn hơn 51.200 byte chạy được trên Floci nhưng AWS sẽ từ chối.
 
 ---
 
@@ -348,7 +400,7 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 | Cắt tab Parameters, Template và cột References                                                                                                                                                                                                                                          | Không ảnh hưởng flow deploy (CDK CLI ↔ Floci); dev xem trong code / `cdk.out/`. User chốt 2026-11-19                                                                    |
 | Không làm canvas                                                                                                                                                                                                                                                                        | User chốt 2026-11-19; References thay phần quan hệ                                                                                                                      |
 | `StackLink` tra bằng index, không dùng `DescribeStackResources?PhysicalResourceId=`                                                                                                                                                                                                     | Tránh HTTP 400 làm E2E fail; 0 request thêm sau lần đầu. User chốt 2026-11-19                                                                                           |
-| `StackLink` đặt ở `services/cloudformation/components`, không ở `shared`                                                                                                                                                                                                                | `shared` không import từ `services`; repo có tiền lệ import chéo service. User chốt 2026-11-19                                                                          |
+| `StackLink` đặt ở `web/src/shared/StackLink.tsx` (đổi từ `services/cloudformation/components`)                                                                                                                                                                                          | Mọi trang chi tiết dùng chung một component. Đây là chỗ đầu tiên `shared` import từ `services`: chỉ import hook index (SDK nạp lười). User đổi chốt 2026-11-22          |
 | Không đặt `StackLink` ở MQ                                                                                                                                                                                                                                                              | Broker luôn bị stub                                                                                                                                                     |
 | Badge stub dựa vào reason trong events, không dựa danh sách type                                                                                                                                                                                                                        | Tài liệu và 2.4.0 lệch nhiều type; physical ID stub không ổn định                                                                                                       |
 | Danh sách dùng `DescribeStacks`, không `ListStacks`                                                                                                                                                                                                                                     | `ListStacks` không có reason, `LastUpdatedTime`                                                                                                                         |
@@ -358,3 +410,6 @@ Chạy thử trên Floci 2.4.0 ngày 2026-11-19, region `ap-southeast-1` (3 lư�
 | Ẩn stack `DELETE_COMPLETE`                                                                                                                                                                                                                                                              | Lịch sử xóa ít dùng ở local. User duyệt 2026-11-19                                                                                                                      |
 | TLS bật / tắt bằng biến môi trường, **mặc định tắt**: compose thêm `FLOCI_TLS_ENABLED: ${FLOCI_TLS_ENABLED:-false}` cho service `floci`; ai deploy app CDK có custom resource Node thì chạy `FLOCI_TLS_ENABLED=true docker compose up`                                                  | Không bật thì app CDK có custom resource Node không deploy được (7 #20); bật mặc định thì mọi URL Floci trả về thành `https://`. User duyệt 2026-11-19, xem lại khi làm |
 | Không sửa server                                                                                                                                                                                                                                                                        | CloudFormation là AWS API thuần, đi qua proxy `/aws`                                                                                                                    |
+| Tạo và sửa stack từ template YAML trên console (3.6), đổi từ "Để sau"                                                                                                                                                                                                                   | Người không quen CLI / CDK dùng UI. User chốt 2026-11-23                                                                                                                |
+| Editor chỉ tô màu YAML; không ô Parameters, upload file, change set, kiểm tra template trước                                                                                                                                                                                            | Làm đơn giản, lỗi do Floci trả hiện dưới editor hoặc ở tab Events. User chốt 2026-11-23                                                                                 |
+| Khóa Edit template cho stack do CDK tạo; stack tạo bằng file chỉ nhắc                                                                                                                                                                                                                   | `cdk deploy` ghi đè thay đổi làm trên console; stack tạo bằng file không phân biệt được với stack tạo trên console. User chốt 2026-11-23                                |

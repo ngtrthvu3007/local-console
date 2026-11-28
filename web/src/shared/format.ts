@@ -26,10 +26,30 @@ export function formatBytes(bytes?: number): string {
 export const formatDate = (date?: Date | string | number) =>
   date ? new Date(date).toLocaleString(DATE_TIME_LOCALE) : NOT_AVAILABLE;
 
+// Có mili giây cho nơi nhiều dòng cùng giây, vd: events của CloudFormation
+const MILLISECOND_DIGITS = 3;
+export const formatDateMs = (date?: Date | string | number) =>
+  date
+    ? `${formatDate(date)}.${String(new Date(date).getMilliseconds()).padStart(MILLISECOND_DIGITS, "0")}`
+    : NOT_AVAILABLE;
+
 export function formatTime(timestamp: number): string {
   if (!timestamp) return NOT_AVAILABLE;
   return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
+
+const ELLIPSIS = "…";
+// Cắt chuỗi dài cho ô bảng / tóm tắt; "…" báo phần còn lại bị ẩn
+export const truncate = (text: string, length: number) =>
+  text.length > length ? `${text.slice(0, length)}${ELLIPSIS}` : text;
+
+// Phần của ARN / URL, mỗi phần kết thúc ở ":" hoặc "/": những chỗ nên xuống dòng
+const IDENTIFIER_PART = /[^:/]*[:/]+|[^:/]+$/g;
+export const identifierParts = (text: string) => text.match(IDENTIFIER_PART) ?? [text];
+
+// Đếm theo byte UTF-8 như giới hạn của AWS, không theo số ký tự
+const textEncoder = new TextEncoder();
+export const byteLength = (text: string) => textEncoder.encode(text).length;
 
 export const nounFor = (count: number, singular: string, pluralForm = `${singular}s`) =>
   count === 1 ? singular : pluralForm;
@@ -58,3 +78,8 @@ export function formatDuration(totalSeconds: number): string {
     })
     .join(" ");
 }
+
+// "A, B, and C" như câu tiếng Anh (Intl có sẵn): lý do khóa Delete khi resource đang được dùng
+const listFormat = new Intl.ListFormat("en", { type: "conjunction" });
+export const usedByText = (users: readonly string[]) =>
+  users.length ? `Used by ${listFormat.format(users)}.` : undefined;

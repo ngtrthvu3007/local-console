@@ -9,18 +9,18 @@ import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
 import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { CreateGroupModal } from "../components/CreateGroupModal.tsx";
 import { EnabledState } from "../components/EnabledState.tsx";
 import { DeleteGroupModal } from "../components/DeleteGroupModal.tsx";
@@ -30,14 +30,13 @@ import { DEFAULT_SCHEDULE_GROUP } from "../constants.ts";
 import { useScheduleGroups, useSchedules, useSetSchedulesEnabled } from "../hooks/useSchedules.ts";
 import { SEARCH_PARAMS, eventbridgeRoutes, schedulesCrumbs } from "../routes.ts";
 import type { ScheduleRow } from "../schedules.ts";
-import { TARGET_KINDS, resourceNameOfArn, targetKindOfArn } from "../targets.ts";
+import { TARGET_KINDS, targetKindOfArn } from "../targets.ts";
 
 const NAME_FIELD = "name";
 const ALL_GROUPS = "";
-const PAGE_SIZE = 50;
 
 const targetLabel = (row: ScheduleRow) =>
-  `${TARGET_KINDS[targetKindOfArn(row.targetArn)]} ${resourceNameOfArn(row.targetArn)}`;
+  `${TARGET_KINDS[targetKindOfArn(row.targetArn)]} ${lastArnPart(row.targetArn)}`;
 const rowKey = (row: ScheduleRow) => `${row.group}/${row.name}`;
 
 type Modal = "delete" | "createGroup" | "deleteGroup" | null;
@@ -94,7 +93,7 @@ export function ScheduleList() {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: rowKey },
     });
 

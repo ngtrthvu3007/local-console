@@ -48,10 +48,7 @@ export function FlociCard() {
 
   // Chỉ reset được khi Floci đang chạy
   const resetButton = (
-    <Button
-      disabled={floci.state !== "running"}
-      onClick={() => setResetting(true)}
-    >
+    <Button disabled={floci.state !== "running"} onClick={() => setResetting(true)}>
       Reset data
     </Button>
   );
@@ -66,10 +63,7 @@ export function FlociCard() {
       }
     >
       <KeyValuePairs columns={1} items={items} />
-      <ResetFlociModal
-        visible={resetting}
-        onDismiss={() => setResetting(false)}
-      />
+      <ResetFlociModal visible={resetting} onDismiss={() => setResetting(false)} />
     </Container>
   );
 }

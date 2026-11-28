@@ -5,8 +5,6 @@ import {
   SECONDS_PER_HOUR,
 } from "@shared/constants.ts";
 
-export const KIBIBYTE = 1024;
-
 // Luật đặt tên queue của SQS: 1–80 ký tự (tính cả đuôi .fifo)
 export const QUEUE_NAME_MAX_LENGTH = 80;
 export const QUEUE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
@@ -50,3 +48,9 @@ export const MESSAGE_ATTRIBUTES = {
   sent: "SentTimestamp",
   receiveCount: "ApproximateReceiveCount",
 } as const;
+
+// Mã hóa phía server: SSE-SQS (key của SQS) hoặc SSE-KMS với key chọn được
+export const QUEUE_ENCRYPTION = { sseSqs: "sse-sqs", sseKms: "sse-kms" } as const;
+export type QueueEncryption = (typeof QUEUE_ENCRYPTION)[keyof typeof QUEUE_ENCRYPTION];
+// Tên service trong alias key AWS managed: alias/aws/sqs
+export const SQS_KEY_SERVICE = "sqs";

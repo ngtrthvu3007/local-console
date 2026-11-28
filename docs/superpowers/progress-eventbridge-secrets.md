@@ -17,16 +17,16 @@ Pull sạch, không conflict. Phần phải đổi:
 
 ## Đang làm: EventBridge — spec mục 8
 
-| Bước                                   | Trạng thái                                                                                |
-| -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 1. Icon, registry, client              | Xong (`useEventBridge`; `useScheduler` làm ở bước 5, chưa cần)                            |
-| 2. Event buses: list, tạo, xóa, Send   | Xong, đã test UI 1440 + 390, IT, E2E, responsive                                          |
-| 3. Rules: list, tạo / sửa, Test pattern, enable/disable, xóa | Xong, đã test UI 1440 + 390, IT, E2E, responsive |
-| 4. Chi tiết rule: tab Targets (Lambda, SQS, SNS), tab Details | Xong (thêm / gỡ target; Step Functions để bước 7) |
-| 5. Schedules: list + group, tạo / sửa (`at`, `rate`, `cron`), chi tiết, enable/disable, xóa | Xong, đã test UI 1440 + 390, IT, E2E, responsive |
-| 6. Liên kết Lambda / SQS / SNS | Xong, đã test UI 1440 + 390, unit, IT, E2E, responsive toàn app |
-| 7. Target Step Functions | **Hoãn** tới khi service Step Functions có trong console (user chốt 2026-11-21): lúc đó làm cùng dropdown state machine và link sang trang state machine |
-| 8. Test cuối | Một phần: `it/eventbridge*.test.ts`, `e2e/eventbridge*.spec.ts`, 3 trang trong `responsive.spec.ts` |
+| Bước                                                                                        | Trạng thái                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Icon, registry, client                                                                   | Xong (`useEventBridge`; `useScheduler` làm ở bước 5, chưa cần)                                                                                              |
+| 2. Event buses: list, tạo, xóa, Send                                                        | Xong, đã test UI 1440 + 390, IT, E2E, responsive                                                                                                            |
+| 3. Rules: list, tạo / sửa, Test pattern, enable/disable, xóa                                | Xong, đã test UI 1440 + 390, IT, E2E, responsive                                                                                                            |
+| 4. Chi tiết rule: tab Targets (Lambda, SQS, SNS), tab Details                               | Xong (thêm / gỡ target; Step Functions để bước 7)                                                                                                           |
+| 5. Schedules: list + group, tạo / sửa (`at`, `rate`, `cron`), chi tiết, enable/disable, xóa | Xong, đã test UI 1440 + 390, IT, E2E, responsive                                                                                                            |
+| 6. Liên kết Lambda / SQS / SNS                                                              | Xong, đã test UI 1440 + 390, unit, IT, E2E, responsive toàn app                                                                                             |
+| 7. Target Step Functions                                                                    | Xong (2026-11-22): dropdown state machine ở Add target và form Schedule, link sang trang state machine; rule không cần RoleArn, schedule dùng role mặc định |
+| 8. Test cuối                                                                                | Một phần: `it/eventbridge*.test.ts`, `e2e/eventbridge*.spec.ts`, 3 trang trong `responsive.spec.ts`                                                         |
 
 ### File đã tạo / sửa (để tách stash)
 
@@ -46,27 +46,27 @@ Pull sạch, không conflict. Phần phải đổi:
 
 ### Quyết định tự chốt (theo 4 tiêu chí)
 
-| Quyết định | Lý do |
-| ---------- | ----- |
-| Bus `default` hiện trong bảng nhưng checkbox khóa (`isItemDisabled`) | Spec 3.1 ("không chọn được để xóa"); tiêu chí 1 |
-| Xóa bus = gỡ target → xóa rule → xóa bus, dùng `rules.ts` (`deleteRule`, `listRuleNames`) | Spec 3.1/4; bước 3 dùng lại cho xóa rule, không viết hai lần |
-| Modal xóa bus liệt kê số rule từng bus (`useRuleNames`) | Spec 3.1 ("liệt kê số rule sẽ mất") |
-| `jsonObjectError` đưa vào `shared/json.ts`, `filterPolicyError` dùng lại | Cùng logic đã có ở SNS; tiêu chí dùng lại trước khi viết mới |
-| `quickLinks` của Home chỉ có "Event buses" | Tạo bus là modal chứ không phải trang riêng, nên không có link "Create" |
-| Tên bus trong bảng là link sang `rules?bus=` (bus default không ghi lên URL) | Spec 3.1; link ngắn gọn |
-| State của rule dùng `FormCheckbox` "Enabled", không dùng Toggle | Repo chưa có `FormToggle`; không thêm component mới cho một ô; tiêu chí 1 |
-| Tile "Schedule" bị khóa khi bus khác default, và schema chặn thêm một lớp | Luật AWS (spec 3.3); chặn ở form thay vì để Floci trả lỗi |
-| Bus và Name của rule hiện chữ (không sửa) khi Edit | Spec 3.3 "Khóa khi sửa" |
-| Test pattern: reset kết quả khi pattern hoặc event mẫu đổi | Tránh Match / No match cũ gây hiểu nhầm (bug UX tự tìm ra) |
-| Sửa rule: `PutRule` giữ `RoleArn` đọc từ `DescribeRule` | Spec 3.3; IT xác nhận Floci giữ đúng |
-| Ngày giờ của schedule `at` là một ô text `yyyy-mm-ddThh:mm:ss` (kèm ví dụ), không dùng DatePicker + TimeInput | Repo chưa có field date / time cho form; thêm 2 component để nhập một chuỗi là quá tay; tiêu chí 1 |
-| Chưa làm Start / End date của schedule định kỳ | Dev ít dùng khi test; Start / End của schedule do IaC tạo vẫn được giữ nguyên khi sửa (gộp với `GetSchedule`) |
-| Target Step Functions của schedule để bước 7 (cùng rule) | Chưa có trang Step Functions; chỉ hiện ARN text |
-| Target `other` (ECS, Kinesis…) khóa khi sửa, hiện ARN và ghi chú | Spec 3.6 |
-| Timezone chỉ gửi cho `at` và `cron`; `rate` giữ giá trị cũ khi sửa | Rate không dùng timezone; tránh ghi đè giá trị IaC |
-| Ô chọn group có mục All groups; Create group / Delete group nằm cạnh; Delete group chỉ bật khi chọn group khác default | Spec 3.5 |
-| Id target = `<loại>-<tên resource>` cắt 64 ký tự | Tự sinh, ổn định, đọc được; spec 3.4 chỉ nói "tự sinh" |
-| Xóa rule: gỡ query của rule đã xóa, không invalidate | Tránh gọi `DescribeRule` rule vừa mất (400) khi trang chi tiết còn mở |
+| Quyết định                                                                                                             | Lý do                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Bus `default` hiện trong bảng nhưng checkbox khóa (`isItemDisabled`)                                                   | Spec 3.1 ("không chọn được để xóa"); tiêu chí 1                                                               |
+| Xóa bus = gỡ target → xóa rule → xóa bus, dùng `rules.ts` (`deleteRule`, `listRuleNames`)                              | Spec 3.1/4; bước 3 dùng lại cho xóa rule, không viết hai lần                                                  |
+| Modal xóa bus liệt kê số rule từng bus (`useRuleNames`)                                                                | Spec 3.1 ("liệt kê số rule sẽ mất")                                                                           |
+| `jsonObjectError` đưa vào `shared/json.ts`, `filterPolicyError` dùng lại                                               | Cùng logic đã có ở SNS; tiêu chí dùng lại trước khi viết mới                                                  |
+| `quickLinks` của Home chỉ có "Event buses"                                                                             | Tạo bus là modal chứ không phải trang riêng, nên không có link "Create"                                       |
+| Tên bus trong bảng là link sang `rules?bus=` (bus default không ghi lên URL)                                           | Spec 3.1; link ngắn gọn                                                                                       |
+| State của rule dùng `FormCheckbox` "Enabled", không dùng Toggle                                                        | Repo chưa có `FormToggle`; không thêm component mới cho một ô; tiêu chí 1                                     |
+| Tile "Schedule" bị khóa khi bus khác default, và schema chặn thêm một lớp                                              | Luật AWS (spec 3.3); chặn ở form thay vì để Floci trả lỗi                                                     |
+| Bus và Name của rule hiện chữ (không sửa) khi Edit                                                                     | Spec 3.3 "Khóa khi sửa"                                                                                       |
+| Test pattern: reset kết quả khi pattern hoặc event mẫu đổi                                                             | Tránh Match / No match cũ gây hiểu nhầm (bug UX tự tìm ra)                                                    |
+| Sửa rule: `PutRule` giữ `RoleArn` đọc từ `DescribeRule`                                                                | Spec 3.3; IT xác nhận Floci giữ đúng                                                                          |
+| Ngày giờ của schedule `at` là một ô text `yyyy-mm-ddThh:mm:ss` (kèm ví dụ), không dùng DatePicker + TimeInput          | Repo chưa có field date / time cho form; thêm 2 component để nhập một chuỗi là quá tay; tiêu chí 1            |
+| Chưa làm Start / End date của schedule định kỳ                                                                         | Dev ít dùng khi test; Start / End của schedule do IaC tạo vẫn được giữ nguyên khi sửa (gộp với `GetSchedule`) |
+| Target Step Functions của schedule để bước 7 (cùng rule)                                                               | Chưa có trang Step Functions; chỉ hiện ARN text                                                               |
+| Target `other` (ECS, Kinesis…) khóa khi sửa, hiện ARN và ghi chú                                                       | Spec 3.6                                                                                                      |
+| Timezone chỉ gửi cho `at` và `cron`; `rate` giữ giá trị cũ khi sửa                                                     | Rate không dùng timezone; tránh ghi đè giá trị IaC                                                            |
+| Ô chọn group có mục All groups; Create group / Delete group nằm cạnh; Delete group chỉ bật khi chọn group khác default | Spec 3.5                                                                                                      |
+| Id target = `<loại>-<tên resource>` cắt 64 ký tự                                                                       | Tự sinh, ổn định, đọc được; spec 3.4 chỉ nói "tự sinh"                                                        |
+| Xóa rule: gỡ query của rule đã xóa, không invalidate                                                                   | Tránh gọi `DescribeRule` rule vừa mất (400) khi trang chi tiết còn mở                                         |
 
 ### Đã kiểm trên Floci 2.4.0 (khớp spec)
 
@@ -141,6 +141,7 @@ Chưa bắt đầu (làm sau khi EventBridge xong).
 - Ghi nhận: quét rule chạy N+1 lệnh (bus × rule), chấp nhận được ở local; nếu chậm khi có hàng trăm rule thì cần cache hoặc giới hạn.
 
 ## Việc kế tiếp
+
 1. Bước 7: target Step Functions cho rule và schedule (ARN dạng text).
 2. Bước 8: test cuối, schedule → event bus, StackLink khi CloudFormation vào dev.
 3. Spec `2026-11-20-integration-enhancements-design.md` (Lambda destination, SES configuration set) cần EventBridge xong: dùng `useBuses` và link bus.
@@ -148,6 +149,7 @@ Chưa bắt đầu (làm sau khi EventBridge xong).
 ## Test flow kết hợp nhiều service (2026-11-20)
 
 **IT `tests/it/eventbridge-flows.test.ts` (7/7, chạy trên Floci thật):**
+
 - S3 → EventBridge → SQS: bật `EventBridgeConfiguration` cho bucket, upload → queue nhận `aws.s3` / `Object Created` có đúng bucket và key.
 - EventBridge → SNS → SQS: rule trỏ topic, queue subscribe (raw) nhận event.
 - Một event, ba đích (queue, topic → queue, Lambda): cả ba nhận từ một `PutEvents`.
@@ -159,7 +161,8 @@ Chưa bắt đầu (làm sau khi EventBridge xong).
 **E2E `tests/e2e/eventbridge-flow.spec.ts` (6/6, qua UI của 4 service):** SQS tạo queue → S3 bật EventBridge → EventBridge tạo rule + target queue → upload → SQS peek thấy event S3 → Settings của queue liệt kê rule → xóa queue (modal cảnh báo rule) → rule báo "(not found)".
 
 **Phát hiện và sửa:**
-- Thiếu sót: spec 3.9 yêu cầu S3 › Event notifications có công tắc **Amazon EventBridge On / Off** nhưng code chỉ *giữ nguyên* cấu hình có sẵn, nên chỉ dùng UI thì không bật được S3 → EventBridge. Đã thêm `Toggle` ở `NotificationsSection` (kèm link "Create a rule…"); `toNotificationConfiguration(rules, current, eventBridge?)` bật / tắt mà không mất rule; unit test thêm.
+
+- Thiếu sót: spec 3.9 yêu cầu S3 › Event notifications có công tắc **Amazon EventBridge On / Off** nhưng code chỉ _giữ nguyên_ cấu hình có sẵn, nên chỉ dùng UI thì không bật được S3 → EventBridge. Đã thêm `Toggle` ở `NotificationsSection` (kèm link "Create a rule…"); `toNotificationConfiguration(rules, current, eventBridge?)` bật / tắt mà không mất rule; unit test thêm.
 - E2E: tham chiếu treo làm trình duyệt ghi 1 `console.error` 400/404 → thêm tuỳ chọn `danglingProbes` (mặc định tắt) vào `e2e/fixtures.ts`, chỉ bật trong `test.describe` của test xóa queue; chỉ bỏ qua lỗi 400/404 tới `/aws/`.
 - Toggle của Cloudscape đổi theo dữ liệu đã lưu nên E2E dùng `click()`, không dùng `check()`.
 
@@ -168,6 +171,7 @@ Chưa bắt đầu (làm sau khi EventBridge xong).
 ## Edge case của tổ hợp EventBridge × service khác (2026-11-21)
 
 Đã kiểm trên UI thật, không có bug mới:
+
 - Đích Lambda có **alias** (`…:function:fn:prod`): Lambda › Triggers vẫn hiện rule (khớp theo tiền tố); trang rule hiện tên function (không hiện `prod`).
 - Xóa **function / topic** còn rule và schedule trỏ tới: modal cảnh báo đúng tên. Sau khi xóa, rule hiện "(not found)" cho cả hai đích; schedule hiện "(not found)" ở trang chi tiết và danh sách; gỡ target treo bằng nút Remove chạy được.
 - **120 rule trên 6 bus** cùng trỏ vào một queue: khối EventBridge ở SQS Settings và cảnh báo trong modal xóa hiện sau ~0,5–0,8 giây (132 lệnh). N+1 chưa là vấn đề ở quy mô local.

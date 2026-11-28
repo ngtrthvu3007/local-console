@@ -4,10 +4,8 @@ import {
   DisableRuleCommand,
   EnableRuleCommand,
   PutRuleCommand,
-  ResourceNotFoundException,
   TestEventPatternCommand,
 } from "@aws-sdk/client-eventbridge";
-import { isNotFoundError } from "@shared/aws.ts";
 import { runEach } from "@shared/hooks/useNotify.ts";
 import { RULE_STATES, type RuleType } from "../constants.ts";
 import { listBuses } from "../buses.ts";
@@ -18,9 +16,6 @@ import { useEventBridge } from "./useEventBridge.ts";
 
 const rulesQueryKey = (bus: string) => [EVENTBRIDGE_QUERY_ROOT, "bus", bus, "rule-list"];
 const ruleQueryKey = (bus: string, rule: string) => [EVENTBRIDGE_QUERY_ROOT, "rule", bus, rule];
-
-export const isRuleMissing = (error: unknown) =>
-  error instanceof ResourceNotFoundException || isNotFoundError(error);
 
 export interface RuleRow extends Rule {
   targets: number;

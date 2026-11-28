@@ -8,20 +8,20 @@ import type { ButtonDropdownProps } from "@cloudscape-design/components/button-d
 import Header from "@cloudscape-design/components/header";
 import Link from "@cloudscape-design/components/link";
 import Pagination from "@cloudscape-design/components/pagination";
-import SpaceBetween from "@cloudscape-design/components/space-between";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import TextFilter from "@cloudscape-design/components/text-filter";
 import Toggle from "@cloudscape-design/components/toggle";
 import type { Queue } from "@server/routes/rabbitmq/contract.ts";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import {
-  DELETE_PREVIEW_COUNT,
   DETAIL_SEPARATOR,
   ITEM_LIST_WIDTH_PX,
   NOT_AVAILABLE,
+  TABLE_PAGE_SIZE,
 } from "@shared/constants.ts";
 import { pluralize } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -30,7 +30,6 @@ import { isUnauthorized, useDeleteQueues, usePurgeQueue, useQueues } from "../ho
 import { CreateQueueModal, PeekModal, PublishModal } from "./QueueModals.tsx";
 
 const NAME_FIELD = "name";
-const PAGE_SIZE = 50;
 
 type Modal =
   | { id: "create" }
@@ -81,7 +80,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
         ),
       },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     });
 
@@ -247,11 +246,7 @@ export function QueuesTab({ broker, authorization, onUnauthorized }: Props) {
         onConfirm={confirmDelete}
         onDismiss={closeModal}
       >
-        <Box>
-          {selectedNames.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-            <div key={name}>{name}</div>
-          ))}
-        </Box>
+        <DeletePreview lines={selectedNames} />
       </ConfirmModal>
     </div>
   );

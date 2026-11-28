@@ -11,8 +11,11 @@ import {
   type SQSClient,
 } from "@aws-sdk/client-sqs";
 import { existsUnlessMissing } from "@shared/aws.ts";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import {
+  QUEUE_ENCRYPTION,
+  SQS_KEY_SERVICE,
+  type QueueEncryption,
   ALL_ATTRIBUTES,
   ATTRIBUTE_TRUE,
   AUTO_REFRESH_INTERVAL_MS,
@@ -27,11 +30,12 @@ import {
   type QueueSettings,
   type RedrivePolicy,
 } from "../queues.ts";
+import { awsManagedAlias } from "../../kms/keys.ts";
 import { useSQS } from "./useSQS.ts";
 
 // Mọi query của SQS nằm dưới key gốc này
 const SQS_QUERY_ROOT = "sqs";
-export const queuesQueryKey = [SQS_QUERY_ROOT, "queues"];
+const queuesQueryKey = [SQS_QUERY_ROOT, "queues"];
 // Mọi query về một queue (chi tiết, message, trigger…) nằm dưới key này
 const anyQueueQueryKey = [SQS_QUERY_ROOT, "queue"];
 export const queueQueryKey = (queue: string, part?: string) =>
@@ -64,11 +68,13 @@ async function describeQueue(client: SQSClient, url: string) {
   const { Attributes = {} } = await client.send(
     new GetQueueAttributesCommand({ QueueUrl: url, AttributeNames: [ALL_ATTRIBUTES] }),
   );
+
   return toQueue(url, Attributes);
 }
 
 export function useQueues() {
   const client = useSQS();
+
   return useQuery({
     queryKey: queuesQueryKey,
     queryFn: async () => {
@@ -84,6 +90,7 @@ export function useQueues() {
 // Đường dẫn dùng tên queue; URL lấy bằng GetQueueUrl, không tự ghép host
 export function useQueue(name: string, autoRefresh = false) {
   const client = useSQS();
+
   return useQuery({
     queryKey: queueQueryKey(name, DETAILS),
     queryFn: async () => {
@@ -98,6 +105,7 @@ export function useQueue(name: string, autoRefresh = false) {
 // Các queue đang dùng queue này làm DLQ
 export function useDeadLetterSources(queue: Queue) {
   const client = useSQS();
+
   return useQuery({
     queryKey: queueQueryKey(queue.name, DLQ_SOURCES),
     queryFn: async () => {
@@ -112,6 +120,7 @@ export function useDeadLetterSources(queue: Queue) {
 // Làm mới mọi query của queue và danh sách; trả promise để nút giữ loading tới khi dữ liệu mới về
 export function useInvalidateQueue() {
   const queryClient = useQueryClient();
+
   return (queue: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: queueQueryKey(queue) }),
@@ -123,21 +132,28 @@ export interface CreateQueueInput {
   name: string;
   type: QueueType;
   contentBasedDedup: boolean;
+  encryption: QueueEncryption;
+  kmsKeyId: string;
 }
 
 // Thông số còn lại để mặc định của SQS, sửa sau ở tab Settings
 export function useCreateQueue() {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
-    mutationFn: ({ name, type, contentBasedDedup }: CreateQueueInput) =>
+    mutationFn: ({ name, type, contentBasedDedup, encryption, kmsKeyId }: CreateQueueInput) =>
       client.send(
         new CreateQueueCommand({
           QueueName: name,
-          Attributes:
-            type === "fifo"
+          Attributes: {
+            ...(type === "fifo"
               ? { FifoQueue: ATTRIBUTE_TRUE, ContentBasedDeduplication: String(contentBasedDedup) }
-              : undefined,
+              : {}),
+            ...(encryption === QUEUE_ENCRYPTION.sseKms
+              ? { KmsMasterKeyId: kmsKeyId || awsManagedAlias(SQS_KEY_SERVICE) }
+              : { SqsManagedSseEnabled: ATTRIBUTE_TRUE }),
+          },
         }),
       ),
     onSuccess: (_result, input) => invalidate(input.name),
@@ -147,18 +163,14 @@ export function useCreateQueue() {
 export function useDeleteQueues() {
   const client = useSQS();
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (queues: readonly Queue[]) => {
-      const failures: string[] = [];
-      for (const queue of queues) {
-        try {
-          await client.send(new DeleteQueueCommand({ QueueUrl: queue.url }));
-        } catch (error) {
-          failures.push(`${queue.name}: ${errorMessage(error)}`);
-        }
-      }
-      return { count: queues.length - failures.length, failures };
-    },
+    mutationFn: (queues: readonly Queue[]) =>
+      runEach(
+        queues,
+        (queue) => queue.name,
+        (queue) => client.send(new DeleteQueueCommand({ QueueUrl: queue.url })),
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queuesQueryKey }),
   });
 }
@@ -166,6 +178,7 @@ export function useDeleteQueues() {
 export function useUpdateSettings(queue: Queue) {
   const client = useSQS();
   const invalidate = useInvalidateQueue();
+
   return useMutation({
     mutationFn: (settings: QueueSettings) =>
       client.send(
@@ -182,6 +195,7 @@ export function useUpdateSettings(queue: Queue) {
 export function useUpdateRedrivePolicy(queue: Queue) {
   const client = useSQS();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (policy?: RedrivePolicy) =>
       client.send(

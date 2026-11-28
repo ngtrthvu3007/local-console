@@ -4,7 +4,7 @@ import type {
 } from "@aws-sdk/client-lambda";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
 import { reformatJson } from "@shared/json.ts";
-import { resourceNameOfArn } from "../eventbridge/targets.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import {
   REPORT_BATCH_FAILURES,
   STARTING_POSITIONS,
@@ -16,7 +16,7 @@ import {
 } from "./constants.ts";
 
 // Nguồn có tùy chọn nâng cao; S3 và SNS không phải event source mapping
-export type MappingSource = "sqs" | "dynamodb";
+export type MappingSource = "sqs" | "dynamodb" | "kinesis";
 
 // Các ô của form, gộp chung cho SQS và DynamoDB: mỗi nguồn chỉ dùng phần của mình
 export interface MappingOptions {
@@ -37,16 +37,6 @@ export const DEFAULT_MAPPING_OPTIONS: MappingOptions = {
   onFailureArn: "",
 };
 
-// Lấy đúng các ô tùy chọn từ giá trị của form (form có thêm nhiều ô khác)
-export const pickMappingOptions = (values: MappingOptions): MappingOptions => ({
-  filterPatterns: values.filterPatterns,
-  reportBatchFailures: values.reportBatchFailures,
-  retryAttempts: values.retryAttempts,
-  maxRecordAge: values.maxRecordAge,
-  onFailureKind: values.onFailureKind,
-  onFailureArn: values.onFailureArn,
-});
-
 type MappingParams = Pick<
   CreateEventSourceMappingCommandInput,
   | "FilterCriteria"
@@ -63,12 +53,15 @@ export function toMappingParams(source: MappingSource, options: MappingOptions):
     .map(({ pattern }) => pattern.trim())
     .filter(Boolean)
     .map((Pattern) => ({ Pattern }));
+
   const common = { FilterCriteria: { Filters: filters } };
+
   if (source === "sqs")
     return {
       ...common,
       FunctionResponseTypes: options.reportBatchFailures ? [REPORT_BATCH_FAILURES] : [],
     };
+
   return {
     ...common,
     MaximumRetryAttempts: Number(options.retryAttempts),
@@ -79,12 +72,13 @@ export function toMappingParams(source: MappingSource, options: MappingOptions):
 }
 
 // SNS hay SQS theo ARN đích; ARN lạ coi là SQS (Floci chỉ nhận hai loại này)
-export const onFailureKindOf = (arn: string): OnFailureKind =>
+const onFailureKindOf = (arn: string): OnFailureKind =>
   !arn ? "none" : arn.includes(":sns:") ? "sns" : "sqs";
 
 // Trigger có sẵn (kể cả tạo bằng IaC) → các ô của form; hiện đủ pattern, không bỏ pattern nào
 export function fromMapping(mapping: EventSourceMappingConfiguration): MappingOptions {
   const destination = mapping.DestinationConfig?.OnFailure?.Destination ?? "";
+
   return {
     filterPatterns: (mapping.FilterCriteria?.Filters ?? []).map((filter) => ({
       pattern: reformatJson(filter.Pattern ?? ""),
@@ -103,6 +97,7 @@ export function mappingDetails(source: TriggerRowSource, mapping: EventSourceMap
   const startingPosition = mapping.StartingPosition as StartingPosition | undefined;
   const destination = mapping.DestinationConfig?.OnFailure?.Destination;
   const retry = mapping.MaximumRetryAttempts;
+
   return [
     `Batch size ${mapping.BatchSize}`,
     startingPosition && STARTING_POSITIONS[startingPosition],
@@ -115,7 +110,7 @@ export function mappingDetails(source: TriggerRowSource, mapping: EventSourceMap
       retry !== STREAM_RETRY_ATTEMPTS.default &&
       `Retry ${retry}`,
     destination &&
-      `On failure: ${onFailureKindOf(destination).toUpperCase()} ${resourceNameOfArn(destination)}`,
+      `On failure: ${onFailureKindOf(destination).toUpperCase()} ${lastArnPart(destination)}`,
   ]
     .filter(Boolean)
     .join(DETAIL_SEPARATOR);

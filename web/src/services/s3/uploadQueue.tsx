@@ -6,6 +6,7 @@ import { formatBytes, pluralize } from "@shared/format.ts";
 import { notifyBulkResult, setLiveMessage } from "@shared/hooks/useNotify.ts";
 import { createStore } from "@shared/store.ts";
 import {
+  SSE_KMS_ALGORITHM,
   MIN_MULTIPART_PART_BYTES,
   UPLOAD_FILES_IN_PARALLEL,
   UPLOAD_PARTS_IN_PARALLEL,
@@ -25,11 +26,12 @@ export interface UploadItem extends PickedFile {
   error?: string;
 }
 
-export interface UploadBatch {
+interface UploadBatch {
   id: number;
   bucket: string;
   prefix: string;
   items: UploadItem[];
+  kmsKeyId?: string; // có thì SSE-KMS ("" = aws/s3), không thì theo mặc định của bucket
   running: boolean;
   detached: boolean; // trang Upload đã đóng: xong thì bỏ khỏi bộ nhớ (giữ File rất tốn RAM)
 }
@@ -48,6 +50,7 @@ interface BatchControl {
   canceled: boolean;
   uploads: Set<Upload>;
 }
+
 const controls = new Map<number, BatchControl>();
 
 let nextId = 0;
@@ -68,6 +71,7 @@ const messageId = (batchId: number) => `upload-${batchId}`;
 
 function progressMessage(batch: UploadBatch) {
   const { totalBytes, uploadedBytes } = byteTotals(batch.items);
+
   return {
     type: "in-progress" as const,
     loading: true,
@@ -87,6 +91,7 @@ function updateBatch(batchId: number, change: (batch: UploadBatch) => Partial<Up
   store.set(
     store.get().map((batch) => (batch.id === batchId ? { ...batch, ...change(batch) } : batch)),
   );
+
   const batch = batchOf(batchId);
   if (batch?.running) setLiveMessage(messageId(batchId), progressMessage(batch));
 }
@@ -107,6 +112,7 @@ async function uploadItem(
 ) {
   if (control.canceled) return updateItem(batch.id, item.id, { status: "canceled" });
   updateItem(batch.id, item.id, { status: "uploading", uploadedBytes: 0, error: undefined });
+
   // lib-storage tự chia file lớn thành nhiều phần (multipart upload)
   const upload = new Upload({
     client: s3,
@@ -118,18 +124,25 @@ async function uploadItem(
       Key: batch.prefix + item.path,
       Body: item.file,
       ContentType: item.file.type || undefined,
+      ...(batch.kmsKeyId === undefined
+        ? {}
+        : { ServerSideEncryption: SSE_KMS_ALGORITHM, SSEKMSKeyId: batch.kmsKeyId || undefined }),
     },
   });
+
   control.uploads.add(upload);
+
   upload.on("httpUploadProgress", (progress) =>
     updateItem(batch.id, item.id, { uploadedBytes: progress.loaded ?? 0 }),
   );
+
   try {
     await upload.done();
     updateItem(batch.id, item.id, { status: "done", uploadedBytes: item.file.size });
   } catch (error) {
     const { name, message } = error as Error;
     const aborted = control.canceled || name === ABORT_ERROR_NAME;
+
     updateItem(
       batch.id,
       item.id,
@@ -142,10 +155,13 @@ async function uploadItem(
 
 function reportResult(batch: UploadBatch) {
   const uploaded = batch.items.filter((item) => item.status === "done");
+
   const failures = batch.items
     .filter((item) => FAILED_STATUSES.includes(item.status))
     .map((item) => `${item.path}: ${item.error ?? CANCELED_REASON}`);
+
   const uploadedBytes = uploaded.reduce((sum, item) => sum + item.file.size, 0);
+
   notifyBulkResult(
     `Uploaded ${pluralize(uploaded.length, "file")} (${formatBytes(uploadedBytes)}) to ${s3Uri(batch.bucket, batch.prefix)}`,
     failures,
@@ -161,11 +177,13 @@ export async function runBatch(s3: S3Client, batchId: number, onFinished: () => 
   updateBatch(batchId, () => ({ running: true }));
 
   const queue = batch.items.filter((item) => RETRYABLE_STATUSES.includes(item.status));
+
   const workers = Array.from({ length: UPLOAD_FILES_IN_PARALLEL }, async () => {
     for (let item = queue.shift(); item; item = queue.shift()) {
       await uploadItem(s3, batch, item, control);
     }
   });
+
   await Promise.all(workers);
 
   controls.delete(batchId);
@@ -179,7 +197,7 @@ export async function runBatch(s3: S3Client, batchId: number, onFinished: () => 
 
 export function startBatch(
   s3: S3Client,
-  target: { bucket: string; prefix: string; items: UploadItem[] },
+  target: { bucket: string; prefix: string; items: UploadItem[]; kmsKeyId?: string },
   onFinished: () => void,
 ) {
   const batchId = nextId++;

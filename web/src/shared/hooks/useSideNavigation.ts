@@ -14,9 +14,11 @@ function serviceItem(
 ): SideNavigationProps.Link | SideNavigationProps.ExpandableLinkGroup {
   const icon = createElement(ServiceIcon, { service });
   const [onlyPage, ...otherPages] = service.navigation;
+
   if (onlyPage && !otherPages.length) {
     return { type: "link", text: service.name, href: onlyPage.href, icon };
   }
+
   // Không đặt defaultExpanded: Cloudscape chỉ mở nhóm chứa trang đang xem, sidebar không dài ra
   return {
     type: "expandable-link-group",
@@ -34,13 +36,11 @@ const categoryGroups = (Object.keys(SERVICE_CATEGORIES) as ServiceCategory[])
     members: services.filter((service) => service.category === category),
   }))
   .filter(({ members }) => members.length > 0)
-  .map(
-    ({ category, members }): SideNavigationProps.SectionGroup => ({
-      type: "section-group",
-      title: SERVICE_CATEGORIES[category].label,
-      items: members.map(serviceItem),
-    }),
-  );
+  .map(({ category, members }): SideNavigationProps.SectionGroup => ({
+    type: "section-group",
+    title: SERVICE_CATEGORIES[category].label,
+    items: members.map(serviceItem),
+  }));
 
 const NAVIGATION_ITEMS: SideNavigationProps.Item[] = [
   { type: "link", text: "Console Home", href: HOME_PATH },

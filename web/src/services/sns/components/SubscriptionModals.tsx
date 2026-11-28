@@ -14,7 +14,7 @@ import {
 } from "@shared/components/form/FormFields.tsx";
 import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { FormValueEditor } from "@shared/components/ValueEditor.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
+import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { reformatJson } from "@shared/json.ts";
 import { notifyBulkOutcome, notifyOutcome } from "@shared/hooks/useNotify.ts";
@@ -27,14 +27,14 @@ import {
   FILTER_SCOPES,
   HOST_FROM_CONTAINER,
   HTTP_PROTOCOLS,
-  LOCAL_HOSTS,
+  isLocalUrl,
   PROTOCOLS,
   RAW_DELIVERY_PROTOCOLS,
+  SUBSCRIPTION_ATTRIBUTES,
   type Protocol,
 } from "../constants.ts";
 import {
   filterPolicyAttributes,
-  rawDeliveryAttributes,
   useCreateSubscription,
   useDeleteSubscriptions,
   useSetSubscriptionAttributes,
@@ -50,14 +50,6 @@ const SQS_PROTOCOL: Protocol = "sqs";
 const FIFO_TOPIC_SQS_ONLY = "FIFO topics deliver only to SQS queues";
 const FIFO_QUEUE_NEEDS_FIFO_TOPIC = "Only FIFO topics can deliver to FIFO queues";
 const SCOPE_OPTIONS = Object.entries(FILTER_SCOPES).map(([id, text]) => ({ id, text }));
-
-const isLocalUrl = (text: string) => {
-  try {
-    return LOCAL_HOSTS.some((host) => host === new URL(text).hostname);
-  } catch {
-    return false;
-  }
-};
 
 const FILTER_POLICY_LABEL = 'Filter policy, e.g. {"type": ["order"]}';
 
@@ -89,8 +81,10 @@ export function CreateSubscriptionModal({
     const blocked = topic.fifo && option.value !== SQS_PROTOCOL;
     return { ...option, disabled: blocked, description: blocked ? FIFO_TOPIC_SQS_ONLY : undefined };
   });
+
   const queueOptions = (queues.data ?? []).map((queue) => {
     const blocked = queue.fifo && !topic.fifo;
+
     return {
       value: queue.arn,
       label: queue.name,
@@ -98,6 +92,7 @@ export function CreateSubscriptionModal({
       description: blocked ? FIFO_QUEUE_NEEDS_FIFO_TOPIC : queue.arn,
     };
   });
+
   const functionOptions = (functions.data ?? []).map((item) => ({
     value: item.FunctionArn!,
     label: item.FunctionName,
@@ -111,6 +106,7 @@ export function CreateSubscriptionModal({
       http: values.url,
       https: values.url,
     }[values.protocol];
+
     createSubscription.mutate(
       { ...values, endpoint },
       notifyOutcome({
@@ -214,6 +210,7 @@ export function EditFilterModal({
   onDismiss: () => void;
 }) {
   const setFilter = useSetSubscriptionAttributes(subscription, topicName);
+
   const form = useZodForm(filterPolicySchema, {
     filterPolicy: reformatJson(subscription.filterPolicy ?? ""),
     filterScope: subscription.filterScope,
@@ -223,7 +220,9 @@ export function EditFilterModal({
     setFilter.mutate(
       filterPolicyAttributes(values),
       notifyOutcome({
-        success: values.filterPolicy.trim() ? "Saved the filter policy" : "Removed the filter policy",
+        success: values.filterPolicy.trim()
+          ? "Saved the filter policy"
+          : "Removed the filter policy",
         errorHeader: "Couldn't save the filter policy",
         then: onDismiss,
       }),
@@ -275,7 +274,7 @@ export function EditRawDeliveryModal({
       loading={setRawDelivery.isPending}
       onSubmit={() =>
         setRawDelivery.mutate(
-          rawDeliveryAttributes(rawDelivery),
+          { [SUBSCRIPTION_ATTRIBUTES.rawDelivery]: String(rawDelivery) },
           notifyOutcome({
             success: "Saved raw message delivery",
             errorHeader: "Couldn't save raw message delivery",
@@ -308,7 +307,6 @@ export function DeleteSubscriptionsModal({
   onDone: () => void;
 }) {
   const deleteSubscriptions = useDeleteSubscriptions(topicName);
-  const hiddenCount = subscriptions.length - DELETE_PREVIEW_COUNT;
 
   const submit = () =>
     deleteSubscriptions.mutate(
@@ -330,12 +328,7 @@ export function DeleteSubscriptionsModal({
       onConfirm={submit}
       onDismiss={onDismiss}
     >
-      <Box>
-        {subscriptions.slice(0, DELETE_PREVIEW_COUNT).map((subscription) => (
-          <div key={subscription.arn}>{subscription.endpoint}</div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
+      <DeletePreview lines={subscriptions.map((subscription) => subscription.endpoint)} />
     </ConfirmModal>
   );
 }

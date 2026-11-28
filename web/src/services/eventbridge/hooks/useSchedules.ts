@@ -5,11 +5,9 @@ import {
   DeleteScheduleCommand,
   DeleteScheduleGroupCommand,
   GetScheduleCommand,
-  ResourceNotFoundException,
   UpdateScheduleCommand,
   type CreateScheduleCommandInput,
 } from "@aws-sdk/client-scheduler";
-import { isNotFoundError } from "@shared/aws.ts";
 import { runEach } from "@shared/hooks/useNotify.ts";
 import { SCHEDULE_STATES } from "../constants.ts";
 import {
@@ -25,9 +23,6 @@ const SCHEDULER_ROOT = [EVENTBRIDGE_QUERY_ROOT, "scheduler"];
 const scheduleListKey = (group?: string) => [...SCHEDULER_ROOT, "list", group ?? ""];
 const scheduleKey = (group: string, name: string) => [...SCHEDULER_ROOT, "schedule", group, name];
 const groupsKey = [...SCHEDULER_ROOT, "groups"];
-
-export const isScheduleMissing = (error: unknown) =>
-  error instanceof ResourceNotFoundException || isNotFoundError(error);
 
 // group rỗng = mọi group
 export function useSchedules(group?: string) {

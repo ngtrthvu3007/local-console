@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 import FormField from "@cloudscape-design/components/form-field";
 import Spinner from "@cloudscape-design/components/spinner";
@@ -22,16 +22,23 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   height?: number;
+  language?: EditorLanguage; // bỏ trống thì đoán theo giá trị ban đầu
 }
 
 // Editor cho giá trị do dev nhập (Redis value, payload message).
 // Hiện đúng giá trị thô, không tự format JSON: format rồi lưu sẽ đổi dữ liệu mà BE đã ghi
-export function ValueEditor({ value, onChange, height = EDITOR_HEIGHT_PX }: Props) {
+export function ValueEditor({ value, onChange, height = EDITOR_HEIGHT_PX, language }: Props) {
   // Chọn chế độ một lần theo giá trị ban đầu, để gõ dở không làm editor đổi chế độ liên tục
-  const [language] = useState(() => editorLanguageOf(value));
+  const [guessed] = useState(() => editorLanguageOf(value));
+
   return (
     <Suspense fallback={<Spinner />}>
-      <CodeEditor value={value} onChange={onChange} language={language} height={height} />
+      <CodeEditor
+        value={value}
+        onChange={onChange}
+        language={language ?? guessed}
+        height={height}
+      />
     </Suspense>
   );
 }
@@ -41,17 +48,30 @@ interface FieldProps<TValues extends FieldValues> {
   name: Path<TValues>;
   label: string;
   height?: number;
+  language?: EditorLanguage;
+  description?: ReactNode;
 }
 
 export function FormValueEditor<TValues extends FieldValues>(props: FieldProps<TValues>) {
-  const { control, name, label, height } = props;
+  const { control, name, label, height, language, description } = props;
+
   return (
     <Controller
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormField label={label} errorText={fieldState.error?.message} stretch>
-          <ValueEditor value={field.value ?? ""} onChange={field.onChange} height={height} />
+        <FormField
+          label={label}
+          description={description}
+          errorText={fieldState.error?.message}
+          stretch
+        >
+          <ValueEditor
+            value={field.value ?? ""}
+            onChange={field.onChange}
+            height={height}
+            language={language}
+          />
         </FormField>
       )}
     />

@@ -16,9 +16,7 @@ interface Props {
   onRemoved: () => unknown;
 }
 
-// Trigger của function đã bị xóa (vd: xóa bằng CLI): Floci không tự dọn, tab Triggers của function
-// chỉ còn "not found", và tạo lại function cùng tên thì trigger sống lại. Nên dọn từ phía nguồn.
-// Dùng chung query với FunctionLink trong bảng nên không gọi thêm
+// Floci không dọn trigger của function đã xóa, tạo lại cùng tên là trigger sống lại: dọn từ phía nguồn
 export function BrokenTriggersAlert({ mappings, onRemoved }: Props) {
   const { lambda } = useLambda();
   const nameOf = (mapping: EventSourceMappingConfiguration) =>
@@ -28,6 +26,7 @@ export function BrokenTriggersAlert({ mappings, onRemoved }: Props) {
   const exists = useQueries({ queries: names.map((name) => functionExistsQuery(lambda, name)) });
   const missing = new Set(names.filter((_name, index) => exists[index].data === false));
   const broken = mappings.filter((mapping) => missing.has(nameOf(mapping)));
+
   const remove = useMutation({
     mutationFn: () =>
       Promise.all(
@@ -39,6 +38,7 @@ export function BrokenTriggersAlert({ mappings, onRemoved }: Props) {
   });
 
   if (!broken.length) return null;
+
   return (
     <Alert
       type='warning'

@@ -29,8 +29,24 @@ describe("keySummary", () => {
   });
 
   it("counts the entries of a collection", () => {
-    const hash: KeyValue = { ...base, type: "hash", kind: "hash", length: 3, items: [], cursor: null };
-    const list: KeyValue = { ...base, type: "list", kind: "list", length: 1, items: [], cursor: null };
+    const hash: KeyValue = {
+      ...base,
+      type: "hash",
+      kind: "hash",
+      length: 3,
+      items: [],
+      cursor: null,
+    };
+
+    const list: KeyValue = {
+      ...base,
+      type: "list",
+      kind: "list",
+      length: 1,
+      items: [],
+      cursor: null,
+    };
+
     const zset: KeyValue = {
       ...base,
       ttl: 90,
@@ -40,6 +56,7 @@ describe("keySummary", () => {
       items: [],
       cursor: null,
     };
+
     expect(keySummary(hash)).toBe("hash · 3 fields · No expiry");
     expect(keySummary(list)).toBe("list · 1 element · No expiry");
     expect(keySummary(zset)).toBe("sorted set · 2 members · TTL 1m 30s");

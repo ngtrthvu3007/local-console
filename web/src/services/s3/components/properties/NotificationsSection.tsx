@@ -14,6 +14,7 @@ import { DeletePreview } from "@shared/components/DeletePreview.tsx";
 import { pluralize } from "@shared/format.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { NOTIFICATION_DESTINATIONS } from "../../constants.ts";
 import {
   useBucketNotifications,
@@ -29,9 +30,7 @@ import { useS3EventRules } from "../../../eventbridge/hooks/useRules.ts";
 import { eventbridgeRoutes } from "../../../eventbridge/routes.ts";
 import { FunctionLink } from "../../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../../sqs/components/QueueLink.tsx";
-import { queueNameOfArn } from "../../../sqs/queues.ts";
 import { TopicLink } from "../../../sns/components/TopicLink.tsx";
-import { topicNameOfArn } from "../../../sns/topics.ts";
 import { NotificationModal } from "./NotificationModal.tsx";
 import { RulesSection } from "./RulesSection.tsx";
 
@@ -42,9 +41,9 @@ const ruleId = (rule: NotificationRule) => rule.id || rule.arn;
 
 // Đích có trang trên console thì là link
 function DestinationCell({ rule }: { rule: NotificationRule }) {
-  if (rule.destination === "sqs") return <QueueLink name={queueNameOfArn(rule.arn)} />;
+  if (rule.destination === "sqs") return <QueueLink name={lastArnPart(rule.arn)} />;
   if (rule.destination === "lambda") return <FunctionLink arn={rule.arn} />;
-  if (rule.destination === "sns") return <TopicLink name={topicNameOfArn(rule.arn)} />;
+  if (rule.destination === "sns") return <TopicLink name={lastArnPart(rule.arn)} />;
   return <>{rule.arn}</>;
 }
 

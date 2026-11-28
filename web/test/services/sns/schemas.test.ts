@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toTopic } from "../../../src/services/sns/topics.ts";
 import {
   createSubscriptionSchema,
   createTopicSchema,
@@ -10,7 +11,13 @@ const firstMessage = (result: { success: boolean; error?: { issues: { message: s
 
 describe("createTopicSchema", () => {
   const check = (type: "standard" | "fifo", name: string) =>
-    createTopicSchema.safeParse({ type, name, contentBasedDedup: false });
+    createTopicSchema.safeParse({
+      type,
+      name,
+      contentBasedDedup: false,
+      encrypted: false,
+      kmsKeyId: "",
+    });
 
   it("accepts valid names", () => {
     expect(check("standard", "order-events_v2").success).toBe(true);
@@ -39,6 +46,7 @@ describe("createSubscriptionSchema", () => {
     filterPolicy: "",
     filterScope: "MessageAttributes" as const,
   };
+
   const check = (changes: Partial<typeof base>) =>
     createSubscriptionSchema.safeParse({ ...base, ...changes });
 
@@ -52,14 +60,15 @@ describe("createSubscriptionSchema", () => {
     expect(check({ protocol: "http", url: "http://host.docker.internal:3000/x" }).success).toBe(
       true,
     );
+
     expect(check({ protocol: "https", url: "http://host:3000" }).success).toBe(false);
     expect(check({ protocol: "http", url: "not a url" }).success).toBe(false);
   });
 
   it("reports a broken filter policy", () => {
-    expect(
-      firstMessage(check({ queueArn: "arn:aws:sqs:r:0:q", filterPolicy: "{oops" })),
-    ).toMatch(/Invalid JSON/);
+    expect(firstMessage(check({ queueArn: "arn:aws:sqs:r:0:q", filterPolicy: "{oops" }))).toMatch(
+      /Invalid JSON/,
+    );
   });
 });
 
@@ -73,6 +82,7 @@ describe("publishSchema", () => {
     expect(firstMessage(publishSchema(standard).safeParse({ ...message, body: " " }))).toBe(
       "Enter a message body.",
     );
+
     expect(publishSchema(standard).safeParse(message).success).toBe(true);
   });
 
@@ -91,14 +101,38 @@ describe("publishSchema", () => {
       ...attribute,
       name: `a${index}`,
     }));
+
     expect(publishSchema(standard).safeParse({ ...message, attributes }).success).toBe(false);
   });
 
   it("needs a group ID on FIFO, and a dedup ID unless content-based", () => {
-    expect(publishSchema(fifo).safeParse(message).error?.issues.map((issue) => issue.path[0])).toEqual(
-      ["groupId", "dedupId"],
-    );
+    expect(
+      publishSchema(fifo)
+        .safeParse(message)
+        .error?.issues.map((issue) => issue.path[0]),
+    ).toEqual(["groupId", "dedupId"]);
+
     const contentBased = publishSchema({ fifo: true, contentBasedDedup: true });
     expect(contentBased.safeParse({ ...message, groupId: "g" }).success).toBe(true);
+  });
+});
+
+describe("createTopicSchema encryption", () => {
+  it("is off by default and takes a KMS key ARN when on", () => {
+    const base = { type: "standard", name: "events", contentBasedDedup: false };
+    expect(createTopicSchema.parse({ ...base, encrypted: false, kmsKeyId: "" }).encrypted).toBe(
+      false,
+    );
+    expect(createTopicSchema.safeParse({ ...base, encrypted: true, kmsKeyId: "k1" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("toTopic encryption", () => {
+  it("reads the topic's KMS key", () => {
+    const arn = "arn:aws:sns:ap-southeast-1:000000000000:events";
+    expect(toTopic(arn, { KmsMasterKeyId: "alias/events" }).kmsKeyId).toBe("alias/events");
+    expect(toTopic(arn, {}).kmsKeyId).toBeUndefined();
   });
 });

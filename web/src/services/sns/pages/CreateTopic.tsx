@@ -5,13 +5,20 @@ import Container from "@cloudscape-design/components/container";
 import Form from "@cloudscape-design/components/form";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { FormCheckbox, FormInput, FormTiles } from "@shared/components/form/FormFields.tsx";
+import {
+  FormToggle,
+  FormCheckbox,
+  FormInput,
+  FormTiles,
+} from "@shared/components/form/FormFields.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
-import { FIFO_SUFFIX, TOPIC_NAME_MAX_LENGTH, TOPIC_TYPES } from "../constants.ts";
+import { FIFO_SUFFIX, SNS_KEY_SERVICE, TOPIC_NAME_MAX_LENGTH, TOPIC_TYPES } from "../constants.ts";
+import { FormKeySelect } from "../../kms/components/KeySelect.tsx";
+import { defaultKeyLabel } from "../../kms/keys.ts";
 import { useCreateTopic } from "../hooks/useTopics.ts";
 import { snsBaseCrumbs, snsRoutes } from "../routes.ts";
 import { createTopicSchema, type CreateTopicForm } from "../schemas.ts";
@@ -31,7 +38,13 @@ const TYPE_ITEMS = [
   },
 ];
 
-const INITIAL_VALUES: CreateTopicForm = { type: "standard", name: "", contentBasedDedup: false };
+const INITIAL_VALUES: CreateTopicForm = {
+  type: "standard",
+  name: "",
+  contentBasedDedup: false,
+  encrypted: false,
+  kmsKeyId: "",
+};
 
 export function CreateTopic() {
   useBreadcrumbs([...snsBaseCrumbs, { text: "Create topic", href: snsRoutes.createTopic }]);
@@ -40,6 +53,7 @@ export function CreateTopic() {
   const createTopic = useCreateTopic();
   const form = useZodForm(createTopicSchema, INITIAL_VALUES);
   const type = useWatch({ control: form.control, name: "type" });
+  const encrypted = useWatch({ control: form.control, name: "encrypted" });
 
   const submit = form.handleSubmit((values) =>
     createTopic.mutate(
@@ -88,6 +102,23 @@ export function CreateTopic() {
                 name='contentBasedDedup'
                 text='Content-based deduplication'
                 description='Use a hash of the body as the deduplication ID, so publishers can leave it out.'
+              />
+            )}
+          </SpaceBetween>
+        </Container>
+        <Container header={<Header variant='h2'>Encryption</Header>}>
+          <SpaceBetween size='l'>
+            <FormToggle
+              control={form.control}
+              name='encrypted'
+              text='Encrypt messages with a KMS key'
+            />
+            {encrypted && (
+              <FormKeySelect
+                control={form.control}
+                name='kmsKeyId'
+                label='Encryption key'
+                defaultLabel={defaultKeyLabel(SNS_KEY_SERVICE)}
               />
             )}
           </SpaceBetween>

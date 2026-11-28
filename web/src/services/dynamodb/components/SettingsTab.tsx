@@ -15,36 +15,30 @@ import type {
   LocalSecondaryIndexDescription,
   TableDescription,
 } from "@aws-sdk/client-dynamodb";
-import type { EventSourceMappingConfiguration } from "@aws-sdk/client-lambda";
 import { ConnectCard } from "@shared/components/CodeSamples.tsx";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { DETAIL_SEPARATOR, ITEM_LIST_WIDTH_PX, NOT_AVAILABLE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
-import {
-  EVENT_SOURCE_STATES,
-  STARTING_POSITIONS,
-  type StartingPosition,
-} from "../../lambda/constants.ts";
-import { BrokenTriggersAlert } from "../../lambda/components/BrokenTriggersAlert.tsx";
-import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
-import { FUNCTION_TABS } from "../../lambda/routes.ts";
+import { StreamTriggersTable } from "../../lambda/components/StreamTriggers.tsx";
+import { useStreamTriggers } from "../../lambda/hooks/useTriggers.ts";
 import {
   PROJECTION_LABELS,
+  SSE_TYPE_KMS,
   STREAM_VIEW_TYPES,
   TTL_STATUS_ENABLED,
   type StreamViewTypeId,
 } from "../constants.ts";
-import { useStreamTriggers, useTimeToLive } from "../hooks/useTableSettings.ts";
+import { useTimeToLive } from "../hooks/useTableSettings.ts";
 import { keyAttributesOf, keySchemaOf } from "../hooks/useTables.ts";
 import { tableSample } from "../codeSamples.ts";
-import { Figure, FigureHeader } from "@shared/components/Figure.tsx";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { KeyLabel, keyText } from "./KeyLabel.tsx";
-import { StreamModal, StreamTriggerModal, TimeToLiveModal } from "./SettingsModals.tsx";
+import { StreamModal, TimeToLiveModal } from "./SettingsModals.tsx";
 
 const GENERAL_COLUMNS = 4;
-const MODALS = { ttl: "ttl", stream: "stream", trigger: "trigger" } as const;
+const MODALS = { ttl: "ttl", stream: "stream" } as const;
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
 interface IndexRow {
@@ -53,8 +47,12 @@ interface IndexRow {
   index: GlobalSecondaryIndexDescription | LocalSecondaryIndexDescription;
 }
 
-const startingPositionText = (mapping: EventSourceMappingConfiguration) =>
-  STARTING_POSITIONS[mapping.StartingPosition as StartingPosition] ?? NOT_AVAILABLE;
+// Không có SSEDescription = key AWS sở hữu (mặc định); KMS không kèm key = AWS managed
+function TableEncryptionValue({ table }: { table: TableDescription }) {
+  const sse = table.SSEDescription;
+  if (sse?.KMSMasterKeyArn) return <KeyLink value={sse.KMSMasterKeyArn} />;
+  return <>{sse?.SSEType === SSE_TYPE_KMS ? "AWS managed key" : "Owned by Amazon DynamoDB"}</>;
+}
 
 export function SettingsTab({ table }: { table: TableDescription }) {
   const tableName = table.TableName!;
@@ -63,7 +61,8 @@ export function SettingsTab({ table }: { table: TableDescription }) {
   const timeToLive = useTimeToLive(tableName);
   const stream = table.StreamSpecification;
   const streamOn = Boolean(stream?.StreamEnabled && table.LatestStreamArn);
-  const triggers = useStreamTriggers(tableName, streamOn ? table.LatestStreamArn : undefined);
+  // Modal tắt stream cần biết số trigger; bảng trigger dùng chung cache này
+  const triggers = useStreamTriggers(streamOn ? table.LatestStreamArn : undefined);
   const [modal, setModal] = useState<ModalId | null>(null);
   const closeModal = () => setModal(null);
   const triggerCount = triggers.data?.length ?? 0;
@@ -79,6 +78,7 @@ export function SettingsTab({ table }: { table: TableDescription }) {
       label: "ARN",
       value: <CopyButton variant='inline' text={table.TableArn} label={table.TableArn} />,
     },
+    { label: "Encryption", value: <TableEncryptionValue table={table} /> },
   ];
 
   // ---------- Indexes ----------
@@ -177,49 +177,6 @@ export function SettingsTab({ table }: { table: TableDescription }) {
     </Button>
   );
 
-  // ---------- Lambda triggers ----------
-
-  const triggerColumns: TableProps.ColumnDefinition<EventSourceMappingConfiguration>[] = [
-    {
-      id: "function",
-      header: "Function",
-      isRowHeader: true,
-      cell: (mapping) => (
-        <FunctionLink arn={mapping.FunctionArn ?? ""} tab={FUNCTION_TABS.triggers} />
-      ),
-    },
-    {
-      id: "state",
-      header: "State",
-      cell: (mapping) => (
-        <StatusIndicator
-          type={mapping.State === EVENT_SOURCE_STATES.enabled ? "success" : "stopped"}
-        >
-          {mapping.State}
-        </StatusIndicator>
-      ),
-    },
-    ...(compact
-      ? []
-      : [
-          {
-            id: "batch-size",
-            header: <FigureHeader>Batch size</FigureHeader>,
-            cell: (mapping: EventSourceMappingConfiguration) => (
-              <Figure>{mapping.BatchSize}</Figure>
-            ),
-          },
-          { id: "starting-position", header: "Starting position", cell: startingPositionText },
-        ]),
-  ];
-
-  const addTriggerButton = <Button onClick={() => setModal(MODALS.trigger)}>Add trigger</Button>;
-  // Câu cần chú ý đặt ngay đầu khối: stream bật mà chưa có Lambda nào đọc
-  const triggersDescription =
-    triggers.data && triggerCount === 0
-      ? "No Lambda reads this stream yet."
-      : "Functions that run when items in this table change.";
-
   return (
     <div ref={ref}>
       <SpaceBetween size='l'>
@@ -263,29 +220,14 @@ export function SettingsTab({ table }: { table: TableDescription }) {
           </Container>
         </ColumnLayout>
 
-        <BrokenTriggersAlert mappings={triggers.data ?? []} onRemoved={triggers.refetch} />
-        {streamOn && (
-          <Table
-            variant='container'
-            items={triggers.data ?? []}
-            trackBy='UUID'
-            loading={triggers.isLoading}
-            loadingText='Loading Lambda triggers'
-            columnDefinitions={triggerColumns}
-            wrapLines
-            empty={emptyOrError(
-              triggers,
-              <EmptyState title='No Lambda triggers' action={addTriggerButton} />,
-            )}
-            header={
-              <Header
-                counter={triggers.data ? `(${triggerCount})` : undefined}
-                description={triggersDescription}
-                actions={addTriggerButton}
-              >
-                Lambda triggers
-              </Header>
-            }
+        {streamOn && table.LatestStreamArn && (
+          <StreamTriggersTable
+            source='dynamodb'
+            sourceName={tableName}
+            streamArn={table.LatestStreamArn}
+            runsWhen={`items in ${tableName} change`}
+            description='Functions that run when items in this table change.'
+            compact={compact}
           />
         )}
       </SpaceBetween>
@@ -298,13 +240,6 @@ export function SettingsTab({ table }: { table: TableDescription }) {
           table={tableName}
           current={stream}
           triggerCount={triggerCount}
-          onDismiss={closeModal}
-        />
-      )}
-      {modal === MODALS.trigger && table.LatestStreamArn && (
-        <StreamTriggerModal
-          table={tableName}
-          streamArn={table.LatestStreamArn}
           onDismiss={closeModal}
         />
       )}

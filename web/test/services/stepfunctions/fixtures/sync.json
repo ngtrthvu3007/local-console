@@ -1,0 +1,106 @@
+{
+  "status": "SUCCEEDED",
+  "events": [
+    {
+      "timestamp": "2026-11-22T05:09:24.847Z",
+      "type": "ExecutionStarted",
+      "id": 1,
+      "previousEventId": 0,
+      "executionStartedEventDetails": {
+        "input": "{}",
+        "inputDetails": {
+          "truncated": false
+        },
+        "roleArn": "arn:aws:iam::000000000000:role/x"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.847Z",
+      "type": "TaskStateEntered",
+      "id": 2,
+      "previousEventId": 0,
+      "stateEnteredEventDetails": {
+        "name": "Run",
+        "input": "{}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.847Z",
+      "type": "TaskScheduled",
+      "id": 3,
+      "previousEventId": 2,
+      "taskScheduledEventDetails": {
+        "resourceType": "states",
+        "resource": "startExecution.sync:2",
+        "region": "ap-southeast-1",
+        "parameters": "{\"StateMachineArn\":\"arn:aws:states:ap-southeast-1:000000000000:stateMachine:lc-fx-child\",\"Input\":{}}"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.847Z",
+      "type": "TaskStarted",
+      "id": 4,
+      "previousEventId": 3,
+      "taskStartedEventDetails": {
+        "resourceType": "states",
+        "resource": "startExecution.sync:2"
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.847Z",
+      "type": "TaskSubmitted",
+      "id": 5,
+      "previousEventId": 4,
+      "taskSubmittedEventDetails": {
+        "resourceType": "states",
+        "resource": "startExecution.sync:2",
+        "output": "{\"ExecutionArn\":\"arn:aws:states:ap-southeast-1:000000000000:execution:lc-fx-child:9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"StartDate\":1795324164847}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.848Z",
+      "type": "TaskSucceeded",
+      "id": 6,
+      "previousEventId": 5,
+      "taskSucceededEventDetails": {
+        "resourceType": "states",
+        "resource": "startExecution.sync:2",
+        "output": "{\"ExecutionArn\":\"arn:aws:states:ap-southeast-1:000000000000:execution:lc-fx-child:9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"Input\":{},\"InputDetails\":{\"Included\":true},\"Name\":\"9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"Output\":{},\"OutputDetails\":{\"Included\":true},\"RedriveCount\":0,\"RedriveStatus\":\"NOT_REDRIVABLE\",\"RedriveStatusReason\":\"Execution is SUCCEEDED and cannot be redriven\",\"StartDate\":1795324164847,\"StateMachineArn\":\"arn:aws:states:ap-southeast-1:000000000000:stateMachine:lc-fx-child\",\"Status\":\"SUCCEEDED\",\"StopDate\":1795324164848}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.848Z",
+      "type": "TaskStateExited",
+      "id": 7,
+      "previousEventId": 6,
+      "stateExitedEventDetails": {
+        "name": "Run",
+        "output": "{\"ExecutionArn\":\"arn:aws:states:ap-southeast-1:000000000000:execution:lc-fx-child:9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"Input\":{},\"InputDetails\":{\"Included\":true},\"Name\":\"9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"Output\":{},\"OutputDetails\":{\"Included\":true},\"RedriveCount\":0,\"RedriveStatus\":\"NOT_REDRIVABLE\",\"RedriveStatusReason\":\"Execution is SUCCEEDED and cannot be redriven\",\"StartDate\":1795324164847,\"StateMachineArn\":\"arn:aws:states:ap-southeast-1:000000000000:stateMachine:lc-fx-child\",\"Status\":\"SUCCEEDED\",\"StopDate\":1795324164848}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:09:24.848Z",
+      "type": "ExecutionSucceeded",
+      "id": 8,
+      "previousEventId": 7,
+      "executionSucceededEventDetails": {
+        "output": "{\"ExecutionArn\":\"arn:aws:states:ap-southeast-1:000000000000:execution:lc-fx-child:9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"Input\":{},\"InputDetails\":{\"Included\":true},\"Name\":\"9c8b6257-61f5-4d7d-abdc-494710bd3627\",\"Output\":{},\"OutputDetails\":{\"Included\":true},\"RedriveCount\":0,\"RedriveStatus\":\"NOT_REDRIVABLE\",\"RedriveStatusReason\":\"Execution is SUCCEEDED and cannot be redriven\",\"StartDate\":1795324164847,\"StateMachineArn\":\"arn:aws:states:ap-southeast-1:000000000000:stateMachine:lc-fx-child\",\"Status\":\"SUCCEEDED\",\"StopDate\":1795324164848}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    }
+  ]
+}

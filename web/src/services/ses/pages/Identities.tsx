@@ -13,7 +13,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useFollow } from "@shared/hooks/useFollow.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
@@ -29,10 +29,11 @@ import { useIdentities, useIdentityConfigurationSets } from "../hooks/useIdentit
 import { sesBaseCrumbs, sesRoutes } from "../routes.ts";
 
 const NAME_FIELD = "IdentityName";
+
 const UNVERIFIED_WARNING =
   "This identity isn't verified, so SES rejects mail from it. " +
   "Send from an email identity instead: Floci verifies those right away.";
-const PAGE_SIZE = 50;
+
 const crumbs = [...sesBaseCrumbs, { text: "Identities", href: sesRoutes.identities }];
 
 const typeLabel = (identity: IdentityInfo) =>
@@ -40,6 +41,7 @@ const typeLabel = (identity: IdentityInfo) =>
 
 function StatusCell({ identity }: { identity: IdentityInfo }) {
   const status = identity.VerificationStatus && VERIFICATION_STATUS[identity.VerificationStatus];
+
   return status ? (
     <StatusIndicator type={status.type}>{status.label}</StatusIndicator>
   ) : (
@@ -72,34 +74,31 @@ export function Identities() {
     {
       filtering: { empty: emptyState },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     },
   );
 
   const selected = collectionProps.selectedItems ?? [];
   const [openName, setOpenName] = useState<string>();
+
   const nameButton = (identity: IdentityInfo) => (
-    <Button
-      variant='inline-link'
-      onClick={() => setOpenName(identity.IdentityName)}
-    >
+    <Button variant='inline-link' onClick={() => setOpenName(identity.IdentityName)}>
       {identity.IdentityName ?? NOT_AVAILABLE}
     </Button>
   );
+
   const finishDelete = () => {
     setDeleting(false);
     actions.setSelectedItems([]);
   };
 
-  // Bấm tên identity: panel có code gửi mail từ nó. Không mở theo ô chọn: panel
-  // làm trang hẹp lại, nút Delete bị gom vào menu. Identity đã xóa thì panel tự
-  // đóng. Domain trên Floci luôn chờ xác minh (như AWS cần DNS) nên SES từ chối
-  const chosen = identities.data?.find(
-    (identity) => identity.IdentityName === openName,
-  );
+  // Panel mở khi bấm tên, không theo ô chọn: panel làm trang hẹp, nút Delete bị gom vào menu
+  // Domain trên Floci luôn chờ xác minh (như AWS cần DNS) nên SES từ chối gửi từ nó
+  const chosen = identities.data?.find((identity) => identity.IdentityName === openName);
   const sender = chosen?.IdentityName;
   const verified = chosen?.VerificationStatus === VerificationStatus.SUCCESS;
+
   useSplitPanel(
     sender
       ? {
@@ -123,24 +122,29 @@ export function Identities() {
     isRowHeader: true,
     cell: nameButton,
   };
+
   const typeColumn: TableProps.ColumnDefinition<IdentityInfo> = {
     id: "type",
     header: "Type",
     cell: typeLabel,
   };
+
   const statusColumn: TableProps.ColumnDefinition<IdentityInfo> = {
     id: "status",
     header: "Status",
     cell: (identity) => <StatusCell identity={identity} />,
   };
+
   // Khung hẹp không có cột riêng: configuration set nằm ở dòng phụ, sau loại identity
   const configurationSetText = (identity: IdentityInfo) =>
     `Set: ${defaults.get(identity.IdentityName ?? "") || NOT_AVAILABLE}`;
+
   const setColumn: TableProps.ColumnDefinition<IdentityInfo> = {
     id: "configurationSet",
     header: "Configuration set",
     cell: (identity) => {
       const set = defaults.get(identity.IdentityName ?? "");
+
       return set ? (
         <Link href={sesRoutes.configurationSetPage(set)} onFollow={configurationSetLink}>
           {set}
@@ -150,6 +154,7 @@ export function Identities() {
       );
     },
   };
+
   // Khung hẹp: tầng 1 là identity + status; tầng 2 là type, xám
   const compactColumns: TableProps.ColumnDefinition<IdentityInfo>[] = [
     {
@@ -199,7 +204,9 @@ export function Identities() {
         items={items}
         loading={identities.isLoading}
         loadingText='Loading identities'
-        columnDefinitions={compact ? compactColumns : [nameColumn, typeColumn, statusColumn, setColumn]}
+        columnDefinitions={
+          compact ? compactColumns : [nameColumn, typeColumn, statusColumn, setColumn]
+        }
         wrapLines={compact}
         header={header}
         pagination={<Pagination {...paginationProps} />}

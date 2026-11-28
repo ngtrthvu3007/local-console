@@ -1,11 +1,11 @@
 import type { QueueAttributeName } from "@aws-sdk/client-sqs";
-import { DETAIL_SEPARATOR, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
-import { ATTRIBUTE_TRUE, KIBIBYTE, QUEUE_TYPES } from "./constants.ts";
+import { z } from "zod";
+import { DETAIL_SEPARATOR, KIBIBYTE, MILLISECONDS_PER_SECOND } from "@shared/constants.ts";
+import { ATTRIBUTE_TRUE, QUEUE_TYPES } from "./constants.ts";
 
 const URL_PATH_SEPARATOR = "/";
-const ARN_SEPARATOR = ":";
 
-export type QueueAttributes = Partial<Record<QueueAttributeName, string>>;
+type QueueAttributes = Partial<Record<QueueAttributeName, string>>;
 
 export interface QueueSettings {
   visibilityTimeout: number; // giây
@@ -14,11 +14,6 @@ export interface QueueSettings {
   maxMessageSize: number; // byte
   receiveWait: number; // giây
   contentBasedDedup: boolean;
-}
-
-export interface RedrivePolicy {
-  deadLetterTargetArn: string;
-  maxReceiveCount: number;
 }
 
 export interface Queue {
@@ -32,13 +27,13 @@ export interface Queue {
   created?: Date;
   modified?: Date;
   settings: QueueSettings;
+  // Không nằm trong settings: tab Settings ghi lại settings, còn mã hóa chỉ đặt lúc tạo
+  encryption: { kmsKeyId?: string; sqsManaged: boolean };
   redrivePolicy?: RedrivePolicy;
 }
 
 // "http://localhost:4566/000000000000/orders" → "orders"
 export const queueNameOfUrl = (url: string) => url.split(URL_PATH_SEPARATOR).pop() ?? url;
-// "arn:aws:sqs:ap-southeast-1:000000000000:orders" → "orders"
-export const queueNameOfArn = (arn: string) => arn.split(ARN_SEPARATOR).pop() ?? arn;
 
 // URL của queue theo host khác (vd: floci:4566 cho app chạy trong compose), giữ nguyên đường dẫn
 export const queueUrlAt = (base: string, queueUrl: string) =>
@@ -50,15 +45,18 @@ const dateOf = (seconds?: string) =>
   seconds ? new Date(Number(seconds) * MILLISECONDS_PER_SECOND) : undefined;
 
 // maxReceiveCount có thể là số hoặc chuỗi tùy nơi tạo policy (SDK, CLI, IaC)
+const redrivePolicySchema = z.object({
+  deadLetterTargetArn: z.string().min(1),
+  maxReceiveCount: z.coerce.number(),
+});
+
+export type RedrivePolicy = z.infer<typeof redrivePolicySchema>;
+
 export function parseRedrivePolicy(text?: string): RedrivePolicy | undefined {
   if (!text) return undefined;
+
   try {
-    const policy = JSON.parse(text) as { deadLetterTargetArn?: string; maxReceiveCount?: unknown };
-    if (!policy.deadLetterTargetArn) return undefined;
-    return {
-      deadLetterTargetArn: policy.deadLetterTargetArn,
-      maxReceiveCount: Number(policy.maxReceiveCount),
-    };
+    return redrivePolicySchema.safeParse(JSON.parse(text)).data;
   } catch {
     return undefined;
   }
@@ -84,6 +82,10 @@ export function toQueue(url: string, attributes: QueueAttributes): Queue {
       contentBasedDedup: attributes.ContentBasedDeduplication === ATTRIBUTE_TRUE,
     },
     redrivePolicy: parseRedrivePolicy(attributes.RedrivePolicy),
+    encryption: {
+      kmsKeyId: attributes.KmsMasterKeyId,
+      sqsManaged: attributes.SqsManagedSseEnabled === ATTRIBUTE_TRUE,
+    },
   };
 }
 

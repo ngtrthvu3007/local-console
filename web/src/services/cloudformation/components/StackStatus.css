@@ -1,0 +1,10 @@
+/* Lý do có thể nhiều dòng, rất dài */
+.cfn-reason {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* ResponsiveTable cho ngắt ở mọi chỗ */
+.cfn-nowrap {
+  white-space: nowrap;
+}

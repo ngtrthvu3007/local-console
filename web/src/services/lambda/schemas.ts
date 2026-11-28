@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { formatBytes } from "@shared/format.ts";
+import { kmsKeyArnSchema } from "../kms/schemas.ts";
+import { byteLength, formatBytes } from "@shared/format.ts";
 import { jsonObjectError } from "@shared/json.ts";
+import { enumOfKeys, isWholeNumberIn, wholeNumberIn } from "@shared/schemas.ts";
 import {
   ASYNC_EVENT_AGE_SECONDS,
   ASYNC_RETRY_ATTEMPTS,
   DESCRIPTION_MAX_LENGTH,
   DESTINATION_KINDS,
-  type DestinationKind,
   ENVIRONMENT_KEY_PATTERN,
   FILTER_PATTERN_LIMIT,
   ON_FAILURE_KIND_IDS,
@@ -22,26 +23,11 @@ import {
   STREAM_BATCH_SIZE,
   STREAM_RECORD_AGE_SECONDS,
   STREAM_RETRY_ATTEMPTS,
-  type StartingPosition,
   TIMEOUT_LIMITS_SECONDS,
   TRIGGER_SOURCES,
-  type TriggerSource,
 } from "./constants.ts";
 
 import type { MappingOptions, MappingSource } from "./mappingOptions.ts";
-
-const TRIGGER_SOURCE_IDS = Object.keys(TRIGGER_SOURCES) as [TriggerSource, ...TriggerSource[]];
-
-// Ô số nguyên trong khoảng [min, max]; Input của Cloudscape luôn trả chuỗi
-export const wholeNumberIn = (limits: { min: number; max: number }, unit: string) =>
-  z
-    .string()
-    .trim()
-    .refine((text) => {
-      const value = Number(text);
-      return text !== "" && Number.isInteger(value) && value >= limits.min && value <= limits.max;
-    }, `Enter a whole number from ${limits.min} to ${limits.max} ${unit}.`)
-    .transform(Number);
 
 const memorySchema = wholeNumberIn(MEMORY_LIMITS_MB, "MB");
 const timeoutSchema = wholeNumberIn(TIMEOUT_LIMITS_SECONDS, "seconds");
@@ -70,15 +56,17 @@ export const generalConfigurationSchema = z.object({
   handler: handlerSchema,
 });
 
-const textEncoder = new TextEncoder();
-const byteLength = (text: string) => textEncoder.encode(text).length;
-
 export const environmentSchema = z
-  .object({ entries: z.array(z.object({ key: z.string().trim(), value: z.string() })) })
+  .object({
+    entries: z.array(z.object({ key: z.string().trim(), value: z.string() })),
+    kmsKeyArn: kmsKeyArnSchema,
+  })
   .superRefine(({ entries }, context) => {
     const seenKeys = new Set<string>();
+
     entries.forEach(({ key }, index) => {
       const path = ["entries", index, "key"];
+
       const message = !key
         ? "Enter a key."
         : !ENVIRONMENT_KEY_PATTERN.test(key)
@@ -88,13 +76,16 @@ export const environmentSchema = z
             : seenKeys.has(key)
               ? "Duplicate key."
               : undefined;
+
       seenKeys.add(key);
       if (message) context.addIssue({ code: "custom", path, message });
     });
+
     const totalBytes = entries.reduce(
       (total, entry) => total + byteLength(entry.key) + byteLength(entry.value),
       0,
     );
+
     if (totalBytes > ENVIRONMENT_MAX_BYTES) {
       context.addIssue({
         code: "custom",
@@ -104,11 +95,10 @@ export const environmentSchema = z
     }
   });
 
-// Dùng chung cho tab Triggers của Lambda và trang bảng DynamoDB
-export const startingPositionSchema = z.enum(
-  Object.keys(STARTING_POSITIONS) as [StartingPosition, ...StartingPosition[]],
-);
-export const streamBatchSizeSchema = wholeNumberIn(STREAM_BATCH_SIZE, "records");
+// Dùng chung cho Add trigger của Lambda và của trang stream (DynamoDB, Kinesis)
+const startingPositionSchema = enumOfKeys(STARTING_POSITIONS);
+
+const streamBatchSizeSchema = wholeNumberIn(STREAM_BATCH_SIZE, "records");
 
 // Các ô tùy chọn nâng cao của trigger, dùng chung cho Lambda, SQS và DynamoDB
 export const mappingOptionsShape = {
@@ -121,6 +111,7 @@ export const mappingOptionsShape = {
 };
 
 type AddIssue = (path: (string | number)[], message: string) => void;
+
 export const issueAdder =
   (context: {
     addIssue: (issue: { code: "custom"; path: (string | number)[]; message: string }) => void;
@@ -138,66 +129,85 @@ export function mappingOptionsIssues(
     const error = pattern.trim()
       ? jsonObjectError(pattern, "A filter pattern is a JSON object.")
       : undefined;
+
     if (error) addIssue(["filterPatterns", index, "pattern"], error);
   });
+
   if (values.filterPatterns.length > FILTER_PATTERN_LIMIT)
     addIssue(["filterPatterns"], `Use at most ${FILTER_PATTERN_LIMIT} patterns.`);
   if (source === "sqs") return;
 
-  if (!wholeNumberIn(STREAM_RETRY_ATTEMPTS, "attempts").safeParse(values.retryAttempts).success)
+  if (!isWholeNumberIn(values.retryAttempts, STREAM_RETRY_ATTEMPTS))
     addIssue(
       ["retryAttempts"],
       `Enter a whole number from ${STREAM_RETRY_ATTEMPTS.min} to ${STREAM_RETRY_ATTEMPTS.max} (${STREAM_RETRY_ATTEMPTS.min} retries until the record expires).`,
     );
-  const age = Number(values.maxRecordAge);
+
   const validAge =
-    values.maxRecordAge !== "" &&
-    Number.isInteger(age) &&
-    (age === STREAM_RECORD_AGE_SECONDS.forever ||
-      (age >= STREAM_RECORD_AGE_SECONDS.min && age <= STREAM_RECORD_AGE_SECONDS.max));
+    Number(values.maxRecordAge) === STREAM_RECORD_AGE_SECONDS.forever ||
+    isWholeNumberIn(values.maxRecordAge, STREAM_RECORD_AGE_SECONDS);
+
   if (!validAge)
     addIssue(
       ["maxRecordAge"],
       `Enter ${STREAM_RECORD_AGE_SECONDS.forever} or a whole number of seconds from ${STREAM_RECORD_AGE_SECONDS.min} to ${STREAM_RECORD_AGE_SECONDS.max}.`,
     );
+
   if (values.onFailureKind !== "none" && !values.onFailureArn)
     addIssue(["onFailureArn"], `Choose a ${values.onFailureKind === "sqs" ? "queue" : "topic"}.`);
 }
 
 export const triggerSchema = z
   .object({
-    source: z.enum(TRIGGER_SOURCE_IDS),
+    source: enumOfKeys(TRIGGER_SOURCES),
     bucket: z.string(),
     events: z.array(z.enum(S3_TRIGGER_EVENTS)),
     prefix: z.string().trim(),
     suffix: z.string().trim(),
     queueArn: z.string().trim(),
     table: z.string(),
+    stream: z.string(), // ARN của Kinesis stream
     startingPosition: startingPositionSchema,
     batchSize: z.string().trim(),
     enabled: z.boolean(),
     ...mappingOptionsShape,
   })
   .superRefine((values, context) => {
-    const addIssue = (field: string, message: string) =>
-      context.addIssue({ code: "custom", path: [field], message });
+    const addIssue = issueAdder(context);
+
     if (values.source === "s3") {
-      if (!values.bucket) addIssue("bucket", "Choose a bucket.");
-      if (!values.events.length) addIssue("events", "Choose at least one event type.");
+      if (!values.bucket) addIssue(["bucket"], "Choose a bucket.");
+      if (!values.events.length) addIssue(["events"], "Choose at least one event type.");
       return;
     }
-    if (values.source === "dynamodb") {
-      if (!values.table) addIssue("table", "Choose a table with a stream.");
+
+    if (values.source === "dynamodb" || values.source === "kinesis") {
+      if (values.source === "dynamodb" && !values.table)
+        addIssue(["table"], "Choose a table with a stream.");
+      if (values.source === "kinesis" && !values.stream)
+        addIssue(["stream"], "Choose a data stream.");
       const batchSize = streamBatchSizeSchema.safeParse(values.batchSize);
-      if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
-      mappingOptionsIssues("dynamodb", values, issueAdder(context));
+      if (!batchSize.success) addIssue(["batchSize"], batchSize.error.issues[0].message);
+      mappingOptionsIssues("dynamodb", values, addIssue);
       return;
     }
-    if (!values.queueArn) addIssue("queueArn", "Choose a queue.");
+
+    if (!values.queueArn) addIssue(["queueArn"], "Choose a queue.");
     const batchSize = wholeNumberIn(SQS_BATCH_SIZE, "records").safeParse(values.batchSize);
-    if (!batchSize.success) addIssue("batchSize", batchSize.error.issues[0].message);
-    mappingOptionsIssues("sqs", values, issueAdder(context));
+    if (!batchSize.success) addIssue(["batchSize"], batchSize.error.issues[0].message);
+    mappingOptionsIssues("sqs", values, addIssue);
   });
+
+// Add trigger từ trang của stream (DynamoDB Stream, Kinesis): chọn function
+export const streamTriggerSchema = z
+  .object({
+    functionName: z.string().min(1, "Choose a function."),
+    startingPosition: startingPositionSchema,
+    batchSize: streamBatchSizeSchema,
+    enabled: z.boolean(),
+    ...mappingOptionsShape,
+  })
+  .superRefine((values, context) => mappingOptionsIssues("dynamodb", values, issueAdder(context)));
 
 // Modal Edit trigger (Lambda › Triggers): batch size cùng các tùy chọn, theo nguồn của trigger
 export const editTriggerSchema = (source: MappingSource) =>
@@ -218,17 +228,14 @@ export const testEventNameSchema = (existingNames: string[]) =>
     .refine((name) => !existingNames.includes(name), "An event with this name already exists.");
 
 // Modal Edit của khối Asynchronous invocation; đích chọn từ dropdown nên chỉ cần kiểm có chọn
-const DESTINATION_KIND_IDS = Object.keys(DESTINATION_KINDS) as [
-  DestinationKind,
-  ...DestinationKind[],
-];
+
 export const asyncInvocationSchema = z
   .object({
     retryAttempts: wholeNumberIn(ASYNC_RETRY_ATTEMPTS, "retries"),
     maxEventAge: wholeNumberIn(ASYNC_EVENT_AGE_SECONDS, "seconds"),
-    onSuccessKind: z.enum(DESTINATION_KIND_IDS),
+    onSuccessKind: enumOfKeys(DESTINATION_KINDS),
     onSuccessArn: z.string(),
-    onFailureKind: z.enum(DESTINATION_KIND_IDS),
+    onFailureKind: enumOfKeys(DESTINATION_KINDS),
     onFailureArn: z.string(),
   })
   .superRefine((values, context) => {

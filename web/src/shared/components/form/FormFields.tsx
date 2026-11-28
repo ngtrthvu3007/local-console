@@ -22,6 +22,7 @@ import SegmentedControl, {
 import Select, { type SelectProps } from "@cloudscape-design/components/select";
 import Textarea from "@cloudscape-design/components/textarea";
 import Tiles, { type TilesProps } from "@cloudscape-design/components/tiles";
+import Toggle from "@cloudscape-design/components/toggle";
 
 // Nối react-hook-form với component của Cloudscape: giá trị qua Controller, lỗi zod hiện ở errorText
 
@@ -42,6 +43,7 @@ interface ControlledFieldProps<TValues extends FieldValues> extends FieldProps<T
 
 function ControlledField<TValues extends FieldValues>(props: ControlledFieldProps<TValues>) {
   const { control, name, children, ...formFieldProps } = props;
+
   return (
     <Controller
       control={control}
@@ -67,6 +69,7 @@ interface InputProps<TValues extends FieldValues> extends FieldProps<TValues> {
 
 export function FormInput<TValues extends FieldValues>(props: InputProps<TValues>) {
   const { placeholder, autoFocus, type, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
@@ -93,14 +96,17 @@ interface AutosuggestFieldProps<TValues extends FieldValues> extends InputProps<
 interface TextareaFieldProps<TValues extends FieldValues> extends FieldProps<TValues> {
   placeholder?: string;
   rows?: number;
+  spellcheck?: boolean; // tắt cho giá trị máy đọc (key, host, secret): gạch đỏ vô ích
 }
 
 export function FormTextarea<TValues extends FieldValues>(props: TextareaFieldProps<TValues>) {
-  const { placeholder, rows, ...fieldProps } = props;
+  const { placeholder, rows, spellcheck, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
         <Textarea
+          spellcheck={spellcheck}
           ref={field.ref}
           value={field.value ?? ""}
           placeholder={placeholder}
@@ -119,6 +125,7 @@ export function FormAutosuggest<TValues extends FieldValues>(
   props: AutosuggestFieldProps<TValues>,
 ) {
   const { options, enteredTextLabel, placeholder, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
@@ -146,11 +153,11 @@ interface FilePickerProps {
   onChange: (files: File[]) => void;
 }
 
-// Nút chọn file giống trang Upload của S3 (icon add-plus), file đã chọn hiện thành token có nút bỏ.
-// FileUpload của Cloudscape luôn vẽ icon mũi tên upload, lệch với S3 nên không dùng.
+// Không dùng FileUpload của Cloudscape: nó luôn vẽ icon mũi tên, lệch với trang Upload của S3
 function FilePicker({ files, accept, onChange }: FilePickerProps) {
   const input = useRef<HTMLInputElement>(null);
   const tokens = files.map((file) => ({ file }));
+
   return (
     <>
       <input
@@ -183,6 +190,7 @@ function FilePicker({ files, accept, onChange }: FilePickerProps) {
 // Giá trị là mảng File
 export function FormFileUpload<TValues extends FieldValues>(props: FileUploadFieldProps<TValues>) {
   const { accept, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field) => (
@@ -203,6 +211,7 @@ interface SelectFieldProps<TValues extends FieldValues> extends OptionsProps<TVa
 
 export function FormSelect<TValues extends FieldValues>(props: SelectFieldProps<TValues>) {
   const { options, placeholder, empty, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
@@ -230,6 +239,7 @@ export function FormMultiselect<TValues extends FieldValues>(
   props: MultiselectFieldProps<TValues>,
 ) {
   const { options, placeholder, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field, invalid) => (
@@ -256,6 +266,7 @@ interface RadioProps<TValues extends FieldValues> extends FieldProps<TValues> {
 
 export function FormRadioGroup<TValues extends FieldValues>(props: RadioProps<TValues>) {
   const { items, onChange, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field) => (
@@ -279,6 +290,7 @@ interface TilesFieldProps<TValues extends FieldValues> extends FieldProps<TValue
 // Lựa chọn lớn có mô tả, vd: loại queue Standard / FIFO
 export function FormTiles<TValues extends FieldValues>(props: TilesFieldProps<TValues>) {
   const { items, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field) => (
@@ -299,6 +311,7 @@ interface CheckboxProps<TValues extends FieldValues> extends FieldProps<TValues>
 export function FormCheckbox<TValues extends FieldValues>(props: CheckboxProps<TValues>) {
   // Mô tả đặt dưới chữ của ô tick (như Cloudscape), không đặt trên như FormField
   const { text, description, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field) => (
@@ -314,12 +327,32 @@ export function FormCheckbox<TValues extends FieldValues>(props: CheckboxProps<T
   );
 }
 
+// Như FormCheckbox nhưng là công tắc bật / tắt (vd: Automatic rotation)
+export function FormToggle<TValues extends FieldValues>(props: CheckboxProps<TValues>) {
+  const { text, description, ...fieldProps } = props;
+
+  return (
+    <ControlledField {...fieldProps}>
+      {(field) => (
+        <Toggle
+          description={description}
+          checked={Boolean(field.value)}
+          onChange={({ detail }) => field.onChange(detail.checked)}
+        >
+          {text}
+        </Toggle>
+      )}
+    </ControlledField>
+  );
+}
+
 interface SegmentedProps<TValues extends FieldValues> extends FieldProps<TValues> {
   options: SegmentedControlProps.Option[];
 }
 
 export function FormSegmentedControl<TValues extends FieldValues>(props: SegmentedProps<TValues>) {
   const { options, ...fieldProps } = props;
+
   return (
     <ControlledField {...fieldProps}>
       {(field) => (

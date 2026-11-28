@@ -68,7 +68,10 @@ const mappings: string[] = [];
 const logLine = (text: string) =>
   waitFor(`Lambda log line "${text}"`, async () => {
     const { events } = await logs.send(
-      new FilterLogEventsCommand({ logGroupName: `/aws/lambda/${functionName}`, filterPattern: `"${text}"` }),
+      new FilterLogEventsCommand({
+        logGroupName: `/aws/lambda/${functionName}`,
+        filterPattern: `"${text}"`,
+      }),
     );
     return events?.find((event) => event.message?.includes(text))?.message;
   });
@@ -94,7 +97,9 @@ beforeAll(async () => {
   );
   functionArn = created.FunctionArn!;
   await waitFor("function to be Active", async () => {
-    const { Configuration } = await lambda.send(new GetFunctionCommand({ FunctionName: functionName }));
+    const { Configuration } = await lambda.send(
+      new GetFunctionCommand({ FunctionName: functionName }),
+    );
     return Configuration?.State === "Active" ? true : undefined;
   });
 });
@@ -103,7 +108,9 @@ afterAll(async () => {
   for (const uuid of mappings) {
     await lambda.send(new DeleteEventSourceMappingCommand({ UUID: uuid })).catch(() => undefined);
   }
-  await lambda.send(new DeleteFunctionCommand({ FunctionName: functionName })).catch(() => undefined);
+  await lambda
+    .send(new DeleteFunctionCommand({ FunctionName: functionName }))
+    .catch(() => undefined);
   for (const key of ["in/photo.png", "out/skip.png"]) {
     await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key })).catch(() => undefined);
   }
@@ -123,7 +130,10 @@ describe("cross-service flows", () => {
       }),
     );
     expect(result.FunctionError).toBeUndefined();
-    expect(JSON.parse(new TextDecoder().decode(result.Payload))).toEqual({ received: 0, echo: "hi" });
+    expect(JSON.parse(new TextDecoder().decode(result.Payload))).toEqual({
+      received: 0,
+      echo: "hi",
+    });
   });
 
   it("S3 upload → Lambda, honouring the notification prefix filter", async () => {
@@ -161,7 +171,10 @@ describe("cross-service flows", () => {
     expect(await logLine(`${MARKER} aws:s3 in/photo.png`)).toBeTruthy();
     // Object ngoài prefix không được gọi Lambda
     const { events } = await logs.send(
-      new FilterLogEventsCommand({ logGroupName: `/aws/lambda/${functionName}`, filterPattern: '"out/skip.png"' }),
+      new FilterLogEventsCommand({
+        logGroupName: `/aws/lambda/${functionName}`,
+        filterPattern: '"out/skip.png"',
+      }),
     );
     expect(events ?? []).toEqual([]);
   });
@@ -210,14 +223,21 @@ describe("cross-service flows", () => {
     mappings.push(mapping.UUID!);
     const pk = uniqueName("item");
     // Mapping có thể cần vài giây mới bắt đầu đọc stream: ghi lại tới khi Lambda thấy
-    await waitFor("stream record to reach Lambda", async () => {
-      await dynamodb.send(new PutItemCommand({ TableName: table, Item: { pk: { S: pk } } }));
-      const { events } = await logs.send(
-        new FilterLogEventsCommand({ logGroupName: `/aws/lambda/${functionName}`, filterPattern: `"${pk}"` }),
-      );
-      return events?.some((event) => event.message?.includes(`${MARKER} aws:dynamodb ${pk}`))
-        ? true
-        : undefined;
-    }, { intervalMs: 3_000 });
+    await waitFor(
+      "stream record to reach Lambda",
+      async () => {
+        await dynamodb.send(new PutItemCommand({ TableName: table, Item: { pk: { S: pk } } }));
+        const { events } = await logs.send(
+          new FilterLogEventsCommand({
+            logGroupName: `/aws/lambda/${functionName}`,
+            filterPattern: `"${pk}"`,
+          }),
+        );
+        return events?.some((event) => event.message?.includes(`${MARKER} aws:dynamodb ${pk}`))
+          ? true
+          : undefined;
+      },
+      { intervalMs: 3_000 },
+    );
   });
 });

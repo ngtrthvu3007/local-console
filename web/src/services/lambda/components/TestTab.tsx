@@ -15,7 +15,7 @@ import Select from "@cloudscape-design/components/select";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import { CodeSnippet } from "@shared/components/CodeSnippet.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, PHONE_MAX_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { notifyError, notifySuccess } from "@shared/hooks/useNotify.ts";
 import { jsonError, prettyJson } from "@shared/json.ts";
@@ -71,6 +71,7 @@ function InvokeResultView({
 
   // Handler ném lỗi hay hết giờ là kết quả của lần chạy, không phải lỗi của console
   const succeeded = result.status === "succeeded";
+
   const summary = [
     { label: "Duration", value: `${result.durationMs} ms (measured in the browser)` },
     { label: "Request ID", value: result.requestId ?? NOT_AVAILABLE },
@@ -85,10 +86,10 @@ function InvokeResultView({
         <KeyValuePairs columns={RESULT_COLUMNS} items={summary} />
         {/* Xếp dọc như AWS Console: dòng log và stack trace dài, đặt cạnh nhau thì bị cắt */}
         <FormField label='Response' stretch>
-          <CodeSnippet code={result.response} />
+          <CodeSnippet code={result.response} ariaLabel='Response' />
         </FormField>
         <FormField label='Log output' stretch>
-          <CodeSnippet code={result.logs || "No log output."} wrap />
+          <CodeSnippet code={result.logs || "No log output."} wrap ariaLabel='Log output' />
         </FormField>
       </SpaceBetween>
     </Alert>
@@ -101,6 +102,8 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
   const testEvents = useTestEvents(functionName);
   const savedNames = Object.keys(testEvents.events).sort();
   const invoke = useInvoke(functionName, logGroup);
+  // Màn hình phone: nút nằm dưới editor. Đọc lúc render, kéo giãn cửa sổ thì render sau mới đổi
+  const narrow = window.innerWidth <= PHONE_MAX_WIDTH_PX;
 
   const [savedName, setSavedName] = useState<string>();
   const [newName, setNewName] = useState("");
@@ -130,6 +133,7 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
       testEvents.save(savedName, eventJson);
       return notifySuccess(`Saved test event ${savedName}`);
     }
+
     const parsed = testEventNameSchema(savedNames).safeParse(newName);
     if (!parsed.success) return setNameError(parsed.error.issues[0].message);
     testEvents.save(parsed.data, eventJson);
@@ -156,6 +160,7 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
     { value: EVENT_MODES.create, label: "Create new event" },
     { value: EVENT_MODES.saved, label: "Edit saved event", disabled: !savedNames.length },
   ];
+
   const savedOptions = savedNames.map((name) => ({ value: name, label: name }));
   const templateOptions = Object.keys(templates).map((name) => ({ value: name, label: name }));
 
@@ -193,8 +198,8 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
       </ColumnLayout>
     );
 
-  const headerActions = (
-    <ResponsiveActions>
+  const actionButtons = (
+    <>
       <Button disabled={savedName === undefined} onClick={remove}>
         Delete
       </Button>
@@ -209,14 +214,14 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
       >
         Test
       </Button>
-    </ResponsiveActions>
+    </>
   );
 
   const header = (
     <Header
       variant='h2'
       description='Saved events are kept in this browser only.'
-      actions={headerActions}
+      actions={narrow ? undefined : <ResponsiveActions>{actionButtons}</ResponsiveActions>}
     >
       Test event
     </Header>
@@ -252,6 +257,8 @@ export function TestTab({ functionName, logGroup, hasUndeployedChanges, onOpenMo
               <CodeEditor value={eventJson} onChange={setEventJson} height={EDITOR_HEIGHT_PX} />
             </Suspense>
           </FormField>
+          {/* Sửa JSON xong bấm Test luôn, không phải cuộn lên */}
+          {narrow && <ResponsiveActions toolbar>{actionButtons}</ResponsiveActions>}
           {invoke.isPending && (
             <Box color='text-body-secondary'>
               First run of a runtime may take a while: Floci downloads its image.

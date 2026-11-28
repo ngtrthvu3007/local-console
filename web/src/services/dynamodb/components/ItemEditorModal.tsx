@@ -45,6 +45,7 @@ function blankItemText(keys: IndexKeys, format: ItemFormat) {
         : [key.name, { [key.type]: key.type === "N" ? "0" : "" }],
     ),
   );
+
   return prettyJson(blank);
 }
 
@@ -55,8 +56,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-// Chỉ mount khi mở. Sửa / nhân bản thì đọc lại cả item trước (bản trong bảng có thể cũ
-// hoặc chỉ là phần index trả về), rồi mới mở editor với dữ liệu mới nhất
+// Sửa / nhân bản thì đọc lại item trước: bản trong bảng có thể cũ hoặc chỉ là phần index trả về
 export function ItemEditorModal(props: Props) {
   const { table, mode, item, onDismiss } = props;
   const fullItem = useFullItem(table.TableName!, item, keySchemaOf(table));
@@ -70,6 +70,7 @@ export function ItemEditorModal(props: Props) {
   ) : (
     <Spinner />
   );
+
   return (
     <Modal visible size='large' header={HEADERS[mode]} onDismiss={onDismiss}>
       {body}
@@ -85,12 +86,15 @@ function ItemEditor({ table, mode, item, onDismiss }: Props) {
   // Item có số lớn, Set, Binary (hoặc bảng có key Binary) chỉ sửa được bằng DynamoDB JSON
   const lockedReason =
     (item && needsDynamoJson(item)) ?? (hasBinaryKey ? BINARY_KEY_REASON : undefined);
+
   const [format, setFormat] = useState<ItemFormat>(
     lockedReason ? ITEM_FORMATS.dynamodb : ITEM_FORMATS.json,
   );
+
   const [text, setText] = useState(() =>
     item ? toEditorText(item, format) : blankItemText(keys, format),
   );
+
   const [error, setError] = useState<string>();
 
   const changeText = (next: string) => {
@@ -101,6 +105,7 @@ function ItemEditor({ table, mode, item, onDismiss }: Props) {
   // Đổi dạng chỉ khi nội dung hiện tại hợp lệ, và dạng mới giữ được dữ liệu
   const switchFormat = (useDynamoJson: boolean) => {
     const nextFormat = useDynamoJson ? ITEM_FORMATS.dynamodb : ITEM_FORMATS.json;
+
     try {
       const parsed = parseEditorText(text, format);
       const reason = nextFormat === ITEM_FORMATS.json ? needsDynamoJson(parsed) : undefined;
@@ -115,17 +120,21 @@ function ItemEditor({ table, mode, item, onDismiss }: Props) {
 
   const save = () => {
     let next: Item;
+
     try {
       next = parseEditorText(text, format);
     } catch (parseError) {
       return setError(errorMessage(parseError));
     }
+
     const problem =
       keyError(next, keys) ??
       (mode === "edit" && item && keyChanged(item, next, keys)
         ? "Key attributes can't be changed. Use Duplicate to copy the item with a new key."
         : undefined);
+
     if (problem) return setError(problem);
+
     putItem.mutate(
       { item: next, createOnly: mode !== "edit", partitionKeyName: keys.partitionKey.name },
       {

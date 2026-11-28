@@ -6,11 +6,12 @@ import { ActionBar, refreshAction, type BarAction } from "@shared/components/Act
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
 import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { truncate } from "@shared/format.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
 import { selectionLabels } from "@shared/tableAriaLabels.ts";
+import { lastArnPart } from "@shared/arn.ts";
 import { FunctionLink } from "../../lambda/components/FunctionLink.tsx";
 import { QueueLink } from "../../sqs/components/QueueLink.tsx";
-import { queueNameOfArn } from "../../sqs/queues.ts";
 import { ENDPOINT_PREVIEW_LENGTH, RAW_DELIVERY_PROTOCOLS } from "../constants.ts";
 import { summarizeFilterPolicy } from "../filterPolicy.ts";
 import { useSubscriptions } from "../hooks/useSubscriptions.ts";
@@ -28,24 +29,26 @@ const MODALS = {
   raw: "raw",
   delete: "delete",
 } as const;
+
 type ModalId = (typeof MODALS)[keyof typeof MODALS];
 
-const ELLIPSIS = "…";
 const PENDING_HELP =
   "Floci sent a SubscriptionConfirmation to this URL. Your app must call the SubscribeURL in it before it receives messages.";
 
-const shorten = (text: string) =>
-  text.length > ENDPOINT_PREVIEW_LENGTH ? `${text.slice(0, ENDPOINT_PREVIEW_LENGTH)}${ELLIPSIS}` : text;
-
 function EndpointCell({ subscription }: { subscription: Subscription }) {
   if (subscription.protocol === "sqs")
-    return <QueueLink name={queueNameOfArn(subscription.endpoint)} />;
+    return <QueueLink name={lastArnPart(subscription.endpoint)} />;
   if (subscription.protocol === "lambda") return <FunctionLink arn={subscription.endpoint} />;
-  return <span title={subscription.endpoint}>{shorten(subscription.endpoint)}</span>;
+  return (
+    <span title={subscription.endpoint}>
+      {truncate(subscription.endpoint, ENDPOINT_PREVIEW_LENGTH)}
+    </span>
+  );
 }
 
 function StatusCell({ subscription }: { subscription: Subscription }) {
   if (!subscription.pending) return <StatusIndicator type='success'>Confirmed</StatusIndicator>;
+
   return (
     <Popover content={PENDING_HELP} triggerType='custom' dismissButton={false}>
       <StatusIndicator type='pending'>Pending confirmation</StatusIndicator>
@@ -58,17 +61,20 @@ const protocolColumn: TableProps.ColumnDefinition<Subscription> = {
   header: "Protocol",
   cell: (subscription) => protocolLabel(subscription.protocol),
 };
+
 const endpointColumn: TableProps.ColumnDefinition<Subscription> = {
   id: "endpoint",
   header: "Endpoint",
   isRowHeader: true,
   cell: (subscription) => <EndpointCell subscription={subscription} />,
 };
+
 const statusColumn: TableProps.ColumnDefinition<Subscription> = {
   id: "status",
   header: "Status",
   cell: (subscription) => <StatusCell subscription={subscription} />,
 };
+
 const rawColumn: TableProps.ColumnDefinition<Subscription> = {
   id: "raw",
   header: "Raw",
@@ -77,6 +83,7 @@ const rawColumn: TableProps.ColumnDefinition<Subscription> = {
     return subscription.rawDelivery ? "Yes" : "No";
   },
 };
+
 const filterColumn: TableProps.ColumnDefinition<Subscription> = {
   id: "filter",
   header: "Filter",
@@ -105,8 +112,14 @@ export function SubscriptionsTab({ topic }: { topic: Topic }) {
       disabled: !selected.length,
       onClick: () => setModal(MODALS.delete),
     },
-    { id: "create", text: "Create subscription", primary: true, onClick: () => setModal(MODALS.create) },
+    {
+      id: "create",
+      text: "Create subscription",
+      primary: true,
+      onClick: () => setModal(MODALS.create),
+    },
   ];
+
   const menuItems = [
     { id: MODALS.filter, text: "Edit filter policy", disabled: !single },
     { id: MODALS.raw, text: "Edit raw delivery", disabled: !canEditRaw },

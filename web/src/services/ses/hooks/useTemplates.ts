@@ -5,20 +5,23 @@ import {
   paginateListEmailTemplates,
   type EmailTemplateMetadata,
 } from "@aws-sdk/client-sesv2";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import { useSES } from "./useSES.ts";
 
-export const templatesQueryKey = ["ses", "templates"];
+const templatesQueryKey = ["ses", "templates"];
 
 export function useTemplates() {
   const client = useSES();
+
   return useQuery({
     queryKey: templatesQueryKey,
     queryFn: async () => {
       const templates: EmailTemplateMetadata[] = [];
+
       for await (const page of paginateListEmailTemplates({ client }, {})) {
         templates.push(...(page.TemplatesMetadata ?? []));
       }
+
       return templates;
     },
   });
@@ -26,6 +29,7 @@ export function useTemplates() {
 
 export function useTemplate(name?: string) {
   const client = useSES();
+
   return useQuery({
     queryKey: [...templatesQueryKey, name],
     queryFn: async () => {
@@ -40,18 +44,14 @@ export function useTemplate(name?: string) {
 export function useDeleteTemplates() {
   const client = useSES();
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (names: string[]) => {
-      const failures: string[] = [];
-      for (const name of names) {
-        try {
-          await client.send(new DeleteEmailTemplateCommand({ TemplateName: name }));
-        } catch (error) {
-          failures.push(`${name}: ${errorMessage(error)}`);
-        }
-      }
-      return { count: names.length - failures.length, failures };
-    },
+    mutationFn: (names: string[]) =>
+      runEach(
+        names,
+        (name) => name,
+        (name) => client.send(new DeleteEmailTemplateCommand({ TemplateName: name })),
+      ),
     // exact: chỉ đọc lại danh sách, không đọc lại chi tiết template vừa xóa (404)
     onSuccess: () => queryClient.invalidateQueries({ queryKey: templatesQueryKey, exact: true }),
   });

@@ -1,11 +1,10 @@
-import CodeView from "@cloudscape-design/code-view/code-view";
 import javascriptHighlight from "@cloudscape-design/code-view/highlight/javascript";
 import pythonHighlight from "@cloudscape-design/code-view/highlight/python";
 import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import Tabs from "@cloudscape-design/components/tabs";
 import type { CodeSample } from "../codeSamples.ts";
-import { CopyButton } from "./CopyButton.tsx";
+import { CodeSnippet } from "./CodeSnippet.tsx";
 
 const LANGUAGES = [
   { id: "node", label: "Node.js", highlight: javascriptHighlight },
@@ -13,10 +12,9 @@ const LANGUAGES = [
 ] as const;
 
 const CONNECT_DESCRIPTION = "Code for your app, with this resource filled in.";
-const COPY_CODE_LABEL = "Copy code";
 
-// Một tab cho mỗi ngôn ngữ: code tô màu cú pháp, nút Copy ở góc trên phải.
-// Dòng dài tự xuống dòng (panel hẹp, điện thoại); Copy vẫn chép nguyên văn
+// Một tab cho mỗi ngôn ngữ, code tô màu cú pháp. Dòng dài tự xuống dòng (panel hẹp, điện thoại);
+// Copy vẫn chép nguyên văn
 export function CodeSamples({ sample }: { sample: CodeSample }) {
   return (
     <Tabs
@@ -25,19 +23,7 @@ export function CodeSamples({ sample }: { sample: CodeSample }) {
         id,
         label,
         content: (
-          <CodeView
-            content={sample[id]}
-            highlight={highlight}
-            wrapLines
-            ariaLabel={`${label} code`}
-            actions={
-              <CopyButton
-                variant='icon'
-                text={sample[id]}
-                label={COPY_CODE_LABEL}
-              />
-            }
-          />
+          <CodeSnippet code={sample[id]} highlight={highlight} wrap ariaLabel={`${label} code`} />
         ),
       }))}
     />

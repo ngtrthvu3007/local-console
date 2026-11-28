@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import Button from "@cloudscape-design/components/button";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs, { type TabsProps } from "@cloudscape-design/components/tabs";
 import type { TableDescription } from "@aws-sdk/client-dynamodb";
+import { useTabParam } from "@shared/hooks/useTabParam.ts";
 import { CopyButton } from "@shared/components/CopyButton.tsx";
 import { pageState } from "@shared/components/PageState.tsx";
 import { pluralize } from "@shared/format.ts";
@@ -15,17 +16,9 @@ import { ItemsTab } from "../components/ItemsTab.tsx";
 import { SettingsTab } from "../components/SettingsTab.tsx";
 import { keyText } from "../components/KeyLabel.tsx";
 import { DETAIL_SEPARATOR } from "@shared/constants.ts";
+import { StackLink } from "@shared/StackLink.tsx";
 import { keySchemaOf, useTable } from "../hooks/useTables.ts";
-import {
-  SEARCH_PARAMS,
-  TABLE_TABS,
-  dynamodbRoutes,
-  tableCrumbs,
-  type TableTab,
-} from "../routes.ts";
-
-const isTableTab = (value: string | null): value is TableTab =>
-  Object.values<string | null>(TABLE_TABS).includes(value);
+import { TABLE_TABS, dynamodbRoutes, tableCrumbs } from "../routes.ts";
 
 // "pk String · sk String · 1,204 items · Stream on": thay cho khối overview, để mở tab là thấy dữ liệu
 function tableSummary(table: TableDescription) {
@@ -43,16 +36,11 @@ function tableSummary(table: TableDescription) {
 export function TableDetail() {
   const { table: tableName = "" } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get(SEARCH_PARAMS.tab);
-  const tab = isTableTab(requestedTab) ? requestedTab : TABLE_TABS.items;
+  const [tab, setTab] = useTabParam(TABLE_TABS, TABLE_TABS.items);
   const details = useTable(tableName);
   const [deleting, setDeleting] = useState(false);
 
   useBreadcrumbs(tableCrumbs(tableName));
-
-  const selectTab = (nextTab: string) =>
-    setSearchParams(nextTab === TABLE_TABS.items ? {} : { [SEARCH_PARAMS.tab]: nextTab });
 
   const state = pageState(details, {
     ready: Boolean(details.data),
@@ -76,18 +64,23 @@ export function TableDetail() {
   );
 
   const header = (
-    <Header variant='h1' description={tableSummary(table)} actions={headerActions}>
+    <Header
+      variant='h1'
+      description={
+        <>
+          {tableSummary(table)}
+          <StackLink separated type='AWS::DynamoDB::Table' physicalId={tableName} />
+        </>
+      }
+      actions={headerActions}
+    >
       {tableName}
     </Header>
   );
 
   return (
     <ContentLayout header={header}>
-      <Tabs
-        activeTabId={tab}
-        tabs={tabs}
-        onChange={({ detail }) => selectTab(detail.activeTabId)}
-      />
+      <Tabs activeTabId={tab} tabs={tabs} onChange={({ detail }) => setTab(detail.activeTabId)} />
       {deleting && (
         <DeleteTablesModal
           tables={[table]}

@@ -1,9 +1,6 @@
+import { BulkActionModal } from "@shared/components/BulkActionModal.tsx";
+import { CONFIRM_DELETE } from "@shared/components/ConfirmModal.tsx";
 import Alert from "@cloudscape-design/components/alert";
-import Box from "@cloudscape-design/components/box";
-import { CONFIRM_DELETE, ConfirmModal } from "@shared/components/ConfirmModal.tsx";
-import { DELETE_PREVIEW_COUNT } from "@shared/constants.ts";
-import { pluralize } from "@shared/format.ts";
-import { notifyBulkOutcome } from "@shared/hooks/useNotify.ts";
 import { useDeleteBrokers, type BrokerRef } from "../hooks/useBrokers.ts";
 
 interface Props {
@@ -16,35 +13,19 @@ interface Props {
 export function DeleteBrokersModal({ brokers, onDismiss, onDone }: Props) {
   const deleteBrokers = useDeleteBrokers();
   const names = brokers.map((broker) => broker.name);
-  const hiddenCount = names.length - DELETE_PREVIEW_COUNT;
-
-  const submit = () =>
-    deleteBrokers.mutate(
-      brokers,
-      notifyBulkOutcome({
-        success: (result) => `Deleting ${pluralize(result.count, "broker")}`,
-        errorHeader: "Couldn't delete",
-        then: onDone,
-      }),
-    );
 
   return (
-    <ConfirmModal
-      visible
-      header={`Delete ${pluralize(names.length, "broker")}?`}
+    <BulkActionModal
+      mutation={deleteBrokers}
+      items={brokers}
+      lines={names}
+      noun='broker'
+      done='Deleting'
       confirmText={names.length === 1 ? names[0] : CONFIRM_DELETE}
-      actionText='Delete'
-      loading={deleteBrokers.isPending}
-      onConfirm={submit}
       onDismiss={onDismiss}
+      onDone={onDone}
     >
-      <Box>
-        {names.slice(0, DELETE_PREVIEW_COUNT).map((name) => (
-          <div key={name}>{name}</div>
-        ))}
-        {hiddenCount > 0 && <Box color='text-body-secondary'>…and {hiddenCount} more</Box>}
-      </Box>
       <Alert type='warning'>Every queue and message in these brokers is deleted.</Alert>
-    </ConfirmModal>
+    </BulkActionModal>
   );
 }

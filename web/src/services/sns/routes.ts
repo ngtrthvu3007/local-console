@@ -1,4 +1,5 @@
 import { generatePath } from "react-router";
+import { withTab } from "@shared/routes.ts";
 
 export const SNS_SERVICE_ID = "sns";
 const SNS_ROOT = `/${SNS_SERVICE_ID}`;
@@ -7,7 +8,7 @@ export const TOPIC_TABS = { subscriptions: "subscriptions", details: "details" }
 export type TopicTab = (typeof TOPIC_TABS)[keyof typeof TOPIC_TABS];
 
 // phone: điền sẵn ô tìm của hộp thư SMS (link từ service khác, vd: Cognito)
-export const SEARCH_PARAMS = { tab: "tab", phone: "phone" } as const;
+export const SEARCH_PARAMS = { phone: "phone" } as const;
 
 // Đường dẫn tương đối khai báo route của react-router; link đầy đủ dựng từ đây
 export const SNS_ROUTE_PATTERNS = {
@@ -24,12 +25,12 @@ export const snsRoutes = {
   createTopic: fullPath(SNS_ROUTE_PATTERNS.createTopic),
   sms: fullPath(SNS_ROUTE_PATTERNS.sms),
   // Tab mặc định (Subscriptions) không ghi lên URL
-  topic: (topic: string, tab?: TopicTab) => {
-    const path = generatePath(fullPath(SNS_ROUTE_PATTERNS.topic), { topic });
-    return tab && tab !== TOPIC_TABS.subscriptions
-      ? `${path}?${new URLSearchParams({ [SEARCH_PARAMS.tab]: tab })}`
-      : path;
-  },
+  topic: (topic: string, tab?: TopicTab) =>
+    withTab(
+      generatePath(fullPath(SNS_ROUTE_PATTERNS.topic), { topic }),
+      tab,
+      TOPIC_TABS.subscriptions,
+    ),
 };
 
 export const snsBaseCrumbs = [

@@ -7,7 +7,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ConfirmModal } from "@shared/components/ConfirmModal.tsx";
 import { EmptyState, emptyOrError, type FailableQuery } from "@shared/components/TableStates.tsx";
 
-export interface CreateModalProps<TRule> {
+interface CreateModalProps<TRule> {
   existingIds: string[];
   onCreate: (rule: TRule, success: string) => void;
   onDismiss: () => void;
@@ -43,7 +43,9 @@ export function RulesSection<TRule>(props: Props<TRule>) {
     setModal(null);
     setSelected([]);
   };
+
   const create = (rule: TRule, success: string) => save([...rules, rule], success, finish);
+
   const deleteSelected = () =>
     save(
       rules.filter((rule) => !selectedIds.includes(ruleId(rule))),

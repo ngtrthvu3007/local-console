@@ -1,6 +1,6 @@
 # SES — Thiết kế
 
-> Ngày: 2026-11-17 · Cập nhật: 2026-11-18 (đối chiếu với code và Floci, mục 7; cắt phạm vi theo ponytail ultra, mục 9) · Trạng thái: chờ duyệt · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
+> Ngày: 2026-11-17 · Cập nhật: 2026-11-18 (đối chiếu với code và Floci, mục 7; cắt phạm vi theo ponytail ultra, mục 9) · Trạng thái: đã làm (2026-11-18) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 2
 
 ## 1. Mục tiêu
 
@@ -27,13 +27,13 @@ Identity, template: AWS SDK (SES v2) qua proxy `/aws`. Hộp thư: endpoint riê
 
 ### Làm trong đợt này
 
-| Nhóm        | Tính năng                                                                               | Floci hỗ trợ                       | Lý do giữ                                              |
-| ----------- | --------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------ |
-| Hộp thư     | Danh sách mail (mới nhất trên), lọc theo người nhận / người gửi / subject, Auto refresh | Có: `GET /_aws/ses` (§7 #3)        | "App đã gửi mail chưa?" — lý do chính để làm SES       |
-| Xem mail    | HTML (như hộp thư thật), Text, Headers, Raw (khi có MIME); tải attachment               | Có: `RawData` (§7 #3, #6)          | Kiểm nội dung; **bấm link** để đi tiếp flow            |
-| Dọn hộp thư | Xóa từng mail, xóa hết mail của region                                                  | Có: `DELETE /_aws/ses?id=` (§7 #5) | Dọn trước khi test lại                                 |
-| Identity    | Danh sách, thêm email (verify ngay), xóa                                                | Có: v1 và v2 (§7 #2, #4)           | Thiếu thì app gửi lỗi `MessageRejected`                |
-| Template    | Danh sách, xem (subject, HTML, text), xóa                                               | Có: v1 và v2 (§7 #1, #9)           | App dùng template thì local phải có: kiểm đã có chưa   |
+| Nhóm        | Tính năng                                                                               | Floci hỗ trợ                       | Lý do giữ                                            |
+| ----------- | --------------------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
+| Hộp thư     | Danh sách mail (mới nhất trên), lọc theo người nhận / người gửi / subject, Auto refresh | Có: `GET /_aws/ses` (§7 #3)        | "App đã gửi mail chưa?" — lý do chính để làm SES     |
+| Xem mail    | HTML (như hộp thư thật), Text, Headers, Raw (khi có MIME); tải attachment               | Có: `RawData` (§7 #3, #6)          | Kiểm nội dung; **bấm link** để đi tiếp flow          |
+| Dọn hộp thư | Xóa từng mail, xóa hết mail của region                                                  | Có: `DELETE /_aws/ses?id=` (§7 #5) | Dọn trước khi test lại                               |
+| Identity    | Danh sách, thêm email (verify ngay), xóa                                                | Có: v1 và v2 (§7 #2, #4)           | Thiếu thì app gửi lỗi `MessageRejected`              |
+| Template    | Danh sách, xem (subject, HTML, text), xóa                                               | Có: v1 và v2 (§7 #1, #9)           | App dùng template thì local phải có: kiểm đã có chưa |
 
 ### Để sau
 
@@ -48,15 +48,15 @@ Identity, template: AWS SDK (SES v2) qua proxy `/aws`. Hộp thư: endpoint riê
 
 ### Không làm
 
-| Tính năng                                                                   | Lý do                                                      |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Suppression list, open/click tracking, VDM, dedicated IP                    | Floci chỉ lưu hoặc không chạy thật                         |
-| Event destination                                                           | Chưa kiểm lại Floci: xem "Thông báo từ SES" ở spec SNS     |
-| Contact list, import/export, tenant                                         | Chuyện marketing / production                              |
-| Receipt rule (nhận mail đến)                                                | Floci chỉ lưu, không nhận mail                             |
-| Custom verification template                                                | Email verify ngay khi tạo, không có bước gửi mail xác nhận |
-| Cấu hình SMTP relay (Mailpit…)                                              | Là biến môi trường của Floci, không phải việc của console  |
-| Account, sandbox, quota                                                     | Floci không có sandbox                                     |
+| Tính năng                                                | Lý do                                                      |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| Suppression list, open/click tracking, VDM, dedicated IP | Floci chỉ lưu hoặc không chạy thật                         |
+| Event destination                                        | Chưa kiểm lại Floci: xem "Thông báo từ SES" ở spec SNS     |
+| Contact list, import/export, tenant                      | Chuyện marketing / production                              |
+| Receipt rule (nhận mail đến)                             | Floci chỉ lưu, không nhận mail                             |
+| Custom verification template                             | Email verify ngay khi tạo, không có bước gửi mail xác nhận |
+| Cấu hình SMTP relay (Mailpit…)                           | Là biến môi trường của Floci, không phải việc của console  |
+| Account, sandbox, quota                                  | Floci không có sandbox                                     |
 
 ---
 
@@ -148,12 +148,12 @@ Templates your app sends emails with. Region: ap-southeast-1.
 
 ## 4. Cách hoạt động của một số thao tác
 
-| Thao tác           | Gọi                                                                                                                                                                                        |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hộp thư            | `GET /aws/_aws/ses` → `{ messages }` → lọc `Region` = region của console → sắp theo `Date.parse(Timestamp)`. Không cần header `Authorization` (khác peek SQS)                                                                                  |
-| Xóa mail           | `DELETE /aws/_aws/ses?id=<id>` từng mail (id lạ không xóa gì). Xóa nhiều mail: báo kết quả bằng `notifyBulkOutcome`                                                                                                                                                   |
+| Thao tác           | Gọi                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hộp thư            | `GET /aws/_aws/ses` → `{ messages }` → lọc `Region` = region của console → sắp theo `Date.parse(Timestamp)`. Không cần header `Authorization` (khác peek SQS)                                                                                                                                                                                                                                                                                                           |
+| Xóa mail           | `DELETE /aws/_aws/ses?id=<id>` từng mail (id lạ không xóa gì). Xóa nhiều mail: báo kết quả bằng `notifyBulkOutcome`                                                                                                                                                                                                                                                                                                                                                     |
 | Đọc nội dung mail  | Có `RejectReason`: không có nội dung, chỉ hiện lý do. Mail có sẵn `Subject`, `Destination`, `Body.text_part` / `html_part` thì dùng luôn. Header, attachment, mail `SendRawEmail`: đọc MIME trong `RawData` (base64) bằng thư viện `postal-mime`, nạp bằng `import()` động. Đọc đủ nội dung (body, header, attachment) chỉ cho mail đang mở; mail `SendRawEmail` còn được đọc một lần để lấy Subject, To cho danh sách (3.1). Không có `RawData`: Headers ghép từ field |
-| Identity, template | SES v2: `ListEmailIdentities`, `CreateEmailIdentity`, `DeleteEmailIdentity`, `ListEmailTemplates`, `GetEmailTemplate`, `DeleteEmailTemplate`                                                 |
+| Identity, template | SES v2: `ListEmailIdentities`, `CreateEmailIdentity`, `DeleteEmailIdentity`, `ListEmailTemplates`, `GetEmailTemplate`, `DeleteEmailTemplate`                                                                                                                                                                                                                                                                                                                            |
 
 Đường đọc hộp thư (file trong `web/src/services/ses/`):
 
@@ -182,12 +182,12 @@ Identity và template của SES v1 và v2 dùng chung (mục 7 #4): app dùng v1
 
 ## 5. Trạng thái và lỗi
 
-| Tình huống                                     | Hiển thị                                                         |
-| ---------------------------------------------- | ---------------------------------------------------------------- |
-| `RawData` không đọc được                       | HTML/Text lấy từ field nếu có, không có thì hiện "Can't read this email"; tab Raw vẫn xem được |
-| Hộp thư lỗi (Floci đổi endpoint)               | Khung bảng hiện lỗi; Identities, Templates vẫn dùng được         |
-| Mail bị Floci chặn (`RejectReason`)            | Dòng "Rejected" kèm lý do; panel chỉ hiện lý do                  |
-| Mail không có `RawData`                        | Ẩn tab Raw; Headers ghép từ field                                |
+| Tình huống                          | Hiển thị                                                                                       |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `RawData` không đọc được            | HTML/Text lấy từ field nếu có, không có thì hiện "Can't read this email"; tab Raw vẫn xem được |
+| Hộp thư lỗi (Floci đổi endpoint)    | Khung bảng hiện lỗi; Identities, Templates vẫn dùng được                                       |
+| Mail bị Floci chặn (`RejectReason`) | Dòng "Rejected" kèm lý do; panel chỉ hiện lý do                                                |
+| Mail không có `RawData`             | Ẩn tab Raw; Headers ghép từ field                                                              |
 
 ---
 
@@ -223,20 +223,20 @@ Khai báo trong `registry.ts`; icon `web/public/icons/ses.svg` theo cùng khung 
 
 ### Dùng lại từ phần đã có
 
-| Thành phần                                                                          | Dùng cho                               |
-| ----------------------------------------------------------------------------------- | -------------------------------------- |
-| `ActionBar`, `refreshAction`, `ConfirmModal`, `ModalFooter`                         | Header bảng, modal xác nhận            |
-| `FormModal`, `FormInput` (`form/FormFields.tsx`), `useZodForm`                     | Add email                              |
-| `CodeSnippet`, `CopyButton`                                                         | Tab Text, Raw                          |
-| `useSplitPanel`                                                                     | Panel xem mail, xem template           |
+| Thành phần                                                                                                                                                                      | Dùng cho                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `ActionBar`, `refreshAction`, `ConfirmModal`, `ModalFooter`                                                                                                                     | Header bảng, modal xác nhận            |
+| `FormModal`, `FormInput` (`form/FormFields.tsx`), `useZodForm`                                                                                                                  | Add email                              |
+| `CodeSnippet`, `CopyButton`                                                                                                                                                     | Tab Text, Raw                          |
+| `useSplitPanel`                                                                                                                                                                 | Panel xem mail, xem template           |
 | `EmptyState`, `emptyOrError`, `ErrorState`, `NotFound`, `useIsCompact`, `notifySuccess` / `notifyError` / `notifyBulkOutcome` (`hooks/useNotify.ts`), `formatDate`, `pluralize` | Trạng thái, khung hẹp, thông báo, ngày |
-| `ObjectPreview` của S3 (mẫu khung 70vh)                                             | Khung iframe HTML                      |
+| `ObjectPreview` của S3 (mẫu khung 70vh)                                                                                                                                         | Khung iframe HTML                      |
 
 ### Sửa phần dùng chung
 
-| File                                                     | Từ                                                       | Thành                                                                                                                                                         | Ảnh hưởng                                                                                                                                                                                                       |
-| -------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `web/src/services/dynamodb/hooks/useItems.ts:205`        | `downloadText` riêng của DynamoDB                        | `downloadBlob(fileName, data, type)` trong `web/src/shared/download.ts`                                                                                       | 1 chỗ gọi: `useItems.ts:223` (Export table)                                                                                                                                                                      |
+| File                                              | Từ                                | Thành                                                                   | Ảnh hưởng                                   |
+| ------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------- |
+| `web/src/services/dynamodb/hooks/useItems.ts:205` | `downloadText` riêng của DynamoDB | `downloadBlob(fileName, data, type)` trong `web/src/shared/download.ts` | 1 chỗ gọi: `useItems.ts:223` (Export table) |
 
 ---
 
@@ -259,18 +259,18 @@ Chạy thử trên Floci 2.4.0 qua proxy `/aws` của console ngày 2026-11-17, 
 
 Kiểm thêm ngày 2026-11-18, **chỉ đọc** (GET hộp thư, [tài liệu SES của Floci](https://floci.io/floci/services/ses/)), không ghi vào Floci (trừ #20–21: gửi thử bằng probe, đã xóa sau đó):
 
-| #   | Rủi ro                                  | Kết quả                                                                                                                                         |
-| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| 11  | **Hộp thư sau khi khởi động lại Floci** | **Ổn.** Mail gửi lúc 17:16–17:17Z, Floci khởi động lại lúc 17:17:32Z (`FLOCI_STORAGE_MODE: hybrid`), mail vẫn còn                               |
-| 12  | **Mail không có `RawData`**             | `SendEmail` simple/template không có attachment: chỉ có field, không có `RawData` → ẩn tab Raw, Headers ghép từ field                           |
-| 13  | **Cc**                                  | Nằm ở `Destination.CcAddresses`                                                                                                                 |
-| 14  | **Shape của hộp thư**                   | `{ messages: [...] }`, cũ nhất trước. Có thêm `ReturnPath`, `ReplyToAddresses`, `Headers` (header tùy chỉnh). `Timestamp` có 6–9 chữ số lẻ      |
-| 15  | **`Id` = `MessageId`**                  | `RawData` có `Message-ID: <Id@email.amazonses.com>`; tài liệu: phần trước `@` là `MessageId` trả về → dùng khi làm Gửi thử (đang để sau)             |
-| 16  | **Xóa / lấy một mail**                  | Tài liệu: `DELETE ?id=` chỉ xóa mail đó, id lạ không xóa gì; `GET ?id=` trả một mail                                                            |
-| 17  | **Mail bị chặn**                        | Tài liệu: mail bị content-scan chặn chỉ có `RejectReason`, không có nội dung                                                                    |
-| 18  | **HTML có script, ảnh ngoài**           | Hộp thư có mail thật chứa `<script>` và `<img src="http://example.com/…">`: iframe sandbox (3.2) là bắt buộc; ảnh ngoài vẫn tải (chấp nhận ở local)          |
-| 19  | **Không phân trang**                    | Mỗi lần tải trả `RawData` của mọi mail → đọc đủ MIME chỉ cho mail đang mở; mail raw đọc một lần để lấy Subject, To. Chấp nhận ở local                                              |
-| 20  | **Bcc**                                 | Gửi thử ngày 2026-11-18 (v2 `SendEmail` simple, đã xóa mail và identity thử): nằm ở `Destination.BccAddresses`, cạnh `ToAddresses`              |
+| #   | Rủi ro                                  | Kết quả                                                                                                                                                     |
+| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 11  | **Hộp thư sau khi khởi động lại Floci** | **Ổn.** Mail gửi lúc 17:16–17:17Z, Floci khởi động lại lúc 17:17:32Z (`FLOCI_STORAGE_MODE: hybrid`), mail vẫn còn                                           |
+| 12  | **Mail không có `RawData`**             | `SendEmail` simple/template không có attachment: chỉ có field, không có `RawData` → ẩn tab Raw, Headers ghép từ field                                       |
+| 13  | **Cc**                                  | Nằm ở `Destination.CcAddresses`                                                                                                                             |
+| 14  | **Shape của hộp thư**                   | `{ messages: [...] }`, cũ nhất trước. Có thêm `ReturnPath`, `ReplyToAddresses`, `Headers` (header tùy chỉnh). `Timestamp` có 6–9 chữ số lẻ                  |
+| 15  | **`Id` = `MessageId`**                  | `RawData` có `Message-ID: <Id@email.amazonses.com>`; tài liệu: phần trước `@` là `MessageId` trả về → dùng khi làm Gửi thử (đang để sau)                    |
+| 16  | **Xóa / lấy một mail**                  | Tài liệu: `DELETE ?id=` chỉ xóa mail đó, id lạ không xóa gì; `GET ?id=` trả một mail                                                                        |
+| 17  | **Mail bị chặn**                        | Tài liệu: mail bị content-scan chặn chỉ có `RejectReason`, không có nội dung                                                                                |
+| 18  | **HTML có script, ảnh ngoài**           | Hộp thư có mail thật chứa `<script>` và `<img src="http://example.com/…">`: iframe sandbox (3.2) là bắt buộc; ảnh ngoài vẫn tải (chấp nhận ở local)         |
+| 19  | **Không phân trang**                    | Mỗi lần tải trả `RawData` của mọi mail → đọc đủ MIME chỉ cho mail đang mở; mail raw đọc một lần để lấy Subject, To. Chấp nhận ở local                       |
+| 20  | **Bcc**                                 | Gửi thử ngày 2026-11-18 (v2 `SendEmail` simple, đã xóa mail và identity thử): nằm ở `Destination.BccAddresses`, cạnh `ToAddresses`                          |
 | 21  | **`Headers`**                           | Cùng mail thử: `Headers: [{ "Name": "X-Lc-Probe", "Value": "1" }]`, giống `MessageHeader` của SES v2. Mail không có header tùy chỉnh thì không có field này |
 
 ---
@@ -291,22 +291,22 @@ Kiểm thêm ngày 2026-11-18, **chỉ đọc** (GET hộp thư, [tài liệu SE
 
 ## 9. Quyết định
 
-| Quyết định                                          | Lý do                                                                                 |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Chọn tính năng theo 3 tiêu chí (`CLAUDE.md`)        | User chốt 2026-11-17; thêm tiêu chí Floci hỗ trợ 2026-11-19                           |
-| Configuration set, domain identity để sau           | User chốt 2026-11-17                                                                  |
-| Hộp thư qua endpoint riêng của Floci `/_aws/ses`    | AWS không có API đọc mail đã gửi; đây là giá trị chính của SES ở local                |
-| Dùng SES v2 cho identity, template                  | Một package, API JSON gọn; v1 và v2 dùng chung dữ liệu nên app dùng bản nào cũng thấy |
-| Lọc region phía trình duyệt, xóa từng mail theo ID  | Hộp thư của Floci dùng chung mọi region                                               |
-| HTML trong `iframe` sandbox, không cho chạy script  | Mail do app tạo, có thể chứa script; link vẫn mở được ở tab mới                       |
-| Đọc MIME bằng `postal-mime`                         | Cần cho mail raw, attachment; tự viết dễ sai                        |
-| Xem mail trong split panel, không có trang riêng    | Giống hộp thư mail và panel của ElastiCache; xem nhiều mail liên tiếp nhanh           |
-| Mail không có `RawData`: ẩn tab Raw, Headers ghép từ field | Floci không lưu MIME cho mail simple/template không attachment; không tự dựng MIME giả (user chốt 2026-11-18) |
-| Home đếm số email trong hộp thư của region          | Hộp thư là giá trị chính của SES ở local (user chốt 2026-11-18)                        |
-| `postal-mime` nạp bằng `import()` động              | Chỉ cần khi có mail MIME phải đọc; không làm nặng bundle chung  |
-| `downloadBlob` dùng chung                            | Sửa hàm có sẵn của DynamoDB thay vì viết hàm tải riêng cho SES                        |
-| Bcc: đọc `Destination.BccAddresses` nếu có          | Tài liệu Floci không nhắc; kiểm trên Floci khi làm (mục 7), sai thì sửa 3.1 và 3.2    |
-| Template chỉ list, xem, xóa; tạo/sửa/preview để sau | Template local thường do CDK / script seed tạo; tránh 2 nơi giữ template (user chốt 2026-11-18, ponytail ultra) |
-| Gửi mail thử để sau                                 | Mail app gửi mới là bài test thật; thiếu identity đã có `MessageRejected` (user chốt 2026-11-18) |
+| Quyết định                                                                | Lý do                                                                                                                                                 |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chọn tính năng theo 3 tiêu chí (`CLAUDE.md`)                              | User chốt 2026-11-17; thêm tiêu chí Floci hỗ trợ 2026-11-19                                                                                           |
+| Configuration set, domain identity để sau                                 | User chốt 2026-11-17                                                                                                                                  |
+| Hộp thư qua endpoint riêng của Floci `/_aws/ses`                          | AWS không có API đọc mail đã gửi; đây là giá trị chính của SES ở local                                                                                |
+| Dùng SES v2 cho identity, template                                        | Một package, API JSON gọn; v1 và v2 dùng chung dữ liệu nên app dùng bản nào cũng thấy                                                                 |
+| Lọc region phía trình duyệt, xóa từng mail theo ID                        | Hộp thư của Floci dùng chung mọi region                                                                                                               |
+| HTML trong `iframe` sandbox, không cho chạy script                        | Mail do app tạo, có thể chứa script; link vẫn mở được ở tab mới                                                                                       |
+| Đọc MIME bằng `postal-mime`                                               | Cần cho mail raw, attachment; tự viết dễ sai                                                                                                          |
+| Xem mail trong split panel, không có trang riêng                          | Giống hộp thư mail và panel của ElastiCache; xem nhiều mail liên tiếp nhanh                                                                           |
+| Mail không có `RawData`: ẩn tab Raw, Headers ghép từ field                | Floci không lưu MIME cho mail simple/template không attachment; không tự dựng MIME giả (user chốt 2026-11-18)                                         |
+| Home đếm số email trong hộp thư của region                                | Hộp thư là giá trị chính của SES ở local (user chốt 2026-11-18)                                                                                       |
+| `postal-mime` nạp bằng `import()` động                                    | Chỉ cần khi có mail MIME phải đọc; không làm nặng bundle chung                                                                                        |
+| `downloadBlob` dùng chung                                                 | Sửa hàm có sẵn của DynamoDB thay vì viết hàm tải riêng cho SES                                                                                        |
+| Bcc: đọc `Destination.BccAddresses` nếu có                                | Tài liệu Floci không nhắc; kiểm trên Floci khi làm (mục 7), sai thì sửa 3.1 và 3.2                                                                    |
+| Template chỉ list, xem, xóa; tạo/sửa/preview để sau                       | Template local thường do CDK / script seed tạo; tránh 2 nơi giữ template (user chốt 2026-11-18, ponytail ultra)                                       |
+| Gửi mail thử để sau                                                       | Mail app gửi mới là bài test thật; thiếu identity đã có `MessageRejected` (user chốt 2026-11-18)                                                      |
 | Không cache nội dung mail đang mở; Subject, To của mail raw giữ theo `Id` | Danh sách không có subject, người nhận thì mất giá trị chính; mail không đổi nên đọc một lần là đủ (user chốt 2026-11-19, thay quyết định 2026-11-18) |
-| Mở mail, template bằng link ở row header, không dùng `onRowClick` | Mở được bằng bàn phím; giống SQS, ElastiCache (user chốt 2026-11-19) |
+| Mở mail, template bằng link ở row header, không dùng `onRowClick`         | Mở được bằng bàn phím; giống SQS, ElastiCache (user chốt 2026-11-19)                                                                                  |

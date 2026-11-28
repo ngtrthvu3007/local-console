@@ -6,7 +6,7 @@ import {
 import { InvokeCommand } from "@aws-sdk/client-lambda";
 import { orEmptyWhenNotFound } from "@shared/aws.ts";
 import { reformatJson } from "@shared/json.ts";
-import { logMessageText } from "../helpers.ts";
+import { logMessageText } from "@shared/logs/format.ts";
 import { INVOCATION_TYPES, LOG_CLOCK_SKEW_MS, type InvocationType } from "../constants.ts";
 import { useLambda } from "./useLambda.ts";
 
@@ -25,8 +25,7 @@ interface InvokeInput {
   invocationType: InvocationType;
 }
 
-// Floci không trả LogResult và không ghi dòng REPORT có request ID,
-// nên lấy log theo khoảng thời gian của lần chạy (trigger chạy cùng lúc thì log có thể lẫn vào)
+// Floci không trả LogResult / request ID nên lấy log theo khoảng thời gian chạy (có thể lẫn log trigger)
 async function readLogsBetween(
   logs: CloudWatchLogsClient,
   logGroupName: string,
@@ -35,17 +34,21 @@ async function readLogsBetween(
 ) {
   const messages: string[] = [];
   const paginator = paginateFilterLogEvents({ client: logs }, { logGroupName, startTime, endTime });
+
   for await (const page of paginator) {
     messages.push(...(page.events ?? []).map((event) => logMessageText(event.message)));
   }
+
   return messages.join("\n");
 }
 
 export function useInvoke(functionName: string, logGroupName: string) {
   const { lambda, logs } = useLambda();
+
   return useMutation({
     mutationFn: async ({ payload, invocationType }: InvokeInput): Promise<InvokeResult> => {
       const startedAt = Date.now();
+
       const result = await lambda.send(
         new InvokeCommand({
           FunctionName: functionName,
@@ -53,6 +56,7 @@ export function useInvoke(functionName: string, logGroupName: string) {
           Payload: new TextEncoder().encode(payload),
         }),
       );
+
       const finishedAt = Date.now();
       const common = { durationMs: finishedAt - startedAt, requestId: result.$metadata.requestId };
       if (invocationType === INVOCATION_TYPES.async) return { ...common, status: "accepted" };
@@ -67,6 +71,7 @@ export function useInvoke(functionName: string, logGroupName: string) {
           ),
         "",
       );
+
       return {
         ...common,
         status: result.FunctionError ? "failed" : "succeeded",

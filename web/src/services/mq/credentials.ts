@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 
-// User/pass của broker giữ trong tab (sessionStorage): còn khi tải lại, mất khi đóng tab.
-// AWS API không trả lại password nên user phải nhập (spec chính, mục 4).
+// AWS không trả lại password nên giữ user / pass trong sessionStorage: còn khi tải lại, mất khi đóng tab
 const STORAGE_PREFIX = "localconsole:mq:";
 const BASIC_PREFIX = "Basic ";
 
@@ -33,6 +32,7 @@ function write(key: string, value?: string) {
 export function useBrokerAuthorization(broker: string) {
   const key = `${STORAGE_PREFIX}${broker}`;
   const [authorization, setAuthorization] = useState(() => read(key));
+
   // Giữ nguyên hàm giữa các lần render để dùng được làm dependency của effect
   const update = useCallback(
     (value?: string) => {
@@ -41,5 +41,6 @@ export function useBrokerAuthorization(broker: string) {
     },
     [key],
   );
+
   return [authorization, update] as const;
 }

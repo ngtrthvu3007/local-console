@@ -9,7 +9,7 @@ import {
   type Endpoint,
   type ReplicationGroup,
 } from "@aws-sdk/client-elasticache";
-import { errorMessage } from "@shared/hooks/useNotify.ts";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import {
   CACHE_NODE_TYPE,
   ENGINE_LABELS,
@@ -173,23 +173,15 @@ export function useDeleteClusters() {
   const client = useElastiCache();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (clusters: Cluster[]) => {
-      const failures: string[] = [];
-      for (const cluster of clusters) {
-        try {
-          if (cluster.kind === "replication-group") {
-            await client.send(
-              new DeleteReplicationGroupCommand({ ReplicationGroupId: cluster.id }),
-            );
-          } else {
-            await client.send(new DeleteCacheClusterCommand({ CacheClusterId: cluster.id }));
-          }
-        } catch (error) {
-          failures.push(`${cluster.id}: ${errorMessage(error)}`);
-        }
-      }
-      return { count: clusters.length - failures.length, failures };
-    },
+    mutationFn: (clusters: Cluster[]) =>
+      runEach(
+        clusters,
+        (cluster) => cluster.id,
+        (cluster) =>
+          cluster.kind === "replication-group"
+            ? client.send(new DeleteReplicationGroupCommand({ ReplicationGroupId: cluster.id }))
+            : client.send(new DeleteCacheClusterCommand({ CacheClusterId: cluster.id })),
+      ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: clustersQueryKey }),
   });
 }

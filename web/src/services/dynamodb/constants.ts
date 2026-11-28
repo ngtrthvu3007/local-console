@@ -1,7 +1,5 @@
 import type { KeyType as KeyRole } from "@aws-sdk/client-dynamodb";
-
-const KIBIBYTE = 1024;
-const MEBIBYTE = 1024 * KIBIBYTE;
+import { MEBIBYTE } from "@shared/constants.ts";
 
 // Kiểu dữ liệu được phép làm key (DynamoDB chỉ cho String, Number, Binary)
 export const KEY_TYPES = { S: "String", N: "Number", B: "Binary" } as const;
@@ -98,3 +96,13 @@ export const PROJECTION_LABELS: Record<string, string> = {
   KEYS_ONLY: "Keys only",
   INCLUDE: "Selected attributes",
 };
+
+// Mã hóa lúc lưu: key AWS sở hữu (mặc định, không gửi gì), key AWS managed (aws/dynamodb) hoặc key chọn được
+export const TABLE_ENCRYPTION = {
+  awsOwned: "aws-owned",
+  awsManaged: "aws-managed",
+  customer: "customer",
+} as const;
+export type TableEncryption = (typeof TABLE_ENCRYPTION)[keyof typeof TABLE_ENCRYPTION];
+export const DYNAMODB_KEY_SERVICE = "dynamodb";
+export const SSE_TYPE_KMS = "KMS";

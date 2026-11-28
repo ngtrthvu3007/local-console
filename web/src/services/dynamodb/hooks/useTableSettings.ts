@@ -5,18 +5,11 @@ import {
   UpdateTimeToLiveCommand,
   type StreamSpecification,
 } from "@aws-sdk/client-dynamodb";
-import {
-  paginateListEventSourceMappings,
-  type EventSourceMappingConfiguration,
-} from "@aws-sdk/client-lambda";
-import { useLambda } from "../../lambda/hooks/useLambda.ts";
-import { createStreamTrigger, type StreamTriggerInput } from "../../lambda/hooks/useTriggers.ts";
 import type { StreamViewTypeId } from "../constants.ts";
 import { useDynamoDB } from "./useDynamoDB.ts";
 import { tableQueryKey, useInvalidateTable } from "./useTables.ts";
 
 const TTL = "ttl";
-const STREAM_TRIGGERS = "stream-triggers";
 
 export function useTimeToLive(table: string) {
   const client = useDynamoDB();
@@ -66,34 +59,5 @@ export function useUpdateStream(table: string) {
       return client.send(updateStream(table, { StreamEnabled: true, StreamViewType: viewType }));
     },
     onSuccess: () => invalidate(table),
-  });
-}
-
-// Các Lambda đang đọc stream của bảng
-export function useStreamTriggers(table: string, streamArn?: string) {
-  const { lambda } = useLambda();
-  return useQuery({
-    queryKey: [...tableQueryKey(table, STREAM_TRIGGERS), streamArn],
-    enabled: Boolean(streamArn),
-    queryFn: async () => {
-      const mappings: EventSourceMappingConfiguration[] = [];
-      const paginator = paginateListEventSourceMappings(
-        { client: lambda },
-        { EventSourceArn: streamArn },
-      );
-      for await (const page of paginator) mappings.push(...(page.EventSourceMappings ?? []));
-      return mappings;
-    },
-  });
-}
-
-export function useAddStreamTrigger(table: string, streamArn: string) {
-  const { lambda } = useLambda();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input: Omit<StreamTriggerInput, "streamArn">) =>
-      createStreamTrigger(lambda, { ...input, streamArn }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: tableQueryKey(table, STREAM_TRIGGERS) }),
   });
 }

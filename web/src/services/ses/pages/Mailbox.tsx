@@ -14,7 +14,7 @@ import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { ResponsiveActions } from "@shared/components/ResponsiveActions.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { DETAIL_SEPARATOR, NOT_AVAILABLE } from "@shared/constants.ts";
+import { DETAIL_SEPARATOR, NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -29,7 +29,6 @@ import { matchesSearch, recipientsOf, sentAt, type Email } from "../mailbox.ts";
 import { SEARCH_PARAMS, sesBaseCrumbs, sesRoutes } from "../routes.ts";
 
 const ID_FIELD = "Id";
-const PAGE_SIZE = 50;
 const ATTACHMENT_ICON = "📎";
 type DeleteTarget = { emails: readonly Email[]; all: boolean };
 
@@ -38,6 +37,7 @@ const crumbs = [...sesBaseCrumbs, { text: "Mailbox", href: sesRoutes.mailbox }];
 function Recipients({ email }: { email: Email }) {
   const [first, ...others] = recipientsOf(email);
   if (!first) return <>{NOT_AVAILABLE}</>;
+
   return (
     <>
       {first}
@@ -55,6 +55,7 @@ function SubjectCell({ email }: { email: Email }) {
   if (email.RejectReason) {
     return <StatusIndicator type='error'>Rejected: {email.RejectReason}</StatusIndicator>;
   }
+
   return (
     <>
       {email.Attachments?.length ? `${ATTACHMENT_ICON} ` : ""}
@@ -90,37 +91,53 @@ export function Mailbox() {
   const { items, collectionProps, filterProps, paginationProps, filteredItemsCount, actions } =
     useCollection<Email>(emails ?? [], {
       filtering: {
+        defaultFilteringText: searchParams.get(SEARCH_PARAMS.search) ?? "",
         empty: emptyState,
         noMatch: (
           <EmptyState
             title='No matches'
-            action={<Button onClick={() => actions.setFiltering("")}>Clear filter</Button>}
+            action={
+              <Button
+                onClick={() => {
+                  actions.setFiltering("");
+                  deleteParam(SEARCH_PARAMS.search);
+                }}
+              >
+                Clear filter
+              </Button>
+            }
           />
         ),
         filteringFunction: matchesSearch,
       },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: ID_FIELD },
     });
 
   const selected = collectionProps.selectedItems ?? [];
+
   const emailHref = (id: string) => {
     const next = new URLSearchParams(searchParams);
     next.set(SEARCH_PARAMS.email, id);
     return `?${next}`;
   };
+
   const selectEmail = (email: Email) =>
     // Đổi mail khi panel đang mở thì thay entry, để Back luôn đóng panel
     navigate(emailHref(email.Id), { replace: Boolean(openId) });
-  const closeEmail = () =>
+
+  const deleteParam = (name: string) =>
     setSearchParams(
       (current) => {
         const next = new URLSearchParams(current);
-        next.delete(SEARCH_PARAMS.email);
+        next.delete(name);
         return next;
       },
       { replace: true },
     );
+
+  const closeEmail = () => deleteParam(SEARCH_PARAMS.email);
+
   const finishDelete = (deleted: readonly Email[]) => {
     setDeleteTarget(null);
     actions.setSelectedItems([]);
@@ -129,6 +146,7 @@ export function Mailbox() {
 
   const panelHeader = (email: Email) =>
     email.RejectReason ? "Rejected email" : openContent.data?.subject || NO_SUBJECT;
+
   // Mô tả của SplitPanel nằm trong <p> nên chỉ dùng chữ, không dùng KeyValuePairs (div)
   const panelDescription = (email: Email) =>
     [
@@ -181,22 +199,26 @@ export function Mailbox() {
     header: "To",
     cell: (email) => <Recipients email={email} />,
   };
+
   const subjectColumn: TableProps.ColumnDefinition<Email> = {
     id: "subject",
     header: "Subject",
     isRowHeader: true,
     cell: subjectLink,
   };
+
   const fromColumn: TableProps.ColumnDefinition<Email> = {
     id: "from",
     header: "From",
     cell: (email) => email.Source ?? NOT_AVAILABLE,
   };
+
   const sentColumn: TableProps.ColumnDefinition<Email> = {
     id: "sent",
     header: "Sent",
     cell: (email) => formatDate(sentAt(email)),
   };
+
   // Khung hẹp: tầng 1 chỉ có subject (link mở mail); tầng 2 xám: người nhận và giờ gửi
   const compactColumns: TableProps.ColumnDefinition<Email>[] = [
     {

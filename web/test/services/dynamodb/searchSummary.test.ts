@@ -29,6 +29,7 @@ const search = (overrides: Partial<ItemSearch> = {}): ItemSearch => ({
 describe("searchSummary", () => {
   it("names a scan on the table or on the index", () => {
     expect(searchSummary("orders", search(), keys)).toBe("Scan on orders");
+
     expect(searchSummary("orders", search({ indexName: "by-status" }), keys)).toBe(
       "Scan on by-status",
     );
@@ -41,6 +42,7 @@ describe("searchSummary", () => {
       sortKey: { operator: "begins_with", value: "order#", secondValue: "" },
       descending: true,
     });
+
     expect(searchSummary("orders", query, keys)).toBe(
       "Query on orders · pk = user#1 · sk begins with order# · descending",
     );
@@ -52,16 +54,20 @@ describe("searchSummary", () => {
       partitionKeyValue: "a",
       sortKey: { operator: "between", value: "1", secondValue: "5" },
     });
-    expect(searchSummary("orders", query, keys)).toBe("Query on orders · pk = a · sk between 1 and 5");
+
+    expect(searchSummary("orders", query, keys)).toBe(
+      "Query on orders · pk = a · sk between 1 and 5",
+    );
   });
 
   it("spells out a single filter", () => {
     expect(searchSummary("orders", search({ filters: [filter({ operator: "<>" })] }), keys)).toBe(
       "Scan on orders · status ≠ DONE",
     );
-    expect(searchSummary("orders", search({ filters: [filter({ operator: "exists" })] }), keys)).toBe(
-      "Scan on orders · status exists",
-    );
+
+    expect(
+      searchSummary("orders", search({ filters: [filter({ operator: "exists" })] }), keys),
+    ).toBe("Scan on orders · status exists");
   });
 
   it("counts several filters instead of listing them", () => {

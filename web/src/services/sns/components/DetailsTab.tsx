@@ -7,10 +7,11 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import { CodeSamples } from "@shared/components/CodeSamples.tsx";
 import { EventSources } from "../../eventbridge/components/EventSources.tsx";
 import { OtherSenders } from "../../integrations/components/OtherSenders.tsx";
-import { CopyButton } from "@shared/components/CopyButton.tsx";
+import { copyable } from "@shared/components/CopyButton.tsx";
 import { ITEM_LIST_WIDTH_PX } from "@shared/constants.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useIsCompact } from "@shared/hooks/useIsCompact.ts";
+import { KeyLink } from "../../kms/components/KeyLink.tsx";
 import { topicSample } from "../codeSamples.ts";
 import { topicTypeLabel, type Topic } from "../topics.ts";
 
@@ -19,8 +20,6 @@ const CONNECT_COLUMNS = 2;
 // Topic nhận từ S3 (notification), Lambda (đích async, đích lỗi của trigger) và SES (configuration set)
 const TOPIC_SENDER_KINDS = ["s3", "lambda", "ses"] as const;
 const ENDPOINT_VARIABLE = "AWS_ENDPOINT_URL";
-
-const copyable = (text: string) => <CopyButton variant='inline' text={text} label={text} />;
 
 export function DetailsTab({ topic }: { topic: Topic }) {
   const { flociPublicUrl, flociInternalUrl } = useLoadedConfig();
@@ -31,6 +30,10 @@ export function DetailsTab({ topic }: { topic: Topic }) {
     { label: "Type", value: topicTypeLabel(topic) },
     { label: "Subscriptions", value: topic.subscriptions },
     { label: "ARN", value: copyable(topic.arn) },
+    {
+      label: "Encryption",
+      value: topic.kmsKeyId ? <KeyLink value={topic.kmsKeyId} /> : "Off",
+    },
     ...(topic.fifo
       ? [
           {

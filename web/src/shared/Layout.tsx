@@ -1,13 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useLocation, useNavigation } from "react-router";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
-import AppLayout, {
-  type AppLayoutProps,
-} from "@cloudscape-design/components/app-layout";
+import AppLayout, { type AppLayoutProps } from "@cloudscape-design/components/app-layout";
 import BreadcrumbGroup from "@cloudscape-design/components/breadcrumb-group";
-import Flashbar, {
-  type FlashbarProps,
-} from "@cloudscape-design/components/flashbar";
+import Flashbar from "@cloudscape-design/components/flashbar";
 import SideNavigation from "@cloudscape-design/components/side-navigation";
 import SplitPanel from "@cloudscape-design/components/split-panel";
 import TopNavigation, {
@@ -16,6 +12,7 @@ import TopNavigation, {
 import {
   APP_NAME,
   FLASHBAR_STACK_THRESHOLD,
+  PHONE_FLASHBAR_STACK_THRESHOLD,
   HOME_PATH,
   LOADING_PLACEHOLDER,
   LOGO_PATH,
@@ -45,6 +42,7 @@ import "./Layout.css";
 
 const TOP_NAVIGATION_ID = "top-nav";
 const TOP_NAVIGATION_LAYER = 1002; // nằm trên AppLayout của Cloudscape
+
 const topNavigationStyle = {
   position: "sticky",
   top: 0,
@@ -64,23 +62,13 @@ const FLOCI_STATUS: Record<
 const regionLabel = (region: string) => REGION_LABELS[region] ?? region;
 const COLOR_MODE_TITLE = "Appearance";
 
-// Thanh mảnh dưới thanh trên cùng khi đang tải code trang (route tải lười), dữ
-// liệu lần đầu, hoặc đang lưu / xóa. Bỏ qua refetch nền (auto refresh, kiểm tra
-// Floci 10 giây một lần): query đã có dữ liệu
+// Chỉ hiện khi tải lần đầu hoặc đang ghi, bỏ qua refetch nền (auto refresh, kiểm tra Floci)
 function LoadingBar() {
   const pageLoading = useNavigation().state !== "idle";
   const dataLoading =
-    useIsFetching({ predicate: (query) => query.state.status === "pending" }) +
-      useIsMutating() >
-    0;
+    useIsFetching({ predicate: (query) => query.state.status === "pending" }) + useIsMutating() > 0;
   const loading = pageLoading || dataLoading;
-  return (
-    <div
-      className='console-loading-bar'
-      data-active={loading || undefined}
-      aria-hidden
-    />
-  );
+  return <div className='console-loading-bar' data-active={loading || undefined} aria-hidden />;
 }
 
 // Điện thoại: panel nằm dưới, cao 2/3 màn hình. Desktop: panel bên phải
@@ -93,12 +81,15 @@ export function Layout({ children }: { children?: ReactNode }) {
   const follow = useFollow();
   const navigation = useSideNavigation();
   const { pathname } = useLocation();
+
   const [navigationOpen, setNavigationOpen] = useState(
     () => window.innerWidth > PHONE_MAX_WIDTH_PX,
   );
+
   useEffect(() => {
     if (window.innerWidth <= PHONE_MAX_WIDTH_PX) setNavigationOpen(false);
   }, [pathname]);
+
   useRecordRecentService(pathname);
   const floci = useFlociStatus();
   const [colorPreference, setColorPreference] = useColorPreference();
@@ -108,10 +99,11 @@ export function Layout({ children }: { children?: ReactNode }) {
   const messages = useNotifications();
   const panel = useSplitPanelContent();
   const [panelSize, setPanelSize] = useState(defaultPanelSize);
-  const [panelPreferences, setPanelPreferences] =
-    useState<AppLayoutProps.SplitPanelPreferences>({
-      position: "side",
-    });
+
+  const [panelPreferences, setPanelPreferences] = useState<AppLayoutProps.SplitPanelPreferences>({
+    position: "side",
+  });
+
   const down = floci.state === "down";
 
   const identity: TopNavigationProps.Identity = {
@@ -126,9 +118,7 @@ export function Layout({ children }: { children?: ReactNode }) {
   const utilities: TopNavigationProps.Utility[] = [
     {
       type: "button",
-      text: floci.version
-        ? `Floci ${floci.version} · Running`
-        : FLOCI_STATUS[floci.state].text,
+      text: floci.version ? `Floci ${floci.version} · Running` : FLOCI_STATUS[floci.state].text,
       iconName: FLOCI_STATUS[floci.state].icon,
       href: HOME_PATH,
       onFollow: follow,
@@ -175,11 +165,13 @@ export function Layout({ children }: { children?: ReactNode }) {
     />
   );
 
+  const stackThreshold =
+    window.innerWidth <= PHONE_MAX_WIDTH_PX
+      ? PHONE_FLASHBAR_STACK_THRESHOLD
+      : FLASHBAR_STACK_THRESHOLD;
+
   const notifications = messages.length > 0 && (
-    <Flashbar
-      items={messages}
-      stackItems={messages.length > FLASHBAR_STACK_THRESHOLD}
-    />
+    <Flashbar items={messages} stackItems={messages.length > stackThreshold} />
   );
 
   // Panel mở khi trang có nội dung panel; đóng (✕) thì trang tự gỡ nội dung
@@ -189,10 +181,9 @@ export function Layout({ children }: { children?: ReactNode }) {
     </SplitPanel>
   );
 
-  // Server hoặc Floci không chạy thì thay nội dung bằng trang hướng dẫn chạy
-  // lại. Home vẫn hiện: nó tự báo trạng thái Floci. Trang cũ chỉ bị ẩn (không
-  // unmount) để code / form đang sửa không mất
+  // Server / Floci tắt thì thay bằng trang hướng dẫn (trừ Home); chỉ ẩn trang cũ để giữ form đang sửa
   const serverDown = configQuery.isError || floci.serverDown;
+
   const unavailable = serverDown ? (
     <ServerDown
       checking={configQuery.isFetching || floci.checking}
@@ -202,16 +193,12 @@ export function Layout({ children }: { children?: ReactNode }) {
       }}
     />
   ) : down && pathname !== HOME_PATH ? (
-    <FlociDown
-      endpoint={floci.endpoint}
-      checking={floci.checking}
-      onCheck={floci.refresh}
-    />
+    <FlociDown endpoint={floci.endpoint} checking={floci.checking} onCheck={floci.refresh} />
   ) : null;
+
   // Mọi trang cần config (region, endpoint) nên chờ có rồi mới render
-  const page = config && (
-    <div hidden={Boolean(unavailable)}>{children ?? <Outlet />}</div>
-  );
+  const page = config && <div hidden={Boolean(unavailable)}>{children ?? <Outlet />}</div>;
+
   const content = (
     <>
       {unavailable}
@@ -222,11 +209,7 @@ export function Layout({ children }: { children?: ReactNode }) {
   return (
     <div className='local-console'>
       <div id={TOP_NAVIGATION_ID} style={topNavigationStyle}>
-        <TopNavigation
-          identity={identity}
-          search={<ServiceSearch />}
-          utilities={utilities}
-        />
+        <TopNavigation identity={identity} search={<ServiceSearch />} utilities={utilities} />
         <LoadingBar />
       </div>
       <AppLayout
@@ -244,9 +227,7 @@ export function Layout({ children }: { children?: ReactNode }) {
         splitPanelSize={panelSize}
         onSplitPanelResize={({ detail }) => setPanelSize(detail.size)}
         splitPanelPreferences={panelPreferences}
-        onSplitPanelPreferencesChange={({ detail }) =>
-          setPanelPreferences(detail)
-        }
+        onSplitPanelPreferencesChange={({ detail }) => setPanelPreferences(detail)}
       />
     </div>
   );

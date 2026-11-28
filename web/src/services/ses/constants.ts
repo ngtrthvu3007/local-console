@@ -7,8 +7,7 @@ export const MAILBOX_ID_PARAM = "id";
 export const MAILBOX_REFRESH_INTERVAL_MS = 5 * MILLISECONDS_PER_SECOND;
 
 export const HTML_PREVIEW_HEIGHT = "70vh";
-export const HTML_PREVIEW_SANDBOX =
-  "allow-popups allow-popups-to-escape-sandbox";
+export const HTML_PREVIEW_SANDBOX = "allow-popups allow-popups-to-escape-sandbox";
 export const HTML_PREVIEW_BASE = '<base target="_blank">';
 export const HTML_PREVIEW_BACKGROUND = "#ffffff";
 
@@ -45,6 +44,7 @@ export const EVENT_TYPE_LABELS = {
   BOUNCE: "Bounce",
   COMPLAINT: "Complaint",
 } as const;
+
 export type AddableEventType = keyof typeof EVENT_TYPE_LABELS;
 
 export const DESTINATION_KIND_LABELS = { sns: "SNS topic", eventbus: "Event bus" } as const;

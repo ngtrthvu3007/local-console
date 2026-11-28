@@ -8,7 +8,7 @@ import type { EmailTemplateMetadata } from "@aws-sdk/client-sesv2";
 import Table, { type TableProps } from "@shared/components/ResponsiveTable.tsx";
 import { ActionBar, refreshAction, type BarAction } from "@shared/components/ActionBar.tsx";
 import { EmptyState, emptyOrError } from "@shared/components/TableStates.tsx";
-import { NOT_AVAILABLE } from "@shared/constants.ts";
+import { NOT_AVAILABLE, TABLE_PAGE_SIZE } from "@shared/constants.ts";
 import { formatDate } from "@shared/format.ts";
 import { useBreadcrumbs } from "@shared/hooks/useBreadcrumbs.ts";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
@@ -21,7 +21,6 @@ import { useTemplate, useTemplates } from "../hooks/useTemplates.ts";
 import { SEARCH_PARAMS, sesBaseCrumbs, sesRoutes } from "../routes.ts";
 
 const NAME_FIELD = "TemplateName";
-const PAGE_SIZE = 50;
 const crumbs = [...sesBaseCrumbs, { text: "Templates", href: sesRoutes.templates }];
 
 export function Templates() {
@@ -53,7 +52,7 @@ export function Templates() {
     {
       filtering: { empty: emptyState },
       sorting: { defaultState: { sortingColumn: { sortingField: NAME_FIELD } } },
-      pagination: { pageSize: PAGE_SIZE },
+      pagination: { pageSize: TABLE_PAGE_SIZE },
       selection: { trackBy: NAME_FIELD },
     },
   );

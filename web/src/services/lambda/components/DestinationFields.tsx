@@ -58,8 +58,7 @@ export function DestinationFields<TValues extends FieldValues>({
         control={control}
         name={kindName}
         label={label}
-        // constraintText (dưới ô) thay vì description (trên ô): nhãn bên phải không có dòng mô tả, nên
-        // description làm ô chọn bên trái lệch xuống một dòng so với ô bên phải
+        // constraintText thay description để 2 ô chọn cạnh nhau thẳng hàng
         constraintText={hint}
         options={kinds.map((value) => ({ value, label: DESTINATION_KINDS[value] }))}
       />

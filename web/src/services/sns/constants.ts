@@ -14,6 +14,7 @@ export const PROTOCOLS = {
   http: "HTTP",
   https: "HTTPS",
 } as const;
+
 export type Protocol = keyof typeof PROTOCOLS;
 // readonly string[]: protocol của subscription có thể là loại khác (email, sms…) tạo ngoài console
 export const HTTP_PROTOCOLS: readonly string[] = ["http", "https"];
@@ -24,6 +25,7 @@ export const FILTER_SCOPES = {
   MessageAttributes: "Message attributes",
   MessageBody: "Message body",
 } as const;
+
 export type FilterScope = keyof typeof FILTER_SCOPES;
 export const DEFAULT_FILTER_SCOPE: FilterScope = "MessageAttributes";
 
@@ -62,3 +64,15 @@ export const ENDPOINT_PREVIEW_LENGTH = 48;
 // Floci chỉ gọi tới host trong container; localhost là chính Floci
 export const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"] as const;
 export const HOST_FROM_CONTAINER = "host.docker.internal";
+
+// URL trỏ localhost: gọi từ trong container Floci sẽ về chính Floci (SNS HTTP, IdP OIDC của Cognito)
+export function isLocalUrl(text: string): boolean {
+  try {
+    return LOCAL_HOSTS.some((host) => host === new URL(text).hostname);
+  } catch {
+    return false;
+  }
+}
+
+// Tên service trong alias key AWS managed: alias/aws/sns
+export const SNS_KEY_SERVICE = "sns";

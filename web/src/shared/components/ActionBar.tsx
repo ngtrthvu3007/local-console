@@ -12,6 +12,7 @@ export interface BarAction {
   onClick?: () => void;
   href?: string;
   disabled?: boolean;
+  disabledReason?: string; // lý do khóa, hiện khi rê / focus vào nút
   loading?: boolean;
   iconName?: IconProps.Name;
   iconOnly?: boolean; // chỉ hiện icon, text làm aria-label
@@ -51,13 +52,12 @@ const toMenuItem = (action: BarAction): ButtonDropdownProps.Item => ({
   id: action.id,
   text: action.text,
   disabled: action.disabled || action.loading,
+  disabledReason: action.disabledReason,
   href: action.href,
   iconName: action.iconName,
 });
 
-// Khung rộng: mỗi action là một nút + dropdown "Actions".
-// Khung hẹp: một split button [nút chính | ▾] chứa mọi action còn lại, kể cả Refresh,
-// để header nằm gọn một hàng cạnh tiêu đề. Không có nút chính thì nút ghim vẫn đứng riêng.
+// Khung hẹp gom mọi action (kể cả Refresh) vào một split button để header nằm gọn một hàng
 export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }: Props) {
   const follow = useFollow();
   const primary = actions.find((action) => action.primary);
@@ -68,10 +68,12 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
 
   const runItem = (id: string) => {
     const action = folded.find((candidate) => candidate.id === id);
+
     if (action) {
       if (!action.disabled && !action.loading) action.onClick?.();
       return;
     }
+
     onMenuItemClick?.(id);
   };
 
@@ -82,6 +84,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
       iconName={action.iconName}
       ariaLabel={action.iconOnly ? action.text : undefined}
       disabled={action.disabled}
+      disabledReason={action.disabledReason}
       loading={action.loading}
       href={action.href}
       onFollow={follow}
@@ -106,6 +109,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
         iconName: primary.iconName,
         href: primary.href,
         disabled: primary.disabled,
+        disabledReason: primary.disabledReason,
         onFollow: follow,
         onClick: primary.onClick,
       }}
@@ -119,9 +123,7 @@ export function ActionBar({ actions, menuItems = [], onMenuItemClick, compact }:
   );
 
   if (compact && splitButton) {
-    return (
-      <ResponsiveActions toolbar>{splitButton}</ResponsiveActions>
-    );
+    return <ResponsiveActions toolbar>{splitButton}</ResponsiveActions>;
   }
 
   return (

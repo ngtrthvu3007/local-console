@@ -6,6 +6,7 @@ import {
   type ObjectIdentifier,
   type S3Client,
 } from "@aws-sdk/client-s3";
+import { runEach } from "@shared/hooks/useNotify.ts";
 import { MAX_KEYS_PER_DELETE } from "./constants.ts";
 import { copySource } from "./helpers.ts";
 
@@ -16,22 +17,20 @@ export interface ObjectReference {
   isFolder: boolean;
 }
 
-export async function listKeysUnder(
-  s3: S3Client,
-  bucket: string,
-  prefix: string,
-): Promise<string[]> {
+async function listKeysUnder(s3: S3Client, bucket: string, prefix: string): Promise<string[]> {
   const keys: string[] = [];
+
   for await (const page of paginateListObjectsV2(
     { client: s3 },
     { Bucket: bucket, Prefix: prefix },
   )) {
     keys.push(...(page.Contents ?? []).map((object) => object.Key!));
   }
+
   return keys;
 }
 
-export interface BucketTotals {
+interface BucketTotals {
   objectCount: number;
   totalBytes: number;
 }
@@ -39,22 +38,26 @@ export interface BucketTotals {
 // Chỉ đếm bản hiện tại của object, giống "Calculate total size" của AWS
 export async function bucketTotals(s3: S3Client, bucket: string): Promise<BucketTotals> {
   const totals: BucketTotals = { objectCount: 0, totalBytes: 0 };
+
   for await (const page of paginateListObjectsV2({ client: s3 }, { Bucket: bucket })) {
     for (const object of page.Contents ?? []) {
       totals.objectCount++;
       totals.totalBytes += object.Size ?? 0;
     }
   }
+
   return totals;
 }
 
 // Folder được mở thành mọi key bên trong
 export async function expandToKeys(s3: S3Client, bucket: string, references: ObjectReference[]) {
   const keys: string[] = [];
+
   for (const reference of references) {
     if (reference.isFolder) keys.push(...(await listKeysUnder(s3, bucket, reference.key)));
     else keys.push(reference.key);
   }
+
   return keys;
 }
 
@@ -65,13 +68,17 @@ export async function deleteObjects(
   objects: ObjectIdentifier[],
 ): Promise<string[]> {
   const failures: string[] = [];
+
   for (let start = 0; start < objects.length; start += MAX_KEYS_PER_DELETE) {
     const batch = objects.slice(start, start + MAX_KEYS_PER_DELETE);
+
     const result = await s3.send(
       new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: batch, Quiet: true } }),
     );
+
     failures.push(...(result.Errors ?? []).map((failure) => `${failure.Key}: ${failure.Message}`));
   }
+
   return failures;
 }
 
@@ -80,6 +87,7 @@ export async function deleteAllVersions(s3: S3Client, bucket: string): Promise<n
   let deleted = 0;
   let keyMarker: string | undefined;
   let versionIdMarker: string | undefined;
+
   do {
     const page = await s3.send(
       new ListObjectVersionsCommand({
@@ -88,16 +96,19 @@ export async function deleteAllVersions(s3: S3Client, bucket: string): Promise<n
         VersionIdMarker: versionIdMarker,
       }),
     );
+
     const objects = [...(page.Versions ?? []), ...(page.DeleteMarkers ?? [])].map((version) => ({
       Key: version.Key!,
       VersionId: version.VersionId,
     }));
+
     const failures = await deleteObjects(s3, bucket, objects);
     if (failures.length) throw new Error(failures[0]);
     deleted += objects.length;
     keyMarker = page.IsTruncated ? page.NextKeyMarker : undefined;
     versionIdMarker = page.IsTruncated ? page.NextVersionIdMarker : undefined;
   } while (keyMarker);
+
   return deleted;
 }
 
@@ -112,19 +123,19 @@ export async function copyObjects(
   destinationBucket: string,
   pairs: CopyPair[],
 ) {
-  const failures: string[] = [];
-  for (const { from, to } of pairs) {
-    try {
-      await s3.send(
+  // Lỗi dạng "from: …": useTransfer dựa vào tiền tố này để chỉ xóa bản gốc đã copy xong
+  const { failures } = await runEach(
+    pairs,
+    (pair) => pair.from,
+    ({ from, to }) =>
+      s3.send(
         new CopyObjectCommand({
           Bucket: destinationBucket,
           Key: to,
           CopySource: copySource(sourceBucket, from),
         }),
-      );
-    } catch (error) {
-      failures.push(`${from}: ${(error as Error).message}`);
-    }
-  }
+      ),
+  );
+
   return failures;
 }

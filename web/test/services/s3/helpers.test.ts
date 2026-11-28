@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   asFolderKey,
   bucketArn,
+  bucketOptions,
   copySource,
   extensionOf,
   fileNameOf,
@@ -15,6 +16,16 @@ import {
 } from "../../../src/services/s3/helpers.ts";
 
 const MIB = 1024 * 1024;
+
+describe("bucket options", () => {
+  it("lists each named bucket once, skipping nameless entries", () => {
+    expect(bucketOptions([{ Name: "a" }, {}, { Name: "b" }])).toEqual([
+      { value: "a", label: "a" },
+      { value: "b", label: "b" },
+    ]);
+    expect(bucketOptions(undefined)).toEqual([]);
+  });
+});
 
 describe("URLs and identifiers", () => {
   it("encodes keys but keeps / readable", () => {

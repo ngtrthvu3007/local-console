@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
 import Alert from "@cloudscape-design/components/alert";
 import Box from "@cloudscape-design/components/box";
@@ -45,7 +45,8 @@ interface Props {
 // Chỉ mount khi mở. Đọc và kiểm tra cả file trước khi ghi: có item sai thì không ghi gì
 export function ImportModal({ table, onDismiss }: Props) {
   const tableName = table.TableName!;
-  const keys = keySchemaOf(table);
+  // Memo theo bảng: object mới mỗi render sẽ làm effect bên dưới đọc file lặp vô hạn
+  const keys = useMemo(() => keySchemaOf(table), [table]);
   const [written, setWritten] = useState(0);
   const importItems = useImportItems(tableName, keys, setWritten);
   const form = useZodForm(importSchema, { files: [], format: ITEM_FORMATS.dynamodb });
@@ -70,8 +71,7 @@ export function ImportModal({ table, onDismiss }: Props) {
     return () => {
       current = false;
     };
-    // keys đổi theo bảng, không đổi khi modal đang mở, nên không cần theo dõi
-  }, [file, format]);
+  }, [file, format, keys]);
 
   const items = check.items;
   const submit = form.handleSubmit(() => {

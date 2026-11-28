@@ -1,7 +1,7 @@
 import { strToU8, unzipSync, zipSync } from "fflate";
 
 // Đường dẫn file trong gói → nội dung
-export type PackageFiles = Record<string, Uint8Array>;
+type PackageFiles = Record<string, Uint8Array>;
 // Đường dẫn file text → nội dung đã sửa
 export type CodeEdits = Record<string, string>;
 
@@ -35,5 +35,6 @@ export function zipPackage(files: PackageFiles, edits: CodeEdits = {}): Uint8Arr
   const editedFiles = Object.fromEntries(
     Object.entries(edits).map(([path, text]) => [path, strToU8(text)]),
   );
+
   return zipSync({ ...files, ...editedFiles });
 }

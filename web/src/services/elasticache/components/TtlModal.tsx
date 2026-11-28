@@ -3,8 +3,9 @@ import { FormModal } from "@shared/components/form/FormModal.tsx";
 import { formatDuration } from "@shared/format.ts";
 import { notifyOutcome } from "@shared/hooks/useNotify.ts";
 import { useZodForm } from "@shared/hooks/useZodForm.ts";
+import { isWholeNumberIn } from "@shared/schemas.ts";
 import { useSetTtl } from "../hooks/useRedis.ts";
-import { TTL_MODES, ttlSchema } from "../schemas.ts";
+import { TTL_MODES, TTL_SECONDS, ttlSchema } from "../schemas.ts";
 
 interface Props {
   cluster: string;
@@ -21,15 +22,18 @@ const MODE_ITEMS = [
 // Chỉ mount khi mở
 export function TtlModal({ cluster, name, ttl, onDismiss }: Props) {
   const setTtl = useSetTtl(cluster, name);
+
   const form = useZodForm(ttlSchema, {
     mode: ttl === null ? TTL_MODES.none : TTL_MODES.expire,
     seconds: ttl === null ? "" : String(ttl),
   });
+
   const mode = form.watch("mode");
   const secondsText = form.watch("seconds").trim();
-  const seconds = Number(secondsText);
-  const readable =
-    secondsText && Number.isInteger(seconds) && seconds > 0 ? formatDuration(seconds) : "";
+
+  const readable = isWholeNumberIn(secondsText, TTL_SECONDS)
+    ? formatDuration(Number(secondsText))
+    : "";
 
   const submit = form.handleSubmit((input) =>
     setTtl.mutate(

@@ -101,7 +101,9 @@ afterAll(async () => {
 describe("SNS through the console proxy", () => {
   it("finds a topic by the ARN the console builds from its name", async () => {
     expect(topicArn).toBe(arnFor(topicName));
-    const { Attributes } = await sns.send(new GetTopicAttributesCommand({ TopicArn: arnFor(topicName) }));
+    const { Attributes } = await sns.send(
+      new GetTopicAttributesCommand({ TopicArn: arnFor(topicName) }),
+    );
     expect(Attributes?.TopicArn).toBe(topicArn);
     const fifo = await sns.send(new GetTopicAttributesCommand({ TopicArn: arnFor(fifoTopicName) }));
     expect(fifo.Attributes?.FifoTopic).toBe("true");

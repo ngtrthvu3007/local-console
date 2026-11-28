@@ -17,14 +17,17 @@ const LINKS = "links";
 // Các Lambda đang đọc queue
 export function useQueueTriggers(queue: Queue) {
   const { lambda } = useLambda();
+
   return useQuery({
     queryKey: queueQueryKey(queue.name, TRIGGERS),
     queryFn: async () => {
       const mappings: EventSourceMappingConfiguration[] = [];
+
       const paginator = paginateListEventSourceMappings(
         { client: lambda },
         { EventSourceArn: queue.arn },
       );
+
       for await (const page of paginator) mappings.push(...(page.EventSourceMappings ?? []));
       return mappings;
     },
@@ -34,6 +37,7 @@ export function useQueueTriggers(queue: Queue) {
 export function useAddQueueTrigger(queue: Queue) {
   const { lambda } = useLambda();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (input: Omit<QueueTriggerInput, "queueArn">) =>
       createQueueTrigger(lambda, { ...input, queueArn: queue.arn }),
@@ -42,7 +46,7 @@ export function useAddQueueTrigger(queue: Queue) {
   });
 }
 
-export interface QueueLinks {
+interface QueueLinks {
   withTriggers: string[];
   deadLetterQueues: string[]; // queue đang là DLQ của queue khác
 }
@@ -51,6 +55,7 @@ export interface QueueLinks {
 export function useQueueLinks(queues: readonly Queue[]) {
   const { lambda } = useLambda();
   const sqs = useSQS();
+
   return useQuery({
     queryKey: queueQueryKey(queues.map((queue) => queue.name).join(), LINKS),
     queryFn: async (): Promise<QueueLinks> => {
@@ -60,6 +65,7 @@ export function useQueueLinks(queues: readonly Queue[]) {
             lambda.send(new ListEventSourceMappingsCommand({ EventSourceArn: queue.arn })),
             sqs.send(new ListDeadLetterSourceQueuesCommand({ QueueUrl: queue.url })),
           ]);
+
           return {
             name: queue.name,
             triggered: Boolean(mappings.EventSourceMappings?.length),
@@ -67,6 +73,7 @@ export function useQueueLinks(queues: readonly Queue[]) {
           };
         }),
       );
+
       return {
         withTriggers: checks.filter((check) => check.triggered).map((check) => check.name),
         deadLetterQueues: checks.filter((check) => check.deadLetter).map((check) => check.name),
