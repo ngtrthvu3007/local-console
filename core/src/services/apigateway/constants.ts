@@ -87,8 +87,6 @@ export const AUTHORIZER_TYPES = {
 export const JWT_ISSUER_LABEL = "issuer ";
 export const LOCAL_ISSUER_POPOVER =
   "Floci blocks local Cognito issuers, so requests get 401. Use a Lambda or Cognito user pool authorizer on a REST API to test sign-in locally.";
-// Host của URL WebSocket: Floci định tuyến <apiId>.execute-api.<region>.localhost
-export const LOCALHOST_DOMAIN = "localhost";
 export const STAGES_DESCRIPTION =
   "Floci serves the latest configuration on every stage; deployments have no effect.";
 export const URL_LABELS = {

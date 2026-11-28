@@ -45,7 +45,7 @@ let id = "";
 // Như localUrl của console: host cố định, port của Floci
 const localUrl = (path = "") => {
   const url = new URL(flociPublicUrl);
-  url.hostname = `${id.toLowerCase()}.cloudfront.localhost`;
+  url.hostname = `${id.toLowerCase()}.cloudfront.localhost.floci.io`;
   return `${url.origin}/${path}`;
 };
 const domainOf = (bucket: string) => `${bucket}.s3.${region}.amazonaws.com`;

@@ -63,16 +63,16 @@ test("SQS: create the queue", async ({ page }) => {
 
 test("S3: turn on Amazon EventBridge for the bucket", async ({ page }) => {
   await page.goto(`/s3/buckets/${bucket}?tab=properties`);
-  const toggle = page.getByRole("checkbox", { name: "Off" });
+  const toggle = page.getByRole("switch", { name: "Off" });
   await expect(toggle).toBeVisible();
   // Toggle theo dữ liệu đã lưu (đổi sau khi Floci trả lời) nên dùng click, không dùng check()
   await toggle.click();
   await expect(flash(page).getByText("Turned on Amazon EventBridge for this bucket")).toBeVisible();
-  await expect(page.getByRole("checkbox", { name: "On" })).toBeChecked();
+  await expect(page.getByRole("switch", { name: "On" })).toBeChecked();
 
   // Tải lại: cấu hình nằm ở Floci, không chỉ ở trạng thái trang
   await page.reload();
-  await expect(page.getByRole("checkbox", { name: "On" })).toBeChecked();
+  await expect(page.getByRole("switch", { name: "On" })).toBeChecked();
 });
 
 test("EventBridge: a rule for the bucket's events with the queue as its target", async ({
@@ -114,27 +114,27 @@ test("an upload reaches the queue: SQS peek shows the S3 event", async ({ page }
 
 test("turning EventBridge off warns about the rule, and Cancel keeps it on", async ({ page }) => {
   await page.goto(`/s3/buckets/${bucket}?tab=properties`);
-  await page.getByRole("checkbox", { name: "On" }).click();
+  await page.getByRole("switch", { name: "On" }).click();
   const dialog = page.getByRole("dialog", { name: "Turn off Amazon EventBridge?" });
   await expect(dialog.getByText(new RegExp(`${rule} \\(bus default\\)`))).toBeVisible();
   await expect(dialog.getByText(/1 rule match events from this bucket/)).toBeVisible();
 
   // Hủy thì công tắc vẫn bật
   await dialog.getByRole("button", { name: "Cancel" }).click();
-  await expect(page.getByRole("checkbox", { name: "On" })).toBeChecked();
+  await expect(page.getByRole("switch", { name: "On" })).toBeChecked();
 
   // Đồng ý thì tắt thật (đọc lại từ Floci), rule vẫn còn nhưng không còn nhận event
-  await page.getByRole("checkbox", { name: "On" }).click();
+  await page.getByRole("switch", { name: "On" }).click();
   await dialog.getByRole("button", { name: "Turn off" }).click();
   await expect(
     flash(page).getByText("Turned off Amazon EventBridge for this bucket"),
   ).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("checkbox", { name: "Off" })).toBeVisible();
+  await expect(page.getByRole("switch", { name: "Off" })).toBeVisible();
   // Tắt rồi thì không còn gì để cảnh báo: bật lại và tắt tiếp không hỏi nữa
-  await page.getByRole("checkbox", { name: "Off" }).click();
-  await expect(page.getByRole("checkbox", { name: "On" })).toBeChecked();
-  await page.getByRole("checkbox", { name: "On" }).click();
+  await page.getByRole("switch", { name: "Off" }).click();
+  await expect(page.getByRole("switch", { name: "On" })).toBeChecked();
+  await page.getByRole("switch", { name: "On" }).click();
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Cancel" }).click();
 });

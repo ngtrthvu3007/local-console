@@ -296,7 +296,7 @@ test.describe("rotation", () => {
     await open(page, rotating);
     await page.getByRole("button", { name: "Edit rotation" }).click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByRole("checkbox", { name: "Automatic rotation" }).check();
+    await dialog.getByRole("switch", { name: "Automatic rotation" }).check();
     await choose(page, dialog, /Rotation function/, { name: rotateFunction });
     await dialog.getByRole("spinbutton", { name: "Days" }).fill("1");
     await dialog.getByRole("button", { name: "Save" }).click();
@@ -353,7 +353,7 @@ test.describe("rotation", () => {
     await open(page, rotating);
     await page.getByRole("button", { name: "Edit rotation" }).click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByRole("checkbox", { name: "Automatic rotation" }).uncheck();
+    await dialog.getByRole("switch", { name: "Automatic rotation" }).uncheck();
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Disabled", { exact: true })).toBeVisible();
   });
