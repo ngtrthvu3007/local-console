@@ -21,12 +21,20 @@ const environmentFor = (endpoint: string, region: string) =>
 const COPY_ENVIRONMENT_LABEL = "Copy environment variables";
 
 // Cùng ô terminal với lệnh trên trang Floci tắt; ghi chú nhỏ bên dưới như ở đó.
-// Tab tắt padding nội dung nên tự chừa khoảng dưới thanh tab
-function EnvironmentBlock({ code, note }: { code: string; note: string }) {
+// Tab tắt padding nội dung nên tự chừa khoảng dưới thanh tab. Card "Connect your AI agent" dùng chung
+export function TabCodeBlock({
+  code,
+  note,
+  copyLabel = COPY_ENVIRONMENT_LABEL,
+}: {
+  code: string;
+  note: string;
+  copyLabel?: string;
+}) {
   return (
     <Box padding={{ top: "s" }}>
       <SpaceBetween size='s'>
-        <TerminalBlock code={code} copyLabel={COPY_ENVIRONMENT_LABEL} />
+        <TerminalBlock code={code} copyLabel={copyLabel} />
         <Box variant='small' color='text-body-secondary'>
           {note}
         </Box>
@@ -43,7 +51,7 @@ export function ConnectYourApp() {
       id: "host",
       label: "On host",
       content: (
-        <EnvironmentBlock
+        <TabCodeBlock
           code={environmentFor(config.flociPublicUrl, config.region)}
           note='For apps started with npm, go run, IDE debuggers…'
         />
@@ -53,7 +61,7 @@ export function ConnectYourApp() {
       id: "docker",
       label: "In Docker",
       content: (
-        <EnvironmentBlock
+        <TabCodeBlock
           code={environmentFor(config.flociInternalUrl, config.region)}
           note='The service must be on the same Compose network as Floci.'
         />

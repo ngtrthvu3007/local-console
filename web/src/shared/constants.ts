@@ -11,7 +11,10 @@ export const API_PATHS = {
   config: "/api/config",
 } as const;
 
-export const FLOCI_START_COMMAND = "docker compose up -d floci";
+// MCP server của console (server/src/mcp): agent khai báo URL này một lần
+export const MCP_PATH = "/mcp";
+export const MCP_SERVER_NAME = "local-console";
+
 export const FLOCI_RESTART_COMMAND = "docker compose restart floci";
 // Chỉ gặp khi chạy UI bằng npm run dev:web (console trong Docker tự có server)
 export const DEV_SERVER_START_COMMAND = "npm run dev:server";

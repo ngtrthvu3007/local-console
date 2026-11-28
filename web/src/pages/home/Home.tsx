@@ -5,6 +5,7 @@ import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { useLoadedConfig } from "@shared/hooks/useConfig.ts";
 import { useFlociStatus } from "@shared/hooks/useFlociStatus.ts";
+import { ConnectYourAgent } from "./ConnectYourAgent.tsx";
 import { ConnectYourApp } from "./ConnectYourApp.tsx";
 import { FlociCard } from "./FlociCard.tsx";
 import { RecentServices } from "./RecentServices.tsx";
@@ -44,6 +45,7 @@ export function Home() {
         <SpaceBetween size='l'>
           <RecentServices />
           <ConnectYourApp />
+          <ConnectYourAgent />
         </SpaceBetween>
         <FlociCard />
       </Grid>

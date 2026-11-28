@@ -5,7 +5,8 @@ import Container from "@cloudscape-design/components/container";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { DEV_SERVER_START_COMMAND, FLOCI_START_COMMAND } from "../constants.ts";
+import { FLOCI_START_COMMAND } from "@localconsole/core/shared";
+import { DEV_SERVER_START_COMMAND } from "../constants.ts";
 import { TerminalBlock } from "./TerminalBlock.tsx";
 
 interface Props {

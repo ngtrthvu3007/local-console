@@ -22,6 +22,9 @@ WORKDIR /app
 ENV NODE_ENV=production PORT=3701 STATIC_DIR=/app/web/dist
 COPY --from=deps /app/node_modules ./node_modules
 COPY server/package.json server/
+# MCP gọi facade của core: node_modules/@localconsole/core là symlink tới core/
+COPY core/package.json core/
+COPY core/src core/src
 COPY server/src server/src
 COPY --from=build /app/web/dist web/dist
 USER node

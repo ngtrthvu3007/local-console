@@ -1,6 +1,6 @@
 # MCP server — Thiết kế
 
-> Ngày: 2026-11-27 · Trạng thái: **chờ duyệt** · Plan: [2026-11-27-mcp-server](../plans/2026-11-27-mcp-server.md) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 4 · Thứ tự (user chốt 2026-11-27): [tách core](2026-11-27-core-design.md) → test lại toàn bộ → test kỹ API Gateway → **MCP** → [bảo mật](2026-11-27-security-design.md)
+> Ngày: 2026-11-27 · Trạng thái: **đã duyệt** (2026-11-28) · Plan: [2026-11-27-mcp-server](../plans/2026-11-27-mcp-server.md) · Thuộc: [Local Console](2026-11-09-localconsole-design.md) · [Roadmap](../roadmap.md): đợt 4 · Thứ tự (user chốt 2026-11-27): [tách core](2026-11-27-core-design.md) → test lại toàn bộ → test kỹ API Gateway → **MCP** → [bảo mật](2026-11-27-security-design.md)
 
 ## 1. Mục tiêu
 
@@ -113,7 +113,7 @@ Mô tả tool trả dữ liệu do app hay người khác ghi (mail, message, ob
 | `services=sqs,ses` | Chỉ đăng ký tool của các nhóm này (id theo registry, thêm `floci`) | Tất cả nhóm |
 | `read_only=true`   | Bỏ mọi tool không có `readOnlyHint`                                | `false`     |
 
-**Reset Floci** (nút Reset data trên Console Home, xóa sạch mọi thứ): tool `floci_reset_data` **chỉ có khi `services` ghi rõ `reset`**, không nằm trong "tất cả" (**chờ user duyệt**). `read_only=true` luôn bỏ nó.
+**Reset Floci** (nút Reset data trên Console Home, xóa sạch mọi thứ): tool `floci_reset_data` **chỉ có khi `services` ghi rõ `reset`**, không nằm trong "tất cả" (user duyệt 2026-11-28). `read_only=true` luôn bỏ nó.
 
 Tham số sai (nhóm không tồn tại): trả lỗi JSON-RPC kèm danh sách nhóm hợp lệ, không lặng lẽ bỏ qua.
 
@@ -250,7 +250,7 @@ Theo nguyên tắc của [spec bảo mật](2026-11-27-security-design.md): MCP 
 
 ## 10. Cần user duyệt
 
-1. Reset chỉ có khi `services` ghi `reset` (mục 4.4).
+Không còn (Reset đã duyệt 2026-11-28).
 
 ---
 
@@ -283,3 +283,4 @@ Tham khảo: GitHub MCP (toolsets, `--read-only`, tool đọc có `method`), Sup
 | 2026-11-27 | Tên tool một khuôn `<service>_<động từ>_<resource>`, resource số ít                                                                                                                        |
 | 2026-11-27 | File qua base64 có giới hạn và cảnh báo; khuyên dùng UI để upload                                                                                                                          |
 | 2026-11-27 | Đợt 1: khung + Floci + SQS + SES, sau khi tách core và test lại                                                                                                                            |
+| 2026-11-28 | Duyệt spec; `floci_reset_data` chỉ có khi `?services=reset`. Dùng `createMcpHandler` + `toNodeHandler` (phục vụ cả client 2025 lẫn 2026-07-28) thay cho `NodeStreamableHTTPServerTransport` |

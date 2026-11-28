@@ -140,3 +140,21 @@ test("reset asks to type 'reset', then calls Floci's reset", async ({ page }) =>
   await expect(dialog.getByRole("textbox")).toHaveValue("");
   await expect(confirm).toBeDisabled();
 });
+
+test("home shows how to connect an AI agent to the MCP server of this console", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Connect your AI agent" })).toBeVisible();
+  // Tên tab chỉ có ở card này
+  const card = page.getByRole("main");
+  const origin = new URL(page.url()).origin;
+  for (const tab of ["Claude Code", "Codex", "Cursor and others"]) {
+    await expect(card.getByRole("tab", { name: tab })).toBeVisible();
+  }
+  await expect(
+    card.getByText(`claude mcp add --transport http local-console ${origin}/mcp`),
+  ).toBeVisible();
+  await card.getByRole("tab", { name: "Codex" }).click();
+  await expect(card.getByText(`url = "${origin}/mcp"`)).toBeVisible();
+});

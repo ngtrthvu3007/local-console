@@ -11,6 +11,8 @@ import {
   ROUTES,
   SPA_INDEX_FILE,
 } from "./constants.ts";
+import { mcpRouter } from "./mcp/index.ts";
+import { createServices } from "./mcp/services.ts";
 import { errorHandler } from "./middleware/error.ts";
 import { localOnly } from "./middleware/localOnly.ts";
 import { healthRouter } from "./routes/health.ts";
@@ -24,7 +26,7 @@ export function createApp(config: Config) {
 
   // Health đứng trước localOnly: Floci gọi health qua tên container, không phải localhost
   app.use(healthRouter(config.AWS_ENDPOINT_URL));
-  app.use([ROUTES.apiPrefix, ROUTES.awsProxy], localOnly);
+  app.use([ROUTES.apiPrefix, ROUTES.awsProxy, ROUTES.mcp], localOnly);
   app.get(ROUTES.config, (_request, response) => {
     response.json({
       region: config.AWS_REGION,
@@ -52,6 +54,8 @@ export function createApp(config: Config) {
   app.use(ROUTES.redis, redisRouter(withRedis));
   const callRabbit = createRabbitConnector(new MqClient(awsOptions), config.AWS_ENDPOINT_URL);
   app.use(ROUTES.rabbitmq, rabbitRouter(callRabbit));
+  // Sau proxy /aws: express.json của MCP chỉ gắn trên route /mcp
+  app.use(mcpRouter(createServices(config)));
 
   app.use(ROUTES.apiPrefix, (_request, response) => {
     response
