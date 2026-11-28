@@ -91,6 +91,8 @@ test("creates a single-page app distribution from the bucket page", async ({ pag
   await page.getByRole("button", { name: "Create distribution" }).last().click();
 
   await expect(flash(page)).toContainText("Created distribution");
+  // Flashbar hiện trước khi chuyển trang: chờ URL của distribution rồi mới đọc id
+  await expect(page).toHaveURL(/\/cloudfront\/distributions\/[A-Z0-9]+$/);
   id = page.url().split("/").pop() ?? "";
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(id);
 
